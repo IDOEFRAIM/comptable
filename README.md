@@ -8,7 +8,7 @@ It centralizes accounting, tax, and document management while integrating an AI 
 
 ---
 
-## ✨ Why Comptable?
+## Why Comptable?
 
 Accounting firms deal every day with:
 
