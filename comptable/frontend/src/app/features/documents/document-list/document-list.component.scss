@@ -1,0 +1,99 @@
+.liste-carte {
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  padding: 1.25rem;
+}
+
+.barre-filtres {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+  align-items: center;
+}
+
+.filtre {
+  padding: 0.4rem 0.9rem;
+  border: 1px solid #d0d5dd;
+  border-radius: 999px;
+  background: white;
+  cursor: pointer;
+  font-size: 0.8125rem;
+
+  &.actif {
+    background: #2563eb;
+    border-color: #2563eb;
+    color: white;
+  }
+}
+
+.bouton-rafraichir {
+  margin-left: auto;
+  border: none;
+  background: none;
+  color: #2563eb;
+  cursor: pointer;
+  font-size: 0.8125rem;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.875rem;
+}
+
+th {
+  text-align: left;
+  color: #667085;
+  font-weight: 600;
+  padding: 0.5rem;
+  border-bottom: 1px solid #eaecf0;
+}
+
+td {
+  padding: 0.6rem 0.5rem;
+  border-bottom: 1px solid #f2f4f7;
+}
+
+.badge-succes {
+  background: #ecfdf3;
+  color: #027a48;
+}
+
+.badge-erreur {
+  background: #fef3f2;
+  color: #b42318;
+}
+
+.badge-attente {
+  background: #fff8e6;
+  color: #b54708;
+}
+
+.info-bulle {
+  margin-left: 0.35rem;
+  cursor: help;
+  color: #98a2b3;
+}
+
+.bouton-comptabiliser {
+  padding: 0.3rem 0.7rem;
+  border: 1px solid #2563eb;
+  border-radius: 6px;
+  background: white;
+  color: #2563eb;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+
+  &:hover {
+    background: #eff6ff;
+  }
+}
+
+.lien-comptabilise {
+  color: #027a48;
+  font-size: 0.8125rem;
+  font-weight: 600;
+}

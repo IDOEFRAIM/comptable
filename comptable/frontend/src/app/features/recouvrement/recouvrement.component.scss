@@ -1,0 +1,74 @@
+.page-recouvrement {
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  padding: 1.25rem;
+}
+
+.entete {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.5rem;
+
+  h2 {
+    margin: 0;
+  }
+}
+
+.bouton-rafraichir {
+  border: none;
+  background: none;
+  color: #2563eb;
+  cursor: pointer;
+  font-size: 0.8125rem;
+}
+
+.note-methode {
+  color: #667085;
+  font-size: 0.8125rem;
+  margin: 0 0 1rem;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.875rem;
+}
+
+th {
+  text-align: left;
+  color: #667085;
+  font-weight: 600;
+  padding: 0.5rem;
+  border-bottom: 1px solid #eaecf0;
+}
+
+td {
+  padding: 0.6rem 0.5rem;
+  border-bottom: 1px solid #f2f4f7;
+}
+
+.colonne-montant {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.colonne-action {
+  color: #475467;
+}
+
+.badge-succes {
+  background: #ecfdf3;
+  color: #027a48;
+}
+
+.badge-erreur {
+  background: #fef3f2;
+  color: #b42318;
+}
+
+.badge-attente {
+  background: #fff8e6;
+  color: #b54708;
+}

@@ -1,0 +1,76 @@
+# ==========================================
+# 1. Java / Spring Boot (comptable)
+# ==========================================
+**/target/
+!**/src/main/**/target/
+!**/src/test/**/target/
+
+# Logs et exécutables Maven/Gradle
+*.log
+**/logs/
+.mvn/wrapper/maven-wrapper.jar
+.gradle/
+**/build/
+
+# ==========================================
+# 2. Python / FastAPI (ai-service)
+# ==========================================
+# Environments virtuels
+**/venv/
+**/env/
+**/ENV/
+**/.venv/
+
+# Caches de test et de linter
+**/.pytest_cache/
+**/.ruff_cache/
+**/__pycache__/
+*.py[cod]
+*$py.class
+
+# Fichiers PDF de test locaux
+*.pdf
+
+# ==========================================
+# 3. Variables d'environnement & Secrets
+# ==========================================
+# Exclut le fichier .env (y compris dans ai-service/app/.env)
+**/.env
+.env.local
+.env.*.local
+*.pem
+*.key
+
+# ==========================================
+# 4. Configurations IDE & Outils AI
+# ==========================================
+# IntelliJ IDEA
+.idea/
+*.iws
+*.iml
+*.ipr
+
+# STS / Eclipse / NetBeans
+.apt_generated
+.classpath
+.factorypath
+.project
+.settings/
+.springBeans
+.sts4-cache/
+/nbproject/
+/nbbuild/
+/dist/
+
+# VS Code
+.vscode/
+
+# Dossier Claude AI / Fichiers temporaires
+**/.claude/
+HELP.md
+
+# ==========================================
+# 5. OS & Fichiers Système
+# ==========================================
+.DS_Store
+Thumbs.db

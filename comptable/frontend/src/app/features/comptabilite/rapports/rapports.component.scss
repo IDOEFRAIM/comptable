@@ -1,0 +1,241 @@
+.page-rapports {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.entete {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+
+  h2 {
+    margin: 0;
+    font-size: 1.2rem;
+  }
+}
+
+.onglets-mode {
+  display: flex;
+  gap: 0.4rem;
+
+  button {
+    padding: 0.4rem 0.9rem;
+    border: 1px solid #d0d5dd;
+    border-radius: 999px;
+    background: white;
+    cursor: pointer;
+    font-size: 0.8125rem;
+
+    &.actif {
+      background: #2563eb;
+      border-color: #2563eb;
+      color: white;
+    }
+  }
+}
+
+.carte {
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  padding: 1.25rem;
+}
+
+.filtres {
+  display: flex;
+  gap: 1rem;
+  align-items: flex-end;
+  flex-wrap: wrap;
+}
+
+.champ {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  font-size: 0.875rem;
+
+  input,
+  select {
+    padding: 0.5rem;
+    border: 1px solid #d0d5dd;
+    border-radius: 6px;
+  }
+}
+
+.champ-compte {
+  min-width: 260px;
+}
+
+.bouton-principal {
+  padding: 0.55rem 1rem;
+  border: none;
+  border-radius: 6px;
+  background: #2563eb;
+  color: white;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.8125rem;
+}
+
+th,
+td {
+  padding: 0.5rem;
+  text-align: right;
+  border-bottom: 1px solid #f2f4f7;
+
+  &:first-child {
+    text-align: left;
+  }
+}
+
+th {
+  color: #667085;
+  font-weight: 600;
+  border-bottom: 1px solid #eaecf0;
+}
+
+tfoot td {
+  font-weight: 700;
+  border-top: 2px solid #eaecf0;
+  border-bottom: none;
+}
+
+.solde-ouverture,
+.solde-cloture {
+  font-size: 0.875rem;
+  color: #667085;
+  font-weight: 600;
+}
+
+.entete-grand-livre {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 0.5rem;
+
+  h3 {
+    margin: 0;
+  }
+}
+
+.entete-grand-livre .bouton-principal:disabled {
+  background: #a4bcf5;
+  cursor: not-allowed;
+}
+
+.ligne-lettree {
+  background: #f0fdf4;
+}
+
+.badge-lettrage {
+  border: none;
+  background: #ecfdf3;
+  color: #027a48;
+  border-radius: 999px;
+  padding: 0.15rem 0.5rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  cursor: pointer;
+
+  &:hover {
+    background: #d1fadf;
+  }
+}
+
+.etat-vide {
+  color: #667085;
+  text-align: center;
+  padding: 1.5rem 0;
+}
+
+.message-erreur {
+  color: #b42318;
+  font-size: 0.875rem;
+}
+
+.message-succes {
+  color: #027a48;
+  font-size: 0.875rem;
+}
+
+.actions-lettrage {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.champ-partiel {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.8125rem;
+  color: #667085;
+}
+
+.bouton-secondaire {
+  padding: 0.55rem 1rem;
+  border: 1px solid #2563eb;
+  border-radius: 6px;
+  background: white;
+  color: #2563eb;
+  font-weight: 600;
+  cursor: pointer;
+
+  &:disabled {
+    color: #a4bcf5;
+    border-color: #a4bcf5;
+    cursor: not-allowed;
+  }
+}
+
+.liste-ecritures-journal {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.carte-ecriture-journal {
+  padding: 0;
+  overflow: hidden;
+}
+
+.entete-ecriture {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.75rem 1.1rem;
+  background: #f9fafb;
+  border-bottom: 1px solid #f2f4f7;
+  font-size: 0.875rem;
+
+  .piece {
+    font-weight: 600;
+  }
+
+  .libelle {
+    flex: 1;
+    color: #1f2328;
+  }
+
+  .date {
+    color: #667085;
+  }
+}
+
+.carte-ecriture-journal table {
+  margin: 0;
+}
+
+.carte-ecriture-journal td,
+.carte-ecriture-journal th {
+  padding: 0.5rem 1.1rem;
+}

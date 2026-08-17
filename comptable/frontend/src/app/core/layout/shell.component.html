@@ -1,0 +1,49 @@
+<header class="entete-app">
+  <a routerLink="/entreprises" class="logo">Comptable</a>
+  <nav class="nav-principale">
+    @if (estMembreCabinet) {
+      <a routerLink="/cabinet" routerLinkActive="actif">Cabinet</a>
+      <a routerLink="/cabinet/indicateurs" routerLinkActive="actif">Indicateurs</a>
+    }
+  </nav>
+  <div class="zone-utilisateur">
+    <div class="zone-notifications">
+      <button type="button" class="bouton-cloche" (click)="basculerDropdown()">
+        🔔
+        @if (compteurNonLues() > 0) {
+          <span class="pastille">{{ compteurNonLues() }}</span>
+        }
+      </button>
+
+      @if (dropdownOuvert()) {
+        <div class="dropdown-notifications">
+          <div class="dropdown-entete">
+            <span>Notifications</span>
+            @if (compteurNonLues() > 0) {
+              <button type="button" class="bouton-lien" (click)="marquerToutesLues()">Tout marquer lu</button>
+            }
+          </div>
+          @if (notifications().length === 0) {
+            <p class="etat-vide">Aucune notification.</p>
+          } @else {
+            <ul>
+              @for (n of notifications(); track n.id) {
+                <li [class.non-lue]="n.statut === 'NON_LUE'" (click)="marquerLue(n)">
+                  {{ n.contenu }}
+                </li>
+              }
+            </ul>
+          }
+        </div>
+      }
+    </div>
+
+    @if (email) {
+      <span class="email">{{ email }}</span>
+    }
+    <button type="button" (click)="seDeconnecter()">Déconnexion</button>
+  </div>
+</header>
+<main>
+  <router-outlet />
+</main>

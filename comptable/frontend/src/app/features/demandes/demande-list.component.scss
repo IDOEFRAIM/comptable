@@ -1,0 +1,176 @@
+.page-demandes {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.entete {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  h2 {
+    margin: 0;
+    font-size: 1.2rem;
+  }
+}
+
+.aide {
+  margin: 0;
+  color: #667085;
+  font-size: 0.875rem;
+}
+
+.carte {
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  padding: 1.25rem;
+}
+
+.formulaire-creation {
+  display: flex;
+  gap: 1rem;
+  align-items: flex-end;
+  flex-wrap: wrap;
+}
+
+.champ {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  font-size: 0.875rem;
+  flex: 1;
+  min-width: 180px;
+
+  input,
+  select {
+    padding: 0.5rem;
+    border: 1px solid #d0d5dd;
+    border-radius: 6px;
+  }
+}
+
+.champ-date {
+  flex: 0 0 auto;
+  min-width: 160px;
+}
+
+.liste-demandes {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.carte-demande {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.ligne-principale {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.texte {
+  strong {
+    font-size: 0.95rem;
+  }
+}
+
+.description {
+  margin: 0.2rem 0 0;
+  color: #475467;
+  font-size: 0.8125rem;
+}
+
+.meta {
+  display: block;
+  margin-top: 0.3rem;
+  color: #98a2b3;
+  font-size: 0.75rem;
+}
+
+.badge {
+  padding: 0.2rem 0.6rem;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.badge-attente {
+  background: #fff8e6;
+  color: #b54708;
+}
+
+.badge-recu {
+  background: #ecfdf3;
+  color: #027a48;
+}
+
+.badge-annulee {
+  background: #f2f4f7;
+  color: #667085;
+}
+
+.actions {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.reponse-inline {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  padding-top: 0.5rem;
+  border-top: 1px solid #f2f4f7;
+
+  select,
+  input[type='file'] {
+    padding: 0.4rem;
+    border: 1px solid #d0d5dd;
+    border-radius: 6px;
+    font-size: 0.8125rem;
+  }
+}
+
+.bouton-principal {
+  padding: 0.5rem 0.9rem;
+  border: none;
+  border-radius: 6px;
+  background: #2563eb;
+  color: white;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+
+  &:disabled {
+    background: #a4bcf5;
+    cursor: not-allowed;
+  }
+}
+
+.bouton-lien {
+  border: none;
+  background: none;
+  color: #2563eb;
+  cursor: pointer;
+  font-size: 0.8125rem;
+  font-weight: 600;
+}
+
+.etat-vide {
+  color: #667085;
+  text-align: center;
+  padding: 2rem 0;
+}
+
+.message-erreur {
+  color: #b42318;
+  font-size: 0.875rem;
+}

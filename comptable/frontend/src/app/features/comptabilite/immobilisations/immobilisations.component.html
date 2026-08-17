@@ -1,0 +1,119 @@
+<div class="page-immobilisations">
+  <div class="entete">
+    <h2>Immobilisations</h2>
+    <div class="actions-entete">
+      <input type="number" class="champ-annee" [(ngModel)]="anneeDotation" [ngModelOptions]="{ standalone: true }" />
+      <button type="button" class="bouton-secondaire" [disabled]="generationEnCours()" (click)="genererDotations()">
+        {{ generationEnCours() ? 'Génération…' : 'Générer les dotations' }}
+      </button>
+      <button type="button" class="bouton-principal" (click)="afficherFormulaire.set(!afficherFormulaire())">
+        {{ afficherFormulaire() ? 'Annuler' : '+ Immobilisation' }}
+      </button>
+    </div>
+  </div>
+
+  @if (dernierResultat()) {
+    <p class="message-info">{{ dernierResultat() }}</p>
+  }
+  @if (erreur()) {
+    <p class="message-erreur">{{ erreur() }}</p>
+  }
+
+  @if (afficherFormulaire()) {
+    <form [formGroup]="form" (ngSubmit)="creer()" class="carte formulaire-creation">
+      <label class="champ">
+        <span>Libellé</span>
+        <input type="text" formControlName="libelle" placeholder="Ex : Véhicule utilitaire" />
+      </label>
+      <label class="champ">
+        <span>Compte d'actif</span>
+        <select formControlName="compteId">
+          <option value="" disabled>Choisir…</option>
+          @for (c of comptesActif(); track c.id) {
+            <option [value]="c.id">{{ c.numero }} — {{ c.intitule }}</option>
+          }
+        </select>
+      </label>
+      <label class="champ">
+        <span>Compte d'amortissement</span>
+        <select formControlName="compteAmortissementId">
+          <option value="" disabled>Choisir…</option>
+          @for (c of comptesAmortissement(); track c.id) {
+            <option [value]="c.id">{{ c.numero }} — {{ c.intitule }}</option>
+          }
+        </select>
+      </label>
+      <label class="champ">
+        <span>Date d'acquisition</span>
+        <input type="date" formControlName="dateAcquisition" />
+      </label>
+      <label class="champ">
+        <span>Valeur d'origine</span>
+        <input type="number" formControlName="valeurOrigine" />
+      </label>
+      <label class="champ champ-etroit">
+        <span>Durée (années)</span>
+        <input type="number" formControlName="dureeAnnees" min="1" />
+      </label>
+      <label class="champ champ-etroit">
+        <span>Mode</span>
+        <select formControlName="mode">
+          <option value="LINEAIRE">Linéaire</option>
+          <option value="DEGRESSIF">Dégressif</option>
+        </select>
+      </label>
+      <button type="submit" class="bouton-principal" [disabled]="envoiEnCours()">
+        {{ envoiEnCours() ? 'Création…' : 'Créer' }}
+      </button>
+    </form>
+  }
+
+  @if (chargement()) {
+    <p class="etat-vide">Chargement…</p>
+  } @else if (immobilisations().length === 0) {
+    <p class="etat-vide">Aucune immobilisation enregistrée.</p>
+  } @else {
+    <div class="liste-immobilisations">
+      @for (immo of immobilisations(); track immo.id) {
+        <div class="carte carte-immo">
+          <button type="button" class="ligne-entete" (click)="basculer(immo)">
+            <span class="libelle">{{ immo.libelle }}</span>
+            <span class="compte">{{ immo.compteNumero }}</span>
+            <span class="mode">{{ immo.mode === 'LINEAIRE' ? 'Linéaire' : 'Dégressif' }}</span>
+            <span class="valeur">{{ immo.valeurOrigine | number: '1.0-0' }}</span>
+            <span class="vnc">VNC {{ immo.valeurNetteComptableActuelle | number: '1.0-0' }}</span>
+          </button>
+
+          @if (immobilisationOuverte() === immo.id) {
+            <div class="details">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Année</th>
+                    <th>Dotation</th>
+                    <th>VNC fin d'année</th>
+                    <th>Statut</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  @for (ligne of immo.plan; track ligne.annee) {
+                    <tr>
+                      <td>{{ ligne.annee }}</td>
+                      <td>{{ ligne.dotation | number: '1.0-0' }}</td>
+                      <td>{{ ligne.valeurNetteComptableFin | number: '1.0-0' }}</td>
+                      <td>
+                        <span class="badge" [class.badge-genere]="ligne.genere">
+                          {{ ligne.genere ? 'Générée' : 'À générer' }}
+                        </span>
+                      </td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            </div>
+          }
+        </div>
+      }
+    </div>
+  }
+</div>

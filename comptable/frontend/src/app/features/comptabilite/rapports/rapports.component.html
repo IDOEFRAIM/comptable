@@ -1,0 +1,320 @@
+<div class="page-rapports">
+  <div class="entete">
+    <h2>Rapports</h2>
+    <div class="onglets-mode">
+      <button type="button" [class.actif]="mode() === 'BALANCE'" (click)="changerMode('BALANCE')">
+        Balance générale
+      </button>
+      <button type="button" [class.actif]="mode() === 'GRAND_LIVRE'" (click)="changerMode('GRAND_LIVRE')">
+        Grand livre
+      </button>
+      <button type="button" [class.actif]="mode() === 'JOURNAL'" (click)="changerMode('JOURNAL')">
+        Journal des opérations
+      </button>
+      <button type="button" [class.actif]="mode() === 'BALANCE_AGEE'" (click)="changerMode('BALANCE_AGEE')">
+        Balance âgée
+      </button>
+      <button type="button" [class.actif]="mode() === 'FEC'" (click)="changerMode('FEC')">
+        Export FEC
+      </button>
+    </div>
+  </div>
+
+  @if (mode() !== 'BALANCE_AGEE' && mode() !== 'FEC') {
+    <form class="carte filtres" (ngSubmit)="generer()">
+      <label class="champ">
+        <span>Du</span>
+        <input type="date" [(ngModel)]="dateDebut" name="dateDebut" />
+      </label>
+      <label class="champ">
+        <span>Au</span>
+        <input type="date" [(ngModel)]="dateFin" name="dateFin" />
+      </label>
+      @if (mode() === 'GRAND_LIVRE') {
+        <label class="champ champ-compte">
+          <span>Compte</span>
+          <select [(ngModel)]="compteSelectionne" name="compte">
+            <option value="" disabled>Sélectionner…</option>
+            @for (c of comptes(); track c.id) {
+              <option [value]="c.id">{{ c.numero }} — {{ c.intitule }}</option>
+            }
+          </select>
+        </label>
+      }
+      @if (mode() === 'JOURNAL') {
+        <label class="champ champ-compte">
+          <span>Journal</span>
+          <select [(ngModel)]="journalSelectionne" name="journal">
+            <option value="" disabled>Sélectionner…</option>
+            @for (j of journaux(); track j.id) {
+              <option [value]="j.id">{{ j.code }} — {{ j.libelle }}</option>
+            }
+          </select>
+        </label>
+      }
+      <button type="submit" class="bouton-principal">Générer</button>
+    </form>
+  }
+
+  @if (mode() === 'BALANCE_AGEE') {
+    <form class="carte filtres" (ngSubmit)="generer()">
+      <label class="champ">
+        <span>Date d'arrêté</span>
+        <input type="date" [(ngModel)]="dateArreteBalanceAgee" name="dateArrete" />
+      </label>
+      <button type="submit" class="bouton-principal">Générer</button>
+    </form>
+  }
+
+  @if (mode() === 'FEC') {
+    <form class="carte filtres" (ngSubmit)="exporterFec()">
+      <label class="champ champ-compte">
+        <span>Exercice</span>
+        <select [(ngModel)]="exerciceSelectionne" name="exercice">
+          <option value="" disabled>Sélectionner…</option>
+          @for (e of exercices(); track e.id) {
+            <option [value]="e.id">{{ e.dateDebut }} — {{ e.dateFin }} ({{ e.statut }})</option>
+          }
+        </select>
+      </label>
+      <button type="submit" class="bouton-principal" [disabled]="exportEnCours()">Télécharger le FEC</button>
+    </form>
+    <p class="etat-vide">
+      Fichier des Écritures Comptables (norme DGI) : uniquement les écritures validées de l'exercice sélectionné.
+    </p>
+  }
+
+  @if (erreur()) {
+    <p class="message-erreur">{{ erreur() }}</p>
+  }
+
+  @if (succes()) {
+    <p class="message-succes">{{ succes() }}</p>
+  }
+
+  @if (chargement()) {
+    <p class="etat-vide">Chargement…</p>
+  }
+
+  @if (mode() === 'BALANCE' && balance(); as balance) {
+    <div class="carte">
+      <table>
+        <thead>
+          <tr>
+            <th rowspan="2">Compte</th>
+            <th colspan="2">Solde d'ouverture</th>
+            <th colspan="2">Mouvements</th>
+            <th colspan="2">Solde de clôture</th>
+          </tr>
+          <tr>
+            <th>Débit</th>
+            <th>Crédit</th>
+            <th>Débit</th>
+            <th>Crédit</th>
+            <th>Débit</th>
+            <th>Crédit</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (ligne of balance.lignes; track ligne.compteId) {
+            <tr>
+              <td>{{ ligne.compteNumero }} — {{ ligne.compteIntitule }}</td>
+              <td>{{ ligne.soldeOuverture.debit || '—' }}</td>
+              <td>{{ ligne.soldeOuverture.credit || '—' }}</td>
+              <td>{{ ligne.mouvementDebit || '—' }}</td>
+              <td>{{ ligne.mouvementCredit || '—' }}</td>
+              <td>{{ ligne.soldeCloture.debit || '—' }}</td>
+              <td>{{ ligne.soldeCloture.credit || '—' }}</td>
+            </tr>
+          }
+        </tbody>
+        <tfoot>
+          <tr>
+            <td>Totaux</td>
+            <td>{{ balance.totalSoldeOuvertureDebit }}</td>
+            <td>{{ balance.totalSoldeOuvertureCredit }}</td>
+            <td>{{ balance.totalMouvementDebit }}</td>
+            <td>{{ balance.totalMouvementCredit }}</td>
+            <td>{{ balance.totalSoldeClotureDebit }}</td>
+            <td>{{ balance.totalSoldeClotureCredit }}</td>
+          </tr>
+        </tfoot>
+      </table>
+      @if (balance.lignes.length === 0) {
+        <p class="etat-vide">Aucun mouvement validé sur cette période.</p>
+      }
+    </div>
+  }
+
+  @if (mode() === 'GRAND_LIVRE' && grandLivre(); as gl) {
+    <div class="carte">
+      <div class="entete-grand-livre">
+        <h3>{{ gl.compteNumero }} — {{ gl.compteIntitule }}</h3>
+        @if (compteLettrable) {
+          <div class="actions-lettrage">
+            <label class="champ-partiel">
+              <input type="checkbox" [(ngModel)]="lettragePartiel" name="lettragePartiel" />
+              Lettrage partiel (accepte un écart)
+            </label>
+            <button
+              type="button"
+              class="bouton-secondaire"
+              [disabled]="lettrageEnCours()"
+              (click)="lettrerAutomatiquement()"
+            >
+              Lettrer automatiquement
+            </button>
+            <button
+              type="button"
+              class="bouton-principal"
+              [disabled]="selectionLettrage().size < 2 || lettrageEnCours()"
+              (click)="lettrerSelection()"
+            >
+              Lettrer la sélection ({{ selectionLettrage().size }})
+            </button>
+          </div>
+        }
+      </div>
+      <p class="solde-ouverture">
+        Solde d'ouverture : {{ gl.soldeOuverture.debit || gl.soldeOuverture.credit }}
+        {{ gl.soldeOuverture.debit ? '(débit)' : gl.soldeOuverture.credit ? '(crédit)' : '' }}
+      </p>
+      <table>
+        <thead>
+          <tr>
+            @if (compteLettrable) {
+              <th></th>
+            }
+            <th>Date</th>
+            <th>Journal</th>
+            <th>Pièce</th>
+            <th>Libellé</th>
+            <th>Débit</th>
+            <th>Crédit</th>
+            @if (compteLettrable) {
+              <th>Lettrage</th>
+            }
+            <th>Solde progressif</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (ligne of gl.lignes; track ligne.id) {
+            <tr [class.ligne-lettree]="!!ligne.lettrage">
+              @if (compteLettrable) {
+                <td>
+                  @if (!ligne.lettrage) {
+                    <input
+                      type="checkbox"
+                      [checked]="estSelectionnee(ligne.id)"
+                      (change)="basculerSelection(ligne.id)"
+                    />
+                  }
+                </td>
+              }
+              <td>{{ ligne.date }}</td>
+              <td>{{ ligne.journalCode }}</td>
+              <td>{{ ligne.numeroPiece }}</td>
+              <td>{{ ligne.libelle }}</td>
+              <td>{{ ligne.debit || '—' }}</td>
+              <td>{{ ligne.credit || '—' }}</td>
+              @if (compteLettrable) {
+                <td>
+                  @if (ligne.lettrage) {
+                    <button type="button" class="badge-lettrage" (click)="delettrerCode(ligne.lettrage)">
+                      {{ ligne.lettrage }} ✕
+                    </button>
+                  }
+                </td>
+              }
+              <td>{{ ligne.soldeProgressif.debit || ligne.soldeProgressif.credit }}</td>
+            </tr>
+          }
+        </tbody>
+      </table>
+      @if (gl.lignes.length === 0) {
+        <p class="etat-vide">Aucun mouvement validé sur cette période.</p>
+      }
+      <p class="solde-cloture">
+        Solde de clôture : {{ gl.soldeCloture.debit || gl.soldeCloture.credit }}
+        {{ gl.soldeCloture.debit ? '(débit)' : gl.soldeCloture.credit ? '(crédit)' : '' }}
+      </p>
+    </div>
+  }
+
+  @if (mode() === 'JOURNAL' && ecrituresJournal(); as ecritures) {
+    <div class="liste-ecritures-journal">
+      @for (ecriture of ecritures; track ecriture.id) {
+        <div class="carte carte-ecriture-journal">
+          <div class="entete-ecriture">
+            <span class="piece">{{ ecriture.numeroPiece }}</span>
+            <span class="libelle">{{ ecriture.libelle }}</span>
+            <span class="date">{{ ecriture.dateEcriture }}</span>
+          </div>
+          <table>
+            <thead>
+              <tr>
+                <th>Compte</th>
+                <th>Libellé</th>
+                <th>Débit</th>
+                <th>Crédit</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (ligne of ecriture.lignes; track ligne.id) {
+                <tr>
+                  <td>{{ ligne.compteNumero }} — {{ ligne.compteIntitule }}</td>
+                  <td>{{ ligne.libelle }}</td>
+                  <td>{{ ligne.debit || '—' }}</td>
+                  <td>{{ ligne.credit || '—' }}</td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      }
+      @if (ecritures.length === 0) {
+        <p class="etat-vide">Aucune écriture validée sur cette période pour ce journal.</p>
+      }
+    </div>
+  }
+
+  @if (mode() === 'BALANCE_AGEE' && balanceAgee(); as ba) {
+    <div class="carte">
+      <table>
+        <thead>
+          <tr>
+            <th>Tiers</th>
+            <th>Type</th>
+            <th>0-30 jours</th>
+            <th>31-60 jours</th>
+            <th>61-90 jours</th>
+            <th>+90 jours</th>
+            <th>Total</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (ligne of ba.lignes; track ligne.tiersId) {
+            <tr>
+              <td>{{ ligne.tiersNom }}</td>
+              <td>{{ ligne.typeTiers === 'CLIENT' ? 'Client' : 'Fournisseur' }}</td>
+              <td>{{ ligne.tranche0a30 || '—' }}</td>
+              <td>{{ ligne.tranche31a60 || '—' }}</td>
+              <td>{{ ligne.tranche61a90 || '—' }}</td>
+              <td>{{ ligne.tranchePlus90 || '—' }}</td>
+              <td>{{ ligne.total }}</td>
+            </tr>
+          }
+        </tbody>
+        <tfoot>
+          <tr>
+            <td colspan="6">Total général</td>
+            <td>{{ ba.totalGeneral }}</td>
+          </tr>
+        </tfoot>
+      </table>
+      @if (ba.lignes.length === 0) {
+        <p class="etat-vide">Aucune créance ou dette en instance à cette date.</p>
+      }
+    </div>
+  }
+</div>

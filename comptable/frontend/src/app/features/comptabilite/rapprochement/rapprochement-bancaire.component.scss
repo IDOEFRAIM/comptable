@@ -1,0 +1,237 @@
+.page-rapprochement {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.entete {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  h2 {
+    margin: 0;
+    font-size: 1.2rem;
+  }
+}
+
+.carte {
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  padding: 1.25rem;
+}
+
+.formulaire-import {
+  display: flex;
+  gap: 1rem;
+  align-items: flex-end;
+  flex-wrap: wrap;
+}
+
+.champ {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  font-size: 0.875rem;
+
+  input,
+  select {
+    padding: 0.5rem;
+    border: 1px solid #d0d5dd;
+    border-radius: 6px;
+  }
+}
+
+.champ-fichier {
+  min-width: 260px;
+}
+
+.bouton-principal {
+  padding: 0.55rem 1rem;
+  border: none;
+  border-radius: 6px;
+  background: #2563eb;
+  color: white;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+
+  &:disabled {
+    background: #a4bcf5;
+    cursor: not-allowed;
+  }
+}
+
+.message-erreur {
+  color: #b42318;
+  font-size: 0.875rem;
+}
+
+.colonnes-rapprochement {
+  display: grid;
+  grid-template-columns: 300px 1fr;
+  gap: 1.25rem;
+  align-items: start;
+
+  @media (max-width: 900px) {
+    grid-template-columns: 1fr;
+  }
+}
+
+.liste-releves h3,
+.detail-releve h3 {
+  margin: 0 0 0.75rem;
+  font-size: 0.95rem;
+}
+
+.item-releve {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  width: 100%;
+  text-align: left;
+  padding: 0.6rem 0.75rem;
+  border: 1px solid #eaecf0;
+  border-radius: 6px;
+  background: white;
+  cursor: pointer;
+  margin-bottom: 0.5rem;
+  font-size: 0.8125rem;
+
+  &.actif {
+    border-color: #2563eb;
+    background: #eff6ff;
+  }
+
+  .libelle {
+    font-weight: 600;
+  }
+
+  .periode {
+    color: #667085;
+  }
+}
+
+.ecart-ok {
+  color: #027a48;
+  font-weight: 600;
+}
+
+.ecart-ko {
+  color: #b42318;
+  font-weight: 600;
+}
+
+.resume-soldes {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1rem;
+  margin-bottom: 1rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid #eaecf0;
+
+  div {
+    display: flex;
+    flex-direction: column;
+    gap: 0.2rem;
+    font-size: 0.8125rem;
+
+    span {
+      color: #667085;
+    }
+  }
+
+  @media (max-width: 700px) {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.8125rem;
+}
+
+th,
+td {
+  padding: 0.5rem;
+  text-align: left;
+  border-bottom: 1px solid #f2f4f7;
+}
+
+th {
+  color: #667085;
+  font-weight: 600;
+}
+
+.montant-negatif {
+  color: #b42318;
+}
+
+.ligne-pointee {
+  background: #f0fdf4;
+}
+
+.badge-pointee {
+  color: #027a48;
+  font-weight: 600;
+  margin-right: 0.5rem;
+}
+
+.select-candidat {
+  padding: 0.3rem;
+  border: 1px solid #d0d5dd;
+  border-radius: 6px;
+  margin-right: 0.5rem;
+  font-size: 0.75rem;
+}
+
+.bouton-lien {
+  border: none;
+  background: none;
+  color: #2563eb;
+  cursor: pointer;
+  font-size: 0.8125rem;
+  font-weight: 600;
+}
+
+.etat-vide {
+  color: #667085;
+  text-align: center;
+  padding: 1rem 0;
+}
+
+.suggestion-ia {
+  margin-top: 0.4rem;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.badge-ia {
+  display: inline-block;
+  padding: 0.15rem 0.5rem;
+  border-radius: 999px;
+  background: #f4ebff;
+  color: #6941c6;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.bouton-discret {
+  color: #667085;
+}
+
+.details-ia {
+  flex-basis: 100%;
+  margin: 0.3rem 0 0;
+  padding-left: 1.1rem;
+  font-size: 0.75rem;
+  color: #475467;
+
+  .avertissement-ia {
+    color: #b54708;
+  }
+}

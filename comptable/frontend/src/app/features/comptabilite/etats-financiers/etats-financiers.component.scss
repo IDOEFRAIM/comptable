@@ -1,0 +1,156 @@
+.page-etats-financiers {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.entete {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+
+  h2 {
+    margin: 0;
+    font-size: 1.2rem;
+  }
+}
+
+.onglets-mode {
+  display: flex;
+  gap: 0.4rem;
+
+  button {
+    padding: 0.4rem 0.9rem;
+    border: 1px solid #d0d5dd;
+    border-radius: 999px;
+    background: white;
+    cursor: pointer;
+    font-size: 0.8125rem;
+
+    &.actif {
+      background: #2563eb;
+      border-color: #2563eb;
+      color: white;
+    }
+  }
+}
+
+.carte {
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  padding: 1.25rem;
+}
+
+.filtres {
+  display: flex;
+  gap: 1rem;
+  align-items: flex-end;
+  flex-wrap: wrap;
+}
+
+.champ {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  font-size: 0.875rem;
+
+  select {
+    padding: 0.5rem;
+    border: 1px solid #d0d5dd;
+    border-radius: 6px;
+  }
+}
+
+.champ-exercice {
+  min-width: 320px;
+}
+
+.bouton-principal {
+  padding: 0.55rem 1rem;
+  border: none;
+  border-radius: 6px;
+  background: #2563eb;
+  color: white;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.colonnes {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.25rem;
+
+  @media (max-width: 720px) {
+    grid-template-columns: 1fr;
+  }
+}
+
+.colonne h3 {
+  margin: 0 0 0.75rem;
+  font-size: 0.9rem;
+  color: #667085;
+  letter-spacing: 0.04em;
+}
+
+.ligne-section {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  font-size: 0.8125rem;
+
+  span:last-child {
+    white-space: nowrap;
+    font-variant-numeric: tabular-nums;
+  }
+}
+
+.ligne-total {
+  font-weight: 700;
+  border-top: 2px solid #eaecf0;
+  margin-top: 0.5rem;
+  padding-top: 0.5rem;
+}
+
+.recapitulatif {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  max-width: 420px;
+}
+
+.bouton-cloture {
+  margin-top: 1rem;
+  padding: 0.6rem 1rem;
+  border: none;
+  border-radius: 6px;
+  background: #b42318;
+  color: white;
+  font-weight: 600;
+  cursor: pointer;
+
+  &:disabled {
+    background: #d0847e;
+    cursor: not-allowed;
+  }
+}
+
+.note-cloture {
+  margin-top: 1rem;
+  font-size: 0.8125rem;
+  color: #667085;
+  font-style: italic;
+}
+
+.etat-vide {
+  color: #667085;
+  text-align: center;
+  padding: 1.5rem 0;
+}
+
+.message-erreur {
+  color: #b42318;
+  font-size: 0.875rem;
+}

@@ -1,0 +1,377 @@
+.page-dashboard {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.entete {
+  h2 {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    margin: 0;
+    font-size: 1.2rem;
+  }
+}
+
+.grille-compteurs {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 1rem;
+}
+
+.carte-compteur {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  padding: 1.1rem;
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  text-decoration: none;
+  color: inherit;
+  transition: box-shadow 0.15s;
+
+  &:hover {
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  }
+
+  .valeur {
+    font-size: 1.75rem;
+    font-weight: 700;
+    color: #1f2328;
+  }
+
+  .libelle {
+    font-size: 0.8125rem;
+    color: #667085;
+  }
+
+  &.attention .valeur {
+    color: #b54708;
+  }
+
+  &.danger .valeur {
+    color: #b42318;
+  }
+}
+
+.carte {
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  padding: 1.25rem;
+}
+
+.section-echeances {
+  h3 {
+    margin: 0 0 0.75rem;
+    font-size: 1rem;
+  }
+
+  ul {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  a {
+    text-decoration: none;
+    color: #1f2328;
+    font-size: 0.875rem;
+
+    &:hover {
+      text-decoration: underline;
+    }
+  }
+}
+
+.section-retard {
+  border: 1px solid #fda29b;
+  background: #fef3f2;
+
+  h3 {
+    color: #b42318;
+  }
+}
+
+.etat-vide {
+  color: #667085;
+  text-align: center;
+  padding: 1rem 0;
+}
+
+.message-erreur {
+  color: #b42318;
+  font-size: 0.875rem;
+}
+
+// --- Mission P0 "Core Intelligent" ---------------------------------------
+
+.carte-dossier {
+  .entete-dossier {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 1rem;
+    margin-bottom: 1rem;
+
+    h3 {
+      margin: 0 0 0.3rem;
+      font-size: 1.05rem;
+    }
+  }
+
+  .statut-dossier {
+    display: inline-block;
+    padding: 0.15rem 0.6rem;
+    border-radius: 999px;
+    font-size: 0.8125rem;
+    font-weight: 600;
+    background: #eaecf0;
+
+    &.statut-PRET {
+      background: #ecfdf3;
+      color: #027a48;
+    }
+
+    &.statut-A_SURVEILLER {
+      background: #fffaeb;
+      color: #b54708;
+    }
+
+    &.statut-BLOQUE {
+      background: #fef3f2;
+      color: #b42318;
+    }
+  }
+
+  .score-global {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+
+    .valeur {
+      font-size: 2rem;
+      font-weight: 700;
+      color: #1f2328;
+    }
+
+    .libelle {
+      font-size: 0.8125rem;
+      color: #667085;
+    }
+  }
+}
+
+.grille-scores-domaines {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+  gap: 0.75rem;
+}
+
+.score-domaine {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  padding: 0.6rem 0.75rem;
+  border-radius: 6px;
+  background: #ecfdf3;
+
+  .valeur {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: #027a48;
+  }
+
+  .libelle {
+    font-size: 0.75rem;
+    color: #667085;
+  }
+
+  &.moyen {
+    background: #fffaeb;
+
+    .valeur {
+      color: #b54708;
+    }
+  }
+
+  &.faible {
+    background: #fef3f2;
+
+    .valeur {
+      color: #b42318;
+    }
+  }
+}
+
+.carte-cloture {
+  border: 1px solid #eaecf0;
+
+  h3 {
+    margin: 0 0 0.75rem;
+    font-size: 1rem;
+  }
+
+  &.cloture-NOT_READY {
+    border-color: #fda29b;
+    background: #fef3f2;
+  }
+
+  &.cloture-READY_WITH_REVIEW {
+    border-color: #fec84b;
+    background: #fffaeb;
+  }
+
+  .liste-cloture {
+    font-size: 0.8125rem;
+    margin-bottom: 0.5rem;
+
+    ul {
+      margin: 0.3rem 0 0;
+      padding-left: 1.1rem;
+    }
+  }
+}
+
+.carte-findings h3 {
+  margin: 0 0 0.75rem;
+  font-size: 1rem;
+}
+
+.liste-findings {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.ligne-finding {
+  padding: 0.75rem;
+  border-radius: 6px;
+  border: 1px solid #eaecf0;
+
+  &.severite-CRITICAL {
+    border-color: #fda29b;
+    background: #fef3f2;
+  }
+
+  &.severite-IMPORTANT {
+    border-color: #fec84b;
+    background: #fffaeb;
+  }
+
+  .entete-finding {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 0.3rem;
+  }
+
+  .badge-severite {
+    font-size: 0.75rem;
+    font-weight: 600;
+    white-space: nowrap;
+  }
+
+  .titre-finding {
+    font-weight: 600;
+    font-size: 0.875rem;
+  }
+
+  .description-finding,
+  .action-recommandee {
+    margin: 0.2rem 0;
+    font-size: 0.8125rem;
+    color: #475467;
+  }
+
+  .actions-finding {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-top: 0.4rem;
+    flex-wrap: wrap;
+  }
+
+  .preuve-finding {
+    margin: 0.5rem 0 0;
+    padding-left: 1.1rem;
+    font-size: 0.75rem;
+    color: #475467;
+  }
+}
+
+.selecteur-assignation {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.75rem;
+  color: #667085;
+
+  select {
+    padding: 0.2rem 0.4rem;
+    border: 1px solid #d0d5dd;
+    border-radius: 6px;
+    font-size: 0.75rem;
+  }
+}
+
+.carte-proposition {
+  margin-top: 0.6rem;
+  padding: 0.6rem 0.75rem;
+  border-radius: 6px;
+  background: #eff6ff;
+  border: 1px solid #bfdbfe;
+}
+
+.titre-proposition {
+  margin: 0 0 0.35rem;
+  font-size: 0.8125rem;
+  font-weight: 600;
+}
+
+.confiance-proposition {
+  font-weight: 400;
+  color: #667085;
+}
+
+.detail-proposition {
+  margin: 0 0 0.5rem;
+  padding-left: 1.1rem;
+  font-size: 0.75rem;
+  color: #475467;
+}
+
+.actions-proposition {
+  display: flex;
+  gap: 0.75rem;
+}
+
+.statut-proposition {
+  margin: 0.6rem 0 0;
+  font-size: 0.75rem;
+  color: #667085;
+}
+
+.bouton-lien {
+  border: none;
+  background: none;
+  color: #2563eb;
+  cursor: pointer;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  padding: 0;
+}
+
+.bouton-discret {
+  color: #667085;
+}

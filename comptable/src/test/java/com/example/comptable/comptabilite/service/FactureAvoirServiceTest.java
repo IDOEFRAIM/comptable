@@ -1,0 +1,426 @@
+package com.example.comptable.comptabilite.service;
+
+import com.example.comptable.comptabilite.domain.CompteComptable;
+import com.example.comptable.comptabilite.domain.EcritureComptable;
+import com.example.comptable.comptabilite.domain.ExerciceComptable;
+import com.example.comptable.comptabilite.domain.Facture;
+import com.example.comptable.comptabilite.domain.FactureAvoir;
+import com.example.comptable.comptabilite.domain.Journal;
+import com.example.comptable.comptabilite.domain.LigneFacture;
+import com.example.comptable.comptabilite.domain.StatutExercice;
+import com.example.comptable.comptabilite.domain.StatutFacture;
+import com.example.comptable.comptabilite.domain.StatutFactureAvoir;
+import com.example.comptable.comptabilite.domain.Tiers;
+import com.example.comptable.comptabilite.domain.TypeFacture;
+import com.example.comptable.comptabilite.domain.TypeTiers;
+import com.example.comptable.comptabilite.repository.CompteComptableRepository;
+import com.example.comptable.comptabilite.repository.EcritureComptableRepository;
+import com.example.comptable.comptabilite.repository.ExerciceComptableRepository;
+import com.example.comptable.comptabilite.repository.FactureAvoirRepository;
+import com.example.comptable.comptabilite.repository.FactureRepository;
+import com.example.comptable.comptabilite.repository.JournalRepository;
+import com.example.comptable.comptabilite.web.dto.CreerFactureAvoirRequest;
+import com.example.comptable.comptabilite.web.dto.FactureAvoirDto;
+import com.example.comptable.comptabilite.web.dto.LigneAvoirRequest;
+import com.example.comptable.entreprise.domain.Entreprise;
+import com.example.comptable.entreprise.service.EntrepriseAccessService;
+import com.example.comptable.identite.domain.Role;
+import com.example.comptable.identite.domain.Utilisateur;
+import com.example.comptable.identite.repository.UtilisateurRepository;
+import com.example.comptable.security.UtilisateurPrincipal;
+import com.example.comptable.stock.domain.Article;
+import com.example.comptable.stock.repository.ArticleRepository;
+import com.example.comptable.stock.service.MouvementStockService;
+import com.example.comptable.stock.web.dto.CreerMouvementStockRequest;
+import com.example.comptable.stock.web.dto.MouvementStockDto;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+
+import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.util.List;
+import java.util.Optional;
+import java.util.Set;
+import java.util.UUID;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
+@ExtendWith(MockitoExtension.class)
+class FactureAvoirServiceTest {
+
+    @Mock
+    private EntrepriseAccessService entrepriseAccessService;
+    @Mock
+    private FactureRepository factureRepository;
+    @Mock
+    private FactureAvoirRepository factureAvoirRepository;
+    @Mock
+    private CompteComptableRepository compteComptableRepository;
+    @Mock
+    private ExerciceComptableRepository exerciceComptableRepository;
+    @Mock
+    private JournalRepository journalRepository;
+    @Mock
+    private EcritureComptableRepository ecritureComptableRepository;
+    @Mock
+    private UtilisateurRepository utilisateurRepository;
+    @Mock
+    private MouvementStockService mouvementStockService;
+    @Mock
+    private ArticleRepository articleRepository;
+    @Mock
+    private LettrageService lettrageService;
+
+    @InjectMocks
+    private FactureAvoirService factureAvoirService;
+
+    private UUID entrepriseId;
+    private Entreprise entreprise;
+    private UtilisateurPrincipal principal;
+    private Utilisateur utilisateur;
+    private Tiers client;
+    private CompteComptable compteClient;
+    private CompteComptable compteVentes;
+    private CompteComptable compteTva;
+    private Journal journalVte;
+    private ExerciceComptable exercice;
+
+    @BeforeEach
+    void setUp() {
+        entrepriseId = UUID.randomUUID();
+        entreprise = new Entreprise();
+        entreprise.setId(entrepriseId);
+
+        Role role = new Role();
+        role.setCode("EXPERT_COMPTABLE");
+        utilisateur = new Utilisateur();
+        utilisateur.setId(UUID.randomUUID());
+        utilisateur.setEmail("test@cabinet.ci");
+        utilisateur.setMotDePasse("hash");
+        utilisateur.setNom("Nom");
+        utilisateur.setPrenom("Prenom");
+        utilisateur.setRoles(Set.of(role));
+        principal = new UtilisateurPrincipal(utilisateur);
+
+        compteClient = new CompteComptable();
+        compteClient.setId(UUID.randomUUID());
+        compteClient.setEntreprise(entreprise);
+        compteClient.setNumero("411001");
+
+        client = new Tiers();
+        client.setId(UUID.randomUUID());
+        client.setEntreprise(entreprise);
+        client.setType(TypeTiers.CLIENT);
+        client.setNom("Client Fidele SARL");
+        client.setCompteComptable(compteClient);
+
+        compteVentes = new CompteComptable();
+        compteVentes.setId(UUID.randomUUID());
+        compteVentes.setEntreprise(entreprise);
+        compteVentes.setNumero("701");
+
+        compteTva = new CompteComptable();
+        compteTva.setId(UUID.randomUUID());
+        compteTva.setEntreprise(entreprise);
+        compteTva.setNumero("443");
+
+        journalVte = new Journal();
+        journalVte.setId(UUID.randomUUID());
+        journalVte.setEntreprise(entreprise);
+        journalVte.setCode("VTE");
+
+        exercice = new ExerciceComptable();
+        exercice.setId(UUID.randomUUID());
+        exercice.setEntreprise(entreprise);
+        exercice.setDateDebut(LocalDate.of(2026, 1, 1));
+        exercice.setDateFin(LocalDate.of(2026, 12, 31));
+        exercice.setStatut(StatutExercice.OUVERT);
+
+        when(entrepriseAccessService.verifierAcces(entrepriseId, principal)).thenReturn(entreprise);
+    }
+
+    /** Facture VALIDEE, 10 x 10000 HT, TVA 18% => HT 100000 / TVA 18000 / TTC 118000. */
+    private Facture factureValidee() {
+        Facture facture = new Facture();
+        facture.setId(UUID.randomUUID());
+        facture.setEntreprise(entreprise);
+        facture.setTiers(client);
+        facture.setType(TypeFacture.FACTURE);
+        facture.setNumero("FAC-2026-0042");
+        facture.setDateEmission(LocalDate.of(2026, 3, 12));
+        facture.setStatut(StatutFacture.VALIDEE);
+        facture.setCompteProduitId(compteVentes.getId());
+
+        LigneFacture ligne = new LigneFacture();
+        ligne.setId(UUID.randomUUID());
+        ligne.setDesignation("Prestation conseil");
+        ligne.setQuantite(new BigDecimal("10"));
+        ligne.setPrixUnitaire(new BigDecimal("10000"));
+        ligne.setTauxTva(new BigDecimal("18"));
+        facture.ajouterLigne(ligne);
+        return facture;
+    }
+
+    private void mockerContexteComptable() {
+        when(exerciceComptableRepository.findByEntrepriseIdAndDate(any(), any())).thenReturn(Optional.of(exercice));
+        when(journalRepository.findByEntrepriseIdAndCode(entrepriseId, "VTE")).thenReturn(Optional.of(journalVte));
+        when(utilisateurRepository.getReferenceById(principal.getId())).thenReturn(utilisateur);
+        when(ecritureComptableRepository.countByJournalId(journalVte.getId())).thenReturn(0L);
+        when(compteComptableRepository.findById(compteVentes.getId())).thenReturn(Optional.of(compteVentes));
+        when(compteComptableRepository.findByEntrepriseIdAndNumero(entrepriseId, "443")).thenReturn(Optional.of(compteTva));
+        when(ecritureComptableRepository.save(any())).thenAnswer(inv -> {
+            EcritureComptable e = inv.getArgument(0);
+            e.setId(UUID.randomUUID());
+            return e;
+        });
+        when(lettrageService.lettrerAutomatiquement(any(), any(), any())).thenReturn(List.of());
+    }
+
+    @Test
+    void genere_un_avoir_total_avec_ecriture_inverse_701_443_411() {
+        Facture facture = factureValidee();
+        when(factureRepository.findById(facture.getId())).thenReturn(Optional.of(facture));
+        when(factureAvoirRepository.sommeQuantitesCrediteesParLigne(any(), any())).thenReturn(List.of());
+        when(factureAvoirRepository.save(any())).thenAnswer(inv -> {
+            FactureAvoir a = inv.getArgument(0);
+            if (a.getId() == null) {
+                a.setId(UUID.randomUUID());
+            }
+            return a;
+        });
+
+        FactureAvoirDto avoirCree = factureAvoirService.creerAvoir(entrepriseId, facture.getId(),
+                new CreerFactureAvoirRequest("Retour marchandise", false, true, null), principal);
+
+        assertThat(avoirCree.statut()).isEqualTo("BROUILLON");
+        assertThat(avoirCree.montantHt()).isEqualByComparingTo("100000");
+        assertThat(avoirCree.montantTva()).isEqualByComparingTo("18000");
+        assertThat(avoirCree.montantTtc()).isEqualByComparingTo("118000");
+
+        mockerContexteComptable();
+        FactureAvoir avoirEntite = construireAvoirDepuisDto(avoirCree, facture);
+        when(factureAvoirRepository.findById(avoirCree.id())).thenReturn(Optional.of(avoirEntite));
+
+        FactureAvoirDto resultat = factureAvoirService.validerAvoir(entrepriseId, avoirCree.id(), principal);
+
+        assertThat(resultat.statut()).isEqualTo("VALIDEE");
+        assertThat(resultat.ecritureId()).isNotNull();
+
+        ArgumentCaptor<EcritureComptable> captor = ArgumentCaptor.forClass(EcritureComptable.class);
+        verify(ecritureComptableRepository).save(captor.capture());
+        EcritureComptable ecriture = captor.getValue();
+        assertThat(ecriture.estEquilibree()).isTrue();
+        assertThat(ecriture.getLignes()).hasSize(3);
+        assertThat(ecriture.getLignes()).anySatisfy(l -> {
+            assertThat(l.getCompte().getNumero()).isEqualTo("701");
+            assertThat(l.getDebit()).isEqualByComparingTo("100000");
+        });
+        assertThat(ecriture.getLignes()).anySatisfy(l -> {
+            assertThat(l.getCompte().getNumero()).isEqualTo("443");
+            assertThat(l.getDebit()).isEqualByComparingTo("18000");
+        });
+        assertThat(ecriture.getLignes()).anySatisfy(l -> {
+            assertThat(l.getCompte().getNumero()).isEqualTo("411001");
+            assertThat(l.getCredit()).isEqualByComparingTo("118000");
+        });
+
+        verify(lettrageService).lettrerAutomatiquement(entrepriseId, compteClient.getId(), principal);
+    }
+
+    /** Reconstruit l'entite geree telle qu'elle serait rechargee en base, a partir du DTO obtenu
+     * a la creation (le mock de save() ne persiste pas reellement) - evite de dupliquer la logique
+     * de creerAvoir tout en gardant chaque test independant. */
+    private FactureAvoir construireAvoirDepuisDto(FactureAvoirDto dto, Facture facture) {
+        FactureAvoir avoir = new FactureAvoir();
+        avoir.setId(dto.id());
+        avoir.setEntreprise(entreprise);
+        avoir.setFactureOrigine(facture);
+        avoir.setTiers(client);
+        avoir.setNumero(dto.numero());
+        avoir.setDateEmission(dto.dateEmission());
+        avoir.setMotif(dto.motif());
+        avoir.setRetourStock(dto.retourStock());
+        avoir.setStatut(StatutFactureAvoir.BROUILLON);
+        dto.lignes().forEach(l -> {
+            com.example.comptable.comptabilite.domain.LigneFactureAvoir ligne = new com.example.comptable.comptabilite.domain.LigneFactureAvoir();
+            ligne.setLigneFactureOrigine(facture.getLignes().stream()
+                    .filter(lo -> lo.getId().equals(l.ligneFactureOrigineId())).findFirst().orElseThrow());
+            ligne.setDesignation(l.designation());
+            ligne.setQuantite(l.quantite());
+            ligne.setPrixUnitaire(l.prixUnitaire());
+            ligne.setTauxTva(l.tauxTva());
+            avoir.ajouterLigne(ligne);
+        });
+        return avoir;
+    }
+
+    @Test
+    void refuse_de_creer_un_avoir_sur_une_facture_en_brouillon() {
+        Facture facture = factureValidee();
+        facture.setStatut(StatutFacture.BROUILLON);
+        when(factureRepository.findById(facture.getId())).thenReturn(Optional.of(facture));
+
+        assertThatThrownBy(() -> factureAvoirService.creerAvoir(entrepriseId, facture.getId(),
+                new CreerFactureAvoirRequest("Erreur", false, true, null), principal))
+                .hasMessageContaining("validee ou payee");
+    }
+
+    @Test
+    void avoir_partiel_ne_reprend_que_la_quantite_demandee() {
+        Facture facture = factureValidee();
+        UUID ligneId = facture.getLignes().get(0).getId();
+        when(factureRepository.findById(facture.getId())).thenReturn(Optional.of(facture));
+        when(factureAvoirRepository.sommeQuantitesCrediteesParLigne(any(), any())).thenReturn(List.of());
+        when(factureAvoirRepository.save(any())).thenAnswer(inv -> {
+            FactureAvoir a = inv.getArgument(0);
+            a.setId(UUID.randomUUID());
+            return a;
+        });
+
+        FactureAvoirDto resultat = factureAvoirService.creerAvoir(entrepriseId, facture.getId(),
+                new CreerFactureAvoirRequest("Retour partiel", false, false,
+                        List.of(new LigneAvoirRequest(ligneId, new BigDecimal("4")))),
+                principal);
+
+        assertThat(resultat.lignes()).hasSize(1);
+        assertThat(resultat.lignes().get(0).quantite()).isEqualByComparingTo("4");
+        assertThat(resultat.montantHt()).isEqualByComparingTo("40000");
+    }
+
+    @Test
+    void refuse_de_crediter_plus_que_le_reste_disponible() {
+        Facture facture = factureValidee();
+        UUID ligneId = facture.getLignes().get(0).getId();
+        when(factureRepository.findById(facture.getId())).thenReturn(Optional.of(facture));
+        // 6 unites deja creditees par un avoir precedent : il ne reste que 4 unites creditables.
+        when(factureAvoirRepository.sommeQuantitesCrediteesParLigne(any(), any()))
+                .thenReturn(List.<Object[]>of(new Object[]{ligneId, new BigDecimal("6")}));
+
+        assertThatThrownBy(() -> factureAvoirService.creerAvoir(entrepriseId, facture.getId(),
+                new CreerFactureAvoirRequest("Retour", false, false,
+                        List.of(new LigneAvoirRequest(ligneId, new BigDecimal("5")))),
+                principal))
+                .hasMessageContaining("superieure au restant creditable");
+    }
+
+    @Test
+    void reintegre_le_stock_au_pump_courant_quand_retourStock_est_vrai() {
+        Facture facture = factureValidee();
+        UUID articleId = UUID.randomUUID();
+        facture.getLignes().get(0).setArticleId(articleId);
+
+        Article article = new Article();
+        article.setId(articleId);
+        article.setEntreprise(entreprise);
+        article.setPump(new BigDecimal("1200"));
+
+        when(factureRepository.findById(facture.getId())).thenReturn(Optional.of(facture));
+        when(factureAvoirRepository.sommeQuantitesCrediteesParLigne(any(), any())).thenReturn(List.of());
+        when(factureAvoirRepository.save(any())).thenAnswer(inv -> {
+            FactureAvoir a = inv.getArgument(0);
+            if (a.getId() == null) {
+                a.setId(UUID.randomUUID());
+            }
+            return a;
+        });
+
+        FactureAvoirDto avoirCree = factureAvoirService.creerAvoir(entrepriseId, facture.getId(),
+                new CreerFactureAvoirRequest("Retour marchandise", true, true, null), principal);
+
+        mockerContexteComptable();
+        when(articleRepository.findById(articleId)).thenReturn(Optional.of(article));
+        when(mouvementStockService.enregistrer(any(), any(), any())).thenReturn(mock(MouvementStockDto.class));
+        FactureAvoir avoirEntite = construireAvoirDepuisDto(avoirCree, facture);
+        avoirEntite.setRetourStock(true);
+        when(factureAvoirRepository.findById(avoirCree.id())).thenReturn(Optional.of(avoirEntite));
+
+        factureAvoirService.validerAvoir(entrepriseId, avoirCree.id(), principal);
+
+        ArgumentCaptor<CreerMouvementStockRequest> captor = ArgumentCaptor.forClass(CreerMouvementStockRequest.class);
+        verify(mouvementStockService, times(1)).enregistrer(eq(entrepriseId), captor.capture(), eq(principal));
+        assertThat(captor.getValue().type()).isEqualTo(com.example.comptable.stock.domain.TypeMouvementStock.ENTREE);
+        assertThat(captor.getValue().quantite()).isEqualByComparingTo("10");
+        assertThat(captor.getValue().prixUnitaireHt()).isEqualByComparingTo("1200");
+    }
+
+    @Test
+    void ne_touche_pas_au_stock_quand_retourStock_est_faux() {
+        Facture facture = factureValidee();
+        facture.getLignes().get(0).setArticleId(UUID.randomUUID());
+        when(factureRepository.findById(facture.getId())).thenReturn(Optional.of(facture));
+        when(factureAvoirRepository.sommeQuantitesCrediteesParLigne(any(), any())).thenReturn(List.of());
+        when(factureAvoirRepository.save(any())).thenAnswer(inv -> {
+            FactureAvoir a = inv.getArgument(0);
+            if (a.getId() == null) {
+                a.setId(UUID.randomUUID());
+            }
+            return a;
+        });
+
+        FactureAvoirDto avoirCree = factureAvoirService.creerAvoir(entrepriseId, facture.getId(),
+                new CreerFactureAvoirRequest("Remise accordee", false, true, null), principal);
+
+        mockerContexteComptable();
+        FactureAvoir avoirEntite = construireAvoirDepuisDto(avoirCree, facture);
+        when(factureAvoirRepository.findById(avoirCree.id())).thenReturn(Optional.of(avoirEntite));
+
+        factureAvoirService.validerAvoir(entrepriseId, avoirCree.id(), principal);
+
+        verify(mouvementStockService, never()).enregistrer(any(), any(), any());
+    }
+
+    @Test
+    void refuse_de_valider_un_avoir_deja_valide() {
+        Facture facture = factureValidee();
+        FactureAvoir avoir = new FactureAvoir();
+        avoir.setId(UUID.randomUUID());
+        avoir.setEntreprise(entreprise);
+        avoir.setFactureOrigine(facture);
+        avoir.setTiers(client);
+        avoir.setStatut(StatutFactureAvoir.VALIDEE);
+        when(factureAvoirRepository.findById(avoir.getId())).thenReturn(Optional.of(avoir));
+
+        assertThatThrownBy(() -> factureAvoirService.validerAvoir(entrepriseId, avoir.getId(), principal))
+                .hasMessageContaining("deja valide");
+    }
+
+    @Test
+    void genere_un_pdf_non_vide_avec_lentete_pdf() {
+        Facture facture = factureValidee();
+        FactureAvoir avoir = new FactureAvoir();
+        avoir.setId(UUID.randomUUID());
+        avoir.setEntreprise(entreprise);
+        avoir.setFactureOrigine(facture);
+        avoir.setTiers(client);
+        avoir.setNumero("AV-2026-0001");
+        avoir.setDateEmission(LocalDate.of(2026, 3, 20));
+        avoir.setMotif("Retour marchandise");
+        avoir.setStatut(StatutFactureAvoir.VALIDEE);
+        com.example.comptable.comptabilite.domain.LigneFactureAvoir ligne = new com.example.comptable.comptabilite.domain.LigneFactureAvoir();
+        ligne.setLigneFactureOrigine(facture.getLignes().get(0));
+        ligne.setDesignation("Prestation conseil");
+        ligne.setQuantite(new BigDecimal("10"));
+        ligne.setPrixUnitaire(new BigDecimal("10000"));
+        ligne.setTauxTva(new BigDecimal("18"));
+        avoir.ajouterLigne(ligne);
+        when(factureAvoirRepository.findById(avoir.getId())).thenReturn(Optional.of(avoir));
+
+        byte[] pdf = factureAvoirService.genererPdf(entrepriseId, avoir.getId(), principal);
+
+        assertThat(pdf).isNotEmpty();
+        assertThat(new String(pdf, 0, 4, java.nio.charset.StandardCharsets.US_ASCII)).isEqualTo("%PDF");
+    }
+}

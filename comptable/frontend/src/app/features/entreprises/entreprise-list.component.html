@@ -1,0 +1,45 @@
+<div class="page-entreprises">
+  <div class="entete">
+    <h1>Entreprises</h1>
+    @if (peutCreer) {
+      <button type="button" class="bouton-principal" (click)="afficherFormulaire.set(!afficherFormulaire())">
+        {{ afficherFormulaire() ? 'Annuler' : '+ Nouvelle entreprise' }}
+      </button>
+    }
+  </div>
+
+  @if (afficherFormulaire()) {
+    <form [formGroup]="form" (ngSubmit)="creer()" class="carte formulaire-creation">
+      <label class="champ">
+        <span>Raison sociale</span>
+        <input type="text" formControlName="raisonSociale" />
+      </label>
+      <label class="champ champ-pays">
+        <span>Pays (ISO 2)</span>
+        <input type="text" formControlName="pays" maxlength="2" style="text-transform: uppercase" />
+      </label>
+      <button type="submit" class="bouton-principal" [disabled]="envoiEnCours()">
+        {{ envoiEnCours() ? 'Création…' : 'Créer' }}
+      </button>
+    </form>
+  }
+
+  @if (erreur()) {
+    <p class="message-erreur">{{ erreur() }}</p>
+  }
+
+  @if (chargement()) {
+    <p class="etat-vide">Chargement…</p>
+  } @else if (entreprises().length === 0) {
+    <p class="etat-vide">Aucune entreprise pour le moment.</p>
+  } @else {
+    <div class="liste-cartes">
+      @for (entreprise of entreprises(); track entreprise.id) {
+        <button type="button" class="carte carte-entreprise" (click)="ouvrir(entreprise)">
+          <strong>{{ entreprise.raisonSociale }}</strong>
+          <span>{{ entreprise.pays }} · {{ entreprise.devise }}</span>
+        </button>
+      }
+    </div>
+  }
+</div>

@@ -1,0 +1,345 @@
+.page-validation {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.entete {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+
+  h2 {
+    margin: 0;
+    font-size: 1.2rem;
+  }
+}
+
+.carte {
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  padding: 1.25rem;
+}
+
+.message-erreur {
+  color: #b42318;
+  font-size: 0.875rem;
+}
+
+.message-succes {
+  color: #027a48;
+  font-size: 0.875rem;
+}
+
+.etat-vide {
+  color: #667085;
+  text-align: center;
+  padding: 1rem 0;
+}
+
+.barre-lot {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.75rem 1rem;
+  background: white;
+  border: 1px solid #eaecf0;
+  border-radius: 8px;
+  flex-wrap: wrap;
+}
+
+.case-tout {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.compteur-selection {
+  color: #667085;
+  font-size: 0.8125rem;
+  flex: 1;
+}
+
+.bouton-principal {
+  padding: 0.55rem 1rem;
+  border: none;
+  border-radius: 6px;
+  background: #2563eb;
+  color: white;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+
+  &:disabled {
+    background: #a4bcf5;
+    cursor: not-allowed;
+  }
+}
+
+.bouton-secondaire {
+  padding: 0.55rem 1rem;
+  border: 1px solid #d0d5dd;
+  border-radius: 6px;
+  background: white;
+  color: #344054;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.bouton-lien {
+  border: none;
+  background: none;
+  color: #2563eb;
+  cursor: pointer;
+  font-size: 0.8125rem;
+  font-weight: 600;
+
+  &:disabled {
+    color: #98a2b3;
+    cursor: not-allowed;
+  }
+}
+
+// --- Layout split-screen : liste des pieces a gauche, detail (apercu + formulaire) a droite ---
+.colonnes-validation {
+  display: grid;
+  grid-template-columns: 320px 1fr;
+  gap: 1.25rem;
+  align-items: start;
+
+  @media (max-width: 1000px) {
+    grid-template-columns: 1fr;
+  }
+}
+
+.liste-documents {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  max-height: 75vh;
+  overflow-y: auto;
+}
+
+.item-document {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.6rem 0.75rem;
+  border: 1px solid #eaecf0;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.8125rem;
+
+  &:hover {
+    border-color: #d0d5dd;
+    background: #f9fafb;
+  }
+
+  &.actif {
+    border-color: #2563eb;
+    background: #eff6ff;
+  }
+}
+
+.infos-document {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  flex: 1;
+  min-width: 0;
+
+  .nom-fichier {
+    font-weight: 600;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .meta {
+    color: #667085;
+    font-size: 0.75rem;
+  }
+}
+
+// --- Badges explicatifs (Sprint 8) : confiance vert >= 95%, orange sinon ; fraude rouge vif ---
+.badges-document {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.3rem;
+}
+
+.badge-confiance {
+  padding: 0.2rem 0.5rem;
+  border-radius: 999px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  white-space: nowrap;
+  background: #fff4e5;
+  color: #b54708;
+}
+
+.badge-haute {
+  background: #ecfdf3;
+  color: #027a48;
+}
+
+.badge-fraude {
+  padding: 0.2rem 0.5rem;
+  border-radius: 999px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  max-width: 220px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.badge-fraude-critique {
+  background: #fef3f2;
+  color: #b42318;
+  border: 1px solid #fda29b;
+}
+
+.explication-confiance {
+  margin: -0.5rem 0 0.85rem;
+  color: #b54708;
+  font-size: 0.8125rem;
+  background: #fff4e5;
+  border-radius: 6px;
+  padding: 0.5rem 0.65rem;
+}
+
+.bloc-alertes-fraude {
+  margin: 0 0 0.85rem;
+  padding: 0.65rem 0.75rem;
+  border-radius: 6px;
+  background: #fffaeb;
+  border: 1px solid #fedf89;
+
+  &.critique {
+    background: #fef3f2;
+    border-color: #fda29b;
+  }
+
+  .titre-alertes {
+    margin: 0 0 0.4rem;
+    font-size: 0.8125rem;
+    font-weight: 700;
+    color: #b54708;
+  }
+
+  &.critique .titre-alertes {
+    color: #b42318;
+  }
+
+  ul {
+    margin: 0;
+    padding-left: 1.1rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+  }
+
+  li {
+    font-size: 0.8125rem;
+    color: #344054;
+  }
+
+  .motif-alerte {
+    display: block;
+  }
+
+  .action-alerte {
+    display: block;
+    color: #667085;
+    font-style: italic;
+  }
+}
+
+// --- Detail : split-screen apercu / formulaire ---
+.detail-validation {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.25rem;
+  align-items: start;
+
+  @media (max-width: 700px) {
+    grid-template-columns: 1fr;
+  }
+}
+
+.volet-apercu {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 400px;
+  padding: 0.75rem;
+}
+
+.apercu-image {
+  max-width: 100%;
+  max-height: 70vh;
+  border-radius: 6px;
+  object-fit: contain;
+}
+
+.apercu-pdf {
+  width: 100%;
+  height: 70vh;
+  border: none;
+  border-radius: 6px;
+}
+
+.entete-formulaire {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.75rem;
+
+  h3 {
+    margin: 0;
+    font-size: 1rem;
+  }
+}
+
+.sous-titre {
+  color: #667085;
+  font-size: 0.8125rem;
+  margin: 0.25rem 0 1rem;
+  text-transform: capitalize;
+}
+
+.champ {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  font-size: 0.875rem;
+  margin-bottom: 0.85rem;
+
+  input,
+  select {
+    padding: 0.5rem;
+    border: 1px solid #d0d5dd;
+    border-radius: 6px;
+    font-size: 0.875rem;
+  }
+}
+
+.actions-formulaire {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.6rem;
+  margin-top: 1rem;
+}
+
+.note-comptabilisation {
+  margin-top: 0.75rem;
+  color: #667085;
+  font-size: 0.75rem;
+}

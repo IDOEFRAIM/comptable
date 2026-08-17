@@ -1,0 +1,91 @@
+<div class="page-conformite">
+  <div class="entete">
+    <h2>Conformité</h2>
+    <a [routerLink]="['/entreprises', entrepriseId(), 'fiscalite']" class="lien-fiscalite">
+      Gérer les déclarations →
+    </a>
+  </div>
+
+  <section class="carte carte-score">
+    <h3>Score fiscal</h3>
+    @if (erreurTaxHealth()) {
+      <p class="message-erreur">{{ erreurTaxHealth() }}</p>
+    } @else if (chargementTaxHealth()) {
+      <p class="etat-vide">Chargement…</p>
+    } @else {
+      @if (taxHealth(); as t) {
+        <div class="jauge-score" [class.score-bon]="t.score >= 80" [class.score-moyen]="t.score >= 50 && t.score < 80" [class.score-mauvais]="t.score < 50">
+          <span class="valeur-score">{{ t.score }}</span>
+          <span class="libelle-score">/ 100</span>
+        </div>
+      }
+    }
+  </section>
+
+  <section class="carte carte-obligations">
+    <h3>Obligations fiscales</h3>
+    @if (erreur()) {
+      <p class="message-erreur">{{ erreur() }}</p>
+    } @else if (chargement()) {
+      <p class="etat-vide">Chargement…</p>
+    } @else {
+      @if (centre(); as c) {
+        @if (c.obligations.length === 0) {
+          <p class="etat-vide">Aucune obligation fiscale enregistrée.</p>
+        } @else {
+          <table>
+            <thead>
+              <tr>
+                <th>Impôt</th>
+                <th>Période</th>
+                <th>Échéance</th>
+                <th>Montant</th>
+                <th>Statut</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (obligation of c.obligations; track obligation.id) {
+                <tr>
+                  <td>{{ obligation.typeImpot }}</td>
+                  <td>{{ obligation.periode }}</td>
+                  <td>{{ obligation.dateEcheance | date: 'dd/MM/yyyy' }}</td>
+                  <td class="colonne-montant">{{ obligation.montant | number: '1.0-0' }} FCFA</td>
+                  <td>
+                    <span [class]="classeStatut(obligation)">
+                      {{ estEnRetard(obligation) ? 'En retard' : libellesStatut[obligation.statut] }}
+                    </span>
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        }
+      }
+    }
+  </section>
+
+  <section class="carte carte-anomalies">
+    <h3>Anomalies fiscales</h3>
+    @if (chargement()) {
+      <p class="etat-vide">Chargement…</p>
+    } @else {
+      @if (centre(); as c) {
+        @if (c.anomalies.length === 0) {
+          <p class="etat-vide">Aucune anomalie fiscale détectée.</p>
+        } @else {
+          <ul class="liste-anomalies">
+            @for (anomalie of c.anomalies; track anomalie.id) {
+              <li [class]="'severite-' + anomalie.severity">
+                <span class="badge-severite">{{ libellesSeverite[anomalie.severity] }}</span>
+                <span class="titre-anomalie">{{ anomalie.title }}</span>
+                @if (anomalie.description) {
+                  <span class="description-anomalie">{{ anomalie.description }}</span>
+                }
+              </li>
+            }
+          </ul>
+        }
+      }
+    }
+  </section>
+</div>

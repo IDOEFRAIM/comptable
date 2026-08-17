@@ -1,0 +1,37 @@
+services:
+  postgres:
+    image: 'postgres:latest'
+    environment:
+      - 'POSTGRES_DB=mydatabase'
+      - 'POSTGRES_PASSWORD=secret'
+      - 'POSTGRES_USER=myuser'
+    ports:
+      - '5432'
+
+  # Microservice IA (FastAPI) : extraction VLM, WhatsApp, fraude visuelle, rapprochement
+  # semantique. Voir ../ai-service. Pas demarre automatiquement par spring-boot-docker-compose
+  # (celui-ci ne pilote que postgres) : a lancer separement avec `docker compose up` depuis
+  # ai-service/, ou decommenter le bloc ci-dessous pour l'inclure dans ce meme compose.
+  #
+  # Deux secrets distincts (rotation independante) : AI_SERVICE_INBOUND_API_KEY protege les
+  # appels Python -> Java (POST /api/v1/internal/whatsapp/documents, ai-service.api-key cote
+  # Spring Boot) ; AI_SERVICE_OUTBOUND_API_KEY protege les appels Java -> Python (extraction,
+  # fraude visuelle, rapprochement, envoi de templates ; ai-service.outbound-api-key cote Spring
+  # Boot). Ce module Spring Boot n'appelle plus Anthropic/Ollama directement.
+  # ai-service:
+  #   build: ../ai-service
+  #   environment:
+  #     - 'INTERNAL_API_KEY=${AI_SERVICE_OUTBOUND_API_KEY:-changeit-dev-secret}'
+  #     - 'CORE_SERVICE_BASE_URL=http://host.docker.internal:8080'
+  #     - 'CORE_SERVICE_API_KEY=${AI_SERVICE_INBOUND_API_KEY:-changeit-dev-secret}'
+  #     - 'ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY:-}'
+  #     - 'WHATSAPP_VERIFY_TOKEN=${WHATSAPP_VERIFY_TOKEN:-}'
+  #     - 'WHATSAPP_APP_SECRET=${WHATSAPP_APP_SECRET:-}'
+  #     - 'WHATSAPP_ACCESS_TOKEN=${WHATSAPP_ACCESS_TOKEN:-}'
+  #     - 'WHATSAPP_PHONE_NUMBER_ID=${WHATSAPP_PHONE_NUMBER_ID:-}'
+  #   ports:
+  #     - '8000:8000'
+  # Cote Spring Boot (application.properties / env) :
+  #   AI_SERVICE_BASE_URL=http://localhost:8000
+  #   AI_SERVICE_OUTBOUND_API_KEY=<meme valeur que INTERNAL_API_KEY ci-dessus>
+  #   AI_SERVICE_API_KEY=<meme valeur que CORE_SERVICE_API_KEY ci-dessus>

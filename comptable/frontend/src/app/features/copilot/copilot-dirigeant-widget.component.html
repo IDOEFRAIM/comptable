@@ -1,0 +1,57 @@
+<div class="carte carte-copilot-dirigeant">
+  <h3>🤖 Votre assistant</h3>
+
+  <div class="suggestions">
+    @for (s of suggestions; track s) {
+      <button type="button" class="bouton-suggestion" (click)="poser(s)" [disabled]="chargement()">{{ s }}</button>
+    }
+  </div>
+
+  <form class="zone-question" (ngSubmit)="poser()">
+    <input
+      type="text"
+      name="question"
+      placeholder="Posez votre question…"
+      [(ngModel)]="question"
+      [disabled]="chargement()"
+    />
+    <button type="submit" [disabled]="chargement() || !question().trim()">Demander</button>
+  </form>
+
+  @if (chargement()) {
+    <p class="etat-vide">Je regarde ça…</p>
+  }
+
+  @if (erreur()) {
+    <p class="message-erreur">{{ erreur() }}</p>
+  }
+
+  @if (reponse(); as r) {
+    <div class="reponse-copilot">
+      <p class="texte-reponse">{{ r.answer }}</p>
+
+      @if (r.recommendedActions.length > 0) {
+        <div class="actions-recommandees">
+          <strong>À faire :</strong>
+          <ul>
+            @for (a of r.recommendedActions; track a) {
+              <li>{{ a }}</li>
+            }
+          </ul>
+        </div>
+      }
+
+      @if (r.queryId) {
+        <div class="zone-feedback">
+          @if (feedbackEnvoye()) {
+            <span class="feedback-merci">Merci pour votre retour.</span>
+          } @else {
+            <span class="feedback-question">Cette réponse était-elle utile ?</span>
+            <button type="button" class="bouton-feedback" (click)="envoyerFeedback('POSITIVE')">👍</button>
+            <button type="button" class="bouton-feedback" (click)="envoyerFeedback('NEGATIVE')">👎</button>
+          }
+        </div>
+      }
+    </div>
+  }
+</div>

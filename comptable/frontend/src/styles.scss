@@ -1,0 +1,35 @@
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+  background: #f4f5f7;
+  color: #1f2328;
+}
+
+// Primitives d'etat UI partagees (mission P1.5, section 49) : ".message-erreur" et ".etat-vide"
+// etaient dupliques a l'identique (meme couleur/typo) dans plus de 20 feuilles de style de
+// composants. Definies ici une seule fois ; un composant peut toujours surcharger le padding ou
+// la marge localement (la regle scopee Angular est plus specifique que ce selecteur global).
+.message-erreur {
+  color: #b42318;
+  font-size: 0.875rem;
+  margin: 0;
+}
+
+.etat-vide {
+  color: #667085;
+  text-align: center;
+  padding: 2rem 0;
+}
+
+// Base commune des badges de statut (couleurs specifiques par domaine restent locales au
+// composant, ex. ".badge-succes"/".badge-erreur" - seule la forme est dupliquee partout).
+.badge {
+  padding: 0.2rem 0.6rem;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 600;
+}

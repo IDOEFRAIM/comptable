@@ -1,0 +1,182 @@
+.page-tresorerie {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.entete h2 {
+  margin: 0 0 0.5rem;
+}
+
+.carte {
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  padding: 1.25rem;
+
+  h3 {
+    margin: 0 0 0.75rem;
+  }
+}
+
+.date-reference {
+  color: #667085;
+  font-size: 0.8125rem;
+  margin: 0 0 0.75rem;
+}
+
+.note-methode {
+  color: #667085;
+  font-size: 0.8125rem;
+  margin: 0 0 1rem;
+}
+
+.total-position {
+  margin-bottom: 1rem;
+
+  .valeur-totale {
+    font-size: 1.75rem;
+    font-weight: 700;
+  }
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.875rem;
+}
+
+th {
+  text-align: left;
+  color: #667085;
+  font-weight: 600;
+  padding: 0.5rem;
+  border-bottom: 1px solid #eaecf0;
+}
+
+td {
+  padding: 0.6rem 0.5rem;
+  border-bottom: 1px solid #f2f4f7;
+}
+
+.numero-compte {
+  font-weight: 600;
+  margin-right: 0.5rem;
+}
+
+.intitule-compte {
+  color: #667085;
+}
+
+.colonne-montant {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.grille-horizons {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 1rem;
+}
+
+.carte-horizon {
+  border: 1px solid #eaecf0;
+  border-radius: 8px;
+  padding: 1rem;
+
+  h4 {
+    margin: 0 0 0.75rem;
+  }
+
+  dl {
+    margin: 0;
+    display: grid;
+    grid-template-columns: auto auto;
+    gap: 0.35rem 0.75rem;
+  }
+
+  dt {
+    color: #667085;
+    font-size: 0.8125rem;
+  }
+
+  dd {
+    margin: 0;
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+  }
+}
+
+.montant-positif {
+  color: #027a48;
+}
+
+.montant-attendu {
+  color: #b54708;
+}
+
+.montant-negatif {
+  color: #b42318;
+}
+
+.solde-previsionnel {
+  font-weight: 700;
+}
+
+.barre-periode {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+  margin-bottom: 1rem;
+  font-size: 0.8125rem;
+
+  label {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    color: #667085;
+  }
+
+  input[type='date'] {
+    padding: 0.35rem 0.5rem;
+    border: 1px solid #d0d5dd;
+    border-radius: 6px;
+  }
+
+  button {
+    align-self: flex-end;
+    padding: 0.4rem 0.9rem;
+    border: 1px solid #2563eb;
+    border-radius: 6px;
+    background: white;
+    color: #2563eb;
+    cursor: pointer;
+    font-weight: 600;
+
+    &:hover {
+      background: #eff6ff;
+    }
+  }
+}
+
+.grille-snapshot {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 1rem;
+
+  > div {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+  }
+
+  .valeur {
+    font-size: 1.25rem;
+    font-weight: 700;
+  }
+
+  .libelle {
+    color: #667085;
+    font-size: 0.8125rem;
+  }
+}

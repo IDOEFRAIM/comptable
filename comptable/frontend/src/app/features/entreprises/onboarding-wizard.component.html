@@ -1,0 +1,141 @@
+<div class="page-onboarding">
+  <div class="carte-onboarding">
+    <div class="indicateur-etapes">
+      <span class="puce" [class.active]="etape() >= 1" [class.faite]="etape() > 1">1</span>
+      <span class="trait" [class.faite]="etape() > 1"></span>
+      <span class="puce" [class.active]="etape() >= 2" [class.faite]="etape() > 2">2</span>
+      <span class="trait" [class.faite]="etape() > 2"></span>
+      <span class="puce" [class.active]="etape() >= 3">3</span>
+    </div>
+
+    @if (etape() === 1) {
+      <form [formGroup]="formEtape1" (ngSubmit)="soumettreEtape1()">
+        <h1>Bienvenue !</h1>
+        <p class="sous-titre">Étape 1 sur 3 — configurons votre premier dossier client.</p>
+
+        <label class="champ">
+          <span>Raison sociale du client</span>
+          <input type="text" formControlName="raisonSociale" placeholder="Ex : SARL Bâtir Plus" />
+        </label>
+
+        <div class="ligne-deux">
+          <label class="champ">
+            <span>Pays</span>
+            <select formControlName="pays">
+              @for (p of paysDisponibles; track p.code) {
+                <option [value]="p.code">{{ p.nom }}</option>
+              }
+            </select>
+          </label>
+          <label class="champ">
+            <span>Devise</span>
+            <select formControlName="devise">
+              <option value="XOF">XOF (Franc CFA UEMOA)</option>
+              <option value="XAF">XAF (Franc CFA CEMAC)</option>
+              <option value="EUR">EUR</option>
+              <option value="USD">USD</option>
+            </select>
+          </label>
+        </div>
+
+        <label class="champ">
+          <span>Régime fiscal (TVA)</span>
+          <select formControlName="regimeFiscal">
+            @for (r of regimesFiscaux; track r.code) {
+              <option [value]="r.code">{{ r.nom }}</option>
+            }
+          </select>
+        </label>
+        <p class="aide-champ">
+          Détermine le taux de TVA attendu : notre agent de contrôle s'en sert pour repérer les écarts de calcul
+          sur les factures de ce client.
+        </p>
+
+        <label class="champ">
+          <span>Secteur d'activité (optionnel)</span>
+          <input type="text" formControlName="secteurActivite" placeholder="Ex : Commerce, BTP, Services..." />
+        </label>
+
+        @if (erreur()) {
+          <p class="message-erreur">{{ erreur() }}</p>
+        }
+
+        <button type="submit" [disabled]="envoiEnCours()">
+          {{ envoiEnCours() ? 'Création…' : 'Continuer' }}
+        </button>
+
+        <p class="lien-secondaire">
+          <a routerLink="/entreprises">Passer pour l'instant</a>
+        </p>
+      </form>
+    }
+
+    @if (etape() === 2) {
+      <div class="contenu-etape">
+        <h1>Connectez WhatsApp Business</h1>
+        <p class="sous-titre">Étape 2 sur 3 — {{ entrepriseNom() }} est créé. Voici comment recevoir vos premières pièces.</p>
+
+        <div class="encadre-explicatif">
+          <p>
+            Une fois le numéro WhatsApp Business de votre cabinet relié (dans
+            <strong>Meta Business Manager</strong>), vos clients pourront vous envoyer une simple <strong>photo</strong>
+            de facture ou de reçu Mobile Money par message — elle sera lue automatiquement par notre IA et
+            apparaîtra directement dans votre Inbox de validation.
+          </p>
+          <ol>
+            <li>Dans Meta Business Manager, ouvrez votre app WhatsApp Cloud API.</li>
+            <li>
+              Configurez le webhook avec l'URL fournie par votre administrateur technique
+              (chemin <code>/api/v1/whatsapp/webhook</code>) et le jeton de vérification convenu.
+            </li>
+            <li>Reliez le numéro de téléphone professionnel que vos clients utiliseront pour vous écrire.</li>
+            <li>Demandez à un client (ou testez vous-même) d'envoyer une photo de facture sur ce numéro.</li>
+          </ol>
+          <p class="note">
+            Cette configuration se fait une seule fois pour tout le cabinet, avec votre administrateur technique.
+            Vous pouvez continuer sans l'avoir terminée — l'upload manuel de documents reste toujours disponible.
+          </p>
+        </div>
+
+        @if (erreur()) {
+          <p class="message-erreur">{{ erreur() }}</p>
+        }
+
+        <div class="actions-etape">
+          <button type="button" class="bouton-secondaire" (click)="retourEtape(1)">Retour</button>
+          <button type="button" (click)="allerEtape3()">Continuer</button>
+        </div>
+      </div>
+    }
+
+    @if (etape() === 3) {
+      <div class="contenu-etape">
+        <h1>C'est prêt !</h1>
+        <p class="sous-titre">Étape 3 sur 3 — votre Inbox de validation vous attend.</p>
+
+        <div class="encadre-explicatif">
+          <p>
+            Chaque pièce reçue (WhatsApp ou upload) sera automatiquement lue par l'IA. Si elle est sûre à plus de
+            95 % et qu'aucune fraude n'est détectée, elle est traitée directement. Sinon, elle atterrit ici pour
+            que vous la vérifiiez en quelques secondes.
+          </p>
+        </div>
+
+        @if (erreur()) {
+          <p class="message-erreur">{{ erreur() }}</p>
+        }
+
+        <button type="button" class="bouton-cta" (click)="allerVersInbox()">
+          📲 Envoyer un reçu test sur WhatsApp pour voir la magie opérer
+        </button>
+
+        <div class="actions-etape">
+          <button type="button" class="bouton-secondaire" (click)="retourEtape(2)">Retour</button>
+          <button type="button" class="bouton-lien" (click)="passerPourLinstant()">
+            Aller directement au tableau de bord
+          </button>
+        </div>
+      </div>
+    }
+  </div>
+</div>

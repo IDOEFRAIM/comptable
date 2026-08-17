@@ -1,0 +1,66 @@
+<div class="page-tiers">
+  <div class="entete">
+    <h2>Tiers (clients &amp; fournisseurs)</h2>
+    <button type="button" class="bouton-principal" (click)="afficherFormulaire.set(!afficherFormulaire())">
+      {{ afficherFormulaire() ? 'Annuler' : '+ Nouveau tiers' }}
+    </button>
+  </div>
+
+  @if (afficherFormulaire()) {
+    <form [formGroup]="form" (ngSubmit)="creer()" class="carte formulaire-creation">
+      <label class="champ champ-type">
+        <span>Type</span>
+        <select formControlName="type">
+          <option value="FOURNISSEUR">Fournisseur</option>
+          <option value="CLIENT">Client</option>
+        </select>
+      </label>
+      <label class="champ">
+        <span>Nom</span>
+        <input type="text" formControlName="nom" />
+      </label>
+      <label class="champ">
+        <span>N° contribuable (optionnel)</span>
+        <input type="text" formControlName="numeroContribuable" />
+      </label>
+      <button type="submit" class="bouton-principal" [disabled]="envoiEnCours()">
+        {{ envoiEnCours() ? 'Création…' : 'Créer' }}
+      </button>
+    </form>
+  }
+
+  @if (erreur()) {
+    <p class="message-erreur">{{ erreur() }}</p>
+  }
+
+  @if (chargement()) {
+    <p class="etat-vide">Chargement…</p>
+  } @else if (tiers().length === 0) {
+    <p class="etat-vide">Aucun tiers pour le moment.</p>
+  } @else {
+    <table class="carte">
+      <thead>
+        <tr>
+          <th>Nom</th>
+          <th>Type</th>
+          <th>Compte</th>
+          <th>N° contribuable</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (t of tiers(); track t.id) {
+          <tr>
+            <td>{{ t.nom }}</td>
+            <td>
+              <span class="badge" [class.badge-client]="t.type === 'CLIENT'">
+                {{ t.type === 'CLIENT' ? 'Client' : 'Fournisseur' }}
+              </span>
+            </td>
+            <td>{{ t.compteComptableNumero }}</td>
+            <td>{{ t.numeroContribuable ?? '—' }}</td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  }
+</div>

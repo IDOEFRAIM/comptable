@@ -1,0 +1,129 @@
+<div class="page-saisie">
+  <div class="entete">
+    <h2>Nouvelle écriture</h2>
+    <a routerLink=".." class="lien-retour">← Retour aux écritures</a>
+  </div>
+
+  <form [formGroup]="form" (ngSubmit)="soumettre()">
+    <div class="carte formulaire-entete">
+      <label class="champ">
+        <span>Journal</span>
+        <select formControlName="journalId">
+          <option value="" disabled>Choisir…</option>
+          @for (j of journaux(); track j.id) {
+            <option [value]="j.id">{{ j.code }} — {{ j.libelle }}</option>
+          }
+        </select>
+      </label>
+      <label class="champ">
+        <span>Date</span>
+        <input type="date" formControlName="dateEcriture" />
+      </label>
+      <label class="champ champ-libelle">
+        <span>Libellé de l'écriture</span>
+        <input type="text" formControlName="libelle" placeholder="Ex : Régularisation loyer mars" />
+      </label>
+      <label class="champ">
+        <span>N° pièce (optionnel, auto-généré sinon)</span>
+        <input type="text" formControlName="numeroPiece" />
+      </label>
+    </div>
+
+    <div class="carte carte-lignes" formArrayName="lignes">
+      <table>
+        <thead>
+          <tr>
+            <th class="col-compte">Compte</th>
+            <th class="col-libelle">Libellé</th>
+            <th class="col-tiers">Tiers</th>
+            <th class="col-montant">Débit</th>
+            <th class="col-montant">Crédit</th>
+            <th class="col-action"></th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (ligne of lignes.controls; track $index; let i = $index) {
+            <tr [formGroupName]="i">
+              <td>
+                <select formControlName="compteId" #compteSelect>
+                  <option value="" disabled>Choisir…</option>
+                  @for (c of comptes(); track c.id) {
+                    <option [value]="c.id">{{ c.numero }} — {{ c.intitule }}</option>
+                  }
+                </select>
+              </td>
+              <td>
+                <input type="text" formControlName="libelle" />
+              </td>
+              <td>
+                <select formControlName="tiersId">
+                  <option value="">—</option>
+                  @for (t of tiers(); track t.id) {
+                    <option [value]="t.id">{{ t.nom }}</option>
+                  }
+                </select>
+              </td>
+              <td>
+                <input
+                  type="number"
+                  min="0"
+                  step="1"
+                  formControlName="debit"
+                  (keydown.enter)="gererEntreeSurDerniereLigne(i, $event)"
+                />
+              </td>
+              <td>
+                <input
+                  type="number"
+                  min="0"
+                  step="1"
+                  formControlName="credit"
+                  (keydown.enter)="gererEntreeSurDerniereLigne(i, $event)"
+                />
+              </td>
+              <td>
+                <button
+                  type="button"
+                  class="bouton-supprimer-ligne"
+                  [disabled]="lignes.length <= 2"
+                  (click)="supprimerLigne(i)"
+                  title="Supprimer la ligne"
+                >
+                  ✕
+                </button>
+              </td>
+            </tr>
+          }
+        </tbody>
+        <tfoot>
+          <tr>
+            <td colspan="3">
+              <button type="button" class="bouton-ajouter-ligne" (click)="ajouterLigne()">
+                + Ajouter une ligne (ou Entrée en fin de ligne)
+              </button>
+            </td>
+            <td class="total" [class.total-ok]="totalDebit() > 0">{{ totalDebit() }}</td>
+            <td class="total" [class.total-ok]="totalCredit() > 0">{{ totalCredit() }}</td>
+            <td></td>
+          </tr>
+        </tfoot>
+      </table>
+    </div>
+
+    <div class="pied">
+      <span class="ecart" [class.ecart-ok]="estEquilibree()" [class.ecart-ko]="!estEquilibree()">
+        @if (estEquilibree()) {
+          ✓ Écriture équilibrée
+        } @else {
+          Écart : {{ ecart() }}
+        }
+      </span>
+      @if (erreur()) {
+        <span class="message-erreur">{{ erreur() }}</span>
+      }
+      <button type="submit" class="bouton-principal" [disabled]="!peutSoumettre()">
+        {{ envoiEnCours() ? 'Création…' : 'Créer l\'écriture' }}
+      </button>
+    </div>
+  </form>
+</div>

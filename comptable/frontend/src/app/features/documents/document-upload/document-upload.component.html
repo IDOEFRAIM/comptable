@@ -1,0 +1,42 @@
+<form [formGroup]="form" (ngSubmit)="soumettre()" class="upload-carte">
+  <label class="champ">
+    <span>Type de document</span>
+    <select formControlName="typeDocument">
+      @for (type of typesDocument; track type) {
+        <option [value]="type">{{ libellesType[type] }}</option>
+      }
+    </select>
+  </label>
+
+  <div
+    class="zone-depot"
+    [class.survol]="enSurvol()"
+    (dragover)="onDragOver($event)"
+    (dragleave)="onDragLeave()"
+    (drop)="onDrop($event)"
+  >
+    @if (fichierSelectionne(); as fichier) {
+      <p class="nom-fichier">{{ fichier.name }} ({{ (fichier.size / 1024).toFixed(0) }} Ko)</p>
+    } @else {
+      <p>Glissez-déposez une facture ou un reçu (PDF, JPEG, PNG — 10 Mo max)</p>
+    }
+    <label class="bouton-parcourir">
+      Parcourir…
+      <input type="file" accept=".pdf,.jpg,.jpeg,.png" (change)="onFileInputChange($event)" hidden />
+    </label>
+  </div>
+
+  @if (erreur()) {
+    <p class="message-erreur">{{ erreur() }}</p>
+  }
+
+  @if (envoiEnCours()) {
+    <div class="barre-progression">
+      <div class="barre-progression-remplissage" [style.width.%]="progression()"></div>
+    </div>
+  }
+
+  <button type="submit" [disabled]="!fichierSelectionne() || envoiEnCours()">
+    {{ envoiEnCours() ? 'Envoi en cours…' : 'Déposer le document' }}
+  </button>
+</form>

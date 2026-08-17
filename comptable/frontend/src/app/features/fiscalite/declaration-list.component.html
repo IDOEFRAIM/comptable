@@ -1,0 +1,102 @@
+<div class="page-fiscalite">
+  <div class="entete">
+    <h2>Déclarations fiscales</h2>
+    <div class="actions-entete">
+      <input type="number" class="champ-annee" [(ngModel)]="anneeEcheancier" [ngModelOptions]="{ standalone: true }" />
+      <button type="button" class="bouton-secondaire" [disabled]="envoiEnCours()" (click)="genererEcheancierTva()">
+        Générer échéancier TVA
+      </button>
+      <button type="button" class="bouton-principal" (click)="afficherFormulaire.set(!afficherFormulaire())">
+        {{ afficherFormulaire() ? 'Annuler' : '+ Déclaration' }}
+      </button>
+    </div>
+  </div>
+
+  @if (afficherFormulaire()) {
+    <form [formGroup]="form" (ngSubmit)="creer()" class="carte formulaire-creation">
+      <label class="champ">
+        <span>Type</span>
+        <select formControlName="typeImpot">
+          @for (type of typesImpot; track type) {
+            <option [value]="type">{{ libellesType[type] }}</option>
+          }
+        </select>
+      </label>
+      <label class="champ">
+        <span>Période</span>
+        <input type="text" formControlName="periode" placeholder="2026-01" />
+      </label>
+      <label class="champ">
+        <span>Échéance</span>
+        <input type="date" formControlName="dateEcheance" />
+      </label>
+      <label class="champ">
+        <span>Montant (optionnel)</span>
+        <input type="number" formControlName="montant" />
+      </label>
+      <button type="submit" class="bouton-principal" [disabled]="envoiEnCours()">Créer</button>
+    </form>
+  }
+
+  @if (erreur()) {
+    <p class="message-erreur">{{ erreur() }}</p>
+  }
+
+  @if (chargement()) {
+    <p class="etat-vide">Chargement…</p>
+  } @else if (declarations().length === 0) {
+    <p class="etat-vide">Aucune déclaration — générez l'échéancier TVA ou ajoutez-en une manuellement.</p>
+  } @else {
+    <table class="carte">
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Période</th>
+          <th>Échéance</th>
+          <th>Statut</th>
+          <th>Montant</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (d of declarations(); track d.id) {
+          <tr>
+            <td>{{ libellesType[d.typeImpot] }}</td>
+            <td>{{ d.periode }}</td>
+            <td>{{ d.dateEcheance }}</td>
+            <td>
+              <span [class]="classeStatut(d)">
+                {{ d.enRetard ? 'En retard' : libellesStatut[d.statut] }}
+              </span>
+            </td>
+            <td>
+              {{ d.montant ?? '—' }}
+              @if (d.typeImpot === 'TVA' && d.statut !== 'PAYEE') {
+                <button
+                  type="button"
+                  class="bouton-lien"
+                  [disabled]="actionEnCours() === d.id"
+                  (click)="recalculerTva(d)"
+                  title="Recalculer depuis les écritures validées (443 collectée - 4456 déductible)"
+                >
+                  Recalculer
+                </button>
+              }
+            </td>
+            <td>
+              @if (d.statut === 'A_FAIRE') {
+                <button type="button" class="bouton-lien" [disabled]="actionEnCours() === d.id" (click)="marquerDeposee(d)">
+                  Marquer déposée
+                </button>
+              } @else if (d.statut === 'DEPOSEE') {
+                <button type="button" class="bouton-lien" [disabled]="actionEnCours() === d.id" (click)="marquerPayee(d)">
+                  Marquer payée
+                </button>
+              }
+            </td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  }
+</div>

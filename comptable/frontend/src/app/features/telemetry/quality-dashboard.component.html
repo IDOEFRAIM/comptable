@@ -1,0 +1,160 @@
+<div class="page-dashboard-qualite">
+  <div class="entete">
+    <h2>Indicateurs produit</h2>
+    <button type="button" class="bouton-rafraichir" (click)="rafraichir()">↻ Actualiser</button>
+  </div>
+  <p class="note-methode">
+    Portefeuille complet du cabinet. Chaque taux affiche son échantillon (N) — jamais un
+    pourcentage sur un échantillon vide ou trop petit pour être fiable.
+  </p>
+
+  @if (erreur()) {
+    <p class="message-erreur">{{ erreur() }}</p>
+  } @else if (chargement()) {
+    <p class="etat-vide">Chargement…</p>
+  } @else {
+    @if (kpi(); as k) {
+      <div class="grille-cartes">
+        <div class="carte carte-headline">
+          <h3>Automatisation</h3>
+          @if (k.humanTouchRate.totalResolu === 0) {
+            <p class="etat-vide">Aucune proposition tranchée pour le moment.</p>
+          } @else {
+            <div class="ligne-headline">
+              <div>
+                <span class="valeur">{{ k.humanTouchRate.automationRatePourcent | number: '1.0-0' }}%</span>
+                <span class="libelle">Automation Rate</span>
+              </div>
+              <div>
+                <span class="valeur">{{ k.humanTouchRate.humanTouchRatePourcent | number: '1.0-0' }}%</span>
+                <span class="libelle">Human Touch Rate</span>
+              </div>
+            </div>
+            <ul class="detail-headline">
+              <li>{{ k.humanTouchRate.automatique }} automatique{{ k.humanTouchRate.automatique > 1 ? 's' : '' }}</li>
+              <li>{{ k.humanTouchRate.assisteParIa }} assisté{{ k.humanTouchRate.assisteParIa > 1 ? 's' : '' }} par l'IA</li>
+              <li>{{ k.humanTouchRate.humainSeul }} humain seul</li>
+              <li class="discret">{{ k.humanTouchRate.enAttente }} en attente (exclu du taux)</li>
+            </ul>
+            <p class="echantillon">N = {{ k.humanTouchRate.totalResolu }} propositions tranchées (banque + comptabilisation)</p>
+          }
+        </div>
+
+        <div class="carte">
+          <h3>Qualité du matching bancaire</h3>
+          @if (k.matchingBancaire.propositions === 0) {
+            <p class="etat-vide">Aucune proposition de rapprochement pour le moment.</p>
+          } @else {
+            <dl>
+              <dt>Taux d'acceptation</dt>
+              <dd>{{ k.matchingBancaire.tauxAcceptationPourcent | number: '1.0-0' }}%</dd>
+              <dt>Taux de rejet</dt>
+              <dd>{{ k.matchingBancaire.tauxRejetPourcent | number: '1.0-0' }}%</dd>
+            </dl>
+            <p class="echantillon">
+              N = {{ k.matchingBancaire.propositions }} ({{ k.matchingBancaire.acceptees }} acceptées,
+              {{ k.matchingBancaire.rejetees }} rejetées, {{ k.matchingBancaire.enAttente }} en attente,
+              {{ k.matchingBancaire.expirees }} expirées)
+            </p>
+          }
+        </div>
+
+        <div class="carte">
+          <h3>Qualité de la comptabilisation</h3>
+          @if (k.comptabilisation.propositions === 0) {
+            <p class="etat-vide">Aucune proposition de comptabilisation pour le moment.</p>
+          } @else {
+            <dl>
+              <dt>Taux d'acceptation</dt>
+              <dd>{{ k.comptabilisation.tauxAcceptationPourcent | number: '1.0-0' }}%</dd>
+              <dt>Taux de rejet</dt>
+              <dd>{{ k.comptabilisation.tauxRejetPourcent | number: '1.0-0' }}%</dd>
+            </dl>
+            <p class="echantillon">
+              N = {{ k.comptabilisation.propositions }} ({{ k.comptabilisation.acceptees }} acceptées,
+              {{ k.comptabilisation.rejetees }} rejetées, {{ k.comptabilisation.enAttente }} en attente)
+            </p>
+          }
+        </div>
+
+        <div class="carte">
+          <h3>Résolution des pièces manquantes</h3>
+          @if (k.resolutionPreuves.creees === 0) {
+            <p class="etat-vide">Aucune demande de pièce pour le moment.</p>
+          } @else {
+            <dl>
+              <dt>Taux de résolution</dt>
+              <dd>{{ k.resolutionPreuves.tauxResolutionPourcent | number: '1.0-0' }}%</dd>
+              @if (k.resolutionPreuves.dureeMoyenneResolutionHeures !== null) {
+                <dt>Délai moyen</dt>
+                <dd>{{ k.resolutionPreuves.dureeMoyenneResolutionHeures | number: '1.0-1' }} h</dd>
+              }
+            </dl>
+            <p class="echantillon">
+              N = {{ k.resolutionPreuves.creees }} ({{ k.resolutionPreuves.completees }} complétées,
+              {{ k.resolutionPreuves.annulees }} annulées, {{ k.resolutionPreuves.enAttente }} en attente)
+            </p>
+          }
+        </div>
+
+        <div class="carte">
+          <h3>Temps de résolution des constats</h3>
+          @if (k.tempsResolutionFindings.nombreResolu === 0) {
+            <p class="etat-vide">Aucun constat résolu pour le moment.</p>
+          } @else {
+            <dl>
+              <dt>Moyenne</dt>
+              <dd>{{ k.tempsResolutionFindings.moyenneHeures | number: '1.0-1' }} h</dd>
+              <dt>Médiane</dt>
+              <dd>{{ k.tempsResolutionFindings.medianeHeures | number: '1.0-1' }} h</dd>
+              <dt>P90</dt>
+              <dd>{{ k.tempsResolutionFindings.p90Heures | number: '1.0-1' }} h</dd>
+            </dl>
+            <p class="echantillon">N = {{ k.tempsResolutionFindings.nombreResolu }} constats résolus</p>
+          }
+        </div>
+
+        <div class="carte">
+          <h3>Usage et qualité du Copilot</h3>
+          <p class="note-methode-carte">Fenêtre glissante de 30 jours.</p>
+          @if (k.usageCopilot.questions === 0) {
+            <p class="etat-vide">Aucune question posée au Copilot sur les 30 derniers jours.</p>
+          } @else {
+            <dl>
+              <dt>Taux de réponse sans preuve (fallback)</dt>
+              <dd>{{ k.usageCopilot.tauxFallbackPourcent | number: '1.0-0' }}%</dd>
+              <dt>Taux de réponse avec preuve</dt>
+              <dd>{{ k.usageCopilot.tauxReponseAvecPreuvePourcent | number: '1.0-0' }}%</dd>
+              @if (k.usageCopilot.latenceMoyenneMs !== null) {
+                <dt>Latence moyenne</dt>
+                <dd>{{ k.usageCopilot.latenceMoyenneMs | number: '1.0-0' }} ms</dd>
+              }
+              @if (k.usageCopilot.tauxFeedbackPositifPourcent !== null) {
+                <dt>Feedback positif</dt>
+                <dd>{{ k.usageCopilot.tauxFeedbackPositifPourcent | number: '1.0-0' }}%</dd>
+              }
+            </dl>
+            <p class="echantillon">
+              N = {{ k.usageCopilot.questions }} questions ({{ k.usageCopilot.feedbackPositif }} 👍,
+              {{ k.usageCopilot.feedbackNegatif }} 👎, {{ k.usageCopilot.sansFeedback }} sans avis)
+            </p>
+          }
+        </div>
+
+        <div class="carte">
+          <h3>File de travail</h3>
+          <dl>
+            <dt>Constats ouverts</dt>
+            <dd>{{ k.workQueue.findingsOuverts }}</dd>
+            <dt>Constats en retard</dt>
+            <dd [class.valeur-alerte]="k.workQueue.findingsEnRetard > 0">{{ k.workQueue.findingsEnRetard }}</dd>
+            <dt>Pièces en attente</dt>
+            <dd>{{ k.workQueue.demandesEnAttente }}</dd>
+            <dt>Pièces en retard</dt>
+            <dd [class.valeur-alerte]="k.workQueue.demandesEnRetard > 0">{{ k.workQueue.demandesEnRetard }}</dd>
+          </dl>
+        </div>
+      </div>
+    }
+  }
+</div>

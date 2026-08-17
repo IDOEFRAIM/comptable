@@ -1,0 +1,73 @@
+<div class="liste-carte">
+  <div class="barre-filtres">
+    @for (filtre of filtres; track filtre.valeur) {
+      <button
+        type="button"
+        class="filtre"
+        [class.actif]="filtreActif() === filtre.valeur"
+        (click)="changerFiltre(filtre.valeur)"
+      >
+        {{ filtre.libelle }}
+      </button>
+    }
+    <button type="button" class="bouton-rafraichir" (click)="rafraichir()">↻ Actualiser</button>
+  </div>
+
+  @if (erreur()) {
+    <p class="message-erreur">{{ erreur() }}</p>
+  } @else if (chargement()) {
+    <p class="etat-vide">Chargement…</p>
+  } @else if (documents().length === 0) {
+    <p class="etat-vide">Aucun document pour ce filtre.</p>
+  } @else {
+    <table>
+      <thead>
+        <tr>
+          <th>Fichier</th>
+          <th>Type</th>
+          <th>Statut</th>
+          <th>Montant TTC</th>
+          <th>Date pièce</th>
+          <th>Déposé le</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (document of documents(); track document.id) {
+          <tr>
+            <td>{{ document.nomFichierOriginal }}</td>
+            <td>{{ libellesType[document.typeDocument] }}</td>
+            <td>
+              <span [class]="classeStatut(document.statut)">{{ libellesStatut[document.statut] }}</span>
+              @if (document.messageOcr && document.statut === 'ERREUR') {
+                <span class="info-bulle" [title]="document.messageOcr">ⓘ</span>
+              }
+            </td>
+            <td>{{ document.montantTtc ?? '—' }}</td>
+            <td>{{ document.datePiece ?? '—' }}</td>
+            <td>{{ document.createdAt | date: 'dd/MM/yyyy HH:mm' }}</td>
+            <td>
+              @if (document.ecritureId) {
+                <span class="lien-comptabilise">Comptabilisé</span>
+              } @else if (peutComptabiliser(document)) {
+                <button type="button" class="bouton-comptabiliser" (click)="documentEnComptabilisation.set(document)">
+                  Comptabiliser
+                </button>
+              }
+            </td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  }
+</div>
+
+@if (documentEnComptabilisation(); as document) {
+  <app-comptabiliser-modal
+    [entrepriseId]="entrepriseId()"
+    [documentId]="document.id"
+    [typeDocument]="asTypeComptabilisable(document.typeDocument)"
+    (valide)="onComptabiliserValide()"
+    (annule)="documentEnComptabilisation.set(null)"
+  />
+}

@@ -1,0 +1,29 @@
+<div class="workspace">
+  <nav class="onglets">
+    @if (estMembreCabinet) {
+      <a routerLink="tableau-de-bord" routerLinkActive="actif">Tableau de bord</a>
+    }
+    <a routerLink="documents" routerLinkActive="actif">Documents</a>
+    <a routerLink="demandes-pieces" routerLinkActive="actif">Pièces demandées</a>
+    @if (estMembreCabinet) {
+      <a routerLink="validation" routerLinkActive="actif">Validation</a>
+      <a routerLink="tiers" routerLinkActive="actif">Tiers</a>
+      <a routerLink="ecritures" routerLinkActive="actif">Écritures</a>
+      <a routerLink="rapports" routerLinkActive="actif">Rapports</a>
+      <a routerLink="etats-financiers" routerLinkActive="actif">États financiers</a>
+      <a routerLink="tresorerie" routerLinkActive="actif">Trésorerie</a>
+      <a routerLink="recouvrement" routerLinkActive="actif">Recouvrement</a>
+      <a routerLink="rapprochement" routerLinkActive="actif">Rapprochement</a>
+      <a routerLink="immobilisations" routerLinkActive="actif">Immobilisations</a>
+      <a routerLink="facturation" routerLinkActive="actif">Facturation</a>
+      <a routerLink="stocks" routerLinkActive="actif">Stocks</a>
+      <a routerLink="achats" routerLinkActive="actif">Achats</a>
+      <a routerLink="fiscalite" routerLinkActive="actif">Fiscalité</a>
+      <a routerLink="conformite" routerLinkActive="actif">Conformité</a>
+      <a routerLink="inviter" routerLinkActive="actif">Inviter</a>
+    }
+  </nav>
+  <div class="contenu-onglet">
+    <router-outlet />
+  </div>
+</div>

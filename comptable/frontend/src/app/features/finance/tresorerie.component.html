@@ -1,0 +1,142 @@
+<div class="page-tresorerie">
+  <div class="entete">
+    <h2>Trésorerie</h2>
+  </div>
+
+  <section class="carte carte-position">
+    <h3>Position de trésorerie</h3>
+    @if (erreurPosition()) {
+      <p class="message-erreur">{{ erreurPosition() }}</p>
+    } @else if (chargementPosition()) {
+      <p class="etat-vide">Chargement…</p>
+    } @else {
+      @if (position(); as p) {
+        <p class="date-reference">
+          Situation au {{ p.dateReference | date: 'dd/MM/yyyy' }} — jamais un chiffre isolé, toujours daté et
+          sourcé par compte.
+        </p>
+        <div class="total-position">
+          <span class="valeur-totale">{{ p.total | number: '1.0-0' }} FCFA</span>
+        </div>
+        @if (p.parCompte.length === 0) {
+          <p class="etat-vide">Aucun compte de trésorerie (classe 5) trouvé.</p>
+        } @else {
+          <table>
+            <thead>
+              <tr>
+                <th>Compte</th>
+                <th>Canal</th>
+                <th>Solde</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (ligne of p.parCompte; track ligne.compteId) {
+                <tr>
+                  <td>
+                    <span class="numero-compte">{{ ligne.compteNumero }}</span>
+                    <span class="intitule-compte">{{ ligne.compteIntitule }}</span>
+                  </td>
+                  <td>{{ libellesCanal[ligne.canal] }}</td>
+                  <td class="colonne-montant">{{ ligne.solde | number: '1.0-0' }} FCFA</td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        }
+      }
+    }
+  </section>
+
+  <section class="carte carte-prevision">
+    <h3>Prévisions de trésorerie</h3>
+    <p class="note-methode">
+      Encaissements connus (factures validées à échéance certaine) et attendus (factures en retard, pondérées
+      selon l'ancienneté). Aucune prédiction statistique n'est affichée faute d'historique de paiement
+      suffisant.
+    </p>
+    @if (erreurPrevision()) {
+      <p class="message-erreur">{{ erreurPrevision() }}</p>
+    } @else if (chargementPrevision()) {
+      <p class="etat-vide">Chargement…</p>
+    } @else if (prevision().length === 0) {
+      <p class="etat-vide">Aucune prévision disponible.</p>
+    } @else {
+      <div class="grille-horizons">
+        @for (horizon of prevision(); track horizon.horizonJours) {
+          <div class="carte-horizon">
+            <h4>{{ horizon.horizonJours }} jours</h4>
+            <dl>
+              <dt>Solde actuel</dt>
+              <dd>{{ horizon.soldeActuel | number: '1.0-0' }} FCFA</dd>
+              <dt>Encaissements connus</dt>
+              <dd class="montant-positif">+{{ horizon.encaissementsConnus | number: '1.0-0' }} FCFA</dd>
+              <dt>Encaissements attendus</dt>
+              <dd class="montant-attendu">+{{ horizon.encaissementsAttendus | number: '1.0-0' }} FCFA</dd>
+              <dt>Décaissements connus</dt>
+              <dd class="montant-negatif">-{{ horizon.decaissementsConnus | number: '1.0-0' }} FCFA</dd>
+              <dt>Solde prévisionnel</dt>
+              <dd class="solde-previsionnel">{{ horizon.soldePrevisionnel | number: '1.0-0' }} FCFA</dd>
+            </dl>
+          </div>
+        }
+      </div>
+    }
+  </section>
+
+  <section class="carte carte-snapshot">
+    <h3>Snapshot financier</h3>
+    <div class="barre-periode">
+      <label>
+        Du
+        <input
+          type="date"
+          [value]="periodeDebut()"
+          (change)="changerPeriodeDebut($any($event.target).value)"
+        />
+      </label>
+      <label>
+        Au
+        <input type="date" [value]="periodeFin()" (change)="changerPeriodeFin($any($event.target).value)" />
+      </label>
+      <button type="button" (click)="rafraichirSnapshot()">Actualiser</button>
+    </div>
+    @if (erreurSnapshot()) {
+      <p class="message-erreur">{{ erreurSnapshot() }}</p>
+    } @else if (chargementSnapshot()) {
+      <p class="etat-vide">Chargement…</p>
+    } @else {
+      @if (snapshot(); as s) {
+        <div class="grille-snapshot">
+          <div>
+            <span class="valeur">{{ s.cash | number: '1.0-0' }}</span>
+            <span class="libelle">Trésorerie</span>
+          </div>
+          <div>
+            <span class="valeur">{{ s.receivables | number: '1.0-0' }}</span>
+            <span class="libelle">Créances clients</span>
+          </div>
+          <div>
+            <span class="valeur">{{ s.payables | number: '1.0-0' }}</span>
+            <span class="libelle">Dettes fournisseurs</span>
+          </div>
+          <div>
+            <span class="valeur">{{ s.revenue | number: '1.0-0' }}</span>
+            <span class="libelle">Chiffre d'affaires</span>
+          </div>
+          <div>
+            <span class="valeur">{{ s.expenses | number: '1.0-0' }}</span>
+            <span class="libelle">Charges</span>
+          </div>
+          <div>
+            <span class="valeur">{{ s.profit | number: '1.0-0' }}</span>
+            <span class="libelle">Résultat</span>
+          </div>
+          <div>
+            <span class="valeur">{{ s.taxes | number: '1.0-0' }}</span>
+            <span class="libelle">Impôts/taxes</span>
+          </div>
+        </div>
+      }
+    }
+  </section>
+</div>

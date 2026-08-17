@@ -1,0 +1,168 @@
+<div class="page-achats">
+  <div class="entete">
+    <h2>Chaîne d'achats</h2>
+    <button type="button" class="bouton-principal" (click)="afficherFormulaire.set(!afficherFormulaire())">
+      {{ afficherFormulaire() ? 'Annuler' : '+ Bon de commande' }}
+    </button>
+  </div>
+
+  @if (erreur()) {
+    <p class="message-erreur">{{ erreur() }}</p>
+  }
+  @if (succes()) {
+    <p class="message-succes">{{ succes() }}</p>
+  }
+
+  @if (afficherFormulaire()) {
+    <form [formGroup]="form" (ngSubmit)="creer()">
+      <div class="carte formulaire-entete">
+        <label class="champ">
+          <span>Fournisseur</span>
+          <select formControlName="fournisseurId">
+            <option value="" disabled>Choisir…</option>
+            @for (f of fournisseurs(); track f.id) {
+              <option [value]="f.id">{{ f.nom }}</option>
+            }
+          </select>
+        </label>
+        <label class="champ">
+          <span>Date de commande</span>
+          <input type="date" formControlName="dateCommande" />
+        </label>
+      </div>
+
+      <div class="carte carte-lignes" formArrayName="lignes">
+        <table>
+          <thead>
+            <tr>
+              <th class="col-designation">Article</th>
+              <th class="col-montant">Qté</th>
+              <th class="col-montant">PU HT</th>
+              <th class="col-montant">Total HT</th>
+              <th class="col-action"></th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (ligne of lignes.controls; track $index; let i = $index) {
+              <tr [formGroupName]="i">
+                <td>
+                  <select formControlName="articleId">
+                    <option value="" disabled>Choisir…</option>
+                    @for (a of articles(); track a.id) {
+                      <option [value]="a.id">{{ a.codeArticle }} — {{ a.designation }}</option>
+                    }
+                  </select>
+                </td>
+                <td><input type="number" min="0.001" step="1" formControlName="quantite" /></td>
+                <td><input type="number" min="0" step="1" formControlName="prixUnitaireHt" /></td>
+                <td class="total-ligne">{{ totalLigneHt(i) | number: '1.0-0' }}</td>
+                <td>
+                  <button
+                    type="button"
+                    class="bouton-supprimer-ligne"
+                    [disabled]="lignes.length <= 1"
+                    (click)="supprimerLigne(i)"
+                  >
+                    ✕
+                  </button>
+                </td>
+              </tr>
+            }
+          </tbody>
+          <tfoot>
+            <tr>
+              <td colspan="3">
+                <button type="button" class="bouton-ajouter-ligne" (click)="ajouterLigne()">+ Ajouter une ligne</button>
+              </td>
+              <td class="total-ligne">{{ totalGeneralHt() | number: '1.0-0' }}</td>
+              <td></td>
+            </tr>
+          </tfoot>
+        </table>
+      </div>
+
+      <div class="pied-formulaire">
+        <button type="submit" class="bouton-principal" [disabled]="envoiEnCours()">
+          {{ envoiEnCours() ? 'Création…' : 'Créer le bon de commande' }}
+        </button>
+      </div>
+    </form>
+  }
+
+  @if (chargement()) {
+    <p class="etat-vide">Chargement…</p>
+  } @else if (commandes().length === 0) {
+    <p class="etat-vide">Aucun bon de commande pour le moment.</p>
+  } @else {
+    <div class="liste-documents">
+      @for (commande of commandes(); track commande.id) {
+        <div class="carte carte-document">
+          <button type="button" class="ligne-entete" (click)="basculer(commande)">
+            <span class="numero">{{ commande.numero }}</span>
+            <span class="client">{{ commande.fournisseurNom }}</span>
+            <span class="date">{{ commande.dateCommande }}</span>
+            <span class="montant">{{ commande.montantTotalHt | number: '1.0-0' }}</span>
+            <span class="badge" [attr.data-statut]="commande.statut">{{ libellesStatut[commande.statut] }}</span>
+          </button>
+
+          @if (commandeOuverte() === commande.id) {
+            <div class="details">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Article</th>
+                    <th>Qté</th>
+                    <th>PU HT</th>
+                    <th>Total HT</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  @for (ligne of commande.lignes; track ligne.id) {
+                    <tr>
+                      <td>{{ ligne.articleCode }} — {{ ligne.articleDesignation }}</td>
+                      <td>{{ ligne.quantite }}</td>
+                      <td>{{ ligne.prixUnitaireHt | number: '1.0-2' }}</td>
+                      <td>{{ ligne.montantHt | number: '1.0-2' }}</td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+              <div class="totaux">
+                <span class="ttc">Total HT {{ commande.montantTotalHt | number: '1.0-2' }}</span>
+              </div>
+
+              @if (commande.statut === 'EN_COURS') {
+                <div class="actions">
+                  <button
+                    type="button"
+                    class="bouton-principal"
+                    [disabled]="actionEnCours() === commande.id"
+                    (click)="validerReception(commande)"
+                  >
+                    {{ actionEnCours() === commande.id ? 'Validation…' : 'Valider la réception' }}
+                  </button>
+                </div>
+              } @else if (commande.statut === 'RECEPTIONNEE') {
+                <p class="info-reception">Réceptionnée le {{ commande.dateReception }} — stock et écritures mis à jour.</p>
+                <div class="actions">
+                  <button
+                    type="button"
+                    class="bouton-principal"
+                    [disabled]="actionEnCours() === commande.id"
+                    (click)="genererFactureFournisseur(commande)"
+                  >
+                    {{ actionEnCours() === commande.id ? 'Génération…' : 'Générer la Facture Fournisseur' }}
+                  </button>
+                </div>
+              } @else {
+                <p class="info-reception">
+                  Réceptionnée le {{ commande.dateReception }} et facturée — écritures de stock et d'achat comptabilisées.
+                </p>
+              }
+            </div>
+          }
+        </div>
+      }
+    </div>
+  }
+</div>

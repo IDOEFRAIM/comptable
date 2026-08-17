@@ -1,0 +1,371 @@
+<div class="page-facturation">
+  <div class="entete">
+    <h2>Facturation</h2>
+    <div class="onglets-mode">
+      <button type="button" [class.actif]="!afficherAvoirs() && type() === 'DEVIS'" (click)="changerType('DEVIS')">Devis</button>
+      <button type="button" [class.actif]="!afficherAvoirs() && type() === 'FACTURE'" (click)="changerType('FACTURE')">Factures</button>
+      <button type="button" [class.actif]="afficherAvoirs()" (click)="afficherOngletAvoirs()">Avoirs</button>
+    </div>
+    @if (!afficherAvoirs()) {
+      <button type="button" class="bouton-principal" (click)="afficherFormulaire.set(!afficherFormulaire())">
+        {{ afficherFormulaire() ? 'Annuler' : (type() === 'DEVIS' ? '+ Nouveau devis' : '+ Nouvelle facture') }}
+      </button>
+    }
+  </div>
+
+  @if (!afficherAvoirs()) {
+    @if (erreur()) {
+      <p class="message-erreur">{{ erreur() }}</p>
+    }
+
+    @if (afficherFormulaire()) {
+      <form [formGroup]="form" (ngSubmit)="creer()">
+        <div class="carte formulaire-entete">
+          <label class="champ">
+            <span>Client</span>
+            <select formControlName="tiersId">
+              <option value="" disabled>Choisir…</option>
+              @for (c of clients(); track c.id) {
+                <option [value]="c.id">{{ c.nom }}</option>
+              }
+            </select>
+          </label>
+          <label class="champ">
+            <span>Date d'émission</span>
+            <input type="date" formControlName="dateEmission" />
+          </label>
+          <label class="champ">
+            <span>Échéance (optionnel)</span>
+            <input type="date" formControlName="dateEcheance" />
+          </label>
+          <label class="champ champ-objet">
+            <span>Objet</span>
+            <input type="text" formControlName="objet" placeholder="Ex : Prestation de conseil janvier" />
+          </label>
+        </div>
+
+        <div class="carte carte-lignes" formArrayName="lignes">
+          <table>
+            <thead>
+              <tr>
+                <th class="col-designation">Désignation</th>
+                <th class="col-article">Article (stock)</th>
+                <th class="col-montant">Qté</th>
+                <th class="col-montant">PU HT</th>
+                <th class="col-montant">TVA %</th>
+                <th class="col-montant">Total HT</th>
+                <th class="col-action"></th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (ligne of lignes.controls; track $index; let i = $index) {
+                <tr [formGroupName]="i">
+                  <td><input type="text" formControlName="designation" /></td>
+                  <td>
+                    <select formControlName="articleId" class="select-article">
+                      <option value="">Aucun (service)</option>
+                      @for (a of articles(); track a.id) {
+                        <option [value]="a.id">{{ a.codeArticle }} — {{ a.designation }}</option>
+                      }
+                    </select>
+                  </td>
+                  <td><input type="number" min="0.01" step="1" formControlName="quantite" /></td>
+                  <td><input type="number" min="0" step="1" formControlName="prixUnitaire" /></td>
+                  <td><input type="number" min="0" step="1" formControlName="tauxTva" /></td>
+                  <td class="total-ligne">{{ totalLigneHt(i) | number: '1.0-0' }}</td>
+                  <td>
+                    <button
+                      type="button"
+                      class="bouton-supprimer-ligne"
+                      [disabled]="lignes.length <= 1"
+                      (click)="supprimerLigne(i)"
+                    >
+                      ✕
+                    </button>
+                  </td>
+                </tr>
+              }
+            </tbody>
+            <tfoot>
+              <tr>
+                <td colspan="5">
+                  <button type="button" class="bouton-ajouter-ligne" (click)="ajouterLigne()">+ Ajouter une ligne</button>
+                </td>
+                <td class="total-ligne">{{ totalGeneralHt() | number: '1.0-0' }}</td>
+                <td></td>
+              </tr>
+            </tfoot>
+          </table>
+        </div>
+
+        <div class="pied-formulaire">
+          <button type="submit" class="bouton-principal" [disabled]="envoiEnCours()">
+            {{ envoiEnCours() ? 'Création…' : 'Créer' }}
+          </button>
+        </div>
+      </form>
+    }
+
+    @if (chargement()) {
+      <p class="etat-vide">Chargement…</p>
+    } @else if (documents().length === 0) {
+      <p class="etat-vide">Aucun {{ type() === 'DEVIS' ? 'devis' : 'facture' }} pour le moment.</p>
+    } @else {
+      <div class="liste-documents">
+        @for (doc of documents(); track doc.id) {
+          <div class="carte carte-document">
+            <button type="button" class="ligne-entete" (click)="basculer(doc)">
+              <span class="numero">{{ doc.numero }}</span>
+              <span class="client">{{ doc.tiersNom }}</span>
+              <span class="date">{{ doc.dateEmission }}</span>
+              <span class="montant">{{ doc.montantTtc | number: '1.0-0' }}</span>
+              <span class="badge" [attr.data-statut]="doc.statut">{{ libellesStatut[doc.statut] }}</span>
+            </button>
+
+            @if (documentOuvert() === doc.id) {
+              <div class="details">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>Désignation</th>
+                      <th>Qté</th>
+                      <th>PU HT</th>
+                      <th>TVA %</th>
+                      <th>Total HT</th>
+                      <th>Total TTC</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    @for (ligne of doc.lignes; track ligne.id) {
+                      <tr>
+                        <td>{{ ligne.designation }}</td>
+                        <td>{{ ligne.quantite }}</td>
+                        <td>{{ ligne.prixUnitaire | number: '1.0-0' }}</td>
+                        <td>{{ ligne.tauxTva }}</td>
+                        <td>{{ ligne.montantHt | number: '1.0-0' }}</td>
+                        <td>{{ ligne.montantTtc | number: '1.0-0' }}</td>
+                      </tr>
+                    }
+                  </tbody>
+                </table>
+                <div class="totaux">
+                  <span>HT {{ doc.montantHt | number: '1.0-0' }}</span>
+                  <span>TVA {{ doc.montantTva | number: '1.0-0' }}</span>
+                  <span class="ttc">TTC {{ doc.montantTtc | number: '1.0-0' }}</span>
+                </div>
+
+                <div class="actions">
+                  @if (doc.type === 'DEVIS') {
+                    @if (doc.statut === 'BROUILLON') {
+                      <button type="button" class="bouton-secondaire" [disabled]="actionEnCours() === doc.id" (click)="envoyer(doc)">
+                        Envoyer
+                      </button>
+                    }
+                    @if (doc.statut === 'ENVOYE') {
+                      <button type="button" class="bouton-secondaire" [disabled]="actionEnCours() === doc.id" (click)="refuserDevis(doc)">
+                        Refuser
+                      </button>
+                      <button type="button" class="bouton-principal" [disabled]="actionEnCours() === doc.id" (click)="accepterDevis(doc)">
+                        Accepter
+                      </button>
+                    }
+                    @if (doc.statut === 'ACCEPTE') {
+                      <button type="button" class="bouton-principal" [disabled]="actionEnCours() === doc.id" (click)="convertir(doc)">
+                        Convertir en facture
+                      </button>
+                    }
+                  }
+                  @if (doc.type === 'FACTURE') {
+                    @if (doc.statut === 'BROUILLON' || doc.statut === 'ENVOYE') {
+                      <select class="select-compte-produit" (change)="choisirCompteProduit(doc.id, $any($event.target).value)">
+                        <option value="">Compte de vente…</option>
+                        @for (c of comptesProduits(); track c.id) {
+                          <option [value]="c.id">{{ c.numero }} — {{ c.intitule }}</option>
+                        }
+                      </select>
+                      <button type="button" class="bouton-principal" [disabled]="actionEnCours() === doc.id" (click)="validerFacture(doc)">
+                        Valider (génère l'écriture)
+                      </button>
+                    }
+                    @if (doc.statut === 'VALIDEE') {
+                      <button type="button" class="bouton-secondaire" [disabled]="actionEnCours() === doc.id" (click)="annuler(doc)">
+                        Annuler
+                      </button>
+                      <button type="button" class="bouton-secondaire" (click)="ouvrirFormulaireAvoir(doc)">
+                        Créer un avoir
+                      </button>
+                      <button type="button" class="bouton-principal" [disabled]="actionEnCours() === doc.id" (click)="marquerPayee(doc)">
+                        Marquer payée
+                      </button>
+                    }
+                    @if (doc.statut === 'PAYEE') {
+                      <button type="button" class="bouton-secondaire" (click)="ouvrirFormulaireAvoir(doc)">
+                        Créer un avoir
+                      </button>
+                    }
+                  }
+                </div>
+
+                @if (avoirEnCoursPourFacture() === doc.id) {
+                  <form [formGroup]="formAvoir" (ngSubmit)="creerAvoir(doc)" class="formulaire-avoir">
+                    <h4>Créer un avoir — {{ doc.numero }}</h4>
+                    @if (erreurAvoir()) {
+                      <p class="message-erreur">{{ erreurAvoir() }}</p>
+                    }
+                    <div class="ligne-champs">
+                      <label class="champ-radio">
+                        <input type="radio" formControlName="total" [value]="true" />
+                        Avoir total
+                      </label>
+                      <label class="champ-radio">
+                        <input type="radio" formControlName="total" [value]="false" />
+                        Avoir partiel
+                      </label>
+                      <label class="champ-checkbox">
+                        <input type="checkbox" formControlName="retourStock" />
+                        Retour physique des articles (réintègre le stock)
+                      </label>
+                    </div>
+                    <label class="champ champ-motif">
+                      <span>Motif</span>
+                      <select formControlName="motif">
+                        <option value="">Sélectionner…</option>
+                        <option value="Retour marchandise">Retour marchandise</option>
+                        <option value="Erreur de prix">Erreur de prix</option>
+                        <option value="Remise accordée">Remise accordée</option>
+                        <option value="Autre">Autre</option>
+                      </select>
+                    </label>
+
+                    @if (formAvoir.value.total === false) {
+                      <div class="carte-lignes-avoir" formArrayName="lignes">
+                        <table>
+                          <thead>
+                            <tr>
+                              <th></th>
+                              <th>Désignation</th>
+                              <th>Quantité à créditer</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            @for (ligne of lignesAvoir.controls; track $index; let i = $index) {
+                              <tr [formGroupName]="i">
+                                <td><input type="checkbox" formControlName="selectionnee" /></td>
+                                <td>{{ ligne.value.designation }}</td>
+                                <td>
+                                  <input
+                                    type="number"
+                                    min="0.01"
+                                    [max]="ligne.value.quantiteMax"
+                                    step="1"
+                                    formControlName="quantite"
+                                  />
+                                </td>
+                              </tr>
+                            }
+                          </tbody>
+                        </table>
+                      </div>
+                    }
+
+                    <div class="pied-formulaire">
+                      <button type="button" class="bouton-secondaire" (click)="fermerFormulaireAvoir()">Annuler</button>
+                      <button type="submit" class="bouton-principal" [disabled]="envoiAvoirEnCours()">
+                        {{ envoiAvoirEnCours() ? 'Création…' : "Créer l'avoir (brouillon)" }}
+                      </button>
+                    </div>
+                  </form>
+                }
+              </div>
+            }
+          </div>
+        }
+      </div>
+    }
+  } @else {
+    @if (erreurAvoir()) {
+      <p class="message-erreur">{{ erreurAvoir() }}</p>
+    }
+    @if (succesAvoir()) {
+      <p class="message-succes">{{ succesAvoir() }}</p>
+    }
+
+    @if (chargementAvoirs()) {
+      <p class="etat-vide">Chargement…</p>
+    } @else if (avoirs().length === 0) {
+      <p class="etat-vide">Aucun avoir pour le moment.</p>
+    } @else {
+      <div class="liste-documents">
+        @for (avoir of avoirs(); track avoir.id) {
+          <div class="carte carte-document">
+            <button type="button" class="ligne-entete" (click)="basculerAvoir(avoir)">
+              <span class="numero">{{ avoir.numero }}</span>
+              <span class="client">{{ avoir.tiersNom }} — avoir sur {{ avoir.factureOrigineNumero }}</span>
+              <span class="date">{{ avoir.dateEmission }}</span>
+              <span class="montant">-{{ avoir.montantTtc | number: '1.0-0' }}</span>
+              <span class="badge badge-avoir" [attr.data-statut]="avoir.statut">
+                AVOIR · {{ libellesStatutAvoir[avoir.statut] }}
+              </span>
+            </button>
+
+            @if (avoirOuvert() === avoir.id) {
+              <div class="details">
+                @if (avoir.motif) {
+                  <p class="motif-avoir">Motif : {{ avoir.motif }}</p>
+                }
+                @if (avoir.retourStock) {
+                  <p class="motif-avoir">Retour physique : le stock sera réintégré à la validation.</p>
+                }
+                <table>
+                  <thead>
+                    <tr>
+                      <th>Désignation</th>
+                      <th>Qté</th>
+                      <th>PU HT</th>
+                      <th>TVA %</th>
+                      <th>Total HT</th>
+                      <th>Total TTC</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    @for (ligne of avoir.lignes; track ligne.id) {
+                      <tr>
+                        <td>{{ ligne.designation }}</td>
+                        <td>{{ ligne.quantite }}</td>
+                        <td>{{ ligne.prixUnitaire | number: '1.0-0' }}</td>
+                        <td>{{ ligne.tauxTva }}</td>
+                        <td>-{{ ligne.montantHt | number: '1.0-0' }}</td>
+                        <td>-{{ ligne.montantTtc | number: '1.0-0' }}</td>
+                      </tr>
+                    }
+                  </tbody>
+                </table>
+                <div class="totaux">
+                  <span>HT -{{ avoir.montantHt | number: '1.0-0' }}</span>
+                  <span>TVA -{{ avoir.montantTva | number: '1.0-0' }}</span>
+                  <span class="ttc">TTC -{{ avoir.montantTtc | number: '1.0-0' }}</span>
+                </div>
+
+                <div class="actions">
+                  @if (avoir.statut === 'BROUILLON') {
+                    <button
+                      type="button"
+                      class="bouton-principal"
+                      [disabled]="actionAvoirEnCours() === avoir.id"
+                      (click)="validerAvoirAction(avoir)"
+                    >
+                      {{ actionAvoirEnCours() === avoir.id ? 'Validation…' : "Valider (génère l'extourne)" }}
+                    </button>
+                  }
+                  <button type="button" class="bouton-secondaire" (click)="telechargerPdf(avoir)">
+                    Télécharger le PDF
+                  </button>
+                </div>
+              </div>
+            }
+          </div>
+        }
+      </div>
+    }
+  }
+</div>

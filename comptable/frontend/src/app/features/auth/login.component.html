@@ -1,0 +1,28 @@
+<div class="page-login">
+  <form [formGroup]="form" (ngSubmit)="soumettre()" class="carte-login">
+    <h1>Comptable</h1>
+    <p class="sous-titre">Connexion à votre cabinet</p>
+
+    <label class="champ">
+      <span>Email</span>
+      <input type="email" formControlName="email" autocomplete="username" />
+    </label>
+
+    <label class="champ">
+      <span>Mot de passe</span>
+      <input type="password" formControlName="motDePasse" autocomplete="current-password" />
+    </label>
+
+    @if (erreur()) {
+      <p class="message-erreur">{{ erreur() }}</p>
+    }
+
+    <button type="submit" [disabled]="envoiEnCours()">
+      {{ envoiEnCours() ? 'Connexion…' : 'Se connecter' }}
+    </button>
+
+    <p class="lien-secondaire">
+      Nouveau cabinet ? <a routerLink="/register">Créer un compte</a>
+    </p>
+  </form>
+</div>

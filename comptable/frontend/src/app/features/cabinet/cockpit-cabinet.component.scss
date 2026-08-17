@@ -1,0 +1,225 @@
+.page-cockpit {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.entete h2 {
+  margin: 0;
+  font-size: 1.2rem;
+}
+
+.carte {
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  padding: 1.25rem;
+
+  h3 {
+    margin: 0 0 0.75rem;
+    font-size: 1rem;
+  }
+}
+
+.carte-resume {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.ligne-resume {
+  display: flex;
+  flex-direction: column;
+
+  .valeur-totale {
+    font-size: 2rem;
+    font-weight: 700;
+    color: #1f2328;
+  }
+
+  .libelle-totale {
+    font-size: 0.8125rem;
+    color: #667085;
+  }
+}
+
+.pastilles-statut {
+  display: flex;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.pastille {
+  padding: 0.3rem 0.7rem;
+  border-radius: 999px;
+  font-size: 0.8125rem;
+  font-weight: 600;
+
+  &.pastille-vert {
+    background: #ecfdf3;
+    color: #027a48;
+  }
+
+  &.pastille-orange {
+    background: #fffaeb;
+    color: #b54708;
+  }
+
+  &.pastille-rouge {
+    background: #fef3f2;
+    color: #b42318;
+  }
+}
+
+.liste-compteurs {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  font-size: 0.875rem;
+  color: #475467;
+}
+
+.liste-risques {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.ligne-risque {
+  padding: 0.6rem 0.75rem;
+  border-radius: 6px;
+  border: 1px solid #eaecf0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  font-size: 0.8125rem;
+
+  a {
+    color: #1f2328;
+    text-decoration: none;
+
+    &:hover {
+      text-decoration: underline;
+    }
+  }
+
+  .cause,
+  .depuis,
+  .action {
+    color: #475467;
+  }
+
+  &.severite-CRITICAL {
+    border-color: #fda29b;
+    background: #fef3f2;
+  }
+
+  &.severite-IMPORTANT {
+    border-color: #fec84b;
+    background: #fffaeb;
+  }
+}
+
+.liste-clients {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+
+  a {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.4rem 0.5rem;
+    border-radius: 6px;
+    text-decoration: none;
+    color: #1f2328;
+    font-size: 0.875rem;
+
+    &:hover {
+      background: #f9fafb;
+    }
+  }
+
+  .nom-client {
+    flex: 1;
+  }
+
+  .score-client {
+    font-weight: 600;
+    color: #667085;
+  }
+}
+
+.liste-charge {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  font-size: 0.875rem;
+
+  li {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+  }
+
+  .nom-collaborateur {
+    flex: 1;
+    font-weight: 600;
+  }
+
+  .total-taches {
+    color: #667085;
+  }
+
+  .taches-critiques {
+    color: #b42318;
+    font-weight: 600;
+  }
+}
+
+.grille-analytics {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
+  gap: 1rem;
+
+  > div {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .valeur {
+    font-size: 1.3rem;
+    font-weight: 700;
+    color: #1f2328;
+  }
+
+  .libelle {
+    font-size: 0.75rem;
+    color: #667085;
+  }
+}
+
+.etat-vide {
+  color: #667085;
+  text-align: center;
+  padding: 1rem 0;
+}
+
+.message-erreur {
+  color: #b42318;
+  font-size: 0.875rem;
+}

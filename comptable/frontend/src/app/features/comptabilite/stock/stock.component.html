@@ -1,0 +1,191 @@
+<div class="page-stock">
+  <div class="entete">
+    <h2>Stocks</h2>
+    <div class="actions-entete">
+      <button type="button" class="bouton-principal" (click)="afficherFormulaireArticle.set(!afficherFormulaireArticle())">
+        {{ afficherFormulaireArticle() ? 'Annuler' : '+ Article' }}
+      </button>
+    </div>
+  </div>
+
+  @if (erreur()) {
+    <p class="message-erreur">{{ erreur() }}</p>
+  }
+
+  @if (afficherFormulaireArticle()) {
+    <form [formGroup]="form" (ngSubmit)="creerArticle()" class="carte formulaire-creation">
+      <label class="champ">
+        <span>Code article</span>
+        <input type="text" formControlName="codeArticle" placeholder="Ex : ART-001" />
+      </label>
+      <label class="champ champ-large">
+        <span>Désignation</span>
+        <input type="text" formControlName="designation" placeholder="Ex : Sac de ciment 50kg" />
+      </label>
+      <label class="champ">
+        <span>Catégorie</span>
+        <input type="text" formControlName="categorie" placeholder="Optionnel" />
+      </label>
+      <label class="champ champ-etroit">
+        <span>Unité</span>
+        <input type="text" formControlName="uniteMesure" placeholder="kg, carton…" />
+      </label>
+      <label class="champ champ-etroit">
+        <span>Prix de vente HT</span>
+        <input type="number" formControlName="prixVenteHt" />
+      </label>
+      <label class="champ champ-etroit">
+        <span>Taux TVA (%)</span>
+        <input type="number" formControlName="tauxTva" />
+      </label>
+      <label class="champ">
+        <span>Compte de stock</span>
+        <select formControlName="compteStockId">
+          <option value="" disabled>Choisir…</option>
+          @for (c of comptesStock; track c.id) {
+            <option [value]="c.id">{{ c.numero }} — {{ c.intitule }}</option>
+          }
+        </select>
+      </label>
+      <label class="champ">
+        <span>Compte d'achat</span>
+        <select formControlName="compteAchatId">
+          <option value="" disabled>Choisir…</option>
+          @for (c of comptesAchat; track c.id) {
+            <option [value]="c.id">{{ c.numero }} — {{ c.intitule }}</option>
+          }
+        </select>
+      </label>
+      <label class="champ">
+        <span>Compte de vente</span>
+        <select formControlName="compteVenteId">
+          <option value="" disabled>Choisir…</option>
+          @for (c of comptesVente; track c.id) {
+            <option [value]="c.id">{{ c.numero }} — {{ c.intitule }}</option>
+          }
+        </select>
+      </label>
+      <label class="champ">
+        <span>Compte de variation de stock</span>
+        <select formControlName="compteVariationId">
+          <option value="" disabled>Choisir…</option>
+          @for (c of comptesVariation; track c.id) {
+            <option [value]="c.id">{{ c.numero }} — {{ c.intitule }}</option>
+          }
+        </select>
+      </label>
+      <button type="submit" class="bouton-principal" [disabled]="envoiEnCours()">
+        {{ envoiEnCours() ? 'Création…' : 'Créer' }}
+      </button>
+    </form>
+  }
+
+  @if (chargement()) {
+    <p class="etat-vide">Chargement…</p>
+  } @else if (articles().length === 0) {
+    <p class="etat-vide">Aucun article dans le catalogue.</p>
+  } @else {
+    <div class="carte">
+      <table>
+        <thead>
+          <tr>
+            <th>Code</th>
+            <th>Désignation</th>
+            <th>Stock actuel</th>
+            <th>PUMP (FCFA)</th>
+            <th>Valeur totale (FCFA)</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (a of articles(); track a.id) {
+            <tr [class.ligne-selectionnee]="articleSelectionne()?.id === a.id" (click)="selectionnerArticle(a)">
+              <td>{{ a.codeArticle }}</td>
+              <td>{{ a.designation }}</td>
+              <td>{{ a.quantiteEnStock | number: '1.0-3' }} {{ a.uniteMesure }}</td>
+              <td>{{ a.pump | number: '1.0-2' }}</td>
+              <td>{{ a.valeurStockTotale | number: '1.0-2' }}</td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  }
+
+  @if (articleSelectionne(); as article) {
+    <div class="carte carte-mouvements">
+      <div class="entete-mouvements">
+        <h3>Mouvements — {{ article.codeArticle }} · {{ article.designation }}</h3>
+        <span class="resume-article">
+          Stock {{ article.quantiteEnStock | number: '1.0-3' }} · PUMP {{ article.pump | number: '1.0-2' }} FCFA
+        </span>
+      </div>
+
+      <form [formGroup]="formMouvement" (ngSubmit)="enregistrerMouvement()" class="formulaire-mouvement">
+        <label class="champ champ-etroit">
+          <span>Type</span>
+          <select formControlName="type">
+            <option value="ENTREE">Entrée</option>
+            <option value="SORTIE">Sortie</option>
+            <option value="AJUSTEMENT">Ajustement</option>
+          </select>
+        </label>
+        <label class="champ champ-etroit">
+          <span>Quantité</span>
+          <input type="number" step="0.001" formControlName="quantite" />
+        </label>
+        @if (formMouvement.value.type === 'ENTREE') {
+          <label class="champ champ-etroit">
+            <span>Prix unitaire HT</span>
+            <input type="number" step="0.01" formControlName="prixUnitaireHt" />
+          </label>
+        }
+        <label class="champ champ-large">
+          <span>Libellé</span>
+          <input type="text" formControlName="libelle" placeholder="Optionnel" />
+        </label>
+        <button type="submit" class="bouton-secondaire" [disabled]="mouvementEnCours()">
+          {{ mouvementEnCours() ? 'Enregistrement…' : 'Enregistrer le mouvement' }}
+        </button>
+      </form>
+
+      @if (chargementMouvements()) {
+        <p class="etat-vide">Chargement…</p>
+      } @else if (mouvements().length === 0) {
+        <p class="etat-vide">Aucun mouvement pour cet article.</p>
+      } @else {
+        <table>
+          <thead>
+            <tr>
+              <th>Date</th>
+              <th>Type</th>
+              <th>Quantité</th>
+              <th>Prix unitaire</th>
+              <th>Valeur</th>
+              <th>Stock après</th>
+              <th>PUMP après</th>
+              <th>Libellé</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (m of mouvements(); track m.id) {
+              <tr>
+                <td>{{ m.dateMouvement }}</td>
+                <td>
+                  <span class="badge-type" [class.badge-entree]="m.type === 'ENTREE'" [class.badge-sortie]="m.type === 'SORTIE'" [class.badge-ajustement]="m.type === 'AJUSTEMENT'">
+                    {{ libellesTypeMouvement[m.type] }}
+                  </span>
+                </td>
+                <td>{{ m.quantite | number: '1.0-3' }}</td>
+                <td>{{ m.prixUnitaireHt | number: '1.0-2' }}</td>
+                <td>{{ m.valeurMouvement | number: '1.0-2' }}</td>
+                <td>{{ m.quantiteApres | number: '1.0-3' }}</td>
+                <td>{{ m.pumpApres | number: '1.0-2' }}</td>
+                <td>{{ m.libelle }}</td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      }
+    </div>
+  }
+</div>

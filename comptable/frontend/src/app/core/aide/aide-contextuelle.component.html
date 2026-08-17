@@ -1,0 +1,21 @@
+<span class="aide-contextuelle">
+  <button
+    type="button"
+    class="bouton-aide"
+    [attr.aria-expanded]="ouvert()"
+    [attr.aria-label]="'Aide : ' + contenu.titre"
+    (click)="basculer($event)"
+  >
+    ?
+  </button>
+
+  @if (ouvert()) {
+    <div class="infobulle-aide" role="tooltip">
+      <div class="infobulle-entete">
+        <strong>{{ contenu.titre }}</strong>
+        <button type="button" class="bouton-fermer" aria-label="Fermer" (click)="fermer()">×</button>
+      </div>
+      <p>{{ contenu.texte }}</p>
+    </div>
+  }
+</span>

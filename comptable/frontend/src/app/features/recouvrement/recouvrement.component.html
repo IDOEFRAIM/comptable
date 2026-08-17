@@ -1,0 +1,40 @@
+<div class="page-recouvrement">
+  <div class="entete">
+    <h2>Recouvrement</h2>
+    <button type="button" class="bouton-rafraichir" (click)="rafraichir()">↻ Actualiser</button>
+  </div>
+
+  <p class="note-methode">
+    Clients dont le solde dû est en retard, classés par risque (Balance âgée). L'action recommandée est une
+    suggestion pour le collaborateur — aucune relance de paiement n'est envoyée automatiquement.
+  </p>
+
+  @if (erreur()) {
+    <p class="message-erreur">{{ erreur() }}</p>
+  } @else if (chargement()) {
+    <p class="etat-vide">Chargement…</p>
+  } @else if (risques().length === 0) {
+    <p class="etat-vide">Aucun client à risque de recouvrement.</p>
+  } @else {
+    <table>
+      <thead>
+        <tr>
+          <th>Client</th>
+          <th>Solde dû</th>
+          <th>Risque</th>
+          <th>Action recommandée</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (risque of risques(); track risque.tiersId) {
+          <tr>
+            <td>{{ risque.tiersNom }}</td>
+            <td class="colonne-montant">{{ risque.soldeDu | number: '1.0-0' }} FCFA</td>
+            <td><span [class]="classeRisque(risque.niveauRisque)">{{ libellesRisque[risque.niveauRisque] }}</span></td>
+            <td class="colonne-action">{{ risque.actionRecommandee }}</td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  }
+</div>

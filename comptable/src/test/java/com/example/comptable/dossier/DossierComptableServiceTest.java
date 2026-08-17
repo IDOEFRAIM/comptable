@@ -1,0 +1,156 @@
+package com.example.comptable.dossier;
+
+import com.example.comptable.agent.finding.ControlEngine;
+import com.example.comptable.agent.finding.domain.Finding;
+import com.example.comptable.agent.finding.domain.SeveriteFinding;
+import com.example.comptable.agent.finding.domain.StatutFinding;
+import com.example.comptable.agent.finding.domain.TypeFinding;
+import com.example.comptable.agent.finding.repository.FindingRepository;
+import com.example.comptable.comptabilite.domain.StatutFacture;
+import com.example.comptable.comptabilite.domain.TypeFacture;
+import com.example.comptable.comptabilite.repository.FactureRepository;
+import com.example.comptable.document.domain.StatutDocument;
+import com.example.comptable.document.domain.TypeDocument;
+import com.example.comptable.document.repository.DocumentRepository;
+import com.example.comptable.dossier.web.dto.DossierComptableDto;
+import com.example.comptable.entreprise.domain.Entreprise;
+import com.example.comptable.entreprise.service.EntrepriseAccessService;
+import com.example.comptable.identite.domain.Role;
+import com.example.comptable.identite.domain.Utilisateur;
+import com.example.comptable.security.UtilisateurPrincipal;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+
+import java.time.LocalDate;
+import java.time.OffsetDateTime;
+import java.util.List;
+import java.util.Set;
+import java.util.UUID;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.when;
+
+@ExtendWith(MockitoExtension.class)
+class DossierComptableServiceTest {
+
+    @Mock
+    private EntrepriseAccessService entrepriseAccessService;
+    @Mock
+    private ControlEngine controlEngine;
+    @Mock
+    private FindingRepository findingRepository;
+    @Mock
+    private FactureRepository factureRepository;
+    @Mock
+    private DocumentRepository documentRepository;
+
+    @InjectMocks
+    private DossierComptableService dossierComptableService;
+
+    private UUID entrepriseId;
+    private Entreprise entreprise;
+    private UtilisateurPrincipal principal;
+
+    @BeforeEach
+    void setUp() {
+        entrepriseId = UUID.randomUUID();
+        entreprise = new Entreprise();
+        entreprise.setId(entrepriseId);
+        entreprise.setRaisonSociale("ABC SARL");
+
+        Role role = new Role();
+        role.setCode("EXPERT_COMPTABLE");
+        Utilisateur utilisateur = new Utilisateur();
+        utilisateur.setId(UUID.randomUUID());
+        utilisateur.setEmail("test@cabinet.ci");
+        utilisateur.setMotDePasse("hash");
+        utilisateur.setNom("Nom");
+        utilisateur.setPrenom("Prenom");
+        utilisateur.setRoles(Set.of(role));
+        principal = new UtilisateurPrincipal(utilisateur);
+
+        when(entrepriseAccessService.verifierAcces(entrepriseId, principal)).thenReturn(entreprise);
+    }
+
+    private Finding finding(TypeFinding type, SeveriteFinding severite, String sourceType) {
+        Finding f = new Finding();
+        f.setId(UUID.randomUUID());
+        f.setEntreprise(entreprise);
+        f.setType(type);
+        f.setSeverity(severite);
+        f.setSourceType(sourceType);
+        f.setSourceId(UUID.randomUUID().toString());
+        f.setTitle("titre");
+        f.setStatus(StatutFinding.OPEN);
+        f.setCreatedAt(OffsetDateTime.now());
+        return f;
+    }
+
+    @Test
+    void dossier_propre_sans_probleme_obtient_un_score_parfait() {
+        when(findingRepository.findByEntrepriseIdAndStatusOrderBySeverityAscCreatedAtDesc(entrepriseId, StatutFinding.OPEN))
+                .thenReturn(List.of());
+        when(factureRepository.countByEntrepriseIdAndTypeAndStatutAndDateEcheanceBefore(
+                eq(entrepriseId), eq(TypeFacture.FACTURE), eq(StatutFacture.VALIDEE), any(LocalDate.class)))
+                .thenReturn(0L);
+        when(documentRepository.countByEntrepriseIdAndStatutAndTypeDocumentInAndEcritureIdIsNull(
+                entrepriseId, StatutDocument.TRAITE, List.of(TypeDocument.FACTURE_ACHAT)))
+                .thenReturn(0L);
+
+        DossierComptableDto dossier = dossierComptableService.generer(entrepriseId, principal);
+
+        assertThat(dossier.entrepriseNom()).isEqualTo("ABC SARL");
+        assertThat(dossier.scoreGlobal()).isEqualTo(100);
+        assertThat(dossier.statut()).isEqualTo("PRET");
+        assertThat(dossier.scoresParDomaine()).hasSize(7);
+        assertThat(dossier.actionsPrioritaires()).isEmpty();
+        assertThat(dossier.blockingItems()).isEmpty();
+    }
+
+    @Test
+    void un_finding_critique_bloque_le_dossier_meme_avec_un_score_eleve() {
+        Finding critique = finding(TypeFinding.DOCUMENT_REVIEW, SeveriteFinding.CRITICAL, "DOCUMENT");
+        when(findingRepository.findByEntrepriseIdAndStatusOrderBySeverityAscCreatedAtDesc(entrepriseId, StatutFinding.OPEN))
+                .thenReturn(List.of(critique));
+        when(factureRepository.countByEntrepriseIdAndTypeAndStatutAndDateEcheanceBefore(
+                eq(entrepriseId), eq(TypeFacture.FACTURE), eq(StatutFacture.VALIDEE), any(LocalDate.class)))
+                .thenReturn(0L);
+        when(documentRepository.countByEntrepriseIdAndStatutAndTypeDocumentInAndEcritureIdIsNull(
+                entrepriseId, StatutDocument.TRAITE, List.of(TypeDocument.FACTURE_ACHAT)))
+                .thenReturn(0L);
+
+        DossierComptableDto dossier = dossierComptableService.generer(entrepriseId, principal);
+
+        assertThat(dossier.statut()).isEqualTo("BLOQUE");
+        assertThat(dossier.blockingItems()).hasSize(1);
+        assertThat(dossier.scoresParDomaine())
+                .filteredOn(s -> s.domaine().equals("Documents"))
+                .extracting(com.example.comptable.dossier.web.dto.ScoreDomaineDto::score)
+                .containsExactly(75);
+    }
+
+    @Test
+    void les_factures_clients_en_retard_degradent_le_score_clients() {
+        when(findingRepository.findByEntrepriseIdAndStatusOrderBySeverityAscCreatedAtDesc(entrepriseId, StatutFinding.OPEN))
+                .thenReturn(List.of());
+        when(factureRepository.countByEntrepriseIdAndTypeAndStatutAndDateEcheanceBefore(
+                eq(entrepriseId), eq(TypeFacture.FACTURE), eq(StatutFacture.VALIDEE), any(LocalDate.class)))
+                .thenReturn(3L);
+        when(documentRepository.countByEntrepriseIdAndStatutAndTypeDocumentInAndEcritureIdIsNull(
+                entrepriseId, StatutDocument.TRAITE, List.of(TypeDocument.FACTURE_ACHAT)))
+                .thenReturn(0L);
+
+        DossierComptableDto dossier = dossierComptableService.generer(entrepriseId, principal);
+
+        assertThat(dossier.scoresParDomaine())
+                .filteredOn(s -> s.domaine().equals("Clients"))
+                .extracting(com.example.comptable.dossier.web.dto.ScoreDomaineDto::score)
+                .containsExactly(76); // 100 - 3*8
+    }
+}

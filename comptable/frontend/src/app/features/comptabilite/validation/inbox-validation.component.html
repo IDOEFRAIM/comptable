@@ -1,0 +1,172 @@
+<div class="page-validation">
+  <div class="entete">
+    <h2>Inbox de validation <app-aide-contextuelle cle="inbox-validation" /></h2>
+    <button type="button" class="bouton-lien" (click)="rafraichir()" [disabled]="chargement()">↻ Actualiser</button>
+  </div>
+
+  @if (erreur()) {
+    <p class="message-erreur">{{ erreur() }}</p>
+  }
+  @if (succes()) {
+    <p class="message-succes">{{ succes() }}</p>
+  }
+
+  @if (chargement()) {
+    <p class="etat-vide">Chargement…</p>
+  } @else if (documents().length === 0) {
+    <p class="etat-vide">Aucune pièce en attente de validation. 🎉</p>
+  } @else {
+    <div class="barre-lot">
+      <label class="case-tout">
+        <input type="checkbox" [checked]="toutEstSelectionne()" (change)="basculerToutSelectionner($event)" />
+        Tout sélectionner
+      </label>
+      <span class="compteur-selection">{{ tailleSelection() }} sélectionnée(s)</span>
+      <button
+        type="button"
+        class="bouton-principal"
+        [disabled]="tailleSelection() === 0 || envoiEnCours()"
+        (click)="validerSelection()"
+      >
+        ✓ Valider la sélection ({{ tailleSelection() }})
+      </button>
+    </div>
+
+    <div class="colonnes-validation">
+      <div class="liste-documents carte">
+        @for (document of documents(); track document.id) {
+          <div
+            class="item-document"
+            [class.actif]="document.id === documentActifId()"
+            (click)="ouvrirDetail(document)"
+          >
+            <input
+              type="checkbox"
+              [checked]="estSelectionne(document.id)"
+              (click)="basculerSelection(document.id, $event)"
+            />
+            <div class="infos-document">
+              <span class="nom-fichier">{{ document.nomFichierOriginal || 'Pièce sans nom' }}</span>
+              <span class="meta">
+                {{ document.montantTtc !== null ? (document.montantTtc | number: '1.0-0') + ' XOF' : 'Montant inconnu' }}
+                · {{ document.datePiece ? (document.datePiece | date: 'dd/MM/yyyy') : 'Date inconnue' }}
+              </span>
+            </div>
+            <div class="badges-document">
+              @if (document.scoreRisqueFraude === 'CRITIQUE') {
+                <span class="badge-fraude badge-fraude-critique" [title]="alerteDuScore(document)">
+                  🛑 {{ alerteDuScore(document) }}
+                </span>
+              }
+              <span class="badge-confiance" [class.badge-haute]="document.niveauConfiance === 'HAUTE'">
+                @if (document.niveauConfiance === 'HAUTE') {
+                  IA sûre à {{ document.confiance * 100 | number: '1.0-0' }}%
+                } @else {
+                  ⚠️ À vérifier ({{ document.confiance * 100 | number: '1.0-0' }}%)
+                }
+              </span>
+            </div>
+          </div>
+        }
+      </div>
+
+      @if (documentActif(); as document) {
+        <div class="detail-validation">
+          <div class="volet-apercu carte">
+            @if (chargementApercu()) {
+              <p class="etat-vide">Chargement de l'aperçu…</p>
+            } @else if (imageUrl()) {
+              @if (document.contentType === 'application/pdf') {
+                <iframe [src]="imageUrl()" class="apercu-pdf" title="Aperçu de la pièce"></iframe>
+              } @else {
+                <img [src]="imageUrl()" class="apercu-image" alt="Pièce justificative envoyée par le client" />
+              }
+            } @else {
+              <p class="etat-vide">Aperçu indisponible.</p>
+            }
+          </div>
+
+          <div class="volet-formulaire carte">
+            <div class="entete-formulaire">
+              <h3>{{ document.nomFichierOriginal || 'Pièce' }}</h3>
+              <span class="badge-confiance" [class.badge-haute]="document.niveauConfiance === 'HAUTE'">
+                @if (document.niveauConfiance === 'HAUTE') {
+                  ✓ IA sûre à {{ document.confiance * 100 | number: '1.0-0' }}%
+                } @else {
+                  ⚠️ À vérifier — {{ document.confiance * 100 | number: '1.0-0' }}%
+                }
+              </span>
+            </div>
+            <p class="sous-titre">
+              {{ document.typeDocument }} · reçu via {{ document.canalSource === 'WHATSAPP' ? 'WhatsApp' : document.canalSource }}
+            </p>
+
+            @if (document.niveauConfiance === 'A_VERIFIER' && document.messageExtraction) {
+              <p class="explication-confiance">🔎 {{ document.messageExtraction }}</p>
+            }
+
+            @if (document.alertesFraude.length > 0) {
+              <div class="bloc-alertes-fraude" [class.critique]="document.scoreRisqueFraude === 'CRITIQUE'">
+                <p class="titre-alertes">
+                  {{ document.scoreRisqueFraude === 'CRITIQUE' ? '🛑 Risque de fraude critique' : '⚠️ Points à vérifier' }}
+                </p>
+                <ul>
+                  @for (alerte of document.alertesFraude; track alerte.code) {
+                    <li>
+                      <span class="motif-alerte">{{ alerte.motif }}</span>
+                      @if (alerte.actionRecommandee) {
+                        <span class="action-alerte">→ {{ alerte.actionRecommandee }}</span>
+                      }
+                    </li>
+                  }
+                </ul>
+              </div>
+            }
+
+            <label class="champ">
+              <span>Montant HT</span>
+              <input type="number" step="0.01" [(ngModel)]="montantHt" name="montantHt" />
+            </label>
+            <label class="champ">
+              <span>TVA</span>
+              <input type="number" step="0.01" [(ngModel)]="montantTva" name="montantTva" />
+            </label>
+            <label class="champ">
+              <span>Montant TTC</span>
+              <input type="number" step="0.01" [(ngModel)]="montantTtc" name="montantTtc" />
+            </label>
+            <label class="champ">
+              <span>Date de la pièce</span>
+              <input type="date" [(ngModel)]="datePiece" name="datePiece" />
+            </label>
+            <label class="champ">
+              <span>Compte SYSCOHADA (suggestion manuelle, pas d'IA)</span>
+              <select [(ngModel)]="compteSuggereId" name="compteSuggereId">
+                <option value="">— À déterminer lors de la comptabilisation —</option>
+                @for (compte of comptes(); track compte.id) {
+                  <option [value]="compte.id">{{ compte.numero }} — {{ compte.intitule }}</option>
+                }
+              </select>
+            </label>
+
+            <div class="actions-formulaire">
+              <button type="button" class="bouton-secondaire" (click)="fermerDetail()">Fermer</button>
+              <button
+                type="button"
+                class="bouton-principal"
+                [disabled]="envoiEnCours()"
+                (click)="validerDocumentActif()"
+              >
+                ✓ Valider cette pièce
+              </button>
+            </div>
+            <p class="note-comptabilisation">
+              La validation confirme les données et reprend le traitement automatique. La comptabilisation
+              définitive (choix du tiers et du compte) se fait ensuite depuis l'écran Documents.
+            </p>
+          </div>
+        </div>
+      }
+    </div>
+  }
+</div>

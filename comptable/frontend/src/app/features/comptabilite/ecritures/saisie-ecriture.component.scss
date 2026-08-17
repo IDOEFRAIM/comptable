@@ -1,0 +1,178 @@
+.page-saisie {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.entete {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  h2 {
+    margin: 0;
+    font-size: 1.2rem;
+  }
+}
+
+.lien-retour {
+  font-size: 0.8125rem;
+  color: #2563eb;
+  text-decoration: none;
+}
+
+.carte {
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  padding: 1.25rem;
+}
+
+.formulaire-entete {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.champ {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  font-size: 0.875rem;
+  flex: 1;
+  min-width: 160px;
+
+  input,
+  select {
+    padding: 0.5rem;
+    border: 1px solid #d0d5dd;
+    border-radius: 6px;
+  }
+}
+
+.champ-libelle {
+  flex: 2;
+}
+
+.carte-lignes {
+  padding: 0;
+  overflow-x: auto;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.875rem;
+}
+
+th {
+  text-align: left;
+  color: #667085;
+  font-weight: 600;
+  padding: 0.6rem;
+  border-bottom: 1px solid #eaecf0;
+}
+
+td {
+  padding: 0.4rem 0.6rem;
+  border-bottom: 1px solid #f2f4f7;
+}
+
+.col-montant {
+  width: 110px;
+}
+
+.col-action {
+  width: 40px;
+}
+
+input,
+select {
+  width: 100%;
+  padding: 0.4rem 0.5rem;
+  border: 1px solid #d0d5dd;
+  border-radius: 6px;
+  font: inherit;
+}
+
+input[type='number'] {
+  text-align: right;
+}
+
+.bouton-supprimer-ligne {
+  border: none;
+  background: none;
+  color: #b42318;
+  cursor: pointer;
+  font-size: 1rem;
+
+  &:disabled {
+    color: #d0d5dd;
+    cursor: not-allowed;
+  }
+}
+
+.bouton-ajouter-ligne {
+  border: none;
+  background: none;
+  color: #2563eb;
+  cursor: pointer;
+  font-size: 0.8125rem;
+  padding: 0.6rem 0;
+}
+
+tfoot td {
+  border-bottom: none;
+  border-top: 2px solid #eaecf0;
+  font-weight: 600;
+}
+
+.total {
+  text-align: right;
+  color: #98a2b3;
+
+  &.total-ok {
+    color: #1f2328;
+  }
+}
+
+.pied {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 1rem;
+}
+
+.ecart {
+  font-size: 0.875rem;
+  font-weight: 600;
+  margin-right: auto;
+
+  &.ecart-ok {
+    color: #027a48;
+  }
+
+  &.ecart-ko {
+    color: #b54708;
+  }
+}
+
+.message-erreur {
+  color: #b42318;
+  font-size: 0.875rem;
+}
+
+.bouton-principal {
+  padding: 0.55rem 1.25rem;
+  border: none;
+  border-radius: 6px;
+  background: #2563eb;
+  color: white;
+  font-weight: 600;
+  cursor: pointer;
+
+  &:disabled {
+    background: #a4bcf5;
+    cursor: not-allowed;
+  }
+}

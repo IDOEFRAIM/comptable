@@ -1,0 +1,68 @@
+<div class="page-register">
+  <form [formGroup]="form" (ngSubmit)="soumettre()" class="carte-register">
+    <h1>Comptable</h1>
+    <p class="sous-titre">Créer le compte de votre cabinet</p>
+
+    <label class="champ">
+      <span>Nom du cabinet</span>
+      <input type="text" formControlName="raisonSocialeCabinet" />
+    </label>
+
+    <label class="champ">
+      <span>Pays</span>
+      <select formControlName="pays">
+        @for (p of paysDisponibles; track p.code) {
+          <option [value]="p.code">{{ p.nom }}</option>
+        }
+      </select>
+    </label>
+
+    <div class="ligne-deux">
+      <label class="champ">
+        <span>Prénom</span>
+        <input type="text" formControlName="prenom" />
+      </label>
+      <label class="champ">
+        <span>Nom</span>
+        <input type="text" formControlName="nom" />
+      </label>
+    </div>
+
+    <label class="champ">
+      <span>Email professionnel</span>
+      <input type="email" formControlName="email" autocomplete="username" />
+    </label>
+
+    <label class="champ">
+      <span>Téléphone (optionnel)</span>
+      <input type="tel" formControlName="telephone" />
+    </label>
+
+    <div class="ligne-deux">
+      <label class="champ">
+        <span>Mot de passe</span>
+        <input type="password" formControlName="motDePasse" autocomplete="new-password" />
+      </label>
+      <label class="champ">
+        <span>Confirmer</span>
+        <input type="password" formControlName="confirmationMotDePasse" autocomplete="new-password" />
+      </label>
+    </div>
+
+    @if (form.errors?.['motsDePasseDifferents'] && form.get('confirmationMotDePasse')?.touched) {
+      <p class="message-erreur">Les mots de passe ne correspondent pas.</p>
+    }
+
+    @if (erreur()) {
+      <p class="message-erreur">{{ erreur() }}</p>
+    }
+
+    <button type="submit" [disabled]="envoiEnCours()">
+      {{ envoiEnCours() ? 'Création…' : 'Créer mon cabinet' }}
+    </button>
+
+    <p class="lien-secondaire">
+      Déjà inscrit ? <a routerLink="/login">Se connecter</a>
+    </p>
+  </form>
+</div>

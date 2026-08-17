@@ -1,0 +1,169 @@
+.page-ecritures {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.entete {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  h2 {
+    margin: 0;
+    font-size: 1.2rem;
+  }
+}
+
+.actions-entete {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.bouton-rafraichir {
+  border: none;
+  background: none;
+  color: #2563eb;
+  cursor: pointer;
+  font-size: 0.8125rem;
+}
+
+.actions-entete .bouton-principal {
+  display: inline-block;
+  text-decoration: none;
+  font-size: 0.8125rem;
+}
+
+.carte {
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.liste-ecritures {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.ligne-entete {
+  display: grid;
+  grid-template-columns: 110px 60px 1fr 110px 110px 90px;
+  align-items: center;
+  gap: 0.75rem;
+  width: 100%;
+  padding: 0.9rem 1.1rem;
+  border: none;
+  background: none;
+  cursor: pointer;
+  text-align: left;
+  font: inherit;
+  font-size: 0.875rem;
+
+  .piece {
+    font-weight: 600;
+  }
+
+  .journal {
+    color: #667085;
+  }
+
+  .libelle {
+    color: #1f2328;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .date,
+  .montant {
+    color: #667085;
+    text-align: right;
+  }
+}
+
+.badge {
+  padding: 0.2rem 0.6rem;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  background: #fff8e6;
+  color: #b54708;
+  justify-self: end;
+
+  &.badge-validee {
+    background: #ecfdf3;
+    color: #027a48;
+  }
+}
+
+.details {
+  padding: 0 1.1rem 1.1rem;
+  border-top: 1px solid #f2f4f7;
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.8125rem;
+    margin-top: 0.75rem;
+  }
+
+  th {
+    text-align: left;
+    color: #667085;
+    font-weight: 600;
+    padding: 0.4rem;
+  }
+
+  td {
+    padding: 0.4rem;
+    border-top: 1px solid #f2f4f7;
+  }
+}
+
+.actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.6rem;
+  margin-top: 0.75rem;
+}
+
+.bouton-principal {
+  padding: 0.5rem 1rem;
+  border: none;
+  border-radius: 6px;
+  background: #2563eb;
+  color: white;
+  font-weight: 600;
+  cursor: pointer;
+
+  &:disabled {
+    background: #a4bcf5;
+    cursor: not-allowed;
+  }
+}
+
+.bouton-secondaire {
+  padding: 0.5rem 1rem;
+  border: 1px solid #d0d5dd;
+  border-radius: 6px;
+  background: white;
+  cursor: pointer;
+
+  &:disabled {
+    color: #98a2b3;
+    cursor: not-allowed;
+  }
+}
+
+.etat-vide {
+  color: #667085;
+  text-align: center;
+  padding: 2rem 0;
+}
+
+.message-erreur {
+  color: #b42318;
+  font-size: 0.875rem;
+}

@@ -1,0 +1,39 @@
+.section-financiere {
+  margin-bottom: 1rem;
+
+  &:last-of-type {
+    margin-bottom: 0;
+  }
+}
+
+.ligne-section {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.35rem 0;
+  font-size: 0.8125rem;
+
+  span:last-child {
+    white-space: nowrap;
+    font-variant-numeric: tabular-nums;
+  }
+}
+
+.ligne-titre {
+  font-weight: 700;
+  color: #1f2328;
+  border-bottom: 1px solid #eaecf0;
+  padding-bottom: 0.4rem;
+  margin-bottom: 0.2rem;
+}
+
+.ligne-poste {
+  color: #475467;
+  padding-left: 0.75rem;
+}
+
+.ligne-vide {
+  color: #98a2b3;
+  padding-left: 0.75rem;
+  font-style: italic;
+}

@@ -1,0 +1,49 @@
+<div class="fond" (click)="annule.emit()">
+  <form [formGroup]="form" (ngSubmit)="soumettre()" class="carte-modale" (click)="$event.stopPropagation()">
+    <h3>Comptabiliser le document</h3>
+
+    @if (chargement()) {
+      <p class="etat-vide">Chargement…</p>
+    } @else {
+      <label class="champ">
+        <span>{{ typeDocument() === 'FACTURE_ACHAT' ? 'Fournisseur' : 'Client' }}</span>
+        <select formControlName="tiersId">
+          <option value="" disabled>Sélectionner…</option>
+          @for (t of tiers(); track t.id) {
+            <option [value]="t.id">{{ t.nom }} ({{ t.compteComptableNumero }})</option>
+          }
+        </select>
+        @if (tiers().length === 0) {
+          <span class="astuce">Aucun {{ typeDocument() === 'FACTURE_ACHAT' ? 'fournisseur' : 'client' }} —
+            créez-en un dans l'onglet Tiers.</span>
+        }
+      </label>
+
+      <label class="champ">
+        <span>Compte de {{ typeDocument() === 'FACTURE_ACHAT' ? 'charge' : 'produit' }}</span>
+        <select formControlName="compteChargeOuProduitId">
+          <option value="" disabled>Sélectionner…</option>
+          @for (c of comptes(); track c.id) {
+            <option [value]="c.id">{{ c.numero }} — {{ c.intitule }}</option>
+          }
+        </select>
+      </label>
+
+      <label class="champ">
+        <span>Libellé (optionnel)</span>
+        <input type="text" formControlName="libelle" />
+      </label>
+    }
+
+    @if (erreur()) {
+      <p class="message-erreur">{{ erreur() }}</p>
+    }
+
+    <div class="actions">
+      <button type="button" class="bouton-secondaire" (click)="annule.emit()">Annuler</button>
+      <button type="submit" class="bouton-principal" [disabled]="chargement() || envoiEnCours()">
+        {{ envoiEnCours() ? 'Comptabilisation…' : 'Comptabiliser' }}
+      </button>
+    </div>
+  </form>
+</div>

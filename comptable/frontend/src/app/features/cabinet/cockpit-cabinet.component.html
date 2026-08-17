@@ -1,0 +1,131 @@
+<div class="page-cockpit">
+  <div class="entete">
+    <h2>Cabinet</h2>
+  </div>
+
+  @if (erreur()) {
+    <p class="message-erreur">{{ erreur() }}</p>
+  }
+
+  @if (chargement()) {
+    <p class="etat-vide">Chargement…</p>
+  } @else {
+  @if (cockpit(); as c) {
+    <div class="carte carte-resume">
+      <div class="ligne-resume">
+        <span class="valeur-totale">{{ c.totalClients }}</span>
+        <span class="libelle-totale">clients actifs</span>
+      </div>
+      <div class="pastilles-statut">
+        <span class="pastille pastille-vert">🟢 {{ c.clientsNormaux }} dossiers normaux</span>
+        <span class="pastille pastille-orange">🟠 {{ c.clientsASurveiller }} à surveiller</span>
+        <span class="pastille pastille-rouge">🔴 {{ c.clientsBloques }} bloqués</span>
+      </div>
+    </div>
+
+    <div class="carte carte-a-traiter">
+      <h3>À traiter aujourd'hui</h3>
+      <ul class="liste-compteurs">
+        <li><strong>{{ c.dossiersATraiter }}</strong> dossier(s) nécessitent une action</li>
+        <li><strong>{{ c.demandesEnRetard }}</strong> demande(s) client en retard</li>
+        <li><strong>{{ c.cloturesARisque }}</strong> clôture(s) à risque</li>
+        <li><strong>{{ c.anomaliesFiscales }}</strong> anomalie(s) fiscale(s)</li>
+        <li><strong>{{ c.rapprochementsCritiques }}</strong> rapprochement(s) critique(s)</li>
+      </ul>
+    </div>
+
+    <div class="carte carte-risques">
+      <h3>Top risques du portefeuille</h3>
+      @if (c.topRisques.length === 0) {
+        <p class="etat-vide">Aucun risque majeur détecté.</p>
+      } @else {
+        <ul class="liste-risques">
+          @for (r of c.topRisques; track r.entrepriseId + r.cause) {
+            <li class="ligne-risque" [class]="'severite-' + r.severite">
+              <a [routerLink]="['/entreprises', r.entrepriseId, 'tableau-de-bord']">
+                <strong>{{ r.raisonSociale }}</strong>
+              </a>
+              <span class="cause">{{ r.cause }}</span>
+              <span class="depuis">depuis {{ r.depuisQuand }}</span>
+              @if (r.actionRecommandee) {
+                <span class="action">→ {{ r.actionRecommandee }}</span>
+              }
+            </li>
+          }
+        </ul>
+      }
+    </div>
+
+    <div class="carte carte-clients">
+      <h3>Clients ({{ c.clients.length }})</h3>
+      <ul class="liste-clients">
+        @for (client of c.clients; track client.entrepriseId) {
+          <li>
+            <a [routerLink]="['/entreprises', client.entrepriseId, 'tableau-de-bord']">
+              <span class="pastille-client">{{ libellesStatut[client.statut] }}</span>
+              <span class="nom-client">{{ client.raisonSociale }}</span>
+              <span class="score-client">{{ client.scoreGlobal }}%</span>
+            </a>
+          </li>
+        }
+      </ul>
+    </div>
+
+    @if (erreurCharge()) {
+      <p class="message-erreur">{{ erreurCharge() }}</p>
+    } @else if (charge().length > 0) {
+      <div class="carte carte-charge">
+        <h3>Charge par collaborateur</h3>
+        <ul class="liste-charge">
+          @for (w of charge(); track w.collaborateurId) {
+            <li>
+              <span class="nom-collaborateur">{{ w.collaborateurNom }}</span>
+              <span class="total-taches">{{ w.totalTaches }} tâche(s)</span>
+              @if (w.tachesCritiques > 0) {
+                <span class="taches-critiques">{{ w.tachesCritiques }} critique(s)</span>
+              }
+            </li>
+          }
+        </ul>
+      </div>
+    }
+
+    @if (erreurAnalytics()) {
+      <p class="message-erreur">{{ erreurAnalytics() }}</p>
+    }
+    @if (analytics(); as a) {
+      <div class="carte carte-analytics">
+        <h3>Analytics</h3>
+        <div class="grille-analytics">
+          <div>
+            <span class="valeur">{{ a.nombreDossiers }}</span>
+            <span class="libelle">Dossiers</span>
+          </div>
+          <div>
+            <span class="valeur">{{ a.dossiersAJour }}</span>
+            <span class="libelle">À jour</span>
+          </div>
+          <div>
+            <span class="valeur">{{ a.dossiersEnRetard }}</span>
+            <span class="libelle">En retard</span>
+          </div>
+          @if (a.tempsMoyenResolutionJours !== null) {
+            <div>
+              <span class="valeur">{{ a.tempsMoyenResolutionJours.toFixed(1) }}j</span>
+              <span class="libelle">Résolution moyenne</span>
+            </div>
+          }
+          @if (a.tauxDemandesResoluesPourcent !== null) {
+            <div>
+              <span class="valeur">{{ a.tauxDemandesResoluesPourcent.toFixed(0) }}%</span>
+              <span class="libelle">Demandes résolues</span>
+            </div>
+          }
+        </div>
+      </div>
+    }
+
+    <app-copilot-widget portee="cabinet" />
+  }
+  }
+</div>

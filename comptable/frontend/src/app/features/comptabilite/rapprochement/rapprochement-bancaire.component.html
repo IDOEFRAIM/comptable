@@ -1,0 +1,167 @@
+<div class="page-rapprochement">
+  <div class="entete">
+    <h2>Rapprochement bancaire <app-aide-contextuelle cle="rapprochement-semantique" /></h2>
+    <button type="button" class="bouton-principal" (click)="afficherFormulaire.set(!afficherFormulaire())">
+      {{ afficherFormulaire() ? 'Annuler' : '+ Importer un relevé' }}
+    </button>
+  </div>
+
+  @if (afficherFormulaire()) {
+    <form class="carte formulaire-import" (ngSubmit)="importer()">
+      <label class="champ">
+        <span>Compte de trésorerie</span>
+        <select [(ngModel)]="compteId" name="compteId">
+          <option value="" disabled>Choisir…</option>
+          @for (c of comptesTresorerie(); track c.id) {
+            <option [value]="c.id">{{ c.numero }} — {{ c.intitule }}</option>
+          }
+        </select>
+      </label>
+      <label class="champ">
+        <span>Libellé</span>
+        <input type="text" [(ngModel)]="libelle" name="libelle" placeholder="Ex : Relevé janvier 2027" />
+      </label>
+      <label class="champ">
+        <span>Du</span>
+        <input type="date" [(ngModel)]="dateDebut" name="dateDebut" />
+      </label>
+      <label class="champ">
+        <span>Au</span>
+        <input type="date" [(ngModel)]="dateFin" name="dateFin" />
+      </label>
+      <label class="champ">
+        <span>Solde début</span>
+        <input type="number" [(ngModel)]="soldeDebut" name="soldeDebut" />
+      </label>
+      <label class="champ">
+        <span>Solde fin</span>
+        <input type="number" [(ngModel)]="soldeFin" name="soldeFin" />
+      </label>
+      <label class="champ champ-fichier">
+        <span>Fichier CSV (date;libellé;montant)</span>
+        <input type="file" accept=".csv,text/csv" (change)="surFichierChoisi($event)" />
+      </label>
+      <button type="submit" class="bouton-principal" [disabled]="envoiEnCours()">
+        {{ envoiEnCours() ? 'Import…' : 'Importer et rapprocher' }}
+      </button>
+    </form>
+  }
+
+  @if (erreur()) {
+    <p class="message-erreur">{{ erreur() }}</p>
+  }
+
+  <div class="colonnes-rapprochement">
+    <div class="carte liste-releves">
+      <h3>Relevés importés</h3>
+      @if (chargement() && releves().length === 0) {
+        <p class="etat-vide">Chargement…</p>
+      } @else if (releves().length === 0) {
+        <p class="etat-vide">Aucun relevé importé.</p>
+      }
+      @for (r of releves(); track r.id) {
+        <button
+          type="button"
+          class="item-releve"
+          [class.actif]="releveActif()?.id === r.id"
+          (click)="ouvrirReleve(r.id)"
+        >
+          <span class="libelle">{{ r.libelle }}</span>
+          <span class="periode">{{ r.dateDebut }} → {{ r.dateFin }}</span>
+          <span class="ecart" [class.ecart-ok]="r.ecart === 0" [class.ecart-ko]="r.ecart !== 0">
+            {{ r.ecart === 0 ? '✓ Rapproché' : 'Écart ' + (r.ecart | number: '1.0-0') }}
+          </span>
+        </button>
+      }
+    </div>
+
+    @if (releveActif(); as releve) {
+      <div class="carte detail-releve">
+        <h3>{{ releve.compteNumero }} — {{ releve.compteIntitule }} · {{ releve.libelle }}</h3>
+        <div class="resume-soldes">
+          <div><span>Solde début relevé</span><strong>{{ releve.soldeDebut | number: '1.0-0' }}</strong></div>
+          <div><span>Solde fin relevé</span><strong>{{ releve.soldeFin | number: '1.0-0' }}</strong></div>
+          <div><span>Solde comptable</span><strong>{{ releve.soldeComptable | number: '1.0-0' }}</strong></div>
+          <div [class.ecart-ok]="releve.ecart === 0" [class.ecart-ko]="releve.ecart !== 0">
+            <span>Écart</span><strong>{{ releve.ecart | number: '1.0-0' }}</strong>
+          </div>
+        </div>
+
+        <table>
+          <thead>
+            <tr>
+              <th>Date</th>
+              <th>Libellé</th>
+              <th>Montant</th>
+              <th>Rapprochement</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (ligne of releve.lignes; track ligne.id) {
+              <tr [class.ligne-pointee]="ligne.pointee">
+                <td>{{ ligne.date }}</td>
+                <td>{{ ligne.libelle }}</td>
+                <td [class.montant-negatif]="ligne.montant < 0">{{ ligne.montant | number: '1.0-0' }}</td>
+                <td>
+                  @if (ligne.pointee) {
+                    <span class="badge-pointee">
+                      ✓ {{ ligne.ecritureNumeroPiece }} — {{ ligne.ecritureLibelle }}
+                    </span>
+                    <button type="button" class="bouton-lien" (click)="depointer(ligne.id)">Dépointer</button>
+                  } @else {
+                    <select #choix class="select-candidat">
+                      <option value="">Associer à…</option>
+                      @for (c of candidatsPourMontant(ligne.montant); track c.id) {
+                        <option [value]="c.id">{{ c.numeroPiece }} — {{ c.libelle }} ({{ c.debit || c.credit }})</option>
+                      }
+                    </select>
+                    <button type="button" class="bouton-lien" (click)="pointer(ligne.id, choix.value)">Pointer</button>
+
+                    @if (propositionsIA()[ligne.id]; as proposition) {
+                      <div class="suggestion-ia">
+                        <span class="badge-ia">
+                          🤖 Suggestion IA {{ proposition.confidence * 100 | number: '1.0-0' }}% —
+                          {{ libelleTypeCandidatIA(proposition.candidateType) }}
+                        </span>
+                        <button type="button" class="bouton-lien" (click)="accepterPropositionIA(proposition.id)">
+                          Accepter
+                        </button>
+                        <button
+                          type="button"
+                          class="bouton-lien bouton-discret"
+                          (click)="rejeterPropositionIA(proposition.id)"
+                        >
+                          Rejeter
+                        </button>
+                        <button
+                          type="button"
+                          class="bouton-lien bouton-discret"
+                          (click)="basculerDetailsIA(proposition.id)"
+                        >
+                          {{ detailsIAOuverts().has(proposition.id) ? 'Masquer détails' : 'Voir détails' }}
+                        </button>
+                        @if (detailsIAOuverts().has(proposition.id)) {
+                          <ul class="details-ia">
+                            @for (motif of proposition.reasons; track motif) {
+                              <li>{{ motif }}</li>
+                            }
+                            @for (avertissement of proposition.warnings; track avertissement) {
+                              <li class="avertissement-ia">⚠ {{ avertissement }}</li>
+                            }
+                          </ul>
+                        }
+                      </div>
+                    }
+                  }
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+        @if (releve.lignes.length === 0) {
+          <p class="etat-vide">Ce relevé ne contient aucune ligne.</p>
+        }
+      </div>
+    }
+  </div>
+</div>

@@ -1,0 +1,58 @@
+<div class="page-invitation">
+  <div class="entete">
+    <h2>Inviter un client ou un collaborateur</h2>
+  </div>
+
+  <p class="note">
+    Aucun email n'est envoyé automatiquement : un mot de passe temporaire est généré et affiché
+    une seule fois ci-dessous. Communiquez-le vous-même à la personne invitée.
+  </p>
+
+  <form [formGroup]="form" (ngSubmit)="inviter()" class="carte formulaire-creation">
+    <label class="champ champ-role">
+      <span>Rôle</span>
+      <select formControlName="role">
+        <option value="CLIENT">Client (accès au portail de cette entreprise)</option>
+        <option value="COLLABORATEUR">Collaborateur (accès à tout le cabinet)</option>
+      </select>
+    </label>
+    <label class="champ">
+      <span>Email</span>
+      <input type="email" formControlName="email" />
+    </label>
+    <label class="champ">
+      <span>Nom</span>
+      <input type="text" formControlName="nom" />
+    </label>
+    <label class="champ">
+      <span>Prénom</span>
+      <input type="text" formControlName="prenom" />
+    </label>
+    <label class="champ">
+      <span>Téléphone (optionnel)</span>
+      <input type="text" formControlName="telephone" />
+    </label>
+    <button type="submit" class="bouton-principal" [disabled]="envoiEnCours()">
+      {{ envoiEnCours() ? 'Création…' : 'Inviter' }}
+    </button>
+  </form>
+
+  @if (erreur()) {
+    <p class="message-erreur">{{ erreur() }}</p>
+  }
+
+  @if (dernierInvite(); as invite) {
+    <div class="carte carte-succes">
+      <p class="titre-succes">Compte créé pour {{ invite.prenom }} {{ invite.nom }} ({{ invite.role }})</p>
+      <dl>
+        <dt>Email</dt>
+        <dd>{{ invite.email }}</dd>
+        <dt>Mot de passe temporaire</dt>
+        <dd><code>{{ invite.motDePasseTemporaire }}</code></dd>
+      </dl>
+      <p class="avertissement">
+        Ce mot de passe ne sera plus jamais affiché. Notez-le et transmettez-le maintenant.
+      </p>
+    </div>
+  }
+</div>

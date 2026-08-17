@@ -1,0 +1,155 @@
+.entete-app {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.85rem 1.5rem;
+  background: white;
+  border-bottom: 1px solid #eaecf0;
+}
+
+.logo {
+  font-weight: 700;
+  font-size: 1.1rem;
+  color: #1f2328;
+  text-decoration: none;
+}
+
+.nav-principale {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  flex: 1;
+  padding-left: 2rem;
+
+  a {
+    color: #475467;
+    text-decoration: none;
+    font-size: 0.875rem;
+    font-weight: 600;
+
+    &.actif,
+    &:hover {
+      color: #2563eb;
+    }
+  }
+}
+
+.zone-utilisateur {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.email {
+  color: #667085;
+  font-size: 0.875rem;
+}
+
+.zone-notifications {
+  position: relative;
+}
+
+.bouton-cloche {
+  position: relative;
+  border: none;
+  background: none;
+  font-size: 1.1rem;
+  cursor: pointer;
+  padding: 0.3rem;
+  line-height: 1;
+}
+
+.pastille {
+  position: absolute;
+  top: -2px;
+  right: -2px;
+  min-width: 16px;
+  height: 16px;
+  padding: 0 3px;
+  border-radius: 999px;
+  background: #b42318;
+  color: white;
+  font-size: 0.625rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.dropdown-notifications {
+  position: absolute;
+  top: calc(100% + 0.5rem);
+  left: 0;
+  width: min(320px, 90vw);
+  max-height: 380px;
+  overflow-y: auto;
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+  border: 1px solid #eaecf0;
+  z-index: 20;
+}
+
+.dropdown-entete {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid #f2f4f7;
+  font-weight: 600;
+  font-size: 0.875rem;
+}
+
+.dropdown-notifications ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.dropdown-notifications li {
+  padding: 0.75rem 1rem;
+  font-size: 0.8125rem;
+  border-bottom: 1px solid #f2f4f7;
+  cursor: pointer;
+  color: #667085;
+
+  &.non-lue {
+    background: #eff6ff;
+    color: #1f2328;
+    font-weight: 600;
+  }
+
+  &:hover {
+    background: #f9fafb;
+  }
+}
+
+.dropdown-notifications .etat-vide {
+  padding: 1.5rem 1rem;
+  text-align: center;
+  color: #98a2b3;
+  font-size: 0.8125rem;
+  margin: 0;
+}
+
+.bouton-lien {
+  border: none;
+  background: none;
+  color: #2563eb;
+  cursor: pointer;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+button {
+  padding: 0.4rem 0.9rem;
+  border: 1px solid #d0d5dd;
+  border-radius: 6px;
+  background: white;
+  cursor: pointer;
+  font-size: 0.8125rem;
+
+  &:hover {
+    background: #f2f4f7;
+  }
+}

@@ -1,0 +1,95 @@
+<div class="page-demandes">
+  <div class="entete">
+    <h2>Pièces demandées</h2>
+    @if (peutGerer) {
+      <button type="button" class="bouton-principal" (click)="afficherFormulaire.set(!afficherFormulaire())">
+        {{ afficherFormulaire() ? 'Annuler' : '+ Nouvelle demande' }}
+      </button>
+    }
+  </div>
+
+  @if (!peutGerer) {
+    <p class="aide">Déposez directement le document demandé sur la ligne correspondante.</p>
+  }
+
+  @if (afficherFormulaire()) {
+    <form [formGroup]="form" (ngSubmit)="creer()" class="carte formulaire-creation">
+      <label class="champ">
+        <span>Ce qui manque</span>
+        <input type="text" formControlName="libelle" placeholder="Ex : Facture d'électricité de juin" />
+      </label>
+      <label class="champ">
+        <span>Précisions (optionnel)</span>
+        <input type="text" formControlName="description" />
+      </label>
+      <label class="champ champ-date">
+        <span>Échéance (optionnel)</span>
+        <input type="date" formControlName="dateLimite" />
+      </label>
+      <button type="submit" class="bouton-principal" [disabled]="envoiEnCours()">Envoyer la demande</button>
+    </form>
+  }
+
+  @if (erreur()) {
+    <p class="message-erreur">{{ erreur() }}</p>
+  }
+
+  @if (chargement()) {
+    <p class="etat-vide">Chargement…</p>
+  } @else if (demandes().length === 0) {
+    <p class="etat-vide">Aucune demande de pièce pour le moment.</p>
+  } @else {
+    <div class="liste-demandes">
+      @for (d of demandes(); track d.id) {
+        <div class="carte carte-demande">
+          <div class="ligne-principale">
+            <div class="texte">
+              <strong>{{ d.libelle }}</strong>
+              @if (d.description) {
+                <p class="description">{{ d.description }}</p>
+              }
+              <span class="meta">
+                @if (d.dateLimite) {
+                  Échéance {{ d.dateLimite }} ·
+                }
+                @if (d.demandeeParNom) {
+                  demandé par {{ d.demandeeParNom }}
+                }
+              </span>
+            </div>
+            <span [class]="classeStatut(d)">{{ libellesStatut[d.statut] }}</span>
+          </div>
+
+          @if (d.statut === 'EN_ATTENTE') {
+            @if (peutGerer) {
+              <div class="actions">
+                <button type="button" class="bouton-lien" (click)="annuler(d)">Annuler la demande</button>
+              </div>
+            } @else if (demandeEnReponse() === d.id) {
+              <div class="reponse-inline">
+                <select (change)="typeChoisi.set($any($event.target).value)">
+                  @for (type of typesDocument; track type) {
+                    <option [value]="type">{{ libellesType[type] }}</option>
+                  }
+                </select>
+                <input type="file" accept=".pdf,.jpg,.jpeg,.png" (change)="onFichierChoisi($event)" />
+                <button
+                  type="button"
+                  class="bouton-principal"
+                  [disabled]="!fichierChoisi() || envoiEnCours()"
+                  (click)="deposer(d)"
+                >
+                  {{ envoiEnCours() ? 'Envoi…' : 'Envoyer' }}
+                </button>
+              </div>
+            } @else {
+              <div class="actions">
+                <button type="button" class="bouton-lien" (click)="ouvrirReponse(d)">Déposer la pièce</button>
+              </div>
+            }
+          }
+        </div>
+      }
+    </div>
+  }
+</div>

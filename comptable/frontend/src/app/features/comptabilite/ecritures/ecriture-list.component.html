@@ -1,0 +1,82 @@
+<div class="page-ecritures">
+  <div class="entete">
+    <h2>Écritures</h2>
+    <div class="actions-entete">
+      <a routerLink="nouvelle" class="bouton-principal">+ Nouvelle écriture</a>
+      <button type="button" class="bouton-rafraichir" (click)="rafraichir()">↻ Actualiser</button>
+    </div>
+  </div>
+
+  @if (erreur()) {
+    <p class="message-erreur">{{ erreur() }}</p>
+  }
+
+  @if (chargement()) {
+    <p class="etat-vide">Chargement…</p>
+  } @else if (ecritures().length === 0) {
+    <p class="etat-vide">Aucune écriture pour le moment — comptabilisez un document depuis l'onglet Documents.</p>
+  } @else {
+    <div class="liste-ecritures">
+      @for (ecriture of ecritures(); track ecriture.id) {
+        <div class="carte carte-ecriture">
+          <button type="button" class="ligne-entete" (click)="basculer(ecriture)">
+            <span class="piece">{{ ecriture.numeroPiece }}</span>
+            <span class="journal">{{ ecriture.journalCode }}</span>
+            <span class="libelle">{{ ecriture.libelle }}</span>
+            <span class="date">{{ ecriture.dateEcriture }}</span>
+            <span class="montant">{{ ecriture.totalDebit }}</span>
+            <span class="badge" [class.badge-validee]="ecriture.statut === 'VALIDEE'">
+              {{ ecriture.statut === 'VALIDEE' ? 'Validée' : 'Brouillon' }}
+            </span>
+          </button>
+
+          @if (ecritureOuverte() === ecriture.id) {
+            <div class="details">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Compte</th>
+                    <th>Libellé</th>
+                    <th>Débit</th>
+                    <th>Crédit</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  @for (ligne of ecriture.lignes; track ligne.id) {
+                    <tr>
+                      <td>{{ ligne.compteNumero }} — {{ ligne.compteIntitule }}</td>
+                      <td>{{ ligne.libelle }}</td>
+                      <td>{{ ligne.debit || '—' }}</td>
+                      <td>{{ ligne.credit || '—' }}</td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+
+              @if (ecriture.statut === 'BROUILLON') {
+                <div class="actions">
+                  <button
+                    type="button"
+                    class="bouton-secondaire"
+                    [disabled]="actionEnCours() === ecriture.id"
+                    (click)="supprimer(ecriture)"
+                  >
+                    Supprimer
+                  </button>
+                  <button
+                    type="button"
+                    class="bouton-principal"
+                    [disabled]="actionEnCours() === ecriture.id"
+                    (click)="valider(ecriture)"
+                  >
+                    {{ actionEnCours() === ecriture.id ? 'Validation…' : 'Valider' }}
+                  </button>
+                </div>
+              }
+            </div>
+          }
+        </div>
+      }
+    </div>
+  }
+</div>
