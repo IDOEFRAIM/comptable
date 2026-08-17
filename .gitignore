@@ -31,6 +31,7 @@
 # Fichiers PDF de test locaux
 *.pdf
 
+README.md
 # ==========================================
 # 3. Variables d'environnement & Secrets
 # ==========================================
