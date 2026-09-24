@@ -19,8 +19,9 @@
 
 .carte {
   background: white;
-  border-radius: 8px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+  border: 1px solid var(--border-subtle);
 }
 
 .formulaire-entete {
@@ -42,8 +43,8 @@
   input,
   select {
     padding: 0.5rem;
-    border: 1px solid #d0d5dd;
-    border-radius: 6px;
+    border: 1px solid var(--border-default);
+    border-radius: var(--radius-md);
   }
 }
 
@@ -61,15 +62,15 @@ table {
 
 th {
   text-align: left;
-  color: #667085;
+  color: var(--text-tertiary);
   font-weight: 600;
   padding: 0.6rem;
-  border-bottom: 1px solid #eaecf0;
+  border-bottom: 1px solid var(--border-subtle);
 }
 
 td {
   padding: 0.4rem 0.6rem;
-  border-bottom: 1px solid #f2f4f7;
+  border-bottom: 1px solid var(--bg-subtle-hover);
 }
 
 .col-montant {
@@ -84,8 +85,8 @@ input,
 select {
   width: 100%;
   padding: 0.4rem 0.5rem;
-  border: 1px solid #d0d5dd;
-  border-radius: 6px;
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-md);
   font: inherit;
 }
 
@@ -96,18 +97,18 @@ select {
 
 tfoot td {
   border-bottom: none;
-  border-top: 2px solid #eaecf0;
+  border-top: 2px solid var(--border-subtle);
   font-weight: 700;
 }
 
 .bouton-supprimer-ligne {
   border: none;
   background: none;
-  color: #b42318;
+  color: var(--color-danger);
   cursor: pointer;
 
   &:disabled {
-    color: #d0d5dd;
+    color: var(--border-default);
     cursor: not-allowed;
   }
 }
@@ -115,7 +116,7 @@ tfoot td {
 .bouton-ajouter-ligne {
   border: none;
   background: none;
-  color: #2563eb;
+  color: var(--color-primary);
   cursor: pointer;
   font-size: 0.8125rem;
   padding: 0.6rem 0;
@@ -130,26 +131,26 @@ tfoot td {
 .bouton-principal {
   padding: 0.55rem 1rem;
   border: none;
-  border-radius: 6px;
-  background: #2563eb;
+  border-radius: var(--radius-md);
+  background: var(--color-primary);
   color: white;
   font-weight: 600;
   cursor: pointer;
   white-space: nowrap;
 
   &:disabled {
-    background: #a4bcf5;
+    background: var(--color-primary-border);
     cursor: not-allowed;
   }
 }
 
 .message-erreur {
-  color: #b42318;
+  color: var(--color-danger);
   font-size: 0.875rem;
 }
 
 .message-succes {
-  color: #027a48;
+  color: var(--color-success);
   font-size: 0.875rem;
 }
 
@@ -178,7 +179,7 @@ tfoot td {
   }
 
   .client {
-    color: #1f2328;
+    color: var(--text-primary);
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
@@ -186,7 +187,7 @@ tfoot td {
 
   .date,
   .montant {
-    color: #667085;
+    color: var(--text-tertiary);
     text-align: right;
   }
 }
@@ -196,24 +197,24 @@ tfoot td {
   border-radius: 999px;
   font-size: 0.75rem;
   font-weight: 600;
-  background: #fff8e6;
-  color: #b54708;
+  background: var(--color-warning-bg);
+  color: var(--color-warning);
   justify-self: end;
 
   &[data-statut='RECEPTIONNEE'] {
-    background: #ecfdf3;
-    color: #027a48;
+    background: var(--color-success-bg);
+    color: var(--color-success);
   }
 
   &[data-statut='FACTUREE'] {
-    background: #eff6ff;
-    color: #2563eb;
+    background: var(--color-primary-light);
+    color: var(--color-primary);
   }
 }
 
 .details {
   padding: 0 1.1rem 1.1rem;
-  border-top: 1px solid #f2f4f7;
+  border-top: 1px solid var(--bg-subtle-hover);
 
   table {
     margin-top: 0.75rem;
@@ -226,11 +227,11 @@ tfoot td {
   gap: 1.25rem;
   padding: 0.75rem 0;
   font-size: 0.875rem;
-  color: #667085;
+  color: var(--text-tertiary);
 
   .ttc {
     font-weight: 700;
-    color: #1f2328;
+    color: var(--text-primary);
   }
 }
 
@@ -242,13 +243,42 @@ tfoot td {
 }
 
 .info-reception {
-  color: #027a48;
+  color: var(--color-success);
   font-size: 0.875rem;
   padding: 0.75rem 0;
 }
 
+.bouton-secondaire {
+  padding: 0.5rem 0.9rem;
+  border: 1px solid var(--color-primary);
+  border-radius: var(--radius-md);
+  background: white;
+  color: var(--color-primary);
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+
+  &:disabled {
+    border-color: var(--border-default);
+    color: var(--text-tertiary);
+    cursor: not-allowed;
+  }
+}
+
+.apercu-comptable {
+  margin-top: 0.75rem;
+  padding-top: 0.75rem;
+  border-top: 1px dashed var(--bg-subtle-hover);
+
+  h4 {
+    margin: 0 0 0.5rem;
+    font-size: 0.8125rem;
+    color: var(--text-tertiary);
+  }
+}
+
 .etat-vide {
-  color: #667085;
+  color: var(--text-tertiary);
   text-align: center;
   padding: 2rem 0;
 }

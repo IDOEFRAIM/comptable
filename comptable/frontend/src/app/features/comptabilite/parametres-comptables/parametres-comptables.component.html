@@ -1,0 +1,123 @@
+<div class="page-parametres-comptables">
+  <div class="entete">
+    <h2>Paramètres comptables</h2>
+    <p class="sous-titre">
+      Configure le compte PCE utilisé automatiquement pour chaque nature d'opération. Un compte non
+      configuré ici reste résolu via le compte système historique s'il existe, sinon l'opération
+      passe en revue humaine — jamais un compte deviné.
+    </p>
+  </div>
+
+  @if (erreur()) {
+    <p class="message-erreur">{{ erreur() }}</p>
+  }
+  @if (succes()) {
+    <p class="message-succes">{{ succes() }}</p>
+  }
+
+  @if (chargement()) {
+    <p class="etat-vide">Chargement…</p>
+  } @else {
+    @for (groupe of groupes; track groupe.titre) {
+      <div class="carte groupe-purpose">
+        <h3>{{ groupe.titre }}</h3>
+        <table>
+          <thead>
+            <tr>
+              <th class="col-libelle">Nature</th>
+              <th class="col-compte">Compte configuré</th>
+              <th class="col-statut">Statut</th>
+              <th class="col-source">Source</th>
+              <th class="col-action"></th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (purpose of groupe.purposes; track purpose) {
+              <tr>
+                <td>{{ libelles[purpose] }}</td>
+                <td>
+                  <select [ngModel]="selectionPour(purpose)" (ngModelChange)="changerSelection(purpose, $event)">
+                    <option value="">— Non configuré ici —</option>
+                    @for (c of comptesPour(purpose); track c.id) {
+                      <option [value]="c.id">{{ c.numero }} — {{ c.intitule }}</option>
+                    }
+                  </select>
+                </td>
+                <td>
+                  <span class="badge-statut" [ngClass]="badgeStatut(purpose).classe">{{ badgeStatut(purpose).texte }}</span>
+                </td>
+                <td class="source">
+                  {{ resolutionPour(purpose)?.source ?? '' }}
+                  @if (resolutionPour(purpose)?.compteNumero) {
+                    <span class="compte-resolu">({{ resolutionPour(purpose)?.compteNumero }})</span>
+                  }
+                </td>
+                <td class="actions-ligne">
+                  @if (aUneModificationEnAttente(purpose) && selectionPour(purpose)) {
+                    <button
+                      type="button"
+                      class="bouton-secondaire"
+                      [disabled]="enregistrementEnCours() === purpose"
+                      (click)="enregistrer(purpose)"
+                    >
+                      Enregistrer
+                    </button>
+                  }
+                  @if (mappingPour(purpose) && !aUneModificationEnAttente(purpose)) {
+                    <button
+                      type="button"
+                      class="bouton-lien"
+                      [disabled]="enregistrementEnCours() === purpose"
+                      (click)="retirer(purpose)"
+                    >
+                      Retirer
+                    </button>
+                  }
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    }
+  }
+
+  <div class="carte panneau-test">
+    <h3>Tester la résolution</h3>
+    <p class="note-formulaire">
+      Vérifie, avant toute opération réelle, quel compte serait utilisé pour un purpose et un
+      contexte donnés.
+    </p>
+    <div class="ligne-champs">
+      <label class="champ">
+        <span>Nature</span>
+        <select [ngModel]="testPurpose()" (ngModelChange)="testPurpose.set($event)">
+          @for (groupe of groupes; track groupe.titre) {
+            @for (purpose of groupe.purposes; track purpose) {
+              <option [value]="purpose">{{ groupe.titre }} — {{ libelles[purpose] }}</option>
+            }
+          }
+        </select>
+      </label>
+      <label class="champ">
+        <span>Contexte (optionnel, ex. ESPECES)</span>
+        <input type="text" [(ngModel)]="testContextKey" placeholder="ex: ESPECES" />
+      </label>
+      <button type="button" class="bouton-principal" [disabled]="testEnCours()" (click)="tester()">
+        {{ testEnCours() ? 'Test…' : 'Tester' }}
+      </button>
+    </div>
+
+    @if (resultatTest(); as resultat) {
+      <div class="resultat-test" [ngClass]="'resultat-' + resultat.status.toLowerCase()">
+        <p>
+          <strong>{{ resultat.status }}</strong>
+          @if (resultat.compteNumero) {
+            — {{ resultat.compteNumero }} ({{ resultat.compteIntitule }})
+          }
+        </p>
+        <p class="explication">{{ resultat.explication }}</p>
+      </div>
+    }
+  </div>
+</div>

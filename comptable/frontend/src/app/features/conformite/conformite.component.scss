@@ -15,7 +15,7 @@
 }
 
 .lien-fiscalite {
-  color: #2563eb;
+  color: var(--color-primary);
   font-size: 0.8125rem;
   font-weight: 600;
   text-decoration: none;
@@ -27,8 +27,9 @@
 
 .carte {
   background: white;
-  border-radius: 8px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+  border: 1px solid var(--border-subtle);
   padding: 1.25rem;
 
   h3 {
@@ -47,19 +48,19 @@
   }
 
   .libelle-score {
-    color: #667085;
+    color: var(--text-tertiary);
   }
 
   &.score-bon .valeur-score {
-    color: #027a48;
+    color: var(--color-success);
   }
 
   &.score-moyen .valeur-score {
-    color: #b54708;
+    color: var(--color-warning);
   }
 
   &.score-mauvais .valeur-score {
-    color: #b42318;
+    color: var(--color-danger);
   }
 }
 
@@ -71,15 +72,15 @@ table {
 
 th {
   text-align: left;
-  color: #667085;
+  color: var(--text-tertiary);
   font-weight: 600;
   padding: 0.5rem;
-  border-bottom: 1px solid #eaecf0;
+  border-bottom: 1px solid var(--border-subtle);
 }
 
 td {
   padding: 0.6rem 0.5rem;
-  border-bottom: 1px solid #f2f4f7;
+  border-bottom: 1px solid var(--bg-subtle-hover);
 }
 
 .colonne-montant {
@@ -88,18 +89,18 @@ td {
 }
 
 .badge-succes {
-  background: #ecfdf3;
-  color: #027a48;
+  background: var(--color-success-bg);
+  color: var(--color-success);
 }
 
 .badge-erreur {
-  background: #fef3f2;
-  color: #b42318;
+  background: var(--color-danger-bg);
+  color: var(--color-danger);
 }
 
 .badge-attente {
-  background: #fff8e6;
-  color: #b54708;
+  background: var(--color-warning-bg);
+  color: var(--color-warning);
 }
 
 .liste-anomalies {
@@ -116,20 +117,20 @@ td {
     align-items: baseline;
     gap: 0.5rem;
     padding: 0.6rem 0.75rem;
-    border-radius: 6px;
-    border-left: 3px solid #d0d5dd;
-    background: #f9fafb;
+    border-radius: var(--radius-md);
+    border-left: 3px solid var(--border-default);
+    background: var(--bg-subtle);
 
     &.severite-CRITICAL {
-      border-left-color: #b42318;
+      border-left-color: var(--color-danger);
     }
 
     &.severite-IMPORTANT {
-      border-left-color: #b54708;
+      border-left-color: var(--color-warning);
     }
 
     &.severite-REVIEW {
-      border-left-color: #eaaa08;
+      border-left-color: var(--color-warning-border);
     }
   }
 }
@@ -144,7 +145,7 @@ td {
 }
 
 .description-anomalie {
-  color: #667085;
+  color: var(--text-tertiary);
   font-size: 0.8125rem;
   flex-basis: 100%;
 }

@@ -1,0 +1,155 @@
+<div class="page-plan-comptable">
+  <div class="entete">
+    <h2>Plan comptable</h2>
+    <div class="actions-entete">
+      <button type="button" class="bouton-secondaire" (click)="afficherFormulaireSubdivision.set(!afficherFormulaireSubdivision())">
+        {{ afficherFormulaireSubdivision() ? 'Annuler' : '+ Subdivision locale' }}
+      </button>
+      <button type="button" class="bouton-principal" (click)="ouvrirPanneauImport()">Importer depuis SYSCOHADA</button>
+    </div>
+  </div>
+
+  @if (erreur()) {
+    <p class="message-erreur">{{ erreur() }}</p>
+  }
+  @if (resultatImport()) {
+    <p class="message-info">{{ resultatImport() }}</p>
+  }
+  @if (avertissementDesactivation()) {
+    <p class="message-erreur">{{ avertissementDesactivation() }}</p>
+  }
+
+  @if (afficherFormulaireSubdivision()) {
+    <div class="carte formulaire-creation">
+      <p class="note-formulaire">
+        @if (compteSelectionne(); as parent) {
+          Nouvelle subdivision sous <strong>{{ parent.numero }} — {{ parent.intitule }}</strong>
+        } @else {
+          Nouveau compte de premier niveau (sélectionnez un compte dans l'arbre pour créer une subdivision dessous)
+        }
+      </p>
+      <div class="ligne-champs">
+        <label class="champ champ-numero">
+          <span>Numéro</span>
+          <input type="text" [(ngModel)]="nouveauNumero" placeholder="ex: 411301" />
+        </label>
+        <label class="champ">
+          <span>Libellé</span>
+          <input type="text" [(ngModel)]="nouvelIntitule" placeholder="ex: Client X" />
+        </label>
+        <label class="champ champ-case">
+          <input type="checkbox" [(ngModel)]="nouveauLettrable" />
+          <span>Lettrable</span>
+        </label>
+        <button type="button" class="bouton-principal" [disabled]="envoiEnCours()" (click)="creerSubdivision()">
+          {{ envoiEnCours() ? 'Création…' : 'Créer' }}
+        </button>
+      </div>
+    </div>
+  }
+
+  @if (afficherPanneauImport()) {
+    <div class="carte panneau-import">
+      <div class="entete-panneau">
+        <h3>Importer depuis le référentiel SYSCOHADA</h3>
+        <button type="button" class="bouton-lien" (click)="afficherPanneauImport.set(false)">Fermer</button>
+      </div>
+      <p class="note-formulaire">Import idempotent : un compte déjà présent dans ce PCE n'est jamais dupliqué ni écrasé.</p>
+      <button type="button" class="bouton-principal" [disabled]="envoiEnCours()" (click)="importerTout()">
+        Importer tout le référentiel actif
+      </button>
+
+      <p class="note-formulaire">Ou sélectionner des comptes précis (les comptes parents nécessaires sont inclus automatiquement) :</p>
+      <ul class="liste-selection-import">
+        @for (r of referentielGlobal(); track r.id) {
+          <li>
+            <label>
+              <input
+                type="checkbox"
+                [checked]="codesSelectionnes().has(r.numero)"
+                (change)="basculerSelectionCode(r.numero)"
+              />
+              <span class="numero">{{ r.numero }}</span>
+              <span>{{ r.intitule }}</span>
+            </label>
+          </li>
+        }
+      </ul>
+      <button
+        type="button"
+        class="bouton-principal"
+        [disabled]="envoiEnCours() || codesSelectionnes().size === 0"
+        (click)="importerSelection()"
+      >
+        Importer la sélection ({{ codesSelectionnes().size }})
+      </button>
+    </div>
+  }
+
+  <label class="champ champ-recherche">
+    <span>Rechercher</span>
+    <input type="text" [ngModel]="recherche()" (ngModelChange)="recherche.set($event)" placeholder="Numéro ou libellé..." />
+  </label>
+
+  @if (chargement()) {
+    <p class="etat-vide">Chargement…</p>
+  } @else if (recherche().trim().length > 0) {
+    @if (resultatsRecherche().length === 0) {
+      <p class="etat-vide">Aucun compte ne correspond à cette recherche.</p>
+    } @else {
+      <ul class="carte liste-resultats">
+        @for (c of resultatsRecherche(); track c.id) {
+          <li>
+            <button type="button" class="ligne-resultat" [class.selectionne]="c.id === compteSelectionneId()" (click)="selectionner(c.id)">
+              <span class="numero">{{ c.numero }}</span>
+              <span class="intitule">{{ c.intitule }}</span>
+              <span class="badge-origine" [class.personnalise]="!c.referenceId">{{ c.referenceId ? 'SYSCOHADA' : 'Personnalisé' }}</span>
+            </button>
+          </li>
+        }
+      </ul>
+    }
+  } @else if (arbre().length === 0) {
+    <p class="etat-vide">Aucun compte dans ce plan comptable pour le moment.</p>
+  } @else {
+    <ul class="carte arbre-racine">
+      @for (noeud of arbre(); track noeud.id) {
+        <app-plan-comptable-tree-node [noeud]="noeud" [compteSelectionneId]="compteSelectionneId()" (selectionner)="selectionner($event)" />
+      }
+    </ul>
+  }
+
+  @if (compteSelectionne(); as compte) {
+    <div class="carte panneau-detail">
+      <div class="entete-panneau">
+        <h3>{{ compte.numero }} — {{ compte.intitule }}</h3>
+        <button type="button" class="bouton-lien" (click)="compteSelectionneId.set(null)">Fermer</button>
+      </div>
+      <dl class="grille-detail">
+        <dt>Origine</dt>
+        <dd>{{ compte.referenceId ? 'Compte SYSCOHADA (n° référence ' + compte.referenceNumero + ')' : 'Compte personnalisé de ce cabinet' }}</dd>
+        <dt>Niveau</dt>
+        <dd>{{ compte.niveau }}</dd>
+        <dt>Nature</dt>
+        <dd>{{ compte.nature ?? '—' }}</dd>
+        <dt>Sens normal</dt>
+        <dd>{{ compte.sensNormal ?? '—' }}</dd>
+        <dt>Lettrable</dt>
+        <dd>{{ compte.lettrable ? 'Oui' : 'Non' }}</dd>
+        <dt>Statut</dt>
+        <dd>{{ compte.actif ? 'Actif' : 'Désactivé' }}</dd>
+      </dl>
+
+      <div class="ligne-champs">
+        <label class="champ">
+          <span>Libellé local</span>
+          <input type="text" [(ngModel)]="intituleEnEdition" />
+        </label>
+        <button type="button" class="bouton-secondaire" (click)="enregistrerIntitule()">Enregistrer le libellé</button>
+        <button type="button" class="bouton-secondaire" (click)="basculerActif()">
+          {{ compte.actif ? 'Désactiver' : 'Activer' }}
+        </button>
+      </div>
+    </div>
+  }
+</div>

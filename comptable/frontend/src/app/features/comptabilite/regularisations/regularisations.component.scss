@@ -1,0 +1,151 @@
+.page-regularisations {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.entete {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+
+  h2 {
+    margin: 0;
+    font-size: 1.2rem;
+  }
+}
+
+.carte {
+  background: white;
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+  border: 1px solid var(--border-subtle);
+  padding: 1.25rem;
+}
+
+.formulaire-creation {
+  display: flex;
+  gap: 1rem;
+  align-items: flex-end;
+  flex-wrap: wrap;
+}
+
+.champ {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  font-size: 0.875rem;
+  flex: 1;
+  min-width: 160px;
+
+  input,
+  select {
+    padding: 0.5rem;
+    border: 1px solid var(--border-default);
+    border-radius: var(--radius-md);
+  }
+}
+
+.champ-etroit {
+  min-width: 110px;
+  flex: 0;
+}
+
+.champ-large {
+  min-width: 240px;
+  flex: 2;
+}
+
+.bouton-principal {
+  padding: 0.55rem 1rem;
+  border: none;
+  border-radius: var(--radius-md);
+  background: var(--color-primary);
+  color: white;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+
+  &:disabled {
+    background: var(--color-primary-border);
+    cursor: not-allowed;
+  }
+}
+
+.bouton-secondaire {
+  padding: 0.4rem 0.8rem;
+  border: 1px solid var(--color-primary);
+  border-radius: var(--radius-md);
+  background: white;
+  color: var(--color-primary);
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.message-erreur {
+  color: var(--color-danger);
+  font-size: 0.875rem;
+}
+
+.message-info {
+  color: #b45309;
+  font-size: 0.8125rem;
+}
+
+.message-succes {
+  color: #15803d;
+  font-weight: 600;
+  font-size: 0.8125rem;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.8125rem;
+}
+
+th,
+td {
+  padding: 0.5rem;
+  text-align: right;
+  border-bottom: 1px solid var(--bg-subtle-hover);
+
+  &:first-child {
+    text-align: left;
+  }
+}
+
+th {
+  color: var(--text-tertiary);
+  font-weight: 600;
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.badge-statut {
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 0.2rem 0.6rem;
+  border-radius: 999px;
+  background: var(--surface-subtle, #f1f5f9);
+}
+
+.statut-proposee {
+  color: #b45309;
+}
+
+.statut-validee {
+  color: #15803d;
+}
+
+.statut-rejetee {
+  color: var(--color-danger);
+}
+
+.etat-vide {
+  color: var(--text-tertiary);
+  text-align: center;
+  padding: 1.5rem 0;
+}

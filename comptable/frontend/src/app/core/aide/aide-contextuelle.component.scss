@@ -10,9 +10,9 @@
   width: 1.35rem;
   height: 1.35rem;
   border-radius: 999px;
-  border: 1px solid #d0d5dd;
+  border: 1px solid var(--border-default);
   background: white;
-  color: #667085;
+  color: var(--text-tertiary);
   font-size: 0.75rem;
   font-weight: 700;
   line-height: 1;
@@ -20,8 +20,8 @@
   padding: 0;
 
   &:hover {
-    border-color: #2563eb;
-    color: #2563eb;
+    border-color: var(--color-primary);
+    color: var(--color-primary);
   }
 }
 
@@ -32,16 +32,16 @@
   z-index: 30;
   width: 280px;
   padding: 0.75rem 0.85rem;
-  background: #1f2328;
+  background: var(--text-primary);
   color: white;
-  border-radius: 8px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-md);
   font-size: 0.8125rem;
   line-height: 1.4;
 
   p {
     margin: 0;
-    color: #d0d5dd;
+    color: var(--border-default);
   }
 }
 
@@ -60,7 +60,7 @@
 .bouton-fermer {
   border: none;
   background: none;
-  color: #98a2b3;
+  color: var(--text-placeholder);
   cursor: pointer;
   font-size: 1rem;
   line-height: 1;

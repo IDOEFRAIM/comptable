@@ -18,23 +18,24 @@
 
 .carte {
   background: white;
-  border-radius: 8px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+  border: 1px solid var(--border-subtle);
   padding: 1.25rem;
 }
 
 .message-erreur {
-  color: #b42318;
+  color: var(--color-danger);
   font-size: 0.875rem;
 }
 
 .message-succes {
-  color: #027a48;
+  color: var(--color-success);
   font-size: 0.875rem;
 }
 
 .etat-vide {
-  color: #667085;
+  color: var(--text-tertiary);
   text-align: center;
   padding: 1rem 0;
 }
@@ -45,8 +46,8 @@
   gap: 1rem;
   padding: 0.75rem 1rem;
   background: white;
-  border: 1px solid #eaecf0;
-  border-radius: 8px;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
   flex-wrap: wrap;
 }
 
@@ -60,7 +61,7 @@
 }
 
 .compteur-selection {
-  color: #667085;
+  color: var(--text-tertiary);
   font-size: 0.8125rem;
   flex: 1;
 }
@@ -68,25 +69,25 @@
 .bouton-principal {
   padding: 0.55rem 1rem;
   border: none;
-  border-radius: 6px;
-  background: #2563eb;
+  border-radius: var(--radius-md);
+  background: var(--color-primary);
   color: white;
   font-weight: 600;
   cursor: pointer;
   white-space: nowrap;
 
   &:disabled {
-    background: #a4bcf5;
+    background: var(--color-primary-border);
     cursor: not-allowed;
   }
 }
 
 .bouton-secondaire {
   padding: 0.55rem 1rem;
-  border: 1px solid #d0d5dd;
-  border-radius: 6px;
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-md);
   background: white;
-  color: #344054;
+  color: var(--text-secondary);
   font-weight: 600;
   cursor: pointer;
 }
@@ -94,13 +95,13 @@
 .bouton-lien {
   border: none;
   background: none;
-  color: #2563eb;
+  color: var(--color-primary);
   cursor: pointer;
   font-size: 0.8125rem;
   font-weight: 600;
 
   &:disabled {
-    color: #98a2b3;
+    color: var(--text-placeholder);
     cursor: not-allowed;
   }
 }
@@ -130,19 +131,19 @@
   align-items: center;
   gap: 0.6rem;
   padding: 0.6rem 0.75rem;
-  border: 1px solid #eaecf0;
-  border-radius: 6px;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
   cursor: pointer;
   font-size: 0.8125rem;
 
   &:hover {
-    border-color: #d0d5dd;
-    background: #f9fafb;
+    border-color: var(--border-default);
+    background: var(--bg-subtle);
   }
 
   &.actif {
-    border-color: #2563eb;
-    background: #eff6ff;
+    border-color: var(--color-primary);
+    background: var(--color-primary-light);
   }
 }
 
@@ -161,7 +162,7 @@
   }
 
   .meta {
-    color: #667085;
+    color: var(--text-tertiary);
     font-size: 0.75rem;
   }
 }
@@ -180,13 +181,13 @@
   font-size: 0.7rem;
   font-weight: 700;
   white-space: nowrap;
-  background: #fff4e5;
-  color: #b54708;
+  background: var(--color-warning-bg);
+  color: var(--color-warning);
 }
 
 .badge-haute {
-  background: #ecfdf3;
-  color: #027a48;
+  background: var(--color-success-bg);
+  color: var(--color-success);
 }
 
 .badge-fraude {
@@ -201,41 +202,41 @@
 }
 
 .badge-fraude-critique {
-  background: #fef3f2;
-  color: #b42318;
-  border: 1px solid #fda29b;
+  background: var(--color-danger-bg);
+  color: var(--color-danger);
+  border: 1px solid var(--color-danger-border);
 }
 
 .explication-confiance {
   margin: -0.5rem 0 0.85rem;
-  color: #b54708;
+  color: var(--color-warning);
   font-size: 0.8125rem;
-  background: #fff4e5;
-  border-radius: 6px;
+  background: var(--color-warning-bg);
+  border-radius: var(--radius-md);
   padding: 0.5rem 0.65rem;
 }
 
 .bloc-alertes-fraude {
   margin: 0 0 0.85rem;
   padding: 0.65rem 0.75rem;
-  border-radius: 6px;
-  background: #fffaeb;
-  border: 1px solid #fedf89;
+  border-radius: var(--radius-md);
+  background: var(--color-warning-bg);
+  border: 1px solid var(--color-warning-border);
 
   &.critique {
-    background: #fef3f2;
-    border-color: #fda29b;
+    background: var(--color-danger-bg);
+    border-color: var(--color-danger-border);
   }
 
   .titre-alertes {
     margin: 0 0 0.4rem;
     font-size: 0.8125rem;
     font-weight: 700;
-    color: #b54708;
+    color: var(--color-warning);
   }
 
   &.critique .titre-alertes {
-    color: #b42318;
+    color: var(--color-danger);
   }
 
   ul {
@@ -248,7 +249,7 @@
 
   li {
     font-size: 0.8125rem;
-    color: #344054;
+    color: var(--text-secondary);
   }
 
   .motif-alerte {
@@ -257,7 +258,7 @@
 
   .action-alerte {
     display: block;
-    color: #667085;
+    color: var(--text-tertiary);
     font-style: italic;
   }
 }
@@ -285,7 +286,7 @@
 .apercu-image {
   max-width: 100%;
   max-height: 70vh;
-  border-radius: 6px;
+  border-radius: var(--radius-md);
   object-fit: contain;
 }
 
@@ -293,7 +294,7 @@
   width: 100%;
   height: 70vh;
   border: none;
-  border-radius: 6px;
+  border-radius: var(--radius-md);
 }
 
 .entete-formulaire {
@@ -309,7 +310,7 @@
 }
 
 .sous-titre {
-  color: #667085;
+  color: var(--text-tertiary);
   font-size: 0.8125rem;
   margin: 0.25rem 0 1rem;
   text-transform: capitalize;
@@ -325,8 +326,8 @@
   input,
   select {
     padding: 0.5rem;
-    border: 1px solid #d0d5dd;
-    border-radius: 6px;
+    border: 1px solid var(--border-default);
+    border-radius: var(--radius-md);
     font-size: 0.875rem;
   }
 }
@@ -340,6 +341,6 @@
 
 .note-comptabilisation {
   margin-top: 0.75rem;
-  color: #667085;
+  color: var(--text-tertiary);
   font-size: 0.75rem;
 }

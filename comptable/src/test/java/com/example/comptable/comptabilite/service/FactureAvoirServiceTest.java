@@ -1,24 +1,21 @@
 package com.example.comptable.comptabilite.service;
 
 import com.example.comptable.comptabilite.domain.CompteComptable;
-import com.example.comptable.comptabilite.domain.EcritureComptable;
-import com.example.comptable.comptabilite.domain.ExerciceComptable;
 import com.example.comptable.comptabilite.domain.Facture;
 import com.example.comptable.comptabilite.domain.FactureAvoir;
-import com.example.comptable.comptabilite.domain.Journal;
 import com.example.comptable.comptabilite.domain.LigneFacture;
-import com.example.comptable.comptabilite.domain.StatutExercice;
+import com.example.comptable.comptabilite.domain.RoleCompteSysteme;
 import com.example.comptable.comptabilite.domain.StatutFacture;
 import com.example.comptable.comptabilite.domain.StatutFactureAvoir;
 import com.example.comptable.comptabilite.domain.Tiers;
 import com.example.comptable.comptabilite.domain.TypeFacture;
 import com.example.comptable.comptabilite.domain.TypeTiers;
-import com.example.comptable.comptabilite.repository.CompteComptableRepository;
-import com.example.comptable.comptabilite.repository.EcritureComptableRepository;
-import com.example.comptable.comptabilite.repository.ExerciceComptableRepository;
+import com.example.comptable.comptabilite.operation.common.AccountingOperationEngine;
+import com.example.comptable.comptabilite.operation.common.AccountingOperationType;
+import com.example.comptable.comptabilite.operation.common.web.dto.AccountingOperationProposalDto;
+import com.example.comptable.comptabilite.operation.vente.VenteRule;
 import com.example.comptable.comptabilite.repository.FactureAvoirRepository;
 import com.example.comptable.comptabilite.repository.FactureRepository;
-import com.example.comptable.comptabilite.repository.JournalRepository;
 import com.example.comptable.comptabilite.web.dto.CreerFactureAvoirRequest;
 import com.example.comptable.comptabilite.web.dto.FactureAvoirDto;
 import com.example.comptable.comptabilite.web.dto.LigneAvoirRequest;
@@ -26,7 +23,6 @@ import com.example.comptable.entreprise.domain.Entreprise;
 import com.example.comptable.entreprise.service.EntrepriseAccessService;
 import com.example.comptable.identite.domain.Role;
 import com.example.comptable.identite.domain.Utilisateur;
-import com.example.comptable.identite.repository.UtilisateurRepository;
 import com.example.comptable.security.UtilisateurPrincipal;
 import com.example.comptable.stock.domain.Article;
 import com.example.comptable.stock.repository.ArticleRepository;
@@ -58,6 +54,12 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+/**
+ * validerAvoir route desormais la construction des lignes via VenteRule et la
+ * proposition/validation via AccountingOperationEngine.proposerEtValiderImmediatement (mission
+ * cloture Etape 4, section 22) plutot que de construire une EcritureComptable a la main - ces
+ * deux collaborateurs sont donc mockes ici comme des unites a part entiere.
+ */
 @ExtendWith(MockitoExtension.class)
 class FactureAvoirServiceTest {
 
@@ -68,15 +70,13 @@ class FactureAvoirServiceTest {
     @Mock
     private FactureAvoirRepository factureAvoirRepository;
     @Mock
-    private CompteComptableRepository compteComptableRepository;
+    private CompteComptableValidationService compteComptableValidationService;
     @Mock
-    private ExerciceComptableRepository exerciceComptableRepository;
+    private CompteSystemeResolver compteSystemeResolver;
     @Mock
-    private JournalRepository journalRepository;
+    private VenteRule venteRule;
     @Mock
-    private EcritureComptableRepository ecritureComptableRepository;
-    @Mock
-    private UtilisateurRepository utilisateurRepository;
+    private AccountingOperationEngine accountingOperationEngine;
     @Mock
     private MouvementStockService mouvementStockService;
     @Mock
@@ -90,13 +90,10 @@ class FactureAvoirServiceTest {
     private UUID entrepriseId;
     private Entreprise entreprise;
     private UtilisateurPrincipal principal;
-    private Utilisateur utilisateur;
     private Tiers client;
     private CompteComptable compteClient;
     private CompteComptable compteVentes;
     private CompteComptable compteTva;
-    private Journal journalVte;
-    private ExerciceComptable exercice;
 
     @BeforeEach
     void setUp() {
@@ -106,7 +103,7 @@ class FactureAvoirServiceTest {
 
         Role role = new Role();
         role.setCode("EXPERT_COMPTABLE");
-        utilisateur = new Utilisateur();
+        Utilisateur utilisateur = new Utilisateur();
         utilisateur.setId(UUID.randomUUID());
         utilisateur.setEmail("test@cabinet.ci");
         utilisateur.setMotDePasse("hash");
@@ -137,18 +134,6 @@ class FactureAvoirServiceTest {
         compteTva.setEntreprise(entreprise);
         compteTva.setNumero("443");
 
-        journalVte = new Journal();
-        journalVte.setId(UUID.randomUUID());
-        journalVte.setEntreprise(entreprise);
-        journalVte.setCode("VTE");
-
-        exercice = new ExerciceComptable();
-        exercice.setId(UUID.randomUUID());
-        exercice.setEntreprise(entreprise);
-        exercice.setDateDebut(LocalDate.of(2026, 1, 1));
-        exercice.setDateFin(LocalDate.of(2026, 12, 31));
-        exercice.setStatut(StatutExercice.OUVERT);
-
         when(entrepriseAccessService.verifierAcces(entrepriseId, principal)).thenReturn(entreprise);
     }
 
@@ -175,22 +160,19 @@ class FactureAvoirServiceTest {
     }
 
     private void mockerContexteComptable() {
-        when(exerciceComptableRepository.findByEntrepriseIdAndDate(any(), any())).thenReturn(Optional.of(exercice));
-        when(journalRepository.findByEntrepriseIdAndCode(entrepriseId, "VTE")).thenReturn(Optional.of(journalVte));
-        when(utilisateurRepository.getReferenceById(principal.getId())).thenReturn(utilisateur);
-        when(ecritureComptableRepository.countByJournalId(journalVte.getId())).thenReturn(0L);
-        when(compteComptableRepository.findById(compteVentes.getId())).thenReturn(Optional.of(compteVentes));
-        when(compteComptableRepository.findByEntrepriseIdAndNumero(entrepriseId, "443")).thenReturn(Optional.of(compteTva));
-        when(ecritureComptableRepository.save(any())).thenAnswer(inv -> {
-            EcritureComptable e = inv.getArgument(0);
-            e.setId(UUID.randomUUID());
-            return e;
-        });
+        when(compteComptableValidationService.chargerCompteUtilisable(entrepriseId, compteVentes.getId(), true)).thenReturn(compteVentes);
+        when(compteSystemeResolver.resoudre(entrepriseId, RoleCompteSysteme.TVA_COLLECTEE)).thenReturn(Optional.of(compteTva));
+        when(venteRule.construireLignesAvoirVenteDepuisMontantsPrecalcules(any(), any(), any(), any(), any(), any(), any()))
+                .thenReturn(List.of());
+        when(accountingOperationEngine.proposerEtValiderImmediatement(any(), any(), any(), any(), any(), any(), any(), any(), any(), any()))
+                .thenAnswer(inv -> new AccountingOperationProposalDto(UUID.randomUUID(), entrepriseId, "AVOIR_VENTE", "APPROVED",
+                        null, null, client.getId(), LocalDate.now(), "libelle", null, List.of(), BigDecimal.ZERO, BigDecimal.ZERO,
+                        true, List.of(), List.of(), null, null, null, null, UUID.randomUUID(), "FACTURE_AVOIR", null));
         when(lettrageService.lettrerAutomatiquement(any(), any(), any())).thenReturn(List.of());
     }
 
     @Test
-    void genere_un_avoir_total_avec_ecriture_inverse_701_443_411() {
+    void genere_un_avoir_total_qui_inverse_le_compte_produit_la_tva_et_le_client() {
         Facture facture = factureValidee();
         when(factureRepository.findById(facture.getId())).thenReturn(Optional.of(facture));
         when(factureAvoirRepository.sommeQuantitesCrediteesParLigne(any(), any())).thenReturn(List.of());
@@ -210,32 +192,36 @@ class FactureAvoirServiceTest {
         assertThat(avoirCree.montantTva()).isEqualByComparingTo("18000");
         assertThat(avoirCree.montantTtc()).isEqualByComparingTo("118000");
 
-        mockerContexteComptable();
+        when(compteComptableValidationService.chargerCompteUtilisable(entrepriseId, compteVentes.getId(), true)).thenReturn(compteVentes);
+        when(compteSystemeResolver.resoudre(entrepriseId, RoleCompteSysteme.TVA_COLLECTEE)).thenReturn(Optional.of(compteTva));
+        when(venteRule.construireLignesAvoirVenteDepuisMontantsPrecalcules(any(), any(), any(), any(), any(), any(), any()))
+                .thenReturn(List.of());
+        UUID ecritureId = UUID.randomUUID();
+        when(accountingOperationEngine.proposerEtValiderImmediatement(eq(entrepriseId), eq(AccountingOperationType.AVOIR_VENTE),
+                eq(client), any(), any(), any(), any(), eq("FACTURE_AVOIR"), any(), eq(principal)))
+                .thenReturn(new AccountingOperationProposalDto(UUID.randomUUID(), entrepriseId, "AVOIR_VENTE", "APPROVED",
+                        null, null, client.getId(), facture.getDateEmission(), "libelle", null, List.of(), BigDecimal.ZERO,
+                        BigDecimal.ZERO, true, List.of(), List.of(), null, null, null, null, ecritureId, "FACTURE_AVOIR", null));
+        when(lettrageService.lettrerAutomatiquement(any(), any(), any())).thenReturn(List.of());
+
         FactureAvoir avoirEntite = construireAvoirDepuisDto(avoirCree, facture);
         when(factureAvoirRepository.findById(avoirCree.id())).thenReturn(Optional.of(avoirEntite));
 
         FactureAvoirDto resultat = factureAvoirService.validerAvoir(entrepriseId, avoirCree.id(), principal);
 
         assertThat(resultat.statut()).isEqualTo("VALIDEE");
-        assertThat(resultat.ecritureId()).isNotNull();
+        assertThat(resultat.ecritureId()).isEqualTo(ecritureId);
 
-        ArgumentCaptor<EcritureComptable> captor = ArgumentCaptor.forClass(EcritureComptable.class);
-        verify(ecritureComptableRepository).save(captor.capture());
-        EcritureComptable ecriture = captor.getValue();
-        assertThat(ecriture.estEquilibree()).isTrue();
-        assertThat(ecriture.getLignes()).hasSize(3);
-        assertThat(ecriture.getLignes()).anySatisfy(l -> {
-            assertThat(l.getCompte().getNumero()).isEqualTo("701");
-            assertThat(l.getDebit()).isEqualByComparingTo("100000");
-        });
-        assertThat(ecriture.getLignes()).anySatisfy(l -> {
-            assertThat(l.getCompte().getNumero()).isEqualTo("443");
-            assertThat(l.getDebit()).isEqualByComparingTo("18000");
-        });
-        assertThat(ecriture.getLignes()).anySatisfy(l -> {
-            assertThat(l.getCompte().getNumero()).isEqualTo("411001");
-            assertThat(l.getCredit()).isEqualByComparingTo("118000");
-        });
+        ArgumentCaptor<BigDecimal> montantHtCaptor = ArgumentCaptor.forClass(BigDecimal.class);
+        ArgumentCaptor<CompteComptable> compteTvaCaptor = ArgumentCaptor.forClass(CompteComptable.class);
+        ArgumentCaptor<BigDecimal> montantTvaCaptor = ArgumentCaptor.forClass(BigDecimal.class);
+        ArgumentCaptor<BigDecimal> montantTtcCaptor = ArgumentCaptor.forClass(BigDecimal.class);
+        verify(venteRule).construireLignesAvoirVenteDepuisMontantsPrecalcules(eq(client), eq(compteVentes),
+                montantHtCaptor.capture(), compteTvaCaptor.capture(), montantTvaCaptor.capture(), montantTtcCaptor.capture(), any());
+        assertThat(montantHtCaptor.getValue()).isEqualByComparingTo("100000");
+        assertThat(compteTvaCaptor.getValue().getNumero()).isEqualTo("443");
+        assertThat(montantTvaCaptor.getValue()).isEqualByComparingTo("18000");
+        assertThat(montantTtcCaptor.getValue()).isEqualByComparingTo("118000");
 
         verify(lettrageService).lettrerAutomatiquement(entrepriseId, compteClient.getId(), principal);
     }
@@ -342,7 +328,7 @@ class FactureAvoirServiceTest {
 
         mockerContexteComptable();
         when(articleRepository.findById(articleId)).thenReturn(Optional.of(article));
-        when(mouvementStockService.enregistrer(any(), any(), any())).thenReturn(mock(MouvementStockDto.class));
+        when(mouvementStockService.enregistrerAvecSource(any(), any(), any(), eq("FACTURE_AVOIR"), any())).thenReturn(mock(MouvementStockDto.class));
         FactureAvoir avoirEntite = construireAvoirDepuisDto(avoirCree, facture);
         avoirEntite.setRetourStock(true);
         when(factureAvoirRepository.findById(avoirCree.id())).thenReturn(Optional.of(avoirEntite));
@@ -350,7 +336,7 @@ class FactureAvoirServiceTest {
         factureAvoirService.validerAvoir(entrepriseId, avoirCree.id(), principal);
 
         ArgumentCaptor<CreerMouvementStockRequest> captor = ArgumentCaptor.forClass(CreerMouvementStockRequest.class);
-        verify(mouvementStockService, times(1)).enregistrer(eq(entrepriseId), captor.capture(), eq(principal));
+        verify(mouvementStockService, times(1)).enregistrerAvecSource(eq(entrepriseId), captor.capture(), eq(principal), eq("FACTURE_AVOIR"), eq(avoirEntite.getId()));
         assertThat(captor.getValue().type()).isEqualTo(com.example.comptable.stock.domain.TypeMouvementStock.ENTREE);
         assertThat(captor.getValue().quantite()).isEqualByComparingTo("10");
         assertThat(captor.getValue().prixUnitaireHt()).isEqualByComparingTo("1200");

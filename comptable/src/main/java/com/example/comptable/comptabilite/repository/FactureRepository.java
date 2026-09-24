@@ -58,4 +58,15 @@ public interface FactureRepository extends JpaRepository<Facture, UUID> {
             + "order by f.dateEmission desc")
     List<Facture> rechercherCandidatsRapprochement(UUID entrepriseId, TypeFacture type, StatutFacture statut,
                                                      LocalDate debut, LocalDate fin);
+
+    /** Mission P2 (Cash Forecast, PaymentBehaviorService) : relie une ligne de reglement lettree
+     * (identifiee par l'ecriture de facturation d'origine) a la facture correspondante, pour en
+     * lire l'echeance contractuelle (dateEcheance) - jamais devinee. */
+    List<Facture> findByEcritureIdIn(List<UUID> ecritureIds);
+
+    /** Mission P2 (Cash Forecast, palier EXPECTED/PaymentBehaviorService) : factures clients avec
+     * une echeance connue, quel que soit leur statut (VALIDEE en instance ou PAYEE deja reglee -
+     * necessaire pour reconstituer l'historique de paiement). */
+    List<Facture> findByEntrepriseIdAndTypeAndTiersIdAndDateEcheanceIsNotNullAndEcritureIdIsNotNull(
+            UUID entrepriseId, TypeFacture type, UUID tiersId);
 }

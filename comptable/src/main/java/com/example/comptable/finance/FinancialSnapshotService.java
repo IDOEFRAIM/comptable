@@ -3,6 +3,7 @@ package com.example.comptable.finance;
 import com.example.comptable.comptabilite.repository.LigneEcritureRepository;
 import com.example.comptable.comptabilite.service.BalanceAgeeService;
 import com.example.comptable.comptabilite.web.dto.BalanceAgeeDto;
+import com.example.comptable.entreprise.repository.EntrepriseRepository;
 import com.example.comptable.entreprise.service.EntrepriseAccessService;
 import com.example.comptable.finance.web.dto.ComparaisonFinancialSnapshotDto;
 import com.example.comptable.finance.web.dto.FinancialSnapshotDto;
@@ -10,8 +11,10 @@ import com.example.comptable.fiscalite.domain.DeclarationFiscale;
 import com.example.comptable.fiscalite.repository.DeclarationFiscaleRepository;
 import com.example.comptable.security.UtilisateurPrincipal;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -31,6 +34,7 @@ import java.util.UUID;
 public class FinancialSnapshotService {
 
     private final EntrepriseAccessService entrepriseAccessService;
+    private final EntrepriseRepository entrepriseRepository;
     private final LigneEcritureRepository ligneEcritureRepository;
     private final BalanceAgeeService balanceAgeeService;
     private final DeclarationFiscaleRepository declarationFiscaleRepository;
@@ -39,10 +43,26 @@ public class FinancialSnapshotService {
     public FinancialSnapshotDto generer(UUID entrepriseId, LocalDate periodeDebut, LocalDate periodeFin,
                                          UtilisateurPrincipal principal) {
         entrepriseAccessService.verifierAcces(entrepriseId, principal);
+        BalanceAgeeDto balanceAgee = balanceAgeeService.generer(entrepriseId, periodeFin, principal);
+        return calculer(entrepriseId, periodeDebut, periodeFin, balanceAgee);
+    }
 
+    /** Variante sans principal humain (STEP 8 du plan AI Finance) : appel serveur-a-serveur
+     * (ai-service, cle API interne) - meme discipline que CashPositionService.genererSysteme
+     * (STEP 8) et AccountingOperationEngine.validerSysteme (STEP 7). */
+    @Transactional(readOnly = true)
+    public FinancialSnapshotDto genererSysteme(UUID entrepriseId, LocalDate periodeDebut, LocalDate periodeFin) {
+        if (!entrepriseRepository.existsById(entrepriseId)) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Entreprise introuvable");
+        }
+        BalanceAgeeDto balanceAgee = balanceAgeeService.genererSysteme(entrepriseId, periodeFin);
+        return calculer(entrepriseId, periodeDebut, periodeFin, balanceAgee);
+    }
+
+    private FinancialSnapshotDto calculer(UUID entrepriseId, LocalDate periodeDebut, LocalDate periodeFin,
+                                           BalanceAgeeDto balanceAgee) {
         BigDecimal cash = ligneEcritureRepository.soldeTresorerie(entrepriseId, periodeFin);
 
-        BalanceAgeeDto balanceAgee = balanceAgeeService.generer(entrepriseId, periodeFin, principal);
         BigDecimal receivables = sommer(balanceAgee, "CLIENT");
         BigDecimal payables = sommer(balanceAgee, "FOURNISSEUR").negate();
 

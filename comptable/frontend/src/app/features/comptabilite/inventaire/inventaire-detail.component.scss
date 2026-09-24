@@ -1,0 +1,62 @@
+.entete-inventaire {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 0.5rem;
+
+  h3 {
+    margin: 0;
+    font-size: 1rem;
+  }
+}
+
+.badge-statut {
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 0.2rem 0.6rem;
+  border-radius: 999px;
+  background: var(--surface-subtle, #f1f5f9);
+}
+
+.statut-valide {
+  color: #b45309;
+}
+
+.statut-cloture {
+  color: #15803d;
+}
+
+.commentaire {
+  color: var(--text-tertiary);
+  font-size: 0.875rem;
+}
+
+.formulaire-ligne {
+  margin: 0.75rem 0;
+}
+
+.ecart-positif {
+  color: #15803d;
+  font-weight: 600;
+}
+
+.ecart-negatif {
+  color: #b91c1c;
+  font-weight: 600;
+}
+
+.actions-inventaire {
+  display: flex;
+  gap: 0.6rem;
+  margin-top: 0.75rem;
+}
+
+.message-info {
+  color: #b45309;
+  font-size: 0.875rem;
+}
+
+.message-succes {
+  color: #15803d;
+  font-weight: 600;
+}

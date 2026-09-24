@@ -2,7 +2,6 @@ package com.example.comptable.comptabilite.service;
 
 import com.example.comptable.comptabilite.domain.CompteComptable;
 import com.example.comptable.comptabilite.domain.LigneEcriture;
-import com.example.comptable.comptabilite.repository.CompteComptableRepository;
 import com.example.comptable.comptabilite.repository.LigneEcritureRepository;
 import com.example.comptable.comptabilite.web.dto.BalanceDto;
 import com.example.comptable.comptabilite.web.dto.BalanceLigneDto;
@@ -29,7 +28,7 @@ import java.util.UUID;
 public class BalanceService {
 
     private final EntrepriseAccessService entrepriseAccessService;
-    private final CompteComptableRepository compteComptableRepository;
+    private final CompteComptableValidationService compteComptableValidationService;
     private final LigneEcritureRepository ligneEcritureRepository;
 
     @Transactional(readOnly = true)
@@ -39,7 +38,7 @@ public class BalanceService {
         List<UUID> comptesMouvementes = ligneEcritureRepository.rechercherComptesMouvementes(entrepriseId, dateFin);
 
         List<BalanceLigneDto> lignes = comptesMouvementes.stream()
-                .map(compteId -> genererLigne(compteId, dateDebut, dateFin))
+                .map(compteId -> genererLigne(entrepriseId, compteId, dateDebut, dateFin))
                 .sorted(Comparator.comparing(BalanceLigneDto::compteNumero))
                 .toList();
 
@@ -56,8 +55,8 @@ public class BalanceService {
                 totalSoldeClotureDebit, totalSoldeClotureCredit);
     }
 
-    private BalanceLigneDto genererLigne(UUID compteId, LocalDate dateDebut, LocalDate dateFin) {
-        CompteComptable compte = compteComptableRepository.findById(compteId).orElseThrow();
+    private BalanceLigneDto genererLigne(UUID entrepriseId, UUID compteId, LocalDate dateDebut, LocalDate dateFin) {
+        CompteComptable compte = compteComptableValidationService.chargerCompteDeLEntreprise(entrepriseId, compteId);
 
         BigDecimal netOuverture = ligneEcritureRepository.soldeNetAvant(compteId, dateDebut);
         List<LigneEcriture> mouvements = ligneEcritureRepository.rechercherMouvementsValides(compteId, dateDebut, dateFin);

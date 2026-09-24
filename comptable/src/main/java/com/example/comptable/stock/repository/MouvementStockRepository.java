@@ -14,4 +14,6 @@ public interface MouvementStockRepository extends JpaRepository<MouvementStock, 
     List<MouvementStock> findByArticleIdFetchAll(UUID articleId);
 
     long countByArticle_Entreprise_Id(UUID entrepriseId);
+
+    List<MouvementStock> findBySourceTypeAndSourceId(String sourceType, UUID sourceId);
 }

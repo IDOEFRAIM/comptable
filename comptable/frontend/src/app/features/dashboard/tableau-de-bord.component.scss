@@ -20,46 +20,79 @@
   gap: 1rem;
 }
 
+// Grille principale du tableau de bord : une colonne large pour le travail en cours (cloture,
+// actions prioritaires) et une colonne etroite pour les outils/reperes secondaires (copilot,
+// echeances) - le pattern classique d'un dashboard SaaS plutot qu'un empilement de cartes pleine
+// largeur qui se lit comme un rapport imprime.
+.grille-dashboard {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(280px, 340px);
+  align-items: start;
+  gap: 1.25rem;
+}
+
+.colonne-principale,
+.colonne-secondaire {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+  min-width: 0;
+}
+
+@media (max-width: 960px) {
+  .grille-dashboard {
+    grid-template-columns: 1fr;
+  }
+}
+
+// Traitement volontairement plus sobre qu'une "carte" pleine (pas d'ombre) : c'est une bande de
+// reperes rapides, pas des blocs de contenu au meme niveau hierarchique que le dossier ou les
+// actions prioritaires - un nombre en gros caracteres gras sur fond blanc avec ombre porte
+// aujourd'hui autant l'oeil qu'un score principal, ce qui aplatit toute la page au meme niveau
+// d'importance.
 .carte-compteur {
   display: flex;
   flex-direction: column;
   gap: 0.35rem;
-  padding: 1.1rem;
+  padding: 0.9rem 1rem;
   background: white;
-  border-radius: 8px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--border-default);
   text-decoration: none;
   color: inherit;
-  transition: box-shadow 0.15s;
+  transition: border-color 0.15s, background 0.15s;
 
   &:hover {
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+    border-color: var(--color-primary-border);
+    background: var(--bg-subtle);
   }
 
   .valeur {
-    font-size: 1.75rem;
-    font-weight: 700;
-    color: #1f2328;
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    font-variant-numeric: tabular-nums;
   }
 
   .libelle {
     font-size: 0.8125rem;
-    color: #667085;
+    color: var(--text-tertiary);
   }
 
   &.attention .valeur {
-    color: #b54708;
+    color: var(--color-warning);
   }
 
   &.danger .valeur {
-    color: #b42318;
+    color: var(--color-danger);
   }
 }
 
 .carte {
   background: white;
-  border-radius: 8px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+  border: 1px solid var(--border-subtle);
   padding: 1.25rem;
 }
 
@@ -80,7 +113,7 @@
 
   a {
     text-decoration: none;
-    color: #1f2328;
+    color: var(--text-primary);
     font-size: 0.875rem;
 
     &:hover {
@@ -90,22 +123,21 @@
 }
 
 .section-retard {
-  border: 1px solid #fda29b;
-  background: #fef3f2;
+  border-left: 3px solid var(--color-danger);
 
   h3 {
-    color: #b42318;
+    color: var(--color-danger);
   }
 }
 
 .etat-vide {
-  color: #667085;
+  color: var(--text-tertiary);
   text-align: center;
   padding: 1rem 0;
 }
 
 .message-erreur {
-  color: #b42318;
+  color: var(--color-danger);
   font-size: 0.875rem;
 }
 
@@ -132,21 +164,21 @@
     border-radius: 999px;
     font-size: 0.8125rem;
     font-weight: 600;
-    background: #eaecf0;
+    background: var(--border-subtle);
 
     &.statut-PRET {
-      background: #ecfdf3;
-      color: #027a48;
+      background: var(--color-success-bg);
+      color: var(--color-success);
     }
 
     &.statut-A_SURVEILLER {
-      background: #fffaeb;
-      color: #b54708;
+      background: var(--color-warning-bg);
+      color: var(--color-warning);
     }
 
     &.statut-BLOQUE {
-      background: #fef3f2;
-      color: #b42318;
+      background: var(--color-danger-bg);
+      color: var(--color-danger);
     }
   }
 
@@ -158,12 +190,12 @@
     .valeur {
       font-size: 2rem;
       font-weight: 700;
-      color: #1f2328;
+      color: var(--text-primary);
     }
 
     .libelle {
       font-size: 0.8125rem;
-      color: #667085;
+      color: var(--text-tertiary);
     }
   }
 }
@@ -171,47 +203,59 @@
 .grille-scores-domaines {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
-  gap: 0.75rem;
+  gap: 0.6rem;
 }
 
+// Silence par defaut : un domaine sain ne porte aucune couleur ni accent, seul un domaine en
+// difficulte se signale par une bordure gauche (meme langage visuel que ligne-finding/carte-cloture
+// plus bas, plutot qu'une barre du haut qui etait la seule case a utiliser ce motif). Sur un
+// dossier sain, 7 barres vertes identiques cote a cote n'apportent aucune information et lisent
+// comme un bulletin de notes plutot qu'un tableau de bord - la couleur ne doit apparaitre que
+// quand elle signale reellement quelque chose.
 .score-domaine {
   display: flex;
   flex-direction: column;
-  gap: 0.15rem;
-  padding: 0.6rem 0.75rem;
-  border-radius: 6px;
-  background: #ecfdf3;
+  gap: 0.2rem;
+  padding: 0.65rem 0.8rem 0.55rem;
+  border-radius: var(--radius-md);
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-left: 3px solid transparent;
 
   .valeur {
-    font-size: 1.1rem;
-    font-weight: 700;
-    color: #027a48;
+    font-size: 1.0625rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    font-variant-numeric: tabular-nums;
   }
 
   .libelle {
-    font-size: 0.75rem;
-    color: #667085;
+    font-size: 0.6875rem;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
+    color: var(--text-tertiary);
   }
 
   &.moyen {
-    background: #fffaeb;
+    border-left-color: var(--color-warning);
 
     .valeur {
-      color: #b54708;
+      color: var(--color-warning);
     }
   }
 
   &.faible {
-    background: #fef3f2;
+    border-left-color: var(--color-danger);
 
     .valeur {
-      color: #b42318;
+      color: var(--color-danger);
     }
   }
 }
 
 .carte-cloture {
-  border: 1px solid #eaecf0;
+  border-left: 3px solid var(--gray-300);
 
   h3 {
     margin: 0 0 0.75rem;
@@ -219,22 +263,69 @@
   }
 
   &.cloture-NOT_READY {
-    border-color: #fda29b;
-    background: #fef3f2;
+    border-left-color: var(--color-danger);
+
+    h3 {
+      color: var(--color-danger);
+    }
   }
 
   &.cloture-READY_WITH_REVIEW {
-    border-color: #fec84b;
-    background: #fffaeb;
+    border-left-color: var(--color-warning);
+
+    h3 {
+      color: var(--color-warning);
+    }
   }
 
-  .liste-cloture {
-    font-size: 0.8125rem;
-    margin-bottom: 0.5rem;
+  &.cloture-READY {
+    border-left-color: var(--color-success);
 
-    ul {
-      margin: 0.3rem 0 0;
-      padding-left: 1.1rem;
+    h3 {
+      color: var(--color-success);
+    }
+  }
+
+  .checklist-cloture {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+    font-size: 0.8125rem;
+
+    li {
+      display: flex;
+      align-items: baseline;
+      gap: 0.5rem;
+    }
+
+    .controle-icone {
+      width: 1.1rem;
+      flex-shrink: 0;
+      text-align: center;
+    }
+
+    .controle-libelle {
+      font-weight: 600;
+      color: var(--text-secondary);
+    }
+
+    .controle-message {
+      color: var(--text-tertiary);
+    }
+
+    .controle-BLOCKING .controle-message {
+      color: var(--color-danger);
+    }
+
+    .controle-WARNING .controle-message {
+      color: var(--color-warning);
+    }
+
+    .controle-NOT_APPLICABLE {
+      opacity: 0.6;
     }
   }
 }
@@ -254,18 +345,22 @@
 }
 
 .ligne-finding {
-  padding: 0.75rem;
-  border-radius: 6px;
-  border: 1px solid #eaecf0;
+  padding: 0.75rem 0.85rem;
+  border-radius: var(--radius-md);
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-left: 3px solid var(--gray-300);
 
   &.severite-CRITICAL {
-    border-color: #fda29b;
-    background: #fef3f2;
+    border-left-color: var(--color-danger);
   }
 
   &.severite-IMPORTANT {
-    border-color: #fec84b;
-    background: #fffaeb;
+    border-left-color: var(--color-warning);
+  }
+
+  &.severite-REVIEW {
+    border-left-color: var(--color-primary);
   }
 
   .entete-finding {
@@ -276,9 +371,31 @@
   }
 
   .badge-severite {
-    font-size: 0.75rem;
-    font-weight: 600;
+    display: inline-flex;
+    padding: 0.1rem 0.5rem;
+    border-radius: 999px;
+    background: var(--bg-subtle);
+    color: var(--text-secondary);
+    font-size: 0.6875rem;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
     white-space: nowrap;
+  }
+
+  &.severite-CRITICAL .badge-severite {
+    background: var(--color-danger-bg);
+    color: var(--color-danger);
+  }
+
+  &.severite-IMPORTANT .badge-severite {
+    background: var(--color-warning-bg);
+    color: var(--color-warning);
+  }
+
+  &.severite-REVIEW .badge-severite {
+    background: var(--color-primary-light);
+    color: var(--color-primary);
   }
 
   .titre-finding {
@@ -290,7 +407,7 @@
   .action-recommandee {
     margin: 0.2rem 0;
     font-size: 0.8125rem;
-    color: #475467;
+    color: var(--text-secondary);
   }
 
   .actions-finding {
@@ -305,7 +422,7 @@
     margin: 0.5rem 0 0;
     padding-left: 1.1rem;
     font-size: 0.75rem;
-    color: #475467;
+    color: var(--text-secondary);
   }
 }
 
@@ -315,12 +432,12 @@
   align-items: center;
   gap: 0.4rem;
   font-size: 0.75rem;
-  color: #667085;
+  color: var(--text-tertiary);
 
   select {
     padding: 0.2rem 0.4rem;
-    border: 1px solid #d0d5dd;
-    border-radius: 6px;
+    border: 1px solid var(--border-default);
+    border-radius: var(--radius-md);
     font-size: 0.75rem;
   }
 }
@@ -328,9 +445,9 @@
 .carte-proposition {
   margin-top: 0.6rem;
   padding: 0.6rem 0.75rem;
-  border-radius: 6px;
-  background: #eff6ff;
-  border: 1px solid #bfdbfe;
+  border-radius: var(--radius-md);
+  background: var(--color-primary-light);
+  border: 1px solid var(--color-primary-border);
 }
 
 .titre-proposition {
@@ -341,14 +458,14 @@
 
 .confiance-proposition {
   font-weight: 400;
-  color: #667085;
+  color: var(--text-tertiary);
 }
 
 .detail-proposition {
   margin: 0 0 0.5rem;
   padding-left: 1.1rem;
   font-size: 0.75rem;
-  color: #475467;
+  color: var(--text-secondary);
 }
 
 .actions-proposition {
@@ -359,13 +476,13 @@
 .statut-proposition {
   margin: 0.6rem 0 0;
   font-size: 0.75rem;
-  color: #667085;
+  color: var(--text-tertiary);
 }
 
 .bouton-lien {
   border: none;
   background: none;
-  color: #2563eb;
+  color: var(--color-primary);
   cursor: pointer;
   font-size: 0.8125rem;
   font-weight: 600;
@@ -373,5 +490,5 @@
 }
 
 .bouton-discret {
-  color: #667085;
+  color: var(--text-tertiary);
 }

@@ -30,120 +30,6 @@
     </div>
   }
 
-  @if (clotureReadiness(); as c) {
-    <div class="carte carte-cloture" [class]="'cloture-' + c.statut">
-      <h3>Clôture — {{ libellesClotureReadiness[c.statut] }}</h3>
-      @if (c.blockingItems.length > 0) {
-        <div class="liste-cloture">
-          <strong>Bloquant :</strong>
-          <ul>
-            @for (item of c.blockingItems; track item) {
-              <li>{{ item }}</li>
-            }
-          </ul>
-        </div>
-      }
-      @if (c.warnings.length > 0) {
-        <div class="liste-cloture">
-          <strong>À surveiller :</strong>
-          <ul>
-            @for (item of c.warnings; track item) {
-              <li>{{ item }}</li>
-            }
-          </ul>
-        </div>
-      }
-    </div>
-  }
-
-  <app-copilot-widget portee="entreprise" [entrepriseId]="entrepriseId()" />
-
-  <div class="carte carte-findings">
-    <h3>Actions prioritaires ({{ findings().length }})</h3>
-    @if (findings().length === 0) {
-      <p class="etat-vide">Rien à traiter pour le moment.</p>
-    } @else {
-      <ul class="liste-findings">
-        @for (f of findings(); track f.id) {
-          <li class="ligne-finding" [class]="'severite-' + f.severity">
-            <div class="entete-finding">
-              <span class="badge-severite">{{ libellesSeverite[f.severity] }}</span>
-              <span class="titre-finding">{{ f.title }}</span>
-            </div>
-            @if (f.description) {
-              <p class="description-finding">{{ f.description }}</p>
-            }
-            @if (f.recommendedAction) {
-              <p class="action-recommandee"><strong>Action recommandée :</strong> {{ f.recommendedAction }}</p>
-            }
-            <div class="actions-finding">
-              <button type="button" class="bouton-lien" (click)="resoudre(f.id)">Résoudre</button>
-              <button type="button" class="bouton-lien bouton-discret" (click)="rejeter(f.id)">Rejeter</button>
-              <button type="button" class="bouton-lien bouton-discret" (click)="basculerDetails(f)">
-                {{ detailsOuverts().has(f.id) ? 'Masquer détails' : 'Voir détails' }}
-              </button>
-              <label class="selecteur-assignation">
-                Assigner à
-                <select [ngModel]="f.assignedToId ?? ''" (ngModelChange)="assigner(f.id, $event)">
-                  <option value="">Non assigné</option>
-                  @for (c of collaborateurs(); track c.id) {
-                    <option [value]="c.id">{{ c.nomComplet }}</option>
-                  }
-                </select>
-              </label>
-            </div>
-            @if (detailsOuverts().has(f.id)) {
-              @if (evidenceEntries(f).length > 0) {
-                <ul class="preuve-finding">
-                  @for (entry of evidenceEntries(f); track entry[0]) {
-                    <li><strong>{{ entry[0] }} :</strong> {{ entry[1] }}</li>
-                  }
-                </ul>
-              }
-              @if (f.sourceType === 'DOCUMENT') {
-                @if (propositionPour(f); as proposition) {
-                  @if (proposition.status === 'PROPOSED') {
-                    <div class="carte-proposition">
-                      <p class="titre-proposition">
-                        Proposition de comptabilisation
-                        <span class="confiance-proposition">({{ (proposition.confidence * 100).toFixed(0) }}% confiance)</span>
-                      </p>
-                      <ul class="detail-proposition">
-                        @if (proposition.tiersNom) {
-                          <li><strong>Tiers :</strong> {{ proposition.tiersNom }}</li>
-                        }
-                        @if (proposition.compteChargeProduitNumero) {
-                          <li><strong>Compte :</strong> {{ proposition.compteChargeProduitNumero }}</li>
-                        }
-                        @if (proposition.montantTtc !== null) {
-                          <li><strong>Montant TTC :</strong> {{ proposition.montantTtc }}</li>
-                        }
-                      </ul>
-                      <div class="actions-proposition">
-                        <button type="button" class="bouton-lien" (click)="accepterProposition(f, proposition.id)">
-                          Accepter
-                        </button>
-                        <button
-                          type="button"
-                          class="bouton-lien bouton-discret"
-                          (click)="rejeterProposition(f, proposition.id)"
-                        >
-                          Rejeter
-                        </button>
-                      </div>
-                    </div>
-                  } @else {
-                    <p class="statut-proposition">Proposition {{ proposition.status === 'ACCEPTED' ? 'acceptée' : 'rejetée' }}.</p>
-                  }
-                }
-              }
-            }
-          </li>
-        }
-      </ul>
-    }
-  </div>
-
   @if (chargement()) {
     <p class="etat-vide">Chargement…</p>
   } @else {
@@ -166,38 +52,151 @@
           <span class="libelle">Solde de trésorerie (classe 5)</span>
         </div>
       </div>
+    }
+  }
 
-      @if (t.echeancesEnRetard.length > 0) {
-        <div class="carte section-echeances section-retard">
-          <h3>⚠ Échéances en retard</h3>
-          <ul>
-            @for (d of t.echeancesEnRetard; track d.id) {
-              <li>
-                <a routerLink="../fiscalite">
-                  <strong>{{ libellesType[d.typeImpot] }}</strong> — {{ d.periode }} (échéance {{ d.dateEcheance }})
-                </a>
+  <div class="grille-dashboard">
+    <div class="colonne-principale">
+      @if (clotureReadiness(); as c) {
+        <div class="carte carte-cloture" [class]="'cloture-' + c.statut">
+          <h3>Clôture — {{ libellesClotureReadiness[c.statut] }}</h3>
+          <ul class="checklist-cloture">
+            @for (item of c.checklist; track item.code) {
+              <li [class]="'controle-' + item.statut">
+                <span class="controle-icone">{{ libellesStatutControle[item.statut] }}</span>
+                <span class="controle-libelle">{{ item.libelle }}</span>
+                @if (item.message) {
+                  <span class="controle-message">{{ item.message }}</span>
+                }
               </li>
             }
           </ul>
         </div>
       }
 
-      <div class="carte section-echeances">
-        <h3>Prochaines échéances fiscales (30 jours)</h3>
-        @if (t.prochainesEcheances.length === 0) {
-          <p class="etat-vide">Aucune échéance dans les 30 prochains jours.</p>
+      <div class="carte carte-findings">
+        <h3>Actions prioritaires ({{ findings().length }})</h3>
+        @if (findings().length === 0) {
+          <p class="etat-vide">Rien à traiter pour le moment.</p>
         } @else {
-          <ul>
-            @for (d of t.prochainesEcheances; track d.id) {
-              <li>
-                <a routerLink="../fiscalite">
-                  <strong>{{ libellesType[d.typeImpot] }}</strong> — {{ d.periode }} (échéance {{ d.dateEcheance }})
-                </a>
+          <ul class="liste-findings">
+            @for (f of findings(); track f.id) {
+              <li class="ligne-finding" [class]="'severite-' + f.severity">
+                <div class="entete-finding">
+                  <span class="badge-severite">{{ libellesSeverite[f.severity] }}</span>
+                  <span class="titre-finding">{{ f.title }}</span>
+                </div>
+                @if (f.description) {
+                  <p class="description-finding">{{ f.description }}</p>
+                }
+                @if (f.recommendedAction) {
+                  <p class="action-recommandee"><strong>Action recommandée :</strong> {{ f.recommendedAction }}</p>
+                }
+                <div class="actions-finding">
+                  <button type="button" class="bouton-lien" (click)="resoudre(f.id)">Résoudre</button>
+                  <button type="button" class="bouton-lien bouton-discret" (click)="rejeter(f.id)">Rejeter</button>
+                  <button type="button" class="bouton-lien bouton-discret" (click)="basculerDetails(f)">
+                    {{ detailsOuverts().has(f.id) ? 'Masquer détails' : 'Voir détails' }}
+                  </button>
+                  <label class="selecteur-assignation">
+                    Assigner à
+                    <select [ngModel]="f.assignedToId ?? ''" (ngModelChange)="assigner(f.id, $event)">
+                      <option value="">Non assigné</option>
+                      @for (c of collaborateurs(); track c.id) {
+                        <option [value]="c.id">{{ c.nomComplet }}</option>
+                      }
+                    </select>
+                  </label>
+                </div>
+                @if (detailsOuverts().has(f.id)) {
+                  @if (evidenceEntries(f).length > 0) {
+                    <ul class="preuve-finding">
+                      @for (entry of evidenceEntries(f); track entry[0]) {
+                        <li><strong>{{ entry[0] }} :</strong> {{ entry[1] }}</li>
+                      }
+                    </ul>
+                  }
+                  @if (f.sourceType === 'DOCUMENT') {
+                    @if (propositionPour(f); as proposition) {
+                      @if (proposition.status === 'PROPOSED') {
+                        <div class="carte-proposition">
+                          <p class="titre-proposition">
+                            Proposition de comptabilisation
+                            <span class="confiance-proposition">({{ (proposition.confidence * 100).toFixed(0) }}% confiance)</span>
+                          </p>
+                          <ul class="detail-proposition">
+                            @if (proposition.tiersNom) {
+                              <li><strong>Tiers :</strong> {{ proposition.tiersNom }}</li>
+                            }
+                            @if (proposition.compteChargeProduitNumero) {
+                              <li><strong>Compte :</strong> {{ proposition.compteChargeProduitNumero }}</li>
+                            }
+                            @if (proposition.montantTtc !== null) {
+                              <li><strong>Montant TTC :</strong> {{ proposition.montantTtc }}</li>
+                            }
+                          </ul>
+                          <div class="actions-proposition">
+                            <button type="button" class="bouton-lien" (click)="accepterProposition(f, proposition.id)">
+                              Accepter
+                            </button>
+                            <button
+                              type="button"
+                              class="bouton-lien bouton-discret"
+                              (click)="rejeterProposition(f, proposition.id)"
+                            >
+                              Rejeter
+                            </button>
+                          </div>
+                        </div>
+                      } @else {
+                        <p class="statut-proposition">Proposition {{ proposition.status === 'ACCEPTED' ? 'acceptée' : 'rejetée' }}.</p>
+                      }
+                    }
+                  }
+                }
               </li>
             }
           </ul>
         }
       </div>
-    }
-  }
+    </div>
+
+    <div class="colonne-secondaire">
+      <app-copilot-widget portee="entreprise" [entrepriseId]="entrepriseId()" />
+
+      @if (tableau(); as t) {
+        @if (t.echeancesEnRetard.length > 0) {
+          <div class="carte section-echeances section-retard">
+            <h3>Échéances en retard</h3>
+            <ul>
+              @for (d of t.echeancesEnRetard; track d.id) {
+                <li>
+                  <a routerLink="../fiscalite">
+                    <strong>{{ libellesType[d.typeImpot] }}</strong> — {{ d.periode }} (échéance {{ d.dateEcheance }})
+                  </a>
+                </li>
+              }
+            </ul>
+          </div>
+        }
+
+        <div class="carte section-echeances">
+          <h3>Prochaines échéances fiscales (30 jours)</h3>
+          @if (t.prochainesEcheances.length === 0) {
+            <p class="etat-vide">Aucune échéance dans les 30 prochains jours.</p>
+          } @else {
+            <ul>
+              @for (d of t.prochainesEcheances; track d.id) {
+                <li>
+                  <a routerLink="../fiscalite">
+                    <strong>{{ libellesType[d.typeImpot] }}</strong> — {{ d.periode }} (échéance {{ d.dateEcheance }})
+                  </a>
+                </li>
+              }
+            </ul>
+          }
+        </div>
+      }
+    </div>
+  </div>
 </div>

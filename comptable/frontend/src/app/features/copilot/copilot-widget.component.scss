@@ -1,13 +1,23 @@
 .carte-copilot {
   background: white;
-  border-radius: 8px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+  border: 1px solid var(--border-subtle);
   padding: 1.25rem;
 
   h3 {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
     margin: 0 0 0.75rem;
-    font-size: 1rem;
+    font-size: 0.9375rem;
+    color: var(--text-primary);
   }
+}
+
+.icone-copilot {
+  color: var(--color-primary);
+  flex-shrink: 0;
 }
 
 .suggestions {
@@ -18,18 +28,18 @@
 }
 
 .bouton-suggestion {
-  border: 1px solid #d0d5dd;
-  background: #f9fafb;
+  border: 1px solid var(--border-default);
+  background: var(--bg-subtle);
   border-radius: 999px;
   padding: 0.35rem 0.75rem;
   font-size: 0.8125rem;
   cursor: pointer;
-  color: #344054;
+  color: var(--text-secondary);
 
   &:hover:not(:disabled) {
-    background: #eef4ff;
-    border-color: #2563eb;
-    color: #2563eb;
+    background: var(--color-primary-light);
+    border-color: var(--color-primary);
+    color: var(--color-primary);
   }
 
   &:disabled {
@@ -45,16 +55,16 @@
   input {
     flex: 1;
     padding: 0.5rem 0.75rem;
-    border: 1px solid #d0d5dd;
-    border-radius: 6px;
+    border: 1px solid var(--border-default);
+    border-radius: var(--radius-md);
     font-size: 0.875rem;
   }
 
   button {
     padding: 0.5rem 1rem;
     border: none;
-    border-radius: 6px;
-    background: #2563eb;
+    border-radius: var(--radius-md);
+    background: var(--color-primary);
     color: white;
     font-weight: 600;
     cursor: pointer;
@@ -67,13 +77,13 @@
 }
 
 .etat-vide {
-  color: #667085;
+  color: var(--text-tertiary);
   margin: 0.75rem 0 0;
   font-size: 0.8125rem;
 }
 
 .message-erreur {
-  color: #b42318;
+  color: var(--color-danger);
   font-size: 0.8125rem;
   margin: 0.75rem 0 0;
 }
@@ -81,18 +91,18 @@
 .reponse-copilot {
   margin-top: 1rem;
   padding-top: 0.75rem;
-  border-top: 1px solid #eaecf0;
+  border-top: 1px solid var(--border-subtle);
 
   .texte-reponse {
     margin: 0 0 0.5rem;
     font-size: 0.9375rem;
-    color: #1f2328;
+    color: var(--text-primary);
   }
 
   .actions-recommandees,
   .preuves {
     font-size: 0.8125rem;
-    color: #475467;
+    color: var(--text-secondary);
     margin-bottom: 0.5rem;
 
     ul {
@@ -104,7 +114,7 @@
   .confiance {
     margin: 0;
     font-size: 0.75rem;
-    color: #667085;
+    color: var(--text-tertiary);
   }
 }
 
@@ -114,24 +124,24 @@
   gap: 0.5rem;
   margin-top: 0.6rem;
   padding-top: 0.6rem;
-  border-top: 1px solid #f2f4f7;
+  border-top: 1px solid var(--bg-subtle-hover);
   font-size: 0.75rem;
-  color: #667085;
+  color: var(--text-tertiary);
 }
 
 .bouton-feedback {
-  border: 1px solid #d0d5dd;
+  border: 1px solid var(--border-default);
   background: white;
-  border-radius: 6px;
+  border-radius: var(--radius-md);
   padding: 0.15rem 0.5rem;
   cursor: pointer;
   font-size: 0.875rem;
 
   &:hover {
-    background: #f9fafb;
+    background: var(--bg-subtle);
   }
 }
 
 .feedback-merci {
-  color: #027a48;
+  color: var(--color-success);
 }

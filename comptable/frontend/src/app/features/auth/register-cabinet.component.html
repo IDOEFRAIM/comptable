@@ -1,68 +1,130 @@
 <div class="page-register">
-  <form [formGroup]="form" (ngSubmit)="soumettre()" class="carte-register">
-    <h1>Comptable</h1>
-    <p class="sous-titre">Créer le compte de votre cabinet</p>
+  <aside class="panneau-marque">
+    <div class="panneau-contenu">
+      <span class="marque">
+        <span class="marque-icone" aria-hidden="true">C</span>
+        Comptable
+      </span>
+      <h2>Créez l'espace de votre cabinet en quelques minutes.</h2>
+      <ul class="atouts">
+        <li>Un dossier par client, prêt à recevoir vos premières pièces</li>
+        <li>Collaborateurs et permissions gérés depuis un seul endroit</li>
+        <li>Aucune carte bancaire requise pour démarrer</li>
+      </ul>
+    </div>
+  </aside>
 
-    <label class="champ">
-      <span>Nom du cabinet</span>
-      <input type="text" formControlName="raisonSocialeCabinet" />
-    </label>
+  <div class="panneau-formulaire">
+    <form [formGroup]="form" (ngSubmit)="soumettre()" class="carte-register">
+      <h1>Créer votre cabinet</h1>
+      <p class="sous-titre">Renseignez les informations de votre structure</p>
 
-    <label class="champ">
-      <span>Pays</span>
-      <select formControlName="pays">
-        @for (p of paysDisponibles; track p.code) {
-          <option [value]="p.code">{{ p.nom }}</option>
+      <label class="champ">
+        <span>Nom du cabinet</span>
+        <input
+          type="text"
+          formControlName="raisonSocialeCabinet"
+          [class.champ-invalide]="messageErreurChamp(form.controls.raisonSocialeCabinet)"
+        />
+        @if (messageErreurChamp(form.controls.raisonSocialeCabinet); as message) {
+          <span class="message-erreur-champ">{{ message }}</span>
         }
-      </select>
-    </label>
-
-    <div class="ligne-deux">
-      <label class="champ">
-        <span>Prénom</span>
-        <input type="text" formControlName="prenom" />
       </label>
+
       <label class="champ">
-        <span>Nom</span>
-        <input type="text" formControlName="nom" />
+        <span>Pays</span>
+        <select formControlName="pays">
+          @for (p of paysDisponibles; track p.code) {
+            <option [value]="p.code">{{ p.nom }}</option>
+          }
+        </select>
       </label>
-    </div>
 
-    <label class="champ">
-      <span>Email professionnel</span>
-      <input type="email" formControlName="email" autocomplete="username" />
-    </label>
+      <div class="ligne-deux">
+        <label class="champ">
+          <span>Prénom</span>
+          <input
+            type="text"
+            formControlName="prenom"
+            [class.champ-invalide]="messageErreurChamp(form.controls.prenom)"
+          />
+          @if (messageErreurChamp(form.controls.prenom); as message) {
+            <span class="message-erreur-champ">{{ message }}</span>
+          }
+        </label>
+        <label class="champ">
+          <span>Nom</span>
+          <input
+            type="text"
+            formControlName="nom"
+            [class.champ-invalide]="messageErreurChamp(form.controls.nom)"
+          />
+          @if (messageErreurChamp(form.controls.nom); as message) {
+            <span class="message-erreur-champ">{{ message }}</span>
+          }
+        </label>
+      </div>
 
-    <label class="champ">
-      <span>Téléphone (optionnel)</span>
-      <input type="tel" formControlName="telephone" />
-    </label>
-
-    <div class="ligne-deux">
       <label class="champ">
-        <span>Mot de passe</span>
-        <input type="password" formControlName="motDePasse" autocomplete="new-password" />
+        <span>Email professionnel</span>
+        <input
+          type="email"
+          formControlName="email"
+          autocomplete="username"
+          [class.champ-invalide]="messageErreurChamp(form.controls.email)"
+        />
+        @if (messageErreurChamp(form.controls.email); as message) {
+          <span class="message-erreur-champ">{{ message }}</span>
+        }
       </label>
+
       <label class="champ">
-        <span>Confirmer</span>
-        <input type="password" formControlName="confirmationMotDePasse" autocomplete="new-password" />
+        <span>Téléphone (optionnel)</span>
+        <input type="tel" formControlName="telephone" />
       </label>
-    </div>
 
-    @if (form.errors?.['motsDePasseDifferents'] && form.get('confirmationMotDePasse')?.touched) {
-      <p class="message-erreur">Les mots de passe ne correspondent pas.</p>
-    }
+      <div class="ligne-deux">
+        <label class="champ">
+          <span>Mot de passe</span>
+          <input
+            type="password"
+            formControlName="motDePasse"
+            autocomplete="new-password"
+            [class.champ-invalide]="messageErreurChamp(form.controls.motDePasse)"
+          />
+          @if (messageErreurChamp(form.controls.motDePasse); as message) {
+            <span class="message-erreur-champ">{{ message }}</span>
+          }
+        </label>
+        <label class="champ">
+          <span>Confirmer</span>
+          <input
+            type="password"
+            formControlName="confirmationMotDePasse"
+            autocomplete="new-password"
+            [class.champ-invalide]="messageErreurChamp(form.controls.confirmationMotDePasse)"
+          />
+          @if (messageErreurChamp(form.controls.confirmationMotDePasse); as message) {
+            <span class="message-erreur-champ">{{ message }}</span>
+          }
+        </label>
+      </div>
 
-    @if (erreur()) {
-      <p class="message-erreur">{{ erreur() }}</p>
-    }
+      @if (form.errors?.['motsDePasseDifferents'] && form.get('confirmationMotDePasse')?.touched && form.get('confirmationMotDePasse')?.valid) {
+        <p class="message-erreur">Les mots de passe ne correspondent pas.</p>
+      }
 
-    <button type="submit" [disabled]="envoiEnCours()">
-      {{ envoiEnCours() ? 'Création…' : 'Créer mon cabinet' }}
-    </button>
+      @if (erreur()) {
+        <p class="message-erreur">{{ erreur() }}</p>
+      }
 
-    <p class="lien-secondaire">
-      Déjà inscrit ? <a routerLink="/login">Se connecter</a>
-    </p>
-  </form>
+      <button type="submit" class="bouton-principal" [disabled]="envoiEnCours()">
+        {{ envoiEnCours() ? 'Création…' : 'Créer mon cabinet' }}
+      </button>
+
+      <p class="lien-secondaire">
+        Déjà inscrit ? <a routerLink="/login">Se connecter</a>
+      </p>
+    </form>
+  </div>
 </div>

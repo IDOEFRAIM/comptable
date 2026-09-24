@@ -10,8 +10,9 @@
 
 .carte {
   background: white;
-  border-radius: 8px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+  border: 1px solid var(--border-subtle);
   padding: 1.25rem;
 
   h3 {
@@ -20,13 +21,13 @@
 }
 
 .date-reference {
-  color: #667085;
+  color: var(--text-tertiary);
   font-size: 0.8125rem;
   margin: 0 0 0.75rem;
 }
 
 .note-methode {
-  color: #667085;
+  color: var(--text-tertiary);
   font-size: 0.8125rem;
   margin: 0 0 1rem;
 }
@@ -48,15 +49,15 @@ table {
 
 th {
   text-align: left;
-  color: #667085;
+  color: var(--text-tertiary);
   font-weight: 600;
   padding: 0.5rem;
-  border-bottom: 1px solid #eaecf0;
+  border-bottom: 1px solid var(--border-subtle);
 }
 
 td {
   padding: 0.6rem 0.5rem;
-  border-bottom: 1px solid #f2f4f7;
+  border-bottom: 1px solid var(--bg-subtle-hover);
 }
 
 .numero-compte {
@@ -65,7 +66,7 @@ td {
 }
 
 .intitule-compte {
-  color: #667085;
+  color: var(--text-tertiary);
 }
 
 .colonne-montant {
@@ -80,8 +81,8 @@ td {
 }
 
 .carte-horizon {
-  border: 1px solid #eaecf0;
-  border-radius: 8px;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
   padding: 1rem;
 
   h4 {
@@ -96,7 +97,7 @@ td {
   }
 
   dt {
-    color: #667085;
+    color: var(--text-tertiary);
     font-size: 0.8125rem;
   }
 
@@ -108,15 +109,15 @@ td {
 }
 
 .montant-positif {
-  color: #027a48;
+  color: var(--color-success);
 }
 
 .montant-attendu {
-  color: #b54708;
+  color: var(--color-warning);
 }
 
 .montant-negatif {
-  color: #b42318;
+  color: var(--color-danger);
 }
 
 .solde-previsionnel {
@@ -134,27 +135,27 @@ td {
     display: flex;
     flex-direction: column;
     gap: 0.25rem;
-    color: #667085;
+    color: var(--text-tertiary);
   }
 
   input[type='date'] {
     padding: 0.35rem 0.5rem;
-    border: 1px solid #d0d5dd;
-    border-radius: 6px;
+    border: 1px solid var(--border-default);
+    border-radius: var(--radius-md);
   }
 
   button {
     align-self: flex-end;
     padding: 0.4rem 0.9rem;
-    border: 1px solid #2563eb;
-    border-radius: 6px;
+    border: 1px solid var(--color-primary);
+    border-radius: var(--radius-md);
     background: white;
-    color: #2563eb;
+    color: var(--color-primary);
     cursor: pointer;
     font-weight: 600;
 
     &:hover {
-      background: #eff6ff;
+      background: var(--color-primary-light);
     }
   }
 }
@@ -176,7 +177,7 @@ td {
   }
 
   .libelle {
-    color: #667085;
+    color: var(--text-tertiary);
     font-size: 0.8125rem;
   }
 }

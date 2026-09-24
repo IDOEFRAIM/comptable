@@ -1,30 +1,28 @@
 package com.example.comptable.comptabilite.service;
 
 import com.example.comptable.comptabilite.domain.CompteComptable;
-import com.example.comptable.comptabilite.domain.EcritureComptable;
-import com.example.comptable.comptabilite.domain.ExerciceComptable;
 import com.example.comptable.comptabilite.domain.Facture;
-import com.example.comptable.comptabilite.domain.Journal;
-import com.example.comptable.comptabilite.domain.LigneEcriture;
 import com.example.comptable.comptabilite.domain.LigneFacture;
-import com.example.comptable.comptabilite.domain.StatutEcriture;
-import com.example.comptable.comptabilite.domain.StatutExercice;
 import com.example.comptable.comptabilite.domain.StatutFacture;
 import com.example.comptable.comptabilite.domain.Tiers;
 import com.example.comptable.comptabilite.domain.TypeFacture;
-import com.example.comptable.comptabilite.repository.CompteComptableRepository;
-import com.example.comptable.comptabilite.repository.EcritureComptableRepository;
-import com.example.comptable.comptabilite.repository.ExerciceComptableRepository;
+import com.example.comptable.comptabilite.domain.TypeJournal;
+import com.example.comptable.comptabilite.operation.common.AccountingOperationEngine;
+import com.example.comptable.comptabilite.operation.common.AccountingOperationType;
+import com.example.comptable.comptabilite.operation.common.ResultatRegle;
+import com.example.comptable.comptabilite.operation.common.domain.AccountingOperationProposalLigne;
+import com.example.comptable.comptabilite.operation.vente.VenteRule;
+import com.example.comptable.comptabilite.parametrage.AccountContext;
+import com.example.comptable.comptabilite.parametrage.AccountingAccountResolver;
+import com.example.comptable.comptabilite.parametrage.ResolvedAccount;
+import com.example.comptable.comptabilite.parametrage.domain.AccountPurpose;
 import com.example.comptable.comptabilite.repository.FactureRepository;
-import com.example.comptable.comptabilite.repository.JournalRepository;
 import com.example.comptable.comptabilite.repository.TiersRepository;
 import com.example.comptable.comptabilite.web.dto.CreerFactureRequest;
 import com.example.comptable.comptabilite.web.dto.FactureDto;
 import com.example.comptable.comptabilite.web.dto.LigneFactureRequest;
 import com.example.comptable.entreprise.domain.Entreprise;
 import com.example.comptable.entreprise.service.EntrepriseAccessService;
-import com.example.comptable.identite.domain.Utilisateur;
-import com.example.comptable.identite.repository.UtilisateurRepository;
 import com.example.comptable.security.UtilisateurPrincipal;
 import com.example.comptable.stock.domain.MouvementStock;
 import com.example.comptable.stock.domain.TypeMouvementStock;
@@ -54,16 +52,13 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class FacturationService {
 
-    private static final String COMPTE_TVA_COLLECTEE = "443";
-
     private final EntrepriseAccessService entrepriseAccessService;
     private final FactureRepository factureRepository;
     private final TiersRepository tiersRepository;
-    private final CompteComptableRepository compteComptableRepository;
-    private final ExerciceComptableRepository exerciceComptableRepository;
-    private final JournalRepository journalRepository;
-    private final EcritureComptableRepository ecritureComptableRepository;
-    private final UtilisateurRepository utilisateurRepository;
+    private final CompteComptableValidationService compteComptableValidationService;
+    private final AccountingAccountResolver accountingAccountResolver;
+    private final VenteRule venteRule;
+    private final AccountingOperationEngine accountingOperationEngine;
     private final MouvementStockService mouvementStockService;
 
     @Transactional
@@ -162,56 +157,42 @@ public class FacturationService {
             throw new ResponseStatusException(HttpStatus.CONFLICT, "Cette facture est deja validee");
         }
 
-        CompteComptable compteProduit = compteComptableRepository.findById(compteProduitId)
-                .filter(c -> c.getEntreprise().getId().equals(entrepriseId))
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Compte de produit introuvable"));
-
-        ExerciceComptable exercice = exerciceComptableRepository.findByEntrepriseIdAndDate(entrepriseId, facture.getDateEmission())
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNPROCESSABLE_ENTITY,
-                        "Aucun exercice comptable ne couvre la date " + facture.getDateEmission()));
-        if (exercice.getStatut() != StatutExercice.OUVERT) {
-            throw new ResponseStatusException(HttpStatus.UNPROCESSABLE_ENTITY, "L'exercice couvrant cette date est cloture");
-        }
-
-        Journal journal = journalRepository.findByEntrepriseIdAndCode(entrepriseId, "VTE")
-                .orElseThrow(() -> new IllegalStateException("Journal VTE introuvable, l'entreprise n'a pas ete initialisee correctement"));
-        Utilisateur utilisateur = utilisateurRepository.getReferenceById(principal.getId());
+        // Migre vers CompteComptableValidationService (previously un findById brut sans
+        // verification actif/detail - seul point de validerFacture qui sautait ce controle).
+        CompteComptable compteProduit = compteComptableValidationService
+                .chargerCompteUtilisable(entrepriseId, compteProduitId, true);
 
         BigDecimal montantHt = facture.montantHt();
         BigDecimal montantTva = facture.montantTva();
         BigDecimal montantTtc = facture.montantTtc();
 
-        EcritureComptable ecriture = new EcritureComptable();
-        ecriture.setEntreprise(facture.getEntreprise());
-        ecriture.setExercice(exercice);
-        ecriture.setJournal(journal);
-        ecriture.setDateEcriture(facture.getDateEmission());
-        ecriture.setLibelle("Facture " + facture.getNumero() + " - " + facture.getTiers().getNom());
-        ecriture.setCreatedBy(utilisateur);
-        ecriture.setStatut(StatutEcriture.VALIDEE);
-        ecriture.setNumeroPiece(genererNumeroPieceEcriture(journal));
-
-        LigneEcriture ligneClient = LigneEcriture.debit(facture.getTiers().getCompteComptable(), montantTtc, ecriture.getLibelle());
-        ligneClient.setTiers(facture.getTiers());
-        ecriture.ajouterLigne(ligneClient);
-
-        ecriture.ajouterLigne(LigneEcriture.credit(compteProduit, montantHt, ecriture.getLibelle()));
-
+        CompteComptable compteTva = null;
         if (montantTva.signum() > 0) {
-            CompteComptable compteTva = compteComptableRepository.findByEntrepriseIdAndNumero(entrepriseId, COMPTE_TVA_COLLECTEE)
-                    .orElseThrow(() -> new IllegalStateException("Compte TVA 443 introuvable, l'entreprise n'a pas ete initialisee correctement"));
-            ecriture.ajouterLigne(LigneEcriture.credit(compteTva, montantTva, ecriture.getLibelle()));
+            ResolvedAccount resoluTva = accountingAccountResolver.resolve(entrepriseId, AccountPurpose.TVA_COLLECTEE,
+                    AccountContext.vide(), null);
+            if (!resoluTva.isResolved()) {
+                throw new ResponseStatusException(HttpStatus.UNPROCESSABLE_ENTITY,
+                        "Compte TVA collectee non configure pour cette entreprise : " + resoluTva.explication());
+            }
+            compteTva = compteComptableValidationService.chargerCompteUtilisable(entrepriseId, resoluTva.compteId(), true);
         }
 
-        if (!ecriture.estEquilibree()) {
-            throw new IllegalStateException("Ecriture de facturation desequilibree, validation annulee");
-        }
-        ecriture = ecritureComptableRepository.save(ecriture);
+        String libelle = "Facture " + facture.getNumero() + " - " + facture.getTiers().getNom();
+        List<AccountingOperationProposalLigne> lignes = venteRule.construireLignesVenteDepuisMontantsPrecalcules(
+                facture.getTiers(), compteProduit, montantHt, compteTva, montantTva, montantTtc, libelle);
+        ResultatRegle resultat = new ResultatRegle(TypeJournal.VENTES, lignes, List.of(), List.of());
+
+        // Propose-et-valide en une seule etape : la validation de la facture EST deja la
+        // confirmation humaine (mission cloture Etape 4, section 20/23/24 - meme mecanisme que la
+        // cloture d'exercice, traçabilite via sourceType/sourceId, idempotent sur double appel).
+        var proposition = accountingOperationEngine.proposerEtValiderImmediatement(entrepriseId, AccountingOperationType.VENTE,
+                facture.getTiers(), facture.getDateEmission(), libelle, facture.getNumero(), resultat,
+                "FACTURE", facture.getId(), principal);
 
         destockerLignesArticle(entrepriseId, facture, principal);
 
         facture.setStatut(StatutFacture.VALIDEE);
-        facture.setEcritureId(ecriture.getId());
+        facture.setEcritureId(proposition.ecritureId());
         facture.setCompteProduitId(compteProduitId);
         return FactureDto.from(factureRepository.save(facture));
     }
@@ -227,11 +208,16 @@ public class FacturationService {
             if (ligne.getArticleId() == null) {
                 continue;
             }
-            MouvementStockDto mouvement = mouvementStockService.enregistrer(entrepriseId,
-                    new CreerMouvementStockRequest(ligne.getArticleId(), TypeMouvementStock.SORTIE, ligne.getQuantite(), null,
+            // enregistrerAvecSource renvoie null pour un article en mode INTERMITTENT (pas de suivi
+            // de stock en continu - la vente reste comptabilisee normalement, seul un inventaire
+            // periodique ajuste la valeur). Le test et le chargement de l'article vivent la-bas.
+            MouvementStockDto mouvement = mouvementStockService.enregistrerAvecSource(entrepriseId,
+                    new CreerMouvementStockRequest(ligne.getArticleId(), TypeMouvementStock.SORTIE_VENTE, ligne.getQuantite(), null,
                             facture.getDateEmission(), "Vente " + facture.getNumero() + " - " + facture.getTiers().getNom()),
-                    principal);
-            ligne.setMouvementStockId(mouvement.id());
+                    principal, "FACTURE", facture.getId());
+            if (mouvement != null) {
+                ligne.setMouvementStockId(mouvement.id());
+            }
         }
     }
 
@@ -247,11 +233,11 @@ public class FacturationService {
                 continue;
             }
             MouvementStock sortieOrigine = mouvementStockService.chargerEntite(entrepriseId, ligne.getMouvementStockId());
-            mouvementStockService.enregistrer(entrepriseId,
+            mouvementStockService.enregistrerAvecSource(entrepriseId,
                     new CreerMouvementStockRequest(sortieOrigine.getArticle().getId(), TypeMouvementStock.ENTREE,
                             sortieOrigine.getQuantite(), sortieOrigine.getPrixUnitaireHt(), LocalDate.now(),
                             "Retour stock - annulation " + facture.getNumero()),
-                    principal);
+                    principal, "FACTURE", facture.getId());
         }
 
         facture.setStatut(StatutFacture.ANNULEE);
@@ -284,11 +270,6 @@ public class FacturationService {
         String prefixe = type == TypeFacture.DEVIS ? "DEV" : "FAC";
         long sequence = factureRepository.countByEntrepriseIdAndType(entrepriseId, type) + 1;
         return "%s-%d-%04d".formatted(prefixe, LocalDate.now().getYear(), sequence);
-    }
-
-    private String genererNumeroPieceEcriture(Journal journal) {
-        long sequence = ecritureComptableRepository.countByJournalId(journal.getId()) + 1;
-        return "%s-%d-%04d".formatted(journal.getCode(), LocalDate.now().getYear(), sequence);
     }
 
     private Facture charger(UUID entrepriseId, UUID factureId, UtilisateurPrincipal principal) {

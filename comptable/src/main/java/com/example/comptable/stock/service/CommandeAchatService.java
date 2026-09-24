@@ -1,23 +1,14 @@
 package com.example.comptable.stock.service;
 
-import com.example.comptable.comptabilite.domain.CompteComptable;
-import com.example.comptable.comptabilite.domain.EcritureComptable;
-import com.example.comptable.comptabilite.domain.ExerciceComptable;
-import com.example.comptable.comptabilite.domain.Journal;
-import com.example.comptable.comptabilite.domain.LigneEcriture;
-import com.example.comptable.comptabilite.domain.StatutEcriture;
-import com.example.comptable.comptabilite.domain.StatutExercice;
 import com.example.comptable.comptabilite.domain.Tiers;
 import com.example.comptable.comptabilite.domain.TypeTiers;
-import com.example.comptable.comptabilite.repository.CompteComptableRepository;
-import com.example.comptable.comptabilite.repository.EcritureComptableRepository;
-import com.example.comptable.comptabilite.repository.ExerciceComptableRepository;
-import com.example.comptable.comptabilite.repository.JournalRepository;
+import com.example.comptable.comptabilite.operation.achat.AchatMultiLigneOperationRequest;
+import com.example.comptable.comptabilite.operation.achat.LigneAchatOperationRequest;
+import com.example.comptable.comptabilite.operation.common.AccountingOperationEngine;
+import com.example.comptable.comptabilite.operation.common.web.dto.AccountingOperationProposalDto;
 import com.example.comptable.comptabilite.repository.TiersRepository;
 import com.example.comptable.entreprise.domain.Entreprise;
 import com.example.comptable.entreprise.service.EntrepriseAccessService;
-import com.example.comptable.identite.domain.Utilisateur;
-import com.example.comptable.identite.repository.UtilisateurRepository;
 import com.example.comptable.security.UtilisateurPrincipal;
 import com.example.comptable.stock.domain.Article;
 import com.example.comptable.stock.domain.CommandeAchat;
@@ -42,9 +33,7 @@ import org.springframework.web.server.ResponseStatusException;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDate;
-import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.UUID;
 
 /**
@@ -53,16 +42,15 @@ import java.util.UUID;
  * {@link MouvementStockService}, qui porte deja tout le calcul du PUMP et la generation de
  * l'ecriture 311/6031 - aucune duplication de cette logique ici. La facturation fournisseur
  * ({@link #genererFactureFournisseur}) cloture la chaine : une seule facture par commande,
- * generee uniquement une fois receptionnee, avec son ecriture d'achat TTC (601/4456/401).
+ * generee uniquement une fois receptionnee. Ce service n'a jamais construit d'EcritureComptable
+ * lui-meme depuis la mission Etape 5 : il orchestre (charge la commande, traduit ses lignes via
+ * {@link LigneAchatMapper}) et delegue la construction/comptabilisation a
+ * {@link AccountingOperationEngine#proposerAchatEtValiderImmediatement} - la seule logique
+ * d'achat multi-comptes vit dans AchatRule.
  */
 @Service
 @RequiredArgsConstructor
 public class CommandeAchatService {
-
-    /** Compte reel apres correction V4 (l'intitule d'origine "TVA recuperable sur achats" /
-     * numero 4452 a ete renomme en 4456 "Etat, TVA deductible" - cf. FacturationService/
-     * ComptabilisationService qui utilisent deja cette meme constante). */
-    private static final String COMPTE_TVA_DEDUCTIBLE = "4456";
 
     private final EntrepriseAccessService entrepriseAccessService;
     private final CommandeAchatRepository commandeAchatRepository;
@@ -70,11 +58,7 @@ public class CommandeAchatService {
     private final ArticleRepository articleRepository;
     private final MouvementStockService mouvementStockService;
     private final FactureFournisseurRepository factureFournisseurRepository;
-    private final CompteComptableRepository compteComptableRepository;
-    private final ExerciceComptableRepository exerciceComptableRepository;
-    private final JournalRepository journalRepository;
-    private final EcritureComptableRepository ecritureComptableRepository;
-    private final UtilisateurRepository utilisateurRepository;
+    private final AccountingOperationEngine accountingOperationEngine;
 
     @Transactional
     public CommandeAchatDto creer(UUID entrepriseId, CreerCommandeAchatRequest request, UtilisateurPrincipal principal) {
@@ -122,16 +106,23 @@ public class CommandeAchatService {
         CommandeAchat commande = commandeAchatRepository.findById(commandeId)
                 .filter(c -> c.getEntreprise().getId().equals(entrepriseId))
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Commande introuvable"));
-        if (commande.getStatut() == StatutCommandeAchat.RECEPTIONNEE) {
-            throw new ResponseStatusException(HttpStatus.CONFLICT, "Cette commande a deja ete receptionnee");
+        // Seule une commande encore EN_COURS peut etre receptionnee : rejeter aussi RECEPTIONNEE
+        // ET FACTUREE (sans quoi une commande deja facturee pourrait etre re-receptionnee -
+        // double entree en stock, PUMP re-gonfle, seconde ecriture, et statut ramene en arriere).
+        if (commande.getStatut() != StatutCommandeAchat.EN_COURS) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT,
+                    "Seule une commande en cours peut etre receptionnee (statut actuel : " + commande.getStatut() + ")");
         }
 
         LocalDate dateReception = LocalDate.now();
         for (LigneCommandeAchat ligne : commande.getLignes()) {
+            // Un article INTERMITTENT ne genere pas de mouvement (la charge reste comptabilisee
+            // normalement via genererFactureFournisseur) : enregistrerAvecSource porte ce test et
+            // renvoie null dans ce cas - inutile de le repeter ici.
             CreerMouvementStockRequest mouvementRequest = new CreerMouvementStockRequest(
-                    ligne.getArticle().getId(), TypeMouvementStock.ENTREE, ligne.getQuantite(), ligne.getPrixUnitaireHt(),
+                    ligne.getArticle().getId(), TypeMouvementStock.ENTREE_ACHAT, ligne.getQuantite(), ligne.getPrixUnitaireHt(),
                     dateReception, "Reception " + commande.getNumero() + " - " + commande.getFournisseur().getNom());
-            mouvementStockService.enregistrer(entrepriseId, mouvementRequest, principal);
+            mouvementStockService.enregistrerAvecSource(entrepriseId, mouvementRequest, principal, "COMMANDE_ACHAT", commande.getId());
         }
 
         commande.setStatut(StatutCommandeAchat.RECEPTIONNEE);
@@ -152,60 +143,16 @@ public class CommandeAchatService {
             throw new ResponseStatusException(HttpStatus.CONFLICT, "Cette commande a deja ete facturee");
         }
 
-        // Regroupe par compte d'achat (des lignes peuvent porter des articles de comptes
-        // differents, ex. 601 marchandises vs 604 matieres) plutot que de debiter un seul 601.
-        Map<CompteComptable, BigDecimal> montantHtParCompte = new LinkedHashMap<>();
-        BigDecimal montantTvaTotal = BigDecimal.ZERO;
-        for (LigneCommandeAchat ligne : commande.getLignes()) {
-            BigDecimal montantLigneHt = ligne.getQuantite().multiply(ligne.getPrixUnitaireHt()).setScale(2, RoundingMode.HALF_UP);
-            montantHtParCompte.merge(ligne.getArticle().getCompteAchat(), montantLigneHt, BigDecimal::add);
-            BigDecimal tauxTva = ligne.getArticle().getTauxTva();
-            montantTvaTotal = montantTvaTotal.add(
-                    montantLigneHt.multiply(tauxTva).divide(new BigDecimal("100"), 2, RoundingMode.HALF_UP));
-        }
-        BigDecimal montantHtTotal = montantHtParCompte.values().stream().reduce(BigDecimal.ZERO, BigDecimal::add);
+        List<LigneAchatOperationRequest> lignesAchat = LigneAchatMapper.depuisCommande(commande);
+        BigDecimal montantHtTotal = lignesAchat.stream().map(LigneAchatOperationRequest::montantHt)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+        BigDecimal montantTvaTotal = lignesAchat.stream()
+                .map(l -> l.tauxTva() == null ? BigDecimal.ZERO
+                        : l.montantHt().multiply(l.tauxTva()).divide(new BigDecimal("100"), 2, RoundingMode.HALF_UP))
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
         BigDecimal montantTtcTotal = montantHtTotal.add(montantTvaTotal);
 
         LocalDate dateFacture = LocalDate.now();
-        ExerciceComptable exercice = exerciceComptableRepository.findByEntrepriseIdAndDate(entrepriseId, dateFacture)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNPROCESSABLE_ENTITY,
-                        "Aucun exercice comptable ne couvre la date " + dateFacture));
-        if (exercice.getStatut() != StatutExercice.OUVERT) {
-            throw new ResponseStatusException(HttpStatus.UNPROCESSABLE_ENTITY, "L'exercice couvrant cette date est cloture");
-        }
-        Journal journal = journalRepository.findByEntrepriseIdAndCode(entrepriseId, "ACH")
-                .orElseThrow(() -> new IllegalStateException("Journal ACH introuvable, l'entreprise n'a pas ete initialisee correctement"));
-        Utilisateur utilisateur = utilisateurRepository.getReferenceById(principal.getId());
-        String libelle = "Facture fournisseur " + commande.getNumero() + " - " + commande.getFournisseur().getNom();
-
-        EcritureComptable ecriture = new EcritureComptable();
-        ecriture.setEntreprise(commande.getEntreprise());
-        ecriture.setExercice(exercice);
-        ecriture.setJournal(journal);
-        ecriture.setDateEcriture(dateFacture);
-        ecriture.setLibelle(libelle);
-        ecriture.setCreatedBy(utilisateur);
-        ecriture.setStatut(StatutEcriture.VALIDEE);
-        ecriture.setNumeroPiece(genererNumeroPieceEcriture(journal));
-
-        for (Map.Entry<CompteComptable, BigDecimal> entry : montantHtParCompte.entrySet()) {
-            ecriture.ajouterLigne(LigneEcriture.debit(entry.getKey(), entry.getValue(), libelle));
-        }
-        if (montantTvaTotal.signum() > 0) {
-            CompteComptable compteTva = compteComptableRepository.findByEntrepriseIdAndNumero(entrepriseId, COMPTE_TVA_DEDUCTIBLE)
-                    .orElseThrow(() -> new IllegalStateException(
-                            "Compte TVA " + COMPTE_TVA_DEDUCTIBLE + " introuvable, l'entreprise n'a pas ete initialisee correctement"));
-            ecriture.ajouterLigne(LigneEcriture.debit(compteTva, montantTvaTotal, libelle));
-        }
-        LigneEcriture ligneFournisseur = LigneEcriture.credit(commande.getFournisseur().getCompteComptable(), montantTtcTotal, libelle);
-        ligneFournisseur.setTiers(commande.getFournisseur());
-        ecriture.ajouterLigne(ligneFournisseur);
-
-        if (!ecriture.estEquilibree()) {
-            throw new IllegalStateException("Ecriture de facture fournisseur desequilibree, generation annulee");
-        }
-        ecriture = ecritureComptableRepository.save(ecriture);
-
         FactureFournisseur facture = new FactureFournisseur();
         facture.setEntreprise(commande.getEntreprise());
         facture.setCommande(commande);
@@ -215,13 +162,22 @@ public class CommandeAchatService {
         facture.setMontantHt(montantHtTotal);
         facture.setMontantTva(montantTvaTotal);
         facture.setMontantTtc(montantTtcTotal);
-        facture.setEcritureId(ecriture.getId());
+        facture = factureFournisseurRepository.save(facture);
+
+        String libelle = "Facture fournisseur " + commande.getNumero() + " - " + commande.getFournisseur().getNom();
+        AchatMultiLigneOperationRequest request = new AchatMultiLigneOperationRequest(
+                commande.getFournisseur().getId(), dateFacture, facture.getNumero(), libelle,
+                lignesAchat, montantTtcTotal, "FACTURE_FOURNISSEUR", facture.getId());
+        AccountingOperationProposalDto proposition =
+                accountingOperationEngine.proposerAchatEtValiderImmediatement(entrepriseId, request, principal);
+
+        facture.setEcritureId(proposition.ecritureId());
         facture = factureFournisseurRepository.save(facture);
 
         commande.setStatut(StatutCommandeAchat.FACTUREE);
         commandeAchatRepository.save(commande);
 
-        return FactureFournisseurDto.from(facture);
+        return FactureFournisseurDto.from(facture, proposition);
     }
 
     private String genererNumero(UUID entrepriseId) {
@@ -232,10 +188,5 @@ public class CommandeAchatService {
     private String genererNumeroFacture(UUID entrepriseId) {
         long sequence = factureFournisseurRepository.countByEntrepriseId(entrepriseId) + 1;
         return "FF-%d-%04d".formatted(LocalDate.now().getYear(), sequence);
-    }
-
-    private String genererNumeroPieceEcriture(Journal journal) {
-        long sequence = ecritureComptableRepository.countByJournalId(journal.getId()) + 1;
-        return "%s-%d-%04d".formatted(journal.getCode(), LocalDate.now().getYear(), sequence);
     }
 }

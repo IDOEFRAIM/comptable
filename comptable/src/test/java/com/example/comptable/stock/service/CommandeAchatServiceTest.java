@@ -1,22 +1,18 @@
 package com.example.comptable.stock.service;
 
 import com.example.comptable.comptabilite.domain.CompteComptable;
-import com.example.comptable.comptabilite.domain.EcritureComptable;
-import com.example.comptable.comptabilite.domain.ExerciceComptable;
-import com.example.comptable.comptabilite.domain.Journal;
-import com.example.comptable.comptabilite.domain.StatutExercice;
 import com.example.comptable.comptabilite.domain.Tiers;
 import com.example.comptable.comptabilite.domain.TypeTiers;
-import com.example.comptable.comptabilite.repository.CompteComptableRepository;
-import com.example.comptable.comptabilite.repository.EcritureComptableRepository;
-import com.example.comptable.comptabilite.repository.ExerciceComptableRepository;
-import com.example.comptable.comptabilite.repository.JournalRepository;
+import com.example.comptable.comptabilite.operation.achat.AchatMultiLigneOperationRequest;
+import com.example.comptable.comptabilite.operation.achat.LigneAchatOperationRequest;
+import com.example.comptable.comptabilite.operation.achat.NatureAchat;
+import com.example.comptable.comptabilite.operation.common.AccountingOperationEngine;
+import com.example.comptable.comptabilite.operation.common.web.dto.AccountingOperationProposalDto;
 import com.example.comptable.comptabilite.repository.TiersRepository;
 import com.example.comptable.entreprise.domain.Entreprise;
 import com.example.comptable.entreprise.service.EntrepriseAccessService;
 import com.example.comptable.identite.domain.Role;
 import com.example.comptable.identite.domain.Utilisateur;
-import com.example.comptable.identite.repository.UtilisateurRepository;
 import com.example.comptable.security.UtilisateurPrincipal;
 import com.example.comptable.stock.domain.Article;
 import com.example.comptable.stock.domain.CommandeAchat;
@@ -47,12 +43,20 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+/**
+ * genererFactureFournisseur route desormais la construction des lignes vers AchatRule (via
+ * LigneAchatMapper) et la proposition/validation vers AccountingOperationEngine.
+ * proposerAchatEtValiderImmediatement (mission Etape 5) plutot que de construire une
+ * EcritureComptable a la main - ce collaborateur est donc mocke ici comme une unite a part
+ * entiere, meme patron que FactureAvoirServiceTest pour VenteRule/proposerEtValiderImmediatement.
+ */
 @ExtendWith(MockitoExtension.class)
 class CommandeAchatServiceTest {
 
@@ -69,15 +73,7 @@ class CommandeAchatServiceTest {
     @Mock
     private FactureFournisseurRepository factureFournisseurRepository;
     @Mock
-    private CompteComptableRepository compteComptableRepository;
-    @Mock
-    private ExerciceComptableRepository exerciceComptableRepository;
-    @Mock
-    private JournalRepository journalRepository;
-    @Mock
-    private EcritureComptableRepository ecritureComptableRepository;
-    @Mock
-    private UtilisateurRepository utilisateurRepository;
+    private AccountingOperationEngine accountingOperationEngine;
 
     @InjectMocks
     private CommandeAchatService commandeAchatService;
@@ -85,14 +81,9 @@ class CommandeAchatServiceTest {
     private UUID entrepriseId;
     private Entreprise entreprise;
     private UtilisateurPrincipal principal;
-    private Utilisateur utilisateur;
     private Tiers fournisseur;
     private Article article;
     private CompteComptable compteAchat;
-    private CompteComptable compteTva;
-    private CompteComptable compteFournisseur;
-    private Journal journalAch;
-    private ExerciceComptable exercice;
 
     @BeforeEach
     void setUp() {
@@ -102,7 +93,7 @@ class CommandeAchatServiceTest {
 
         Role role = new Role();
         role.setCode("EXPERT_COMPTABLE");
-        utilisateur = new Utilisateur();
+        Utilisateur utilisateur = new Utilisateur();
         utilisateur.setId(UUID.randomUUID());
         utilisateur.setEmail("test@cabinet.ci");
         utilisateur.setMotDePasse("hash");
@@ -111,7 +102,7 @@ class CommandeAchatServiceTest {
         utilisateur.setRoles(Set.of(role));
         principal = new UtilisateurPrincipal(utilisateur);
 
-        compteFournisseur = new CompteComptable();
+        CompteComptable compteFournisseur = new CompteComptable();
         compteFournisseur.setId(UUID.randomUUID());
         compteFournisseur.setEntreprise(entreprise);
         compteFournisseur.setNumero("401001");
@@ -135,23 +126,6 @@ class CommandeAchatServiceTest {
         article.setDesignation("Sac de ciment 50kg");
         article.setTauxTva(new BigDecimal("18"));
         article.setCompteAchat(compteAchat);
-
-        compteTva = new CompteComptable();
-        compteTva.setId(UUID.randomUUID());
-        compteTva.setEntreprise(entreprise);
-        compteTva.setNumero("4456");
-
-        journalAch = new Journal();
-        journalAch.setId(UUID.randomUUID());
-        journalAch.setEntreprise(entreprise);
-        journalAch.setCode("ACH");
-
-        exercice = new ExerciceComptable();
-        exercice.setId(UUID.randomUUID());
-        exercice.setEntreprise(entreprise);
-        exercice.setDateDebut(LocalDate.of(2026, 1, 1));
-        exercice.setDateFin(LocalDate.of(2026, 12, 31));
-        exercice.setStatut(StatutExercice.OUVERT);
 
         when(entrepriseAccessService.verifierAcces(entrepriseId, principal)).thenReturn(entreprise);
     }
@@ -197,7 +171,7 @@ class CommandeAchatServiceTest {
     void la_reception_declenche_une_entree_en_stock_par_ligne_et_marque_la_commande_receptionnee() {
         CommandeAchat commande = commandeCreee();
         when(commandeAchatRepository.findById(commande.getId())).thenReturn(Optional.of(commande));
-        when(mouvementStockService.enregistrer(any(), any(), any())).thenReturn(mock(MouvementStockDto.class));
+        when(mouvementStockService.enregistrerAvecSource(any(), any(), any(), eq("COMMANDE_ACHAT"), any())).thenReturn(mock(MouvementStockDto.class));
         when(commandeAchatRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
 
         CommandeAchatDto resultat = commandeAchatService.validerReception(entrepriseId, commande.getId(), principal);
@@ -207,46 +181,58 @@ class CommandeAchatServiceTest {
 
         ArgumentCaptor<com.example.comptable.stock.web.dto.CreerMouvementStockRequest> captor =
                 ArgumentCaptor.forClass(com.example.comptable.stock.web.dto.CreerMouvementStockRequest.class);
-        verify(mouvementStockService, times(1)).enregistrer(org.mockito.ArgumentMatchers.eq(entrepriseId), captor.capture(), org.mockito.ArgumentMatchers.eq(principal));
-        assertThat(captor.getValue().type()).isEqualTo(com.example.comptable.stock.domain.TypeMouvementStock.ENTREE);
+        verify(mouvementStockService, times(1)).enregistrerAvecSource(eq(entrepriseId), captor.capture(),
+                eq(principal), eq("COMMANDE_ACHAT"), eq(commande.getId()));
+        assertThat(captor.getValue().type()).isEqualTo(com.example.comptable.stock.domain.TypeMouvementStock.ENTREE_ACHAT);
         assertThat(captor.getValue().quantite()).isEqualByComparingTo("10");
         assertThat(captor.getValue().prixUnitaireHt()).isEqualByComparingTo("1000");
     }
 
     @Test
-    void refuse_de_receptionner_deux_fois_la_meme_commande() {
+    void refuse_de_receptionner_une_commande_deja_receptionnee() {
         CommandeAchat commande = commandeCreee();
         commande.setStatut(StatutCommandeAchat.RECEPTIONNEE);
         when(commandeAchatRepository.findById(commande.getId())).thenReturn(Optional.of(commande));
 
         assertThatThrownBy(() -> commandeAchatService.validerReception(entrepriseId, commande.getId(), principal))
-                .hasMessageContaining("deja");
-        verify(mouvementStockService, never()).enregistrer(any(), any(), any());
+                .hasMessageContaining("en cours");
+        verify(mouvementStockService, never()).enregistrerAvecSource(any(), any(), any(), any(), any());
     }
 
     @Test
-    void genere_une_facture_fournisseur_avec_lecriture_dachat_601_4456_401() {
+    void refuse_de_receptionner_une_commande_deja_facturee() {
+        CommandeAchat commande = commandeCreee();
+        commande.setStatut(StatutCommandeAchat.FACTUREE);
+        when(commandeAchatRepository.findById(commande.getId())).thenReturn(Optional.of(commande));
+
+        assertThatThrownBy(() -> commandeAchatService.validerReception(entrepriseId, commande.getId(), principal))
+                .hasMessageContaining("en cours");
+        verify(mouvementStockService, never()).enregistrerAvecSource(any(), any(), any(), any(), any());
+    }
+
+    @Test
+    void genere_une_facture_fournisseur_qui_delegue_au_moteur_commun() {
         CommandeAchat commande = commandeCreee();
         commande.setStatut(StatutCommandeAchat.RECEPTIONNEE);
 
         when(commandeAchatRepository.findById(commande.getId())).thenReturn(Optional.of(commande));
-        when(exerciceComptableRepository.findByEntrepriseIdAndDate(any(), any())).thenReturn(Optional.of(exercice));
-        when(journalRepository.findByEntrepriseIdAndCode(entrepriseId, "ACH")).thenReturn(Optional.of(journalAch));
-        when(utilisateurRepository.getReferenceById(principal.getId())).thenReturn(utilisateur);
-        when(ecritureComptableRepository.countByJournalId(journalAch.getId())).thenReturn(0L);
-        when(compteComptableRepository.findByEntrepriseIdAndNumero(entrepriseId, "4456")).thenReturn(Optional.of(compteTva));
-        when(ecritureComptableRepository.save(any())).thenAnswer(inv -> {
-            EcritureComptable e = inv.getArgument(0);
-            e.setId(UUID.randomUUID());
-            return e;
-        });
         when(factureFournisseurRepository.countByEntrepriseId(entrepriseId)).thenReturn(0L);
         when(factureFournisseurRepository.save(any())).thenAnswer(inv -> {
             com.example.comptable.stock.domain.FactureFournisseur f = inv.getArgument(0);
-            f.setId(UUID.randomUUID());
+            if (f.getId() == null) {
+                f.setId(UUID.randomUUID());
+            }
             return f;
         });
         when(commandeAchatRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
+
+        UUID ecritureId = UUID.randomUUID();
+        AccountingOperationProposalDto proposition = new AccountingOperationProposalDto(UUID.randomUUID(), entrepriseId,
+                "ACHAT", "APPROVED", null, null, fournisseur.getId(), LocalDate.now(), "libelle", null, List.of(),
+                new BigDecimal("11800"), new BigDecimal("11800"), true, List.of(), List.of(), null, null, null, null,
+                ecritureId, "FACTURE_FOURNISSEUR", null);
+        when(accountingOperationEngine.proposerAchatEtValiderImmediatement(eq(entrepriseId), any(), eq(principal)))
+                .thenReturn(proposition);
 
         FactureFournisseurDto resultat = commandeAchatService.genererFactureFournisseur(entrepriseId, commande.getId(), principal);
 
@@ -255,26 +241,20 @@ class CommandeAchatServiceTest {
         assertThat(resultat.montantHt()).isEqualByComparingTo("10000");
         assertThat(resultat.montantTva()).isEqualByComparingTo("1800");
         assertThat(resultat.montantTtc()).isEqualByComparingTo("11800");
-        assertThat(resultat.ecritureId()).isNotNull();
+        assertThat(resultat.ecritureId()).isEqualTo(ecritureId);
         assertThat(commande.getStatut()).isEqualTo(StatutCommandeAchat.FACTUREE);
 
-        ArgumentCaptor<EcritureComptable> captor = ArgumentCaptor.forClass(EcritureComptable.class);
-        verify(ecritureComptableRepository).save(captor.capture());
-        EcritureComptable ecriture = captor.getValue();
-        assertThat(ecriture.estEquilibree()).isTrue();
-        assertThat(ecriture.getLignes()).hasSize(3);
-        assertThat(ecriture.getLignes()).anySatisfy(l -> {
-            assertThat(l.getCompte().getNumero()).isEqualTo("601");
-            assertThat(l.getDebit()).isEqualByComparingTo("10000");
-        });
-        assertThat(ecriture.getLignes()).anySatisfy(l -> {
-            assertThat(l.getCompte().getNumero()).isEqualTo("4456");
-            assertThat(l.getDebit()).isEqualByComparingTo("1800");
-        });
-        assertThat(ecriture.getLignes()).anySatisfy(l -> {
-            assertThat(l.getCompte().getNumero()).isEqualTo("401001");
-            assertThat(l.getCredit()).isEqualByComparingTo("11800");
-        });
+        ArgumentCaptor<AchatMultiLigneOperationRequest> captor = ArgumentCaptor.forClass(AchatMultiLigneOperationRequest.class);
+        verify(accountingOperationEngine).proposerAchatEtValiderImmediatement(eq(entrepriseId), captor.capture(), eq(principal));
+        AchatMultiLigneOperationRequest request = captor.getValue();
+        assertThat(request.fournisseurId()).isEqualTo(fournisseur.getId());
+        assertThat(request.sourceType()).isEqualTo("FACTURE_FOURNISSEUR");
+        assertThat(request.lignes()).hasSize(1);
+        LigneAchatOperationRequest ligne = request.lignes().get(0);
+        assertThat(ligne.nature()).isEqualTo(NatureAchat.MARCHANDISE);
+        assertThat(ligne.compteId()).isEqualTo(compteAchat.getId());
+        assertThat(ligne.montantHt()).isEqualByComparingTo("10000");
+        assertThat(ligne.tauxTva()).isEqualByComparingTo("18");
     }
 
     @Test

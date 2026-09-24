@@ -4,6 +4,7 @@ import com.example.comptable.comptabilite.domain.CompteComptable;
 import com.example.comptable.comptabilite.repository.CompteComptableRepository;
 import com.example.comptable.comptabilite.repository.LigneEcritureRepository;
 import com.example.comptable.entreprise.domain.Entreprise;
+import com.example.comptable.entreprise.repository.EntrepriseRepository;
 import com.example.comptable.entreprise.service.EntrepriseAccessService;
 import com.example.comptable.finance.web.dto.CashPositionDto;
 import com.example.comptable.security.UtilisateurPrincipal;
@@ -13,6 +14,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -31,6 +33,8 @@ class CashPositionServiceTest {
 
     @Mock
     private EntrepriseAccessService entrepriseAccessService;
+    @Mock
+    private EntrepriseRepository entrepriseRepository;
     @Mock
     private CompteComptableRepository compteComptableRepository;
     @Mock
@@ -103,5 +107,25 @@ class CashPositionServiceTest {
 
         assertThat(position.dateReference()).isEqualTo(LocalDate.now());
         assertThat(position.total()).isEqualByComparingTo(BigDecimal.ZERO);
+    }
+
+    @Test
+    void genererSysteme_calcule_sans_principal_quand_lentreprise_existe() {
+        when(entrepriseRepository.existsById(entrepriseId)).thenReturn(true);
+        CompteComptable banque = compte("521000", "Banque BOA");
+        when(compteComptableRepository.findByEntrepriseId(entrepriseId)).thenReturn(List.of(banque));
+        when(ligneEcritureRepository.soldeNetJusquau(eq(banque.getId()), any())).thenReturn(new BigDecimal("500000"));
+
+        CashPositionDto position = cashPositionService.genererSysteme(entrepriseId, LocalDate.now());
+
+        assertThat(position.total()).isEqualByComparingTo("500000");
+    }
+
+    @Test
+    void genererSysteme_refuse_une_entreprise_introuvable() {
+        when(entrepriseRepository.existsById(entrepriseId)).thenReturn(false);
+
+        org.assertj.core.api.Assertions.assertThatThrownBy(() -> cashPositionService.genererSysteme(entrepriseId, null))
+                .isInstanceOf(ResponseStatusException.class);
     }
 }

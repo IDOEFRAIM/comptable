@@ -1,35 +1,350 @@
+// Design system — tokens + éléments de base. Centralise ce qui était auparavant dupliqué à
+// l'identique (couleurs en dur, ombre de carte, rayon de bordure) dans plus de 30 feuilles de
+// style par composant. Les composants continuent de définir leur mise en page locale, mais
+// référencent ces variables pour la couleur/l'ombre/le rayon plutôt que des valeurs en dur.
+:root {
+  // Marque — bleu plus soutenu que le bleu générique d'origine (#2563eb), toujours dans la
+  // même famille pour rester familier/rassurant (secteur financier) sans avoir l'air d'un
+  // template par défaut.
+  --color-primary: #175cd3;
+  --color-primary-hover: #0e4fbd;
+  --color-primary-active: #0b3f99;
+  --color-primary-light: #eff4ff;
+  --color-primary-border: #b2ccf3;
+
+  // Neutres (échelle Untitled UI, déjà utilisée en dur ci-et-là — centralisée ici)
+  --gray-25: #fcfcfd;
+  --gray-50: #f9fafb;
+  --gray-100: #f2f4f7;
+  --gray-200: #eaecf0;
+  --gray-300: #d0d5dd;
+  --gray-400: #98a2b3;
+  --gray-500: #667085;
+  --gray-600: #475467;
+  --gray-700: #344054;
+  --gray-800: #1d2939;
+  --gray-900: #101828;
+
+  --text-primary: #101828;
+  --text-secondary: #475467;
+  --text-tertiary: #667085;
+  --text-placeholder: #98a2b3;
+  --text-on-primary: #ffffff;
+
+  --border-default: #d0d5dd;
+  --border-subtle: #eaecf0;
+
+  --bg-app: #f8fafc;
+  --bg-surface: #ffffff;
+  --bg-subtle: #f9fafb;
+  --bg-subtle-hover: #f2f4f7;
+
+  // Sémantique (succès/avertissement/danger) — mêmes teintes que celles déjà en usage,
+  // nommées pour ne plus jamais avoir à retrouver un code hex précis dans 10 fichiers.
+  --color-success: #027a48;
+  --color-success-bg: #ecfdf3;
+  --color-success-border: #abefc6;
+  --color-warning: #b54708;
+  --color-warning-bg: #fffaeb;
+  --color-warning-border: #fedf89;
+  --color-danger: #b42318;
+  --color-danger-bg: #fef3f2;
+  --color-danger-border: #fda29b;
+  --color-info: var(--color-primary);
+  --color-info-bg: var(--color-primary-light);
+
+  // Élévation — une seule échelle, plus raffinée que l'ombre plate d'origine
+  // (0 1px 3px rgba(0,0,0,.1) partout).
+  --shadow-xs: 0 1px 2px rgba(16, 24, 40, 0.05);
+  --shadow-sm: 0 1px 2px rgba(16, 24, 40, 0.06), 0 1px 3px rgba(16, 24, 40, 0.08);
+  --shadow-md: 0 4px 8px -2px rgba(16, 24, 40, 0.1), 0 2px 4px -2px rgba(16, 24, 40, 0.06);
+  --shadow-lg: 0 12px 16px -4px rgba(16, 24, 40, 0.1), 0 4px 6px -2px rgba(16, 24, 40, 0.04);
+  --shadow-xl: 0 20px 24px -4px rgba(16, 24, 40, 0.12), 0 8px 8px -4px rgba(16, 24, 40, 0.04);
+
+  // Rayons
+  --radius-sm: 6px;
+  --radius-md: 8px;
+  --radius-lg: 10px;
+  --radius-xl: 14px;
+
+  --font-sans:
+    -apple-system, BlinkMacSystemFont, "Segoe UI", "Helvetica Neue", Roboto, Arial, sans-serif;
+}
+
 * {
   box-sizing: border-box;
 }
 
+html,
 body {
-  margin: 0;
-  font-family: -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
-  background: #f4f5f7;
-  color: #1f2328;
+  height: 100%;
 }
 
-// Primitives d'etat UI partagees (mission P1.5, section 49) : ".message-erreur" et ".etat-vide"
-// etaient dupliques a l'identique (meme couleur/typo) dans plus de 20 feuilles de style de
-// composants. Definies ici une seule fois ; un composant peut toujours surcharger le padding ou
-// la marge localement (la regle scopee Angular est plus specifique que ce selecteur global).
+body {
+  margin: 0;
+  font-family: var(--font-sans);
+  font-size: 14px;
+  line-height: 1.5;
+  background: var(--bg-app);
+  color: var(--text-primary);
+  -webkit-font-smoothing: antialiased;
+}
+
+// Applique par le panneau de navigation mobile coulissant (entreprise-workspace) le temps qu'il
+// est ouvert, en complement du position:fixed pose en inline par le composant (voir
+// verrouillerScrollPage) : sans ce verrou, un geste de defilement sur le panneau fait defiler la
+// page en dessous au lieu du panneau lui-meme - overflow:hidden seul ne suffit pas sur Safari
+// iOS, d'ou le position:fixed cote body. width:100% evite que le body, sorti du flux normal par
+// le position:fixed, ne s'effondre a la largeur de son contenu.
+body.menu-mobile-ouvert {
+  overflow: hidden;
+  width: 100%;
+}
+
+h1,
+h2,
+h3,
+h4 {
+  margin: 0;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  color: var(--text-primary);
+}
+
+a {
+  color: var(--color-primary);
+}
+
+::selection {
+  background: var(--color-primary-border);
+}
+
+:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
+
+// Défilement discret (Chromium) — un détail que les produits soignés ont, un template n'a pas.
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--gray-300);
+  border-radius: 999px;
+  border: 2px solid var(--bg-app);
+}
+
+// --- Primitives d'état UI partagées -----------------------------------------------------
+
 .message-erreur {
-  color: #b42318;
-  font-size: 0.875rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: var(--color-danger);
+  background: var(--color-danger-bg);
+  border: 1px solid var(--color-danger-border);
+  border-radius: var(--radius-md);
+  padding: 0.65rem 0.85rem;
+  font-size: 0.8125rem;
   margin: 0;
 }
 
 .etat-vide {
-  color: #667085;
+  color: var(--text-tertiary);
   text-align: center;
-  padding: 2rem 0;
+  padding: 2.5rem 1rem;
+  font-size: 0.875rem;
 }
 
-// Base commune des badges de statut (couleurs specifiques par domaine restent locales au
-// composant, ex. ".badge-succes"/".badge-erreur" - seule la forme est dupliquee partout).
 .badge {
-  padding: 0.2rem 0.6rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.2rem 0.65rem;
   border-radius: 999px;
   font-size: 0.75rem;
   font-weight: 600;
+  line-height: 1.4;
+}
+
+// --- Carte : le composant le plus dupliqué de tout le frontend (>25 fichiers, valeurs
+// identiques : background blanc, rayon 8px, même ombre) — définition canonique ici, les
+// feuilles de style locales n'ont plus qu'à référencer var(--shadow-sm)/var(--radius-lg)
+// plutôt que de recopier les valeurs.
+.carte {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-xs);
+}
+
+// --- Boutons -----------------------------------------------------------------------------
+// Conventions déjà utilisées dans les gabarits (.bouton-principal / .bouton-secondaire,
+// >55 usages cumulés) — définies une seule fois avec un état hover/disabled cohérent partout.
+
+.bouton-principal,
+button.bouton-principal {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  padding: 0.55rem 1rem;
+  border: 1px solid var(--color-primary);
+  border-radius: var(--radius-md);
+  background: var(--color-primary);
+  color: var(--text-on-primary);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.12s ease, border-color 0.12s ease;
+
+  &:hover:not(:disabled) {
+    background: var(--color-primary-hover);
+    border-color: var(--color-primary-hover);
+  }
+
+  &:active:not(:disabled) {
+    background: var(--color-primary-active);
+    border-color: var(--color-primary-active);
+  }
+
+  &:disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+  }
+}
+
+.bouton-secondaire,
+button.bouton-secondaire {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  padding: 0.55rem 1rem;
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-md);
+  background: var(--bg-surface);
+  color: var(--text-secondary);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.12s ease, border-color 0.12s ease;
+
+  &:hover:not(:disabled) {
+    background: var(--bg-subtle-hover);
+    border-color: var(--gray-400);
+    color: var(--text-primary);
+  }
+
+  &:disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+  }
+}
+
+// --- Champs de formulaire ------------------------------------------------------------------
+// Base neutre : la plupart des composants ne stylaient un input qu'en cas de besoin explicite ;
+// ceux qui ne le faisaient pas héritent maintenant d'un rendu cohérent plutôt que du style
+// natif du navigateur (visible d'un formulaire à l'autre auparavant).
+
+input:not([type="checkbox"]):not([type="radio"]),
+select,
+textarea {
+  font-family: inherit;
+  font-size: 0.875rem;
+  color: var(--text-primary);
+  background: var(--bg-surface);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-md);
+  padding: 0.55rem 0.75rem;
+  transition: border-color 0.12s ease, box-shadow 0.12s ease;
+
+  &::placeholder {
+    color: var(--text-placeholder);
+  }
+
+  &:focus-visible {
+    outline: none;
+    border-color: var(--color-primary);
+    box-shadow: 0 0 0 3px var(--color-primary-light);
+  }
+
+  &:disabled {
+    background: var(--bg-subtle);
+    color: var(--text-tertiary);
+    cursor: not-allowed;
+  }
+}
+
+label {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+// --- Tableaux --------------------------------------------------------------------------------
+// Base commune : beaucoup de tableaux du produit (Écritures, Tiers, Documents, Facturation...)
+// stylaient chacun leurs th/td légèrement différemment. Une base cohérente ici, chaque
+// composant garde la liberté d'ajuster localement (alignement de colonnes spécifiques, etc.)
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.8125rem;
+}
+
+th {
+  text-align: left;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--text-tertiary);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  padding: 0.65rem 0.75rem;
+  border-bottom: 1px solid var(--border-subtle);
+  background: var(--bg-subtle);
+}
+
+td {
+  padding: 0.7rem 0.75rem;
+  border-bottom: 1px solid var(--border-subtle);
+  color: var(--text-primary);
+}
+
+tbody tr:hover {
+  background: var(--bg-subtle);
+}
+
+// --- Icône de statut (remplace les émoji 🟢🟠🔴 utilisés comme indicateurs) -----------------
+// Un point coloré + libellé texte est un pattern standard des produits SaaS "sérieux" ; un
+// émoji rendu différemment selon l'OS/le navigateur ne l'est pas.
+
+.point-statut {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  flex-shrink: 0;
+
+  &.succes {
+    background: var(--color-success);
+  }
+
+  &.attention {
+    background: var(--color-warning);
+  }
+
+  &.danger {
+    background: var(--color-danger);
+  }
+
+  &.neutre {
+    background: var(--gray-400);
+  }
 }

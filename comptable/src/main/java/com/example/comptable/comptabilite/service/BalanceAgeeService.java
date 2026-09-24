@@ -5,11 +5,14 @@ import com.example.comptable.comptabilite.domain.Tiers;
 import com.example.comptable.comptabilite.repository.LigneEcritureRepository;
 import com.example.comptable.comptabilite.web.dto.BalanceAgeeDto;
 import com.example.comptable.comptabilite.web.dto.BalanceAgeeLigneDto;
+import com.example.comptable.entreprise.repository.EntrepriseRepository;
 import com.example.comptable.entreprise.service.EntrepriseAccessService;
 import com.example.comptable.security.UtilisateurPrincipal;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -39,11 +42,26 @@ public class BalanceAgeeService {
     private static final int BORNE_TRANCHE_3 = 90;
 
     private final EntrepriseAccessService entrepriseAccessService;
+    private final EntrepriseRepository entrepriseRepository;
     private final LigneEcritureRepository ligneEcritureRepository;
 
     @Transactional(readOnly = true)
     public BalanceAgeeDto generer(UUID entrepriseId, LocalDate dateArrete, UtilisateurPrincipal principal) {
         entrepriseAccessService.verifierAcces(entrepriseId, principal);
+        return calculer(entrepriseId, dateArrete);
+    }
+
+    /** Variante sans principal humain (STEP 8 du plan AI Finance) : appel serveur-a-serveur
+     * (ai-service, cle API interne) - meme discipline que CashPositionService.genererSysteme. */
+    @Transactional(readOnly = true)
+    public BalanceAgeeDto genererSysteme(UUID entrepriseId, LocalDate dateArrete) {
+        if (!entrepriseRepository.existsById(entrepriseId)) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Entreprise introuvable");
+        }
+        return calculer(entrepriseId, dateArrete);
+    }
+
+    private BalanceAgeeDto calculer(UUID entrepriseId, LocalDate dateArrete) {
         LocalDate date = dateArrete != null ? dateArrete : LocalDate.now();
 
         List<LigneEcriture> lignesEnInstance = ligneEcritureRepository.rechercherLignesEnInstance(entrepriseId, date);

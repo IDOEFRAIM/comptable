@@ -29,7 +29,8 @@ import java.util.List;
  * est la seule transition (pas d'etape "envoye au fournisseur" separee pour l'instant) et
  * declenche, pour chaque ligne, une entree en stock via MouvementStockService - qui recalcule
  * le PUMP de l'article et genere l'ecriture 311/6031 correspondante. La facture fournisseur
- * (401/601/4456) reste hors perimetre de cette premiere iteration de la chaine d'achats.
+ * (voir {@link FactureFournisseur}) est comptabilisee via AccountingOperationEngine (AchatRule) -
+ * ce service ne construit plus d'EcritureComptable lui-meme (mission Etape 5).
  */
 @Entity
 @Table(name = "commande_achat")

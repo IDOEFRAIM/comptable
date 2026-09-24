@@ -1,0 +1,140 @@
+<div class="page-operations">
+  <div class="entete">
+    <h2>Opérations courantes</h2>
+    <p class="note-formulaire">
+      Chaque opération passe par le moteur de règles comptables : les comptes sont résolus depuis le plan comptable,
+      jamais devinés. Une proposition d'écriture est toujours affichée avant toute comptabilisation.
+    </p>
+  </div>
+
+  <div class="carte">
+    <div class="onglets-categorie">
+      <button type="button" [class.actif]="categorie() === 'ACHAT'" (click)="changerCategorie('ACHAT')">Achat</button>
+      <button type="button" [class.actif]="categorie() === 'VENTE'" (click)="changerCategorie('VENTE')">Vente</button>
+      <button type="button" [class.actif]="categorie() === 'REGLEMENT'" (click)="changerCategorie('REGLEMENT')">
+        Règlement
+      </button>
+      <button type="button" [class.actif]="categorie() === 'AVOIR'" (click)="changerCategorie('AVOIR')">Avoir</button>
+    </div>
+
+    @if (afficheSens()) {
+      <div class="onglets-sens">
+        <button type="button" [class.actif]="sens() === 'CLIENT'" (click)="changerSens('CLIENT')">
+          {{ categorie() === 'REGLEMENT' ? 'Reçu d\'un client' : 'Sur une vente' }}
+        </button>
+        <button type="button" [class.actif]="sens() === 'FOURNISSEUR'" (click)="changerSens('FOURNISSEUR')">
+          {{ categorie() === 'REGLEMENT' ? 'Versé à un fournisseur' : 'Sur un achat' }}
+        </button>
+      </div>
+    }
+
+    <div class="grille-formulaire">
+      <label class="champ">
+        {{ libelleTiers() }}
+        <select [(ngModel)]="tiersId">
+          <option value="" disabled>Sélectionner…</option>
+          @for (t of tiersDisponibles(); track t.id) {
+            <option [value]="t.id">{{ t.nom }}</option>
+          }
+        </select>
+      </label>
+
+      <label class="champ">
+        Date
+        <input type="date" [(ngModel)]="date" />
+      </label>
+
+      <label class="champ">
+        Référence (optionnel)
+        <input type="text" [(ngModel)]="reference" placeholder="Ex. FA-2026-0042" />
+      </label>
+
+      @if (afficheNature()) {
+        <label class="champ">
+          Nature
+          @if (categorie() === 'ACHAT') {
+            <select [(ngModel)]="natureAchat">
+              <option value="MARCHANDISE">Marchandise</option>
+              <option value="MATIERE_PREMIERE">Matière première</option>
+              <option value="SERVICE">Service</option>
+              <option value="CHARGE">Charge</option>
+              <option value="IMMOBILISATION">Immobilisation</option>
+              <option value="AUTRE">Autre</option>
+            </select>
+          } @else {
+            <select [(ngModel)]="natureVente">
+              <option value="VENTE_MARCHANDISE">Vente de marchandise</option>
+              <option value="VENTE_PRODUIT">Vente de produit</option>
+              <option value="VENTE_SERVICE">Vente de service</option>
+              <option value="AUTRE_VENTE">Autre vente</option>
+            </select>
+          }
+        </label>
+      }
+
+      @if (afficheCompte()) {
+        <label class="champ">
+          Compte {{ categorie() === 'ACHAT' ? 'de charge' : 'de produit' }}
+          <select [(ngModel)]="compteId">
+            <option value="" disabled>Sélectionner…</option>
+            @for (c of comptes(); track c.id) {
+              <option [value]="c.id">{{ c.numero }} — {{ c.intitule }}</option>
+            }
+          </select>
+        </label>
+      }
+
+      @if (afficheMoyenPaiement()) {
+        <label class="champ">
+          Moyen de paiement
+          <select [(ngModel)]="moyenPaiement">
+            <option value="ESPECES">Espèces</option>
+            <option value="CHEQUE">Chèque</option>
+            <option value="VIREMENT">Virement</option>
+            <option value="CARTE">Carte</option>
+            <option value="MOBILE_MONEY">Mobile money</option>
+            <option value="AUTRE">Autre</option>
+          </select>
+        </label>
+      }
+
+      <label class="champ">
+        Libellé
+        <input type="text" [(ngModel)]="libelle" placeholder="Description de l'opération" />
+      </label>
+
+      <label class="champ">
+        Montant {{ afficheMontantHt() ? 'HT' : '' }}
+        <input type="number" min="0" step="0.01" [(ngModel)]="montant" />
+      </label>
+
+      @if (afficheMontantHt()) {
+        <label class="champ">
+          TTC attendu (optionnel)
+          <input type="number" min="0" step="0.01" [(ngModel)]="montantTtcAttendu" placeholder="Vérification facultative" />
+        </label>
+      }
+    </div>
+
+    @if (erreur()) {
+      <p class="message-erreur">{{ erreur() }}</p>
+    }
+
+    <div class="actions-formulaire">
+      <button type="button" class="bouton-principal" [disabled]="envoiEnCours()" (click)="proposer()">
+        {{ envoiEnCours() ? 'Génération…' : 'Générer la proposition' }}
+      </button>
+      @if (proposition()) {
+        <button type="button" class="bouton-lien" (click)="nouvelleOperation()">Nouvelle opération</button>
+      }
+    </div>
+
+    <app-proposition-preview
+      [proposition]="proposition()"
+      [enCours]="envoiEnCours()"
+      (valider)="validerProposition()"
+      (rejeter)="rejeterProposition($event)"
+      (modifier)="allerVersSaisieManuelle()"
+    />
+  </div>
+</div>

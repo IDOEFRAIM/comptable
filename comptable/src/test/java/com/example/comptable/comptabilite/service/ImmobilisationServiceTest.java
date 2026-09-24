@@ -14,6 +14,12 @@ import com.example.comptable.comptabilite.repository.EcritureComptableRepository
 import com.example.comptable.comptabilite.repository.ExerciceComptableRepository;
 import com.example.comptable.comptabilite.repository.ImmobilisationRepository;
 import com.example.comptable.comptabilite.repository.JournalRepository;
+import com.example.comptable.comptabilite.parametrage.AccountResolutionSource;
+import com.example.comptable.comptabilite.parametrage.AccountResolutionStatus;
+import com.example.comptable.comptabilite.parametrage.AccountingAccountResolver;
+import com.example.comptable.comptabilite.parametrage.NiveauConfiance;
+import com.example.comptable.comptabilite.parametrage.ResolvedAccount;
+import com.example.comptable.comptabilite.parametrage.domain.AccountPurpose;
 import com.example.comptable.comptabilite.web.dto.CreerImmobilisationRequest;
 import com.example.comptable.comptabilite.web.dto.GenererDotationsResultDto;
 import com.example.comptable.comptabilite.web.dto.ImmobilisationDto;
@@ -61,6 +67,8 @@ class ImmobilisationServiceTest {
     private EcritureComptableRepository ecritureComptableRepository;
     @Mock
     private UtilisateurRepository utilisateurRepository;
+    @Mock
+    private AccountingAccountResolver accountingAccountResolver;
 
     @InjectMocks
     private ImmobilisationService immobilisationService;
@@ -196,7 +204,11 @@ class ImmobilisationServiceTest {
                 .thenReturn(List.of(immo));
         when(dotationAmortissementRepository.existsByImmobilisationIdAndAnnee(immo.getId(), 2027)).thenReturn(false);
         when(journalRepository.findByEntrepriseIdAndCode(entrepriseId, "OD")).thenReturn(Optional.of(journalOd));
-        when(compteComptableRepository.findByEntrepriseIdAndNumero(entrepriseId, "681")).thenReturn(Optional.of(compte681));
+        when(accountingAccountResolver.resolve(org.mockito.ArgumentMatchers.eq(entrepriseId),
+                org.mockito.ArgumentMatchers.eq(AccountPurpose.DOTATION_AMORTISSEMENT), any(), org.mockito.ArgumentMatchers.isNull()))
+                .thenReturn(new ResolvedAccount(AccountResolutionStatus.RESOLVED, compte681.getId(), compte681.getNumero(),
+                        compte681.getIntitule(), AccountResolutionSource.ROLE_SYSTEME, NiveauConfiance.CERTAIN, "resolu (test)"));
+        when(compteComptableRepository.findById(compte681.getId())).thenReturn(Optional.of(compte681));
         when(utilisateurRepository.getReferenceById(principal.getId())).thenReturn(utilisateur);
         when(ecritureComptableRepository.countByJournalId(journalOd.getId())).thenReturn(0L);
         when(ecritureComptableRepository.save(any())).thenAnswer(inv -> {

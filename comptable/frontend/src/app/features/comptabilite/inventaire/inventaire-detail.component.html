@@ -1,0 +1,97 @@
+@if (inventaire(); as inv) {
+  <div class="entete-inventaire">
+    <h3>Inventaire du {{ inv.date }}</h3>
+    <span class="badge-statut" [class]="'statut-' + inv.statut.toLowerCase()">{{ libellesStatut[inv.statut] }}</span>
+  </div>
+  @if (inv.commentaire) {
+    <p class="commentaire">{{ inv.commentaire }}</p>
+  }
+
+  @if (erreur()) {
+    <p class="message-erreur">{{ erreur() }}</p>
+  }
+
+  @if (modifiable) {
+    <div class="ligne-champs formulaire-ligne">
+      <label class="champ">
+        <span>Article</span>
+        <select [(ngModel)]="articleIdSaisie">
+          <option value="" disabled>Sélectionner…</option>
+          @for (a of articles; track a.id) {
+            <option [value]="a.id">{{ a.codeArticle }} — {{ a.designation }}</option>
+          }
+        </select>
+      </label>
+      <label class="champ champ-etroit">
+        <span>Stock compté</span>
+        <input type="number" step="0.001" [(ngModel)]="stockCompteSaisie" />
+      </label>
+      <label class="champ champ-etroit">
+        <span>Coût unitaire (si requis)</span>
+        <input type="number" step="0.0001" [(ngModel)]="coutUnitaireManuelSaisie" placeholder="Mode intermittent" />
+      </label>
+      <button type="button" class="bouton-secondaire" [disabled]="envoiEnCours()" (click)="saisirLigne()">
+        Ajouter / mettre à jour
+      </button>
+    </div>
+  }
+
+  @if (inv.lignes.length === 0) {
+    <p class="etat-vide">Aucune ligne saisie.</p>
+  } @else {
+    <table>
+      <thead>
+        <tr>
+          <th>Article</th>
+          <th>Stock théorique</th>
+          <th>Stock compté</th>
+          <th>Écart</th>
+          <th>Coût unitaire</th>
+          <th>Valeur écart</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (l of inv.lignes; track l.id) {
+          <tr>
+            <td>{{ l.articleCode }} — {{ l.articleDesignation }}</td>
+            <td>{{ l.stockTheorique | number: '1.0-3' }}</td>
+            <td>{{ l.stockCompte | number: '1.0-3' }}</td>
+            <td [class.ecart-positif]="l.ecart > 0" [class.ecart-negatif]="l.ecart < 0">{{ l.ecart | number: '1.0-3' }}</td>
+            <td>{{ l.coutUnitaire | number: '1.0-4' }}</td>
+            <td>{{ l.valeurEcart | number: '1.0-2' }}</td>
+          </tr>
+        }
+      </tbody>
+      <tfoot>
+        <tr>
+          <td colspan="5">Total écart</td>
+          <td>{{ inv.valeurEcartTotal | number: '1.0-2' }}</td>
+        </tr>
+      </tfoot>
+    </table>
+  }
+
+  <div class="actions-inventaire">
+    @if (inv.statut === 'EN_COURS') {
+      <button type="button" class="bouton-principal" [disabled]="envoiEnCours()" (click)="valider()">
+        Valider l'inventaire
+      </button>
+    }
+    @if (inv.statut === 'VALIDE') {
+      <button type="button" class="bouton-principal" [disabled]="envoiEnCours()" (click)="cloturer()">
+        Clôturer
+      </button>
+    }
+  </div>
+
+  @if (inv.propositionId && !inv.ecritureId) {
+    <p class="message-info">
+      Une régularisation a été proposée : validez-la depuis l'écran <strong>Opérations</strong> avant de pouvoir clôturer cet inventaire.
+    </p>
+  }
+  @if (inv.ecritureId) {
+    <p class="message-succes">✓ Écriture comptable générée (n° {{ inv.ecritureId.slice(0, 8) }}…).</p>
+  }
+} @else if (chargement()) {
+  <p class="etat-vide">Chargement…</p>
+}

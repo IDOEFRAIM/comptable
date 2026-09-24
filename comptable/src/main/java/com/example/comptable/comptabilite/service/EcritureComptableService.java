@@ -8,7 +8,6 @@ import com.example.comptable.comptabilite.domain.LigneEcriture;
 import com.example.comptable.comptabilite.domain.StatutEcriture;
 import com.example.comptable.comptabilite.domain.StatutExercice;
 import com.example.comptable.comptabilite.domain.Tiers;
-import com.example.comptable.comptabilite.repository.CompteComptableRepository;
 import com.example.comptable.comptabilite.repository.EcritureComptableRepository;
 import com.example.comptable.comptabilite.repository.ExerciceComptableRepository;
 import com.example.comptable.comptabilite.repository.JournalRepository;
@@ -46,7 +45,7 @@ public class EcritureComptableService {
     private final EcritureComptableRepository ecritureComptableRepository;
     private final DocumentRepository documentRepository;
     private final JournalRepository journalRepository;
-    private final CompteComptableRepository compteComptableRepository;
+    private final CompteComptableValidationService compteComptableValidationService;
     private final ExerciceComptableRepository exerciceComptableRepository;
     private final TiersRepository tiersRepository;
     private final UtilisateurRepository utilisateurRepository;
@@ -120,10 +119,14 @@ public class EcritureComptableService {
                     "Ligne " + numeroLigne + " : renseignez soit un debit, soit un credit, jamais les deux ni aucun");
         }
 
-        CompteComptable compte = compteComptableRepository.findById(ligneRequest.compteId())
-                .filter(c -> c.getEntreprise().getId().equals(entrepriseId))
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
-                        "Ligne " + numeroLigne + " : compte introuvable"));
+        CompteComptable compte;
+        try {
+            compte = compteComptableValidationService.chargerCompteUtilisable(entrepriseId, ligneRequest.compteId(), true);
+        } catch (ResponseStatusException e) {
+            // Reformule le message avec le numero de ligne, plus utile pour une saisie
+            // manuelle multi-lignes que le message generique du service de validation.
+            throw new ResponseStatusException(e.getStatusCode(), "Ligne " + numeroLigne + " : " + e.getReason());
+        }
 
         LigneEcriture ligne = new LigneEcriture();
         ligne.setCompte(compte);

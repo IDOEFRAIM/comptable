@@ -1,0 +1,122 @@
+<div class="page-regularisations">
+  <div class="entete">
+    <h2>Régularisations</h2>
+    <button type="button" class="bouton-principal" (click)="afficherFormulaire.set(!afficherFormulaire())">
+      {{ afficherFormulaire() ? 'Annuler' : '+ Régularisation' }}
+    </button>
+  </div>
+
+  @if (erreur()) {
+    <p class="message-erreur">{{ erreur() }}</p>
+  }
+
+  @if (afficherFormulaire()) {
+    <form [formGroup]="form" (ngSubmit)="creer()" class="carte formulaire-creation">
+      <label class="champ">
+        <span>Exercice</span>
+        <select formControlName="exerciceId">
+          <option value="" disabled>Choisir…</option>
+          @for (e of exercices(); track e.id) {
+            <option [value]="e.id">{{ e.dateDebut }} — {{ e.dateFin }}</option>
+          }
+        </select>
+      </label>
+      <label class="champ champ-large">
+        <span>Type</span>
+        <select formControlName="type">
+          @for (t of types; track t) {
+            <option [value]="t">{{ libellesType[t] }}</option>
+          }
+        </select>
+      </label>
+      <label class="champ champ-etroit">
+        <span>Date d'origine</span>
+        <input type="date" formControlName="dateOrigine" />
+      </label>
+      <label class="champ champ-etroit">
+        <span>Début de période</span>
+        <input type="date" formControlName="dateDebut" />
+      </label>
+      <label class="champ champ-etroit">
+        <span>Fin de période</span>
+        <input type="date" formControlName="dateFin" />
+      </label>
+      <label class="champ champ-etroit">
+        <span>Montant</span>
+        <input type="number" formControlName="montant" />
+      </label>
+      <label class="champ champ-large">
+        <span>Libellé</span>
+        <input type="text" formControlName="libelle" placeholder="Ex : Assurance annuelle" />
+      </label>
+      <label class="champ">
+        <span>Compte d'origine</span>
+        <select formControlName="compteOrigineId">
+          <option value="" disabled>Choisir…</option>
+          @for (c of comptes(); track c.id) {
+            <option [value]="c.id">{{ c.numero }} — {{ c.intitule }}</option>
+          }
+        </select>
+      </label>
+      <label class="champ">
+        <span>Compte de contrepartie</span>
+        <select formControlName="compteContrepartieId">
+          <option value="" disabled>Choisir…</option>
+          @for (c of comptes(); track c.id) {
+            <option [value]="c.id">{{ c.numero }} — {{ c.intitule }}</option>
+          }
+        </select>
+      </label>
+      <button type="submit" class="bouton-principal" [disabled]="envoiEnCours()">
+        {{ envoiEnCours() ? 'Création…' : 'Créer' }}
+      </button>
+    </form>
+  }
+
+  @if (chargement()) {
+    <p class="etat-vide">Chargement…</p>
+  } @else if (regularisations().length === 0) {
+    <p class="etat-vide">Aucune régularisation.</p>
+  } @else {
+    <div class="carte">
+      <table>
+        <thead>
+          <tr>
+            <th>Type</th>
+            <th>Libellé</th>
+            <th>Montant</th>
+            <th>Part exercice</th>
+            <th>Part future</th>
+            <th>Statut</th>
+            <th>Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (r of regularisations(); track r.id) {
+            <tr>
+              <td>{{ libellesType[r.type] }}</td>
+              <td>{{ r.libelle }}</td>
+              <td>{{ r.montant | number: '1.0-2' }}</td>
+              <td>{{ r.montantExercice | number: '1.0-2' }}</td>
+              <td>{{ r.montantFutur | number: '1.0-2' }}</td>
+              <td>
+                <span class="badge-statut" [class]="'statut-' + r.statut.toLowerCase()">{{ libellesStatut[r.statut] }}</span>
+              </td>
+              <td>
+                @if (r.statut === 'BROUILLON') {
+                  <button type="button" class="bouton-secondaire" (click)="proposer(r)">Proposer</button>
+                }
+                @if (r.propositionId && !r.ecritureId) {
+                  <span class="message-info">Validez depuis l'écran Opérations.</span>
+                }
+                @if (r.ecritureId) {
+                  <span class="message-succes">✓ Écriture générée</span>
+                }
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  }
+</div>

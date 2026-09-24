@@ -5,7 +5,6 @@ import com.example.comptable.comptabilite.domain.EcritureComptable;
 import com.example.comptable.comptabilite.domain.ExerciceComptable;
 import com.example.comptable.comptabilite.domain.Journal;
 import com.example.comptable.comptabilite.domain.StatutExercice;
-import com.example.comptable.comptabilite.repository.CompteComptableRepository;
 import com.example.comptable.comptabilite.repository.EcritureComptableRepository;
 import com.example.comptable.comptabilite.repository.ExerciceComptableRepository;
 import com.example.comptable.comptabilite.repository.JournalRepository;
@@ -52,7 +51,7 @@ class EcritureComptableServiceTest {
     @Mock
     private JournalRepository journalRepository;
     @Mock
-    private CompteComptableRepository compteComptableRepository;
+    private CompteComptableValidationService compteComptableValidationService;
     @Mock
     private ExerciceComptableRepository exerciceComptableRepository;
     @Mock
@@ -134,8 +133,8 @@ class EcritureComptableServiceTest {
         when(journalRepository.findById(journal.getId())).thenReturn(Optional.of(journal));
         when(exerciceComptableRepository.findByEntrepriseIdAndDate(entrepriseId, LocalDate.of(2026, 3, 15)))
                 .thenReturn(Optional.of(exercice));
-        when(compteComptableRepository.findById(compteBanque.getId())).thenReturn(Optional.of(compteBanque));
-        when(compteComptableRepository.findById(compteVentes.getId())).thenReturn(Optional.of(compteVentes));
+        when(compteComptableValidationService.chargerCompteUtilisable(entrepriseId, compteBanque.getId(), true)).thenReturn(compteBanque);
+        when(compteComptableValidationService.chargerCompteUtilisable(entrepriseId, compteVentes.getId(), true)).thenReturn(compteVentes);
         when(ecritureComptableRepository.countByJournalId(journal.getId())).thenReturn(3L);
         when(utilisateurRepository.getReferenceById(principal.getId())).thenReturn(utilisateur);
         when(ecritureComptableRepository.save(any())).thenAnswer(inv -> {
@@ -157,8 +156,8 @@ class EcritureComptableServiceTest {
         when(journalRepository.findById(journal.getId())).thenReturn(Optional.of(journal));
         when(exerciceComptableRepository.findByEntrepriseIdAndDate(entrepriseId, LocalDate.of(2026, 3, 15)))
                 .thenReturn(Optional.of(exercice));
-        when(compteComptableRepository.findById(compteBanque.getId())).thenReturn(Optional.of(compteBanque));
-        when(compteComptableRepository.findById(compteVentes.getId())).thenReturn(Optional.of(compteVentes));
+        when(compteComptableValidationService.chargerCompteUtilisable(entrepriseId, compteBanque.getId(), true)).thenReturn(compteBanque);
+        when(compteComptableValidationService.chargerCompteUtilisable(entrepriseId, compteVentes.getId(), true)).thenReturn(compteVentes);
         when(utilisateurRepository.getReferenceById(principal.getId())).thenReturn(utilisateur);
         when(ecritureComptableRepository.save(any())).thenAnswer(inv -> {
             EcritureComptable e = inv.getArgument(0);
@@ -183,8 +182,8 @@ class EcritureComptableServiceTest {
         when(journalRepository.findById(journal.getId())).thenReturn(Optional.of(journal));
         when(exerciceComptableRepository.findByEntrepriseIdAndDate(entrepriseId, LocalDate.of(2026, 3, 15)))
                 .thenReturn(Optional.of(exercice));
-        when(compteComptableRepository.findById(compteBanque.getId())).thenReturn(Optional.of(compteBanque));
-        when(compteComptableRepository.findById(compteVentes.getId())).thenReturn(Optional.of(compteVentes));
+        when(compteComptableValidationService.chargerCompteUtilisable(entrepriseId, compteBanque.getId(), true)).thenReturn(compteBanque);
+        when(compteComptableValidationService.chargerCompteUtilisable(entrepriseId, compteVentes.getId(), true)).thenReturn(compteVentes);
 
         CreerEcritureRequest request = new CreerEcritureRequest(
                 journal.getId(), LocalDate.of(2026, 3, 15), "Deséquilibrée", null,

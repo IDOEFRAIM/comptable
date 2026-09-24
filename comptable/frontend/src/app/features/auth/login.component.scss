@@ -1,62 +1,141 @@
 .page-login {
+  display: grid;
+  grid-template-columns: minmax(0, 5fr) minmax(0, 4fr);
+  min-height: 100vh;
+  background: var(--bg-surface);
+}
+
+// Panneau de marque : premiere impression du produit (ecran de connexion) - un fond uni avec
+// un message de positionnement plutot qu'une simple carte centree sur fond gris, pattern
+// standard des produits SaaS B2B mais absent de la version precedente.
+.panneau-marque {
+  display: flex;
+  align-items: center;
+  padding: 3rem;
+  background: linear-gradient(160deg, var(--color-primary-active) 0%, #0a2a63 100%);
+  color: #eaf0fd;
+}
+
+.panneau-contenu {
+  max-width: 420px;
+  margin: 0 auto;
+}
+
+.marque {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  font-size: 1rem;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  margin-bottom: 3rem;
+}
+
+.marque-icone {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  border-radius: var(--radius-sm);
+  background: rgba(255, 255, 255, 0.14);
+  font-size: 0.9375rem;
+}
+
+.panneau-contenu h2 {
+  font-size: 1.625rem;
+  font-weight: 600;
+  line-height: 1.35;
+  letter-spacing: -0.01em;
+  color: #ffffff;
+  margin: 0 0 2rem;
+}
+
+.atouts {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.9rem;
+  font-size: 0.875rem;
+  color: rgba(234, 240, 253, 0.85);
+
+  li {
+    position: relative;
+    padding-left: 1.35rem;
+    line-height: 1.5;
+
+    &::before {
+      content: "";
+      position: absolute;
+      left: 0;
+      top: 0.5rem;
+      width: 6px;
+      height: 6px;
+      border-radius: 999px;
+      background: #7ea6ee;
+    }
+  }
+}
+
+.panneau-formulaire {
   display: flex;
   align-items: center;
   justify-content: center;
-  min-height: 100vh;
-  background: #f4f5f7;
+  padding: 2rem;
 }
 
 .carte-login {
   display: flex;
   flex-direction: column;
-  gap: 0.9rem;
+  gap: 1rem;
   width: 100%;
-  max-width: 360px;
-  padding: 2rem;
-  background: white;
-  border-radius: 10px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  max-width: 340px;
 
   h1 {
     margin: 0;
-    font-size: 1.5rem;
+    font-size: 1.375rem;
   }
 }
 
 .sous-titre {
-  margin: 0 0 0.5rem;
-  color: #667085;
+  margin: 0 0 0.25rem;
+  color: var(--text-tertiary);
   font-size: 0.875rem;
 }
 
 .champ {
   display: flex;
   flex-direction: column;
-  gap: 0.3rem;
-  font-size: 0.875rem;
+  gap: 0.35rem;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--text-secondary);
 
   input {
-    padding: 0.55rem;
-    border: 1px solid #d0d5dd;
-    border-radius: 6px;
-    font-size: 0.9rem;
+    width: 100%;
+
+    &.champ-invalide {
+      border-color: var(--color-danger-border);
+    }
   }
 }
 
-.message-erreur {
-  color: #b42318;
-  font-size: 0.875rem;
-  margin: 0;
+.message-erreur-champ {
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: var(--color-danger);
 }
 
 .lien-secondaire {
-  margin: 0;
+  margin: 0.25rem 0 0;
   text-align: center;
   font-size: 0.8125rem;
-  color: #667085;
+  color: var(--text-tertiary);
 
   a {
-    color: #2563eb;
+    color: var(--color-primary);
     font-weight: 600;
     text-decoration: none;
 
@@ -66,17 +145,18 @@
   }
 }
 
-button {
+.bouton-principal {
+  width: 100%;
   padding: 0.65rem;
-  border: none;
-  border-radius: 6px;
-  background: #2563eb;
-  color: white;
-  font-weight: 600;
-  cursor: pointer;
+  font-size: 0.875rem;
+}
 
-  &:disabled {
-    background: #a4bcf5;
-    cursor: not-allowed;
+@media (max-width: 860px) {
+  .page-login {
+    grid-template-columns: 1fr;
+  }
+
+  .panneau-marque {
+    display: none;
   }
 }

@@ -11,8 +11,9 @@
 
 .carte {
   background: white;
-  border-radius: 8px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+  border: 1px solid var(--border-subtle);
   padding: 1.25rem;
 
   h3 {
@@ -21,55 +22,67 @@
   }
 }
 
-.carte-resume {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  flex-wrap: wrap;
+.grille-compteurs {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
   gap: 1rem;
 }
 
-.ligne-resume {
+.carte-compteur {
   display: flex;
   flex-direction: column;
+  gap: 0.35rem;
+  padding: 1.1rem;
+  background: white;
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+  border: 1px solid var(--border-subtle);
 
-  .valeur-totale {
-    font-size: 2rem;
+  .valeur {
+    font-size: 1.75rem;
     font-weight: 700;
-    color: #1f2328;
+    color: var(--text-primary);
   }
 
-  .libelle-totale {
+  .libelle {
     font-size: 0.8125rem;
-    color: #667085;
+    color: var(--text-tertiary);
+  }
+
+  &.succes .valeur {
+    color: var(--color-success);
+  }
+
+  &.attention .valeur {
+    color: var(--color-warning);
+  }
+
+  &.danger .valeur {
+    color: var(--color-danger);
   }
 }
 
-.pastilles-statut {
+// Meme pattern que le tableau de bord entreprise : colonne large pour le travail actionnable
+// (risques, taches du jour), colonne etroite pour les reperes secondaires (assistant, liste de
+// clients, charge, analytics) plutot qu'un empilement de cartes pleine largeur.
+.grille-cockpit {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(300px, 360px);
+  align-items: start;
+  gap: 1.25rem;
+}
+
+.colonne-principale,
+.colonne-secondaire {
   display: flex;
-  gap: 0.75rem;
-  flex-wrap: wrap;
+  flex-direction: column;
+  gap: 1.25rem;
+  min-width: 0;
 }
 
-.pastille {
-  padding: 0.3rem 0.7rem;
-  border-radius: 999px;
-  font-size: 0.8125rem;
-  font-weight: 600;
-
-  &.pastille-vert {
-    background: #ecfdf3;
-    color: #027a48;
-  }
-
-  &.pastille-orange {
-    background: #fffaeb;
-    color: #b54708;
-  }
-
-  &.pastille-rouge {
-    background: #fef3f2;
-    color: #b42318;
+@media (max-width: 960px) {
+  .grille-cockpit {
+    grid-template-columns: 1fr;
   }
 }
 
@@ -81,7 +94,7 @@
   flex-direction: column;
   gap: 0.4rem;
   font-size: 0.875rem;
-  color: #475467;
+  color: var(--text-secondary);
 }
 
 .liste-risques {
@@ -95,15 +108,17 @@
 
 .ligne-risque {
   padding: 0.6rem 0.75rem;
-  border-radius: 6px;
-  border: 1px solid #eaecf0;
+  border-radius: var(--radius-md);
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-left: 3px solid var(--gray-300);
   display: flex;
   flex-direction: column;
   gap: 0.15rem;
   font-size: 0.8125rem;
 
   a {
-    color: #1f2328;
+    color: var(--text-primary);
     text-decoration: none;
 
     &:hover {
@@ -114,17 +129,15 @@
   .cause,
   .depuis,
   .action {
-    color: #475467;
+    color: var(--text-secondary);
   }
 
   &.severite-CRITICAL {
-    border-color: #fda29b;
-    background: #fef3f2;
+    border-left-color: var(--color-danger);
   }
 
   &.severite-IMPORTANT {
-    border-color: #fec84b;
-    background: #fffaeb;
+    border-left-color: var(--color-warning);
   }
 }
 
@@ -141,13 +154,13 @@
     align-items: center;
     gap: 0.5rem;
     padding: 0.4rem 0.5rem;
-    border-radius: 6px;
+    border-radius: var(--radius-md);
     text-decoration: none;
-    color: #1f2328;
+    color: var(--text-primary);
     font-size: 0.875rem;
 
     &:hover {
-      background: #f9fafb;
+      background: var(--bg-subtle);
     }
   }
 
@@ -157,7 +170,7 @@
 
   .score-client {
     font-weight: 600;
-    color: #667085;
+    color: var(--text-tertiary);
   }
 }
 
@@ -182,11 +195,11 @@
   }
 
   .total-taches {
-    color: #667085;
+    color: var(--text-tertiary);
   }
 
   .taches-critiques {
-    color: #b42318;
+    color: var(--color-danger);
     font-weight: 600;
   }
 }
@@ -204,22 +217,22 @@
   .valeur {
     font-size: 1.3rem;
     font-weight: 700;
-    color: #1f2328;
+    color: var(--text-primary);
   }
 
   .libelle {
     font-size: 0.75rem;
-    color: #667085;
+    color: var(--text-tertiary);
   }
 }
 
 .etat-vide {
-  color: #667085;
+  color: var(--text-tertiary);
   text-align: center;
   padding: 1rem 0;
 }
 
 .message-erreur {
-  color: #b42318;
+  color: var(--color-danger);
   font-size: 0.875rem;
 }

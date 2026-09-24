@@ -71,6 +71,23 @@ public class MouvementStock extends UuidEntity {
     @Column(name = "ecriture_id")
     private UUID ecritureId;
 
+    /** Type de document/processus a l'origine du mouvement (ex. "COMMANDE_ACHAT", "FACTURE",
+     * "FACTURE_AVOIR", "INVENTAIRE") - null pour un mouvement manuel (createdBy + libelle suffisent
+     * alors a repondre "pourquoi ce mouvement existe"). */
+    @Column(name = "source_type")
+    private String sourceType;
+
+    @Column(name = "source_id")
+    private UUID sourceId;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "depot_source_id")
+    private Depot depotSource;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "depot_destination_id")
+    private Depot depotDestination;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "created_by")
     private Utilisateur createdBy;

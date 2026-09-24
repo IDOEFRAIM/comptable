@@ -237,7 +237,7 @@ GET    /api/entreprises/{id}/etats-financiers/compte-resultat?exerciceId=...   �
 
 #### F. Clôture d'Exercice (`comptabilite/service/ClotureExerciceService`)
 
-Clôture un exercice comptable : refuse s'il reste des écritures en **BROUILLON**, génère une écriture de détermination du résultat (solde les comptes de charges/produits classes 6-7 vers le compte 120 Bénéfice ou 129 Perte), marque l'exercice **CLOTURE**, puis crée automatiquement l'exercice suivant (année civile) s'il n'existe pas déjà. Les comptes de bilan (classes 1-5) n'ont besoin d'aucune écriture "à nouveaux" : leurs soldes se reportent nativement d'un exercice à l'autre par cumul sur tout l'historique.
+Clôture un exercice comptable : consulte d'abord la **checklist de clôture** (`ClotureReadinessService`, voir module 1️⃣8️⃣) et refuse (422) si un item est `BLOCKING` (jamais de clôture qui contourne un blocage), solde les comptes de charges/produits classes 6-7 (chaque compte soldé selon le **signe réel de son mouvement net** — débit s'il est net créditeur, crédit s'il est net débiteur — et non une direction supposée par sa classe, ce qui reste correct même pour un compte de variation de stock atypique), transfère le résultat vers le compte système `RESULTAT_BENEFICE`/`RESULTAT_PERTE` (résolu via `CompteSystemeResolver`, plus de numéro `120`/`129` codé en dur), le tout construit par `ClotureRule` et posé via `AccountingOperationEngine.proposerEtValiderImmediatement` (mission cloture Étape 4 — voir module 3️⃣.M) plutôt qu'une `EcritureComptable` assemblée à la main. Marque l'exercice **CLOTURE**, puis crée automatiquement l'exercice suivant (année civile) s'il n'existe pas déjà. Les comptes de bilan (classes 1-5) n'ont besoin d'aucune écriture "à nouveaux" : leurs soldes se reportent nativement d'un exercice à l'autre par cumul sur tout l'historique.
 
 ```
 POST   /api/entreprises/{id}/exercices/{exerciceId}/cloturer   → Clôture l'exercice et ouvre le suivant
@@ -276,7 +276,7 @@ POST   /api/entreprises/{id}/immobilisations/generer-dotations?annee=.. → Gén
 
 #### J. Facturation (`comptabilite/service/FacturationService`)
 
-Devis et factures clients. Un devis suit `BROUILLON → ENVOYE → ACCEPTE|REFUSE`, un devis **ACCEPTE** peut être converti en facture (copie des lignes, `devisOrigineId` renseigné). Une facture suit `BROUILLON → VALIDEE` (génère l'écriture de vente sur le journal VTE, avec ventilation TVA sur le compte 443) `→ PAYEE`.
+Devis et factures clients. Un devis suit `BROUILLON → ENVOYE → ACCEPTE|REFUSE`, un devis **ACCEPTE** peut être converti en facture (copie des lignes, `devisOrigineId` renseigné). Une facture suit `BROUILLON → VALIDEE` (construit ses lignes via `VenteRule.construireLignesVenteDepuisMontantsPrecalcules` — montants HT/TVA/TTC déjà agrégés par la facture, aucune re-dérivation TVA — puis pose l'écriture via `AccountingOperationEngine.proposerEtValiderImmediatement`, mission cloture Étape 4 ; même forme d'écriture qu'avant, même contrat externe atomique, gain de traçabilité `sourceType="FACTURE"`/`sourceId` et d'idempotence — une double validation ne produit jamais deux écritures) `→ PAYEE`. `FactureAvoirService.validerAvoir` suit le même principe en miroir (`construireLignesAvoirVenteDepuisMontantsPrecalcules`, `sourceType="FACTURE_AVOIR"`).
 
 ```
 POST   /api/entreprises/{id}/factures?type=DEVIS|FACTURE                → Créer un devis ou une facture
@@ -288,6 +288,229 @@ POST   /api/entreprises/{id}/factures/{id}/convertir                    → Conv
 POST   /api/entreprises/{id}/factures/{id}/valider?compteProduitId=..   → Valider et générer l'écriture de vente
 POST   /api/entreprises/{id}/factures/{id}/marquer-payee                → Marquer une facture validée comme payée
 ```
+
+#### K. Moteur d'Opérations Courantes (`comptabilite/operation/`)
+
+Sépare explicitement l'**opération métier** (achat, vente, règlement, avoir) de l'**écriture comptable** : une opération ne produit jamais directement une écriture validée. Elle traverse toujours le flux suivant, sans exception :
+
+```
+Opération métier → AccountingOperationEngine → règle métier (Achat/Vente/Règlement/Avoir)
+   → résolution des comptes (AccountingAccountResolver → mapping du cabinet → CompteSystemeResolver
+     → PCE, jamais de numéro codé en dur — voir module 3️⃣.O, mission Étape 6)
+   → AccountingOperationProposal (PROPOSED ou NEEDS_REVIEW)
+   → contrôles + validation humaine explicite
+   → EcritureComptable (VALIDEE)
+```
+
+**Règle absolue** : le moteur ne calcule ou ne construit une ligne que si le compte correspondant a été réellement résolu (compte explicitement fourni par l'appelant, mapping configuré par le cabinet, ou compte système configuré via `role_systeme` — dans cet ordre, via `AccountingAccountResolver`, jamais un choix arbitraire ni un numéro deviné), toujours validé par `CompteComptableValidationService`. Si une résolution échoue (compte TVA non configuré, journal absent, règle fiscale introuvable...), la proposition passe en **NEEDS_REVIEW** avec une explication précise — le moteur ne devine jamais un compte ni un taux.
+
+**Convention de signe** : tous les montants sont toujours positifs ; c'est le **type d'opération** qui porte le sens (`ACHAT`, `VENTE`, `REGLEMENT_CLIENT`, `REGLEMENT_FOURNISSEUR`, `AVOIR_VENTE`, `AVOIR_ACHAT`). Un avoir n'est jamais un montant négatif : `AvoirRule` réutilise la construction de lignes de `VenteRule`/`AchatRule` puis inverse débit et crédit.
+
+**Statuts d'une proposition** : `PROPOSED` (complète, en attente de validation humaine) → `APPROVED` (l'écriture réelle est créée, `VALIDEE`) ou `REJECTED` ; `NEEDS_REVIEW` (incomplète, au moins une explication bloquante) ne peut être que rejetée, jamais validée directement.
+
+**Traçabilité et idempotence** (mission cloture Étape 4) : chaque proposition porte désormais `sourceType`/`sourceId` (nullable — ex. `"FACTURE"`/factureId, `"EXERCICE"`/exerciceId, `"REGULARISATION"`/regularisationId), identifiant le document métier d'origine. Avant de construire une proposition, le moteur recherche si une proposition non rejetée existe déjà pour `(entreprise, sourceType, sourceId, type)` et la renvoie telle quelle plutôt que d'en créer une seconde — une facture, une clôture ou une régularisation traitée deux fois ne produit jamais deux écritures. `proposerEtValiderImmediatement(...)` enchaîne proposition + validation dans la même transaction, pour les appelants dont l'action métier EST déjà la confirmation humaine (validation d'une facture/d'un avoir, clôture d'un exercice) — évite une double confirmation redondante sans dupliquer la logique de `valider()`.
+
+**Types d'opération** (`AccountingOperationType`) : `ACHAT`, `VENTE`, `REGLEMENT_CLIENT`, `REGLEMENT_FOURNISSEUR`, `AVOIR_VENTE`, `AVOIR_ACHAT`, `REGULARISATION_INVENTAIRE` (Étape 3), et depuis la mission cloture Étape 4 : `REGULARISATION`, `REGULARISATION_REPRISE`, `PROVISION`, `DEPRECIATION`, `CLOTURE_EXERCICE` (voir module 3️⃣.M).
+
+```
+POST   /api/entreprises/{id}/operations/achat/proposition                    → Proposer un achat
+POST   /api/entreprises/{id}/operations/vente/proposition                    → Proposer une vente
+POST   /api/entreprises/{id}/operations/reglement/proposition                → Proposer un règlement (client/fournisseur)
+POST   /api/entreprises/{id}/operations/avoir/proposition                    → Proposer un avoir (vente/achat)
+GET    /api/entreprises/{id}/operations/propositions/{id}                    → Détail d'une proposition
+POST   /api/entreprises/{id}/operations/propositions/{id}/valider            → Valider (crée l'écriture réelle)
+POST   /api/entreprises/{id}/operations/propositions/{id}/rejeter            → Rejeter (motif obligatoire)
+```
+
+**✅ IMPLÉMENTÉ** :
+- Achats (marchandise/matière première/service/charge/immobilisation/autre) avec contrôle de cohérence nature/classe de compte (une immobilisation ne peut jamais produire le schéma d'achat classique 601/445/401).
+- Ventes (marchandise/produit/service/autre) sur le même principe.
+- Règlements client/fournisseur, compte de trésorerie résolu selon le moyen de paiement (espèces → caisse, tout le reste → banque) via `role_systeme`, jamais `521`/`571` codés en dur.
+- Avoirs vente/achat par inversion des lignes de la règle d'origine (aucune logique dupliquée).
+- Frais accessoires (inclus ou non dans la base TVA) et réductions commerciales (remise/rabais/ristourne nettées avant TVA).
+- Résolution de la TVA via un référentiel paramétrable (`TaxRule` + `TvaRateResolver`) — **jamais un taux codé en dur**.
+- Contrôles : entreprise/tenant, exercice ouvert, comptes actifs/utilisables, tiers de la bonne entreprise et du bon type, tolérance HT+TVA≈TTC, équilibre débit=crédit (revérifié une seconde fois au moment de la validation, défense en profondeur).
+
+**⚠️ À FAIRE / LIMITES ASSUMÉES (non deviné, explicitement documenté)** :
+- **`TaxRule` reste vide en production** : aucun taux de TVA n'est présenté comme réglementairement vérifié pour un pays donné. Toute donnée de test doit porter `source = "FIXTURE_DEMO_NON_VERIFIE"` (ou équivalent préfixé `FIXTURE_DEMO`) ; le moteur ajoute alors un avertissement explicite (`sourceDemo`) plutôt que de laisser croire à une couverture fiscale certifiée. **Peupler ce référentiel avec des taux officiels par pays SYSCOHADA reste une mission dédiée, non couverte ici.**
+- **Escompte** : structure présente (`TypeReduction.ESCOMPTE`) mais volontairement **non calculé** — la proposition signale "non pris en charge, saisir manuellement" plutôt que de risquer une écriture incorrecte.
+- Répartition trésorerie simplifiée : carte et mobile money n'ont pas (encore) de compte système dédié distinct de la banque.
+- Hypothèse "un seul journal par type et par entreprise" (posée par `EntrepriseService.creerJournauxParDefaut`), non contrainte en base — point d'extension unique si elle change : `JournalResolver`.
+- Numérotation centralisée (`NumeroPieceGenerator`) pour ce moteur, `EcritureComptableService`, `FacturationService`, `FactureAvoirService` et, depuis l'Étape 5, `CommandeAchatService`/`AvoirFournisseurService` (via le moteur) ; `ClotureExerciceService`/`ImmobilisationService` gardent encore leur propre copie du même algorithme (dette résiduelle documentée, pas un oubli). Ceci ne concerne que le numéro de *pièce comptable* : la numérotation du *document métier* (`BC-…`, `FF-…`, `AF-…`) reste un concept séparé, propre à chaque service.
+- Pas d'écran de liste des propositions en attente ni d'édition d'une proposition — "Modifier" renvoie vers la saisie manuelle d'écriture existante.
+
+**Frontend** : `frontend/src/app/features/comptabilite/operations/` — un formulaire unique par catégorie (Achat/Vente/Règlement/Avoir) avec bascule de sens pour Règlement/Avoir, et un composant d'aperçu (`proposition-preview`) affichant systématiquement le tableau Compte/Débit/Crédit, l'indicateur d'équilibre, les explications/avertissements, et les actions Valider/Modifier/Rejeter — le comptable voit toujours les comptes proposés avant toute comptabilisation réelle.
+
+#### L. Moteur de gestion des stocks (`stock/`)
+
+Module **déjà existant avant cette mission** (`Article`, `MouvementStock`, `PumpCalculator`, `CommandeAchat` — chaîne bon de commande → réception → facture fournisseur, destockage automatique à la vente), étendu ici plutôt que dupliqué. **La comptabilisation de la facture fournisseur elle-même a depuis été unifiée sur `AccountingOperationEngine` — voir module N (mission Étape 5) ; le reste (mouvements de stock, CUMP, inventaire) est inchangé depuis cette mission-ci :**
+
+```
+Article (catalogue + 4 comptes explicites)
+    ↓
+Mouvement de stock (ENTREE_ACHAT / SORTIE_VENTE / ENTREE_INVENTAIRE / SORTIE_INVENTAIRE / AJUSTEMENT / TRANSFERT / ...)
+    ↓
+Valorisation (StockValuationService → CUMP)
+    ↓
+Inventaire physique (comptage → écart)
+    ↓
+Régularisation → AccountingOperationEngine → proposition → validation humaine → EcritureComptable
+```
+
+**✅ IMPLÉMENTÉ** :
+- **Valorisation** : `StockValuationService` (interface) / `CumpValuationService` (unique implémentation, délègue à `PumpCalculator` — même calcul déjà testé, aucun changement de comportement). **CUMP est la seule méthode implémentée** ; FIFO/LIFO/coût standard ne sont **pas implémentées** (non suffisamment cadrées pour cette mission, jamais devinées).
+- **Convention de signe portée par le type** (comme les opérations de l'Étape 2) : `ENTREE_ACHAT`/`SORTIE_VENTE`/`ENTREE_INVENTAIRE`/`SORTIE_INVENTAIRE` portent toujours une quantité positive, le type indique le sens. Les valeurs historiques `ENTREE`/`SORTIE` restent utilisées telles quelles pour les deux réintégrations préexistantes (annulation de facture, retour sur avoir) qui ne correspondent proprement à aucune catégorie plus fine — choix pragmatique documenté, pas une invention. `ENTREE_PRODUCTION`/`SORTIE_PRODUCTION`/`SORTIE_CONSOMMATION` : enum préparé pour une future mission production, **aucune logique câblée**.
+- **Politique de stock négatif configurable par article** (`politiqueStockNegatif` : `INTERDIT` par défaut = comportement historique exact / `AUTORISE_AVEC_ALERTE` / `AUTORISE`) — jamais une politique universelle imposée.
+- **Traçabilité** (`sourceType`/`sourceId` sur `MouvementStock`, nullable) : achat → `COMMANDE_ACHAT`, vente → `FACTURE`, avoir → `FACTURE_AVOIR`, régularisation → `INVENTAIRE` ; `null` pour un mouvement manuel (traçable via `createdBy`+`libelle`).
+- **Inventaire physique** (`stock/inventaire/`) : `Inventaire` (statuts `BROUILLON → EN_COURS → VALIDE → CLOTURE`) + `LigneInventaire` (stock théorique/compté/écart/valeur, instantanés figés à la saisie — jamais recalculés rétroactivement). Mode **PERMANENT** : théorique = solde/PUMP courants de l'article. Mode **INTERMITTENT** (`Article.modeGestionStock`) : aucun mouvement de stock lors des achats/ventes (la charge/le produit restent comptabilisés normalement) ; le théorique est le dernier comptage validé (ou une saisie manuelle de coût si aucun historique n'existe — jamais un coût deviné à zéro). La formule "variation = final − initial" appliquée est l'identité comptable universelle, pas un détail SYSCOHADA spécifique inventé.
+- **Régularisation via `AccountingOperationEngine`, jamais un second système** : `valider()` enregistre les mouvements `ENTREE_INVENTAIRE`/`SORTIE_INVENTAIRE` (met à jour la quantité/valeur immédiatement — le comptage physique est un fait) **sans générer d'écriture**, puis construit une `AccountingOperationProposal` (nouveau type `REGULARISATION_INVENTAIRE`, seule proposition sans tiers) via `InventaireRegularisationRule` — une paire de lignes débit/crédit par article en écart (jamais de regroupement agrégé par compte), comptes re-validés via `CompteComptableValidationService`. L'écriture réelle n'existe qu'après validation humaine de cette proposition via l'écran **Opérations** existant (`/operations/propositions/{id}/valider`, endpoint inchangé de l'Étape 2). `cloturer()` exige que la proposition soit `APPROVED`, sinon 422 ; la clôture relie alors chaque mouvement à l'écriture réelle.
+- **`Depot`/`TRANSFERT`** : abstraction minimale d'emplacement, préparée pour des transferts inter-dépôts tracables. Un transfert **n'a aucun impact** sur la quantité/valeur globale de l'article et **ne génère aucune écriture** (déplacement interne, pas un événement comptable ; aucun compte de liaison inter-établissement construit).
+- Nouveaux champs `Article` : `type` (nature), `actif`, `stockMinimum`, en plus de la politique/mode ci-dessus.
+
+```
+POST/GET  /api/entreprises/{id}/articles, /{articleId}          → CRUD article (PUT pour modifier/désactiver)
+POST/GET  /api/entreprises/{id}/mouvements-stock                → mouvements manuels (ENTREE/SORTIE/AJUSTEMENT/TRANSFERT)
+POST/GET  /api/entreprises/{id}/depots                          → dépôts
+POST/GET  /api/entreprises/{id}/inventaires, /{id}              → inventaires
+POST      /api/entreprises/{id}/inventaires/{id}/lignes         → saisie théorique/compté (calcule l'écart)
+POST      /api/entreprises/{id}/inventaires/{id}/valider        → régularisation + proposition
+POST      /api/entreprises/{id}/inventaires/{id}/cloturer       → exige la proposition APPROVED
+```
+
+**⚠️ LIMITES ASSUMÉES (non devinées)** :
+- À l'époque de cette mission (Étape 3), le reste du module stock (achats/ventes) continuait de générer ses propres écritures directement — seule la régularisation d'inventaire passait par `AccountingOperationEngine`. **Ceci a été résolu pour les achats à l'Étape 5 (voir module N)** ; les ventes l'étaient déjà depuis l'Étape 4 (module M).
+- Si la proposition de régularisation est rejetée, l'inventaire reste bloqué (pas de flux de re-proposition dans cette fondation).
+- Carte/mobile money, production/consommation, comptes de liaison inter-dépôts : non implémentés (hors périmètre explicite de cette mission).
+
+**Frontend** : `frontend/src/app/features/comptabilite/stock/stock.component.ts` (existant, étendu) — onglet **Inventaires** ajouté à côté d'Articles/Mouvements ; nouveau `inventaire/inventaire-detail.component.ts` (saisie théorique/compté/écart, actions Valider/Clôturer, bandeau "Écriture comptable générée" une fois `ecritureId` renseigné). Nouveau modèle dédié `models/inventaire.model.ts` (même convention que `plan-comptable.model.ts`/`operations.model.ts`).
+
+#### M. Régularisations, Provisions, Dépréciations et Clôture SYSCOHADA (mission cloture Étape 4)
+
+Complète le cycle de fin de période et poursuit l'unification du moteur comptable amorcée à l'Étape 2, sans dupliquer `AccountingOperationEngine` :
+
+```
+Exercice → Contrôles pré-clôture (ClotureChecklist) → Régularisations / Provisions / Dépréciations
+   → AccountingOperationEngine → AccountingOperationProposal → validation humaine
+   → EcritureComptable → Détermination du résultat → CLOTURE → Exercice suivant
+```
+
+**✅ IMPLÉMENTÉ** :
+- **Régularisations de fin de période** (`comptabilite/regularisation/`, table `regularisation`) — 6 types minimum (`RegularisationType`) : `CHARGE_CONSTATEE_AVANCE` (CCA), `PRODUIT_CONSTATE_AVANCE` (PCA), `FACTURE_NON_PARVENUE` (FNP), `CHARGE_A_PAYER` (CAP), `PRODUIT_A_RECEVOIR`, `PRODUIT_A_REPORTER` (partage exactement la mécanique de PCA — **aucune différence de traitement vérifiée entre les deux dans ce périmètre, donc aucune inventée**, seule la classification diffère). Répartition temporelle **déterministe** au prorata du nombre de jours (`RegularisationService`, jamais une simple saisie manuelle libre lorsque `dateDebut`/`dateFin` le permettent) : la part au-delà de la fin de l'exercice devient `montantFutur`, le reste `montantExercice`. `RegularisationRule` (`comptabilite/operation/regularisation/`) construit les lignes : CCA/PCA/PAR soldent `montantFutur` à la date de fin d'exercice ; FNP/CAP/produit-à-recevoir soldent le `montant` entier (accrual entièrement rattaché à l'exercice courant). **Aucune nouvelle valeur `RoleCompteSysteme` n'a été ajoutée** : `compteOrigine`/`compteContrepartie` sont toujours saisis explicitement par l'utilisateur et validés via `CompteComptableValidationService` (même discipline qu'`Article`) — jamais un numéro de compte deviné (476/477/408...).
+- **Reprise (contre-passation)** : `repriseAutomatique`/`dateReprise`/proposition de reprise dédiée — **jamais générée automatiquement**, uniquement sur action explicite (`proposerReprise`) une fois la régularisation d'origine `VALIDEE`.
+- **Provisions** (`comptabilite/provision/`, table `provision`) : `DOTATION` (débite le compte de dotation / crédite la provision pour l'augmentation `montantNouveau − montantPrecedent`), `REPRISE_TOTALE` (reprend `montantPrecedent` entier — le risque n'existe plus), `REPRISE_PARTIELLE` (reprend uniquement la diminution). `nature`/`objet` restent du texte libre — aucune liste fermée de natures n'est vérifiée, en inventer une serait deviner.
+- **Dépréciations** (`comptabilite/depreciation/`, table `depreciation`) : `perte = max(0, valeurComptable − valeurRecouvrable)` sur `objetType` ∈ `{IMMOBILISATION, STOCK, CREANCE, AUTRE}` (liste reprise telle quelle du besoin exprimé, rien ajouté). Si la valeur recouvrable couvre la valeur comptable, **aucune ligne n'est générée** (jamais d'écriture nulle forcée) — la ressource reste tracée pour historique via son statut.
+- Régularisations/provisions/dépréciations partagent le même cycle propose→valide/rejette que l'inventaire (Étape 3) : `POST .../proposition` (jamais auto-validée, exige toujours une confirmation humaine séparée), puis validation/rejet via le moteur commun.
+- **Checklist de clôture structurée** et **`ClotureExerciceService` sécurisé par cette checklist** — voir modules 3️⃣.F et 1️⃣8️⃣.
+- **Unification vente/avoir** (`FacturationService.validerFacture`, `FactureAvoirService.validerAvoir`) — voir module 3️⃣.J.
+- **Règlements déjà unifiés** (aucune écriture n'est créée hors `ReglementRule`/`AccountingOperationEngine` depuis l'Étape 2) — vérifié, aucun changement nécessaire.
+
+```
+GET/POST  /api/entreprises/{id}/regularisations, /{id}                    → CRUD + détail
+POST      /api/entreprises/{id}/regularisations/{id}/proposition          → Proposer l'écriture
+POST      /api/entreprises/{id}/regularisations/{id}/valider              → Valider (délègue au moteur)
+POST      /api/entreprises/{id}/regularisations/{id}/rejeter              → Rejeter
+POST      /api/entreprises/{id}/regularisations/{id}/reprise              → Proposer la contre-passation
+POST      /api/entreprises/{id}/regularisations/{id}/reprise/valider      → Valider la reprise
+GET/POST  /api/entreprises/{id}/provisions, /{id}                         → CRUD + détail
+POST      /api/entreprises/{id}/provisions/{id}/proposition|valider|rejeter
+GET/POST  /api/entreprises/{id}/depreciations, /{id}                      → CRUD + détail
+POST      /api/entreprises/{id}/depreciations/{id}/proposition|valider|rejeter
+```
+
+**⚠️ LIMITES ASSUMÉES (non devinées)** :
+- **`CommandeAchatService` (achats) a depuis été unifié à l'Étape 5** — voir module N. Au moment de cette mission (Étape 4), il restait non unifié pour la raison décrite ci-après, qui a motivé l'ajout d'`AchatRule.construireMultiLigne` plutôt qu'une réutilisation forcée de `construireLignesCore` : son écriture agrège potentiellement plusieurs comptes de charge par ligne, une forme structurellement incompatible avec `AchatRule.construireLignesCore` (compte de charge unique).
+- **Aucune nouvelle valeur `RoleCompteSysteme`** pour CCA/PCA/FNP/CAP/PAR/provisions/dépréciations — tous ces comptes restent à la charge de l'utilisateur, validés mais jamais devinés (pas de numéro SYSCOHADA non vérifié seedé).
+- **Checklist de clôture partiellement `NOT_APPLICABLE`** : banque, caisse, rapprochement, lettrage, fournisseurs, clients, stocks, immobilisations, amortissements, fiscalité — aucune logique de contrôle approfondie construite pour ces points dans cette mission, honnêtement signalé plutôt que simulé.
+- **`PRODUIT_A_REPORTER` ≡ `PRODUIT_CONSTATE_AVANCE`** mécaniquement — distinction de classification uniquement.
+- **`DossierComptableService`** (3ᵉ calcul indépendant de "prêt à clôturer", voir module 1️⃣8️⃣) reste **séparé**, non unifié avec la nouvelle `ClotureChecklist` — deux implémentations de la même question coexistent, documenté comme dette pré-existante non résolue ici.
+- Amortissements : module existant réutilisé tel quel (voir 3️⃣.I) — non reconstruit, aucune tentative de le faire passer par le moteur commun dans cette mission.
+
+**Frontend** : `frontend/src/app/features/comptabilite/regularisations/regularisations.component.ts` (nouveau) — liste + création + proposition ; la validation/le rejet réutilisent l'écran **Opérations** existant (même convention que l'inventaire, pas de second écran de validation dupliqué). Le tableau de bord (`tableau-de-bord.component.*`) affiche désormais la checklist de clôture structurée (une ligne ✓/⚠/🔴 par contrôle avec message) au lieu de deux listes plates.
+
+> Vérifié de bout en bout par `comptabilite/ClotureRegularisationIntegrationTest.java` (Postgres réel) : entreprise → PCE → exercice → fournisseur/client → achat → stock → vente → règlement → CCA/PCA créées → proposées → validées → écritures équilibrées → readiness sans blocage → clôture → exercice suivant créé sans doublon → idempotence (double validation de facture refusée) → isolation multi-tenant.
+
+#### N. Unification du cycle achats/fournisseurs (mission Étape 5)
+
+Dernier flux opérationnel restant sur l'ancien mécanisme d'écriture directe — migré vers `AccountingOperationEngine`, sans dupliquer le moteur :
+
+```
+Commande fournisseur → Réception (MouvementStockService, inchangé)
+   → Facture fournisseur → AchatRule.construireMultiLigne → AccountingOperationEngine
+   → AccountingOperationProposal → validation (immédiate, voir ci-dessous) → EcritureComptable
+   → Avoir fournisseur (AvoirRule.inverserLignes) → même moteur
+```
+
+**✅ IMPLÉMENTÉ** :
+- **`AchatRule.construireMultiLigne`** (nouveau, `AchatRule.construire`/`construireLignesCore` restent inchangés) : accepte une liste de lignes (`LigneAchatOperationRequest` : désignation, `NatureAchat`, montant HT, taux de TVA explicite, compte) portant chacune sa **propre nature et son propre compte** — une facture peut ainsi débiter 601 (marchandises) et 604 (matières) sur la même pièce, jamais agrégés dans un seul compte. `NatureAchat` étendu additivement avec `CONSOMMABLE` et `FRAIS_ACCESSOIRE` (les valeurs existantes `MARCHANDISE/MATIERE_PREMIERE/SERVICE/CHARGE/IMMOBILISATION/AUTRE` sont inchangées) ; un frais de transport est modélisé comme une ligne à part entière de nature `FRAIS_ACCESSOIRE`, pas comme un sous-attribut d'une autre ligne.
+- **Résolution de compte par ligne, priorité stricte, jamais devinée** : chaque ligne doit porter un `compteId` explicitement résolu par l'appelant (ex. `CommandeAchatService` via `Article.compteAchat`) ; si absent, la ligne est écartée avec une explication (`NEEDS_REVIEW`) — **aucune table "nature → compte par défaut" n'a été créée** (elle n'existait nulle part avant cette mission ; l'inventer aurait été une configuration non demandée avec certitude). *(Cette table existe depuis la mission Étape 6 — voir module O — mais reste une configuration explicite par cabinet, jamais un défaut implicite.)*
+- **TVA ligne par ligne via un taux explicite**, pas `TvaRateResolver`/`tax_rule` — même convention déjà en place côté vente (`LigneFacture.tauxTva`, consommée directement par `FacturationService`). Ce n'est pas un second moteur TVA : `AchatRule.construire()` (chemin manuel de l'écran Opérations) continue d'utiliser `TvaRateResolver` sans changement ; seul le nouveau chemin document (`construireMultiLigne`) utilise le taux explicite porté par la ligne. Le compte TVA déductible était résolu une seule fois via `CompteSystemeResolver.resoudre(..., TVA_DEDUCTIBLE)` (remplace le littéral `"4456"`) ; absent → explication `NEEDS_REVIEW`, jamais une exception 500. **Depuis la mission Étape 6, ce même appel passe par `AccountingAccountResolver` (purpose `TVA_RECUPERABLE`)**, qui essaie d'abord un mapping du cabinet puis retombe sur ce même `CompteSystemeResolver` — comportement par défaut inchangé, surchargeable désormais.
+- **`CommandeAchatService.genererFactureFournisseur` migré** : ne construit plus `EcritureComptable`/`LigneEcriture` à la main. Reconstruit les lignes via `LigneAchatMapper` (nouvelle classe utilitaire partagée, package-privée), puis délègue à `AccountingOperationEngine.proposerAchatEtValiderImmediatement` (nouvelle méthode, même discipline que `FacturationService`/`FactureAvoirService` : la génération de la facture EST la confirmation humaine, propose et valide dans la même transaction). Journal résolu via `JournalResolver` (plus de littéral `"ACH"`). Idempotence : `sourceType="FACTURE_FOURNISSEUR"`, `sourceId=facture.getId()` — rejouer la génération sur une commande déjà `FACTUREE` échoue avant même d'atteindre le moteur (409, garde de premier niveau inchangée).
+- **Avoir fournisseur documentaire** (nouveau, table `avoir_fournisseur`, un avoir total par facture — pas de sélection partielle des lignes dans cette mission) : `AvoirFournisseurService` reconstruit les mêmes lignes que la facture d'origine (`LigneAchatMapper` + `AchatRule.construireMultiLigne`), les inverse via `AvoirRule.inverserLignes` (nouvelle méthode publique, extraite du helper privé déjà utilisé par l'avoir générique `AVOIR_ACHAT`), puis propose+valide via le même moteur. Réintègre le stock (sortie générique, comptes de stock/variation via `MouvementStockService`, même mécanisme que tout retour) si `retourStock=true`, en ignorant les articles en mode `INTERMITTENT`.
+- **Traçabilité** : `sourceType`/`sourceId` déjà existants depuis l'Étape 4 (`AccountingOperationProposal`) sont désormais renseignés pour la facture (`FACTURE_FOURNISSEUR`) et l'avoir (`AVOIR_FACTURE_FOURNISSEUR`) fournisseur — aucun nouveau mécanisme construit, seulement utilisé.
+
+```
+POST /api/entreprises/{id}/avoirs-fournisseur/factures/{factureId}   → créer + valider l'avoir (atomique)
+GET  /api/entreprises/{id}/avoirs-fournisseur, /{avoirId}            → liste / détail
+```
+
+**⚠️ LIMITES ASSUMÉES (non devinées)** :
+- Pas de configuration "nature → compte par défaut" par entreprise — chaque ligne doit toujours résoudre un compte explicite (via un article, ou une saisie manuelle future), sinon `NEEDS_REVIEW`.
+- Avoir fournisseur : total uniquement dans cette mission, pas de retour partiel d'une sélection de lignes de la commande.
+- Emballages, distinction réduction commerciale/financière au-delà de `TypeReduction` existant, capitalisation des frais accessoires dans le coût du stock : architecture compatible (nature `FRAIS_ACCESSOIRE` dédiée, `TypeReduction` déjà là), **aucune règle implémentée** — non suffisamment vérifiée pour cette mission.
+- `CommandeAchatService.validerReception`/`MouvementStockService` inchangés (déjà délégués depuis l'Étape 3) ; `ComptabilisationService` (chemin document→écriture legacy distinct, hors périmètre de toutes les missions à ce jour) reste non touché.
+- Frontend : pas de nouvel écran de prévisualisation avant validation (comme `FacturationService`/`FactureAvoirService`, la génération de la facture est elle-même la confirmation) — l'écran achats existant affiche les comptes réellement posés *après* génération plutôt qu'un texte figé.
+
+**Frontend** : `frontend/src/app/features/comptabilite/stock/achats.component.ts` (existant, étendu) — après génération d'une facture fournisseur, affiche le tableau réel Compte/Intitulé/Débit/Crédit (`FactureFournisseurDto.lignesEcriture`, alimenté directement par la proposition retournée par le moteur) et un bouton "Avoir fournisseur" déclenchant le retour physique en stock.
+
+> Vérifié de bout en bout par `stock/service/CommandeAchatIntegrationTest.java` (Postgres réel) : entreprise → PCE → comptes d'achat (601/604/4456/401) → fournisseur → 2 articles de comptes distincts → commande multi-lignes → réception → vérification stock → facture fournisseur → vérification comptes/TVA/total équilibré → rejeu (409, pas de doublon) → avoir fournisseur → inversion vérifiée → stock réintégré → second avoir refusé → isolation multi-tenant.
+
+#### O. Paramétrage comptable par entreprise et moteur de correspondance des comptes (mission Étape 6)
+
+Jusqu'ici, chaque opération exigeait un compte **explicitement saisi** ou passait par les 9 rôles fixes de `CompteSystemeResolver` (TVA collectée/déductible, dotations, résultat, racines tiers) — aucun mécanisme ne permettait à un cabinet de configurer "quel compte PCE utiliser pour telle nature d'opération" au-delà de ces 9 rôles. Cette mission généralise `CompteSystemeResolver` (jamais dupliqué ni supprimé — il reste le repli de dernier niveau) sans jamais deviner un compte à partir d'un numéro qui "semble logique" :
+
+```
+Opération → Nature/contexte → AccountingAccountResolver → Paramétrage comptable de l'entreprise
+   → Compte PCE → AccountingOperationEngine → Proposition → Validation humaine
+```
+
+**✅ IMPLÉMENTÉ** :
+- **`AccountingAccountResolver`** (nouveau, `comptabilite/parametrage/`) : point d'entrée unique, chaîne de priorité stricte —
+  1. compte explicite fourni par l'opération (`EXPLICITE`, aucune requête mapping) ;
+  2. mapping actif de l'entreprise spécifique au contexte (`MAPPING_CONTEXTUEL`, ex. par moyen de paiement) ;
+  3. mapping actif générique de l'entreprise (`MAPPING_GENERIQUE`) ;
+  4. rôle système historique correspondant, via `CompteSystemeResolver` (`ROLE_SYSTEME`) — seuls certains purposes en ont un (TVA, trésorerie, résultat, dotation, racines tiers ; achats/ventes/stock/immobilisation-actif n'en ont aucun) ;
+  5. `NOT_CONFIGURED` — jamais un compte deviné.
+
+  Le compte trouvé aux étapes 2-4 est **toujours revalidé** via `CompteComptableValidationService` avant d'être renvoyé : un compte désactivé après coup rend le mapping `INVALID` dynamiquement, jamais silencieusement ignoré. Plusieurs mappings actifs de même rang (structurellement impossible en base, voir plus bas, mais revérifié en lecture par défense en profondeur) produisent `AMBIGUOUS`, jamais un choix arbitraire.
+- **`AccountPurpose`** (23 valeurs, liste fermée du besoin exprimé — achats/ventes par nature, TVA collectée/récupérable, stock/variation de stock, client/fournisseur racine, banque/caisse, immobilisation corporelle/incorporelle/amortissement/dotation, résultat bénéfice/perte) : chaque valeur porte une classe SYSCOHADA attendue, utilisée **uniquement à la validation d'un mapping** (jamais à la résolution — la résolution ne raisonne jamais sur un numéro de compte).
+- **`AccountingAccountMapping`** (nouvelle table, `entreprise_id` obligatoire — un mapping n'existe jamais sans entreprise et n'affecte jamais une autre entreprise) : deux index uniques **partiels** (`context_key IS NULL` / `IS NOT NULL`) plutôt qu'une contrainte `UNIQUE` naïve, car PostgreSQL ne bloque pas les doublons `NULL` sous une contrainte unique classique — un doublon actif est ainsi structurellement impossible en base, pas seulement évité côté application.
+- **Validation à la création/modification** (`AccountingAccountMappingService`) : le compte doit appartenir à l'entreprise, être actif et utilisable, et sa classe doit être compatible avec le purpose (422 sinon) ; aucun doublon actif pour le même (purpose, contextKey) n'est accepté (409 sinon).
+- **Désactivation d'un compte du PCE** (`PlanComptableService.modifier`) : **jamais bloquée**, mais le nombre de mappings actifs concernés est renvoyé (`CompteComptableDto.mappingsActifsCount`) pour que le cabinet sache qu'il doit reconfigurer avant que les opérations concernées redeviennent utilisables — le mapping n'est jamais supprimé silencieusement, `AccountingAccountResolver` le détecte comme `INVALID`.
+- **Audit** : chaque `CREATE_MAPPING`/`UPDATE_MAPPING`/`DELETE_MAPPING`/`ACTIVATE_MAPPING`/`DEACTIVATE_MAPPING` est tracé via `AuditTrailService` existant (aucun second système d'audit créé).
+- **Intégration par module, portée mesurée** — chaque module tente le résolveur avant de renoncer, aucun ne construit de règle de correspondance en dur :
+  - `AchatRule.construireMultiLigne` : ligne sans `compteId` → tente le résolveur depuis `NatureAchat` (`MARCHANDISE/MATIERE_PREMIERE/CONSOMMABLE/SERVICE/FRAIS_ACCESSOIRE/IMMOBILISATION` → purpose correspondant ; `CHARGE`/`AUTRE` n'ont pas d'équivalent dans la liste minimale → `NEEDS_REVIEW` direct, jamais un purpose inventé) ; TVA déductible via purpose `TVA_RECUPERABLE`. `AchatRule.construire()`/`construireLignesCore()` (chemin manuel de l'écran Opérations) restent inchangés.
+  - `FacturationService.validerFacture` : TVA collectée via purpose `TVA_COLLECTEE` (remplace l'appel direct à `CompteSystemeResolver`) ; `compteProduitId` reste explicite (une facture porte un seul compte pour toutes ses lignes).
+  - `ReglementRule` : trésorerie via `BANQUE`/`CAISSE`, `contextKey` = moyen de paiement (permet une correspondance spécifique par moyen de paiement, ex. une banque différente pour les virements).
+  - `ImmobilisationService.genererDotations` : remplace le hardcode `findByEntrepriseIdAndNumero(entrepriseId, "681")` par le purpose `DOTATION_AMORTISSEMENT` — dernier vrai hardcode numérique identifié par l'audit préalable de cette mission. **Le calcul des amortissements lui-même n'a pas été modifié.**
+  - `ClotureRule` : résultat bénéfice/perte via `RESULTAT_BENEFICE`/`RESULTAT_PERTE` (remplace l'appel direct à `CompteSystemeResolver`).
+  - `Article`/`Immobilisation`/régularisations/provisions/dépréciations : gardent leurs comptes toujours explicites (`NOT NULL`) — déjà conformes à "jamais deviné", non modifiés ; le résolveur reste disponible pour l'écran de test de résolution.
+
+```
+GET/POST  /api/entreprises/{id}/parametres-comptables/mappings              → lister (filtrable ?purpose=) / créer
+PUT/DELETE /api/entreprises/{id}/parametres-comptables/mappings/{mappingId} → modifier / supprimer
+POST      /api/entreprises/{id}/parametres-comptables/test-resolution      → prévisualiser une résolution (purpose + contexte)
+```
+
+**⚠️ LIMITES ASSUMÉES (non devinées)** :
+- `compteProduitId` de facture reste explicite — pas de nature par ligne à ce niveau de document.
+- `Article`/`Immobilisation`/régularisations/provisions/dépréciations gardent leurs comptes toujours explicites — le résolveur ne change rien à leur écriture, seulement disponible pour une future pré-suggestion frontend, non implémentée ici.
+- `priorite` sur le mapping est un champ réservé, non fonctionnellement utilisé — les doublons de même rang sont rendus impossibles par contrainte plutôt que départagés (aucun mécanisme de départage arbitraire inventé, le brief l'interdit explicitement).
+- `ComptabilisationService`/`DeclarationFiscaleService`/`FactureAvoirService`/`CommandeAchatService`/`ClotureExerciceService`/`TiersService` (racines 401/411) restent hors périmètre, comme dans toutes les missions précédentes — voir le javadoc mis à jour de `CompteSystemeResolver` pour l'état exact des sites d'appel restants.
+- Aucune correspondance réglementaire n'a été auto-inventée : un purpose sans mapping ni rôle système reste `NOT_CONFIGURED`, jamais un numéro SYSCOHADA "probable" seedé automatiquement.
+
+**Frontend** : `frontend/src/app/features/comptabilite/parametres-comptables/parametres-comptables.component.ts` (nouvel écran, accessible depuis le workspace entreprise juste après "Plan comptable") — un tableau par groupe (Achats/Ventes/TVA/Trésorerie/Tiers/Stock/Immobilisations/Résultat), un sélecteur de compte PCE réel par purpose (jamais un numéro saisi librement), un badge de statut par purpose calculé via un vrai appel à `test-resolution` (`✓ Résolu` / `⚠ Non configuré` / `🔴 Ambigu` / `⛔ Invalide`), et un panneau « Tester la résolution » libre. `PlanComptablePageComponent` affiche l'avertissement `mappingsActifsCount` lors d'une désactivation.
+
+> Vérifié de bout en bout par `comptabilite/parametrage/AccountingAccountMappingIntegrationTest.java` (Postgres réel) : deux entreprises → PCE → mappings différents pour le même purpose → résolutions testées isolées → achat multi-ligne résolu via mapping → facture (TVA) résolue via mapping → règlement (banque) résolu via mapping → désactivation du compte mappé → résolution `INVALID` → opération refusée (jamais un compte deviné à la place) → réactivation → rejeu réussi → mapping cross-tenant refusé (404) → classe incompatible refusée (422) → doublon actif refusé (409) → suppression explicite du mapping → retour à `NOT_CONFIGURED` → audit trail vérifié (`CREATE_MAPPING`/`DELETE_MAPPING`).
 
 ---
 
@@ -559,7 +782,7 @@ Couche de synthèse qui répond à « qu'est-ce qui est correct / qu'est-ce qui 
 - **`DossierComptableService`** (`GET /api/entreprises/{id}/dossier`) : calcule à la lecture (jamais persisté — le score doit rester déterministe et toujours à jour) un score global + 7 scores par domaine (Banque/Documents/Clients/Fournisseurs/Justificatifs/Fiscalité/Clôture, pénalités 25/10/3 pts par Finding CRITICAL/IMPORTANT/REVIEW), un statut `PRET`/`A_SURVEILLER`/`BLOQUE`, et la liste des actions prioritaires triées par sévérité.
 - **`AccountingProposal`** (table `accounting_proposal`, migration V24) + **`AccountingProposalBuilder`** : débloque `ComptabilisationService.comptabiliserAutomatiquement` (stub qui échouait systématiquement avant cette mission) via une résolution 100 % Java, sans appel IA supplémentaire — tiers par normalisation/sous-chaîne (même technique que `MatchingContextBuilder`), compte par fréquence historique (`LigneEcritureRepository`, agrégée en Java). Niveaux 0–3 : seul le niveau 3 (tiers + compte + journal résolus, confiance ≥ 0.9, ≥ 3 occurrences historiques cohérentes) déclenche une comptabilisation réelle depuis `agent/pipeline/EcritureNode` ; en dessous, la proposition reste une suggestion à valider (`POST .../propositions/{id}/accepter` ne fait que pré-sélectionner, jamais comptabiliser seul).
 - **Boucle de résolution WhatsApp** (`WhatsAppResolutionService`) : un `Finding` de type `MISSING_EVIDENCE` sans aucun candidat déclenche automatiquement une `DemandePiece` ciblée (libellé précis : montant/date/libellé, pas un template générique), liée via `demande_piece.finding_id` (migration V25). Les cas ambigus (candidats existants mais non tranchés) restent en revue interne — pas de sollicitation client hors contrôle.
-- **`ClotureReadinessService`** (`GET /api/entreprises/{id}/cloture-readiness`) : avis `READY`/`READY_WITH_REVIEW`/`NOT_READY` agrégeant écritures BROUILLON + Findings ouverts. Purement consultatif — **ne déclenche jamais** `ClotureExerciceService.cloturer`.
+- **`ClotureReadinessService`** (`GET /api/entreprises/{id}/cloture-readiness`) : avis `READY`/`READY_WITH_REVIEW`/`NOT_READY`, restructuré (mission cloture Étape 4) en une **checklist** explicite (`ControlItem[]` : `code`/`libelle`/`statut` OK|WARNING|BLOCKING|NOT_APPLICABLE/`severite`/`message`/`evidence`) couvrant exercice ouvert, écritures BROUILLON, régularisations non finalisées, Findings ouverts, détermination du résultat — plusieurs items (banque/caisse/rapprochement/lettrage/fournisseurs/clients/stocks/immobilisations/amortissements/fiscalité) restent honnêtement `NOT_APPLICABLE` (aucune logique de contrôle approfondie construite pour ces points). Purement consultatif en tant que tel, mais **`ClotureExerciceService.cloturer` consulte désormais cette même checklist et refuse (422) si un item est `BLOCKING`** — voir module 3️⃣.K/M.
 - **UI Angular** : le tableau de bord existant (`tableau-de-bord.component.*`) est étendu (pas de nouvel écran redondant) avec le score du dossier, les 7 scores par domaine, un bandeau clôture, et l'inbox des actions prioritaires (Résoudre/Rejeter/Voir détails avec preuve JSON dépliable).
 
 ```
@@ -1343,7 +1566,8 @@ export DOCUMENTS_STORAGE_DIR="/var/comptable/documents"
   - Derniers documents/écritures
 - ✅ **Gestion des Rôles et Permissions**
 - ✅ **États Financiers SYSCOHADA** : Bilan et Compte de Résultat générés en direct depuis les écritures validées
-- ✅ **Clôture d'Exercice** : détermination du résultat, solde des comptes de charges/produits, ouverture automatique de l'exercice suivant
+- ✅ **Clôture d'Exercice** : détermination du résultat (via le moteur commun `AccountingOperationEngine`, mission cloture Étape 4), solde des comptes de charges/produits selon le signe réel du mouvement, checklist de clôture bloquante, ouverture automatique de l'exercice suivant
+- ✅ **Régularisations, Provisions, Dépréciations** (mission cloture Étape 4, module 3️⃣.M) : CCA/PCA/FNP/CAP/produit-à-recevoir/produit-à-reporter avec répartition temporelle déterministe, provisions (dotation/reprise totale/reprise partielle), dépréciations (perte constatée si valeur recouvrable < valeur comptable) — toujours via proposition + validation humaine, jamais de compte deviné
 - ✅ **Lettrage** : rapprochement des lignes d'un compte tiers par code alphabétique (A, B, ... AA, ...)
 - ✅ **Rapprochement Bancaire** : import de relevé CSV avec appariement automatique par montant
 - ✅ **Immobilisations & Amortissements** : registre des actifs, plan d'amortissement linéaire/dégressif, génération des dotations
@@ -1376,6 +1600,8 @@ export DOCUMENTS_STORAGE_DIR="/var/comptable/documents"
 - ⏳ **Pipeline agentique pour l'upload web** : le graphe LangGraph4j (conformité, routage) ne se déclenche aujourd'hui que pour les pièces WhatsApp ; le contrôle de fraude s'applique bien aux deux canaux, mais pas encore le reste du pipeline
 - ⏳ **Universal Matching Engine avec un vrai appel Anthropic** : testé et fonctionnel en mode `AI_PROVIDER=mock` uniquement (aucun budget Anthropic disponible à ce jour) — aucun changement de code prévu pour basculer en production, juste `AI_PROVIDER=anthropic` + `ANTHROPIC_API_KEY`
 - ⏳ **Décision produit sur l'Agent Comptable Autonome** (module 1️⃣6️⃣) : remplacer ou compléter le duo extraction+fraude classique dans les flux d'ingestion (upload web, WhatsApp) ?
+- ⏳ **Unification des achats sur le moteur commun** (`CommandeAchatService`) : structurellement incompatible avec `AchatRule` en l'état (agrégation multi-comptes par ligne) — dette documentée, mission cloture Étape 4, module 3️⃣.M.
+- ⏳ **Trois calculs indépendants de "prêt à clôturer"** (`ClotureExerciceService` inline, `ClotureReadinessService`, `DossierComptableService`) : la checklist de clôture (Étape 4) et `ClotureExerciceService` sont désormais unifiés autour de `ClotureReadinessService`, mais `DossierComptableService` reste un 3ᵉ calcul séparé — non résolu, dette documentée.
 - ⏳ **Signatures Électroniques** : Validation des documents par DSN
 - ⏳ **Intégrations Bancaires** : Connexion avec les banques (API XOF)
 - ⏳ **Export/Import** : Format Excel, CSV, XML pour intégration

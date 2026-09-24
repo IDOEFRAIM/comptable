@@ -26,9 +26,9 @@ export interface ScoreDomaineDto {
 export type SeveriteFinding = 'CRITICAL' | 'IMPORTANT' | 'REVIEW';
 
 export const LIBELLES_SEVERITE_FINDING: Record<SeveriteFinding, string> = {
-  CRITICAL: '🔴 Critique',
-  IMPORTANT: '🟠 Important',
-  REVIEW: '🟡 À vérifier',
+  CRITICAL: 'Critique',
+  IMPORTANT: 'Important',
+  REVIEW: 'À vérifier',
 };
 
 export interface FindingDto {
@@ -60,20 +60,39 @@ export interface DossierComptableDto {
 }
 
 export const LIBELLES_STATUT_DOSSIER: Record<string, string> = {
-  PRET: '✅ Prêt',
-  A_SURVEILLER: '👀 À surveiller',
-  BLOQUE: '⛔ Bloqué',
+  PRET: 'Prêt',
+  A_SURVEILLER: 'À surveiller',
+  BLOQUE: 'Bloqué',
 };
+
+export type StatutControleCloture = 'OK' | 'WARNING' | 'BLOCKING' | 'NOT_APPLICABLE';
+
+export interface ControlItemDto {
+  code: string;
+  libelle: string;
+  statut: StatutControleCloture;
+  severite: string | null;
+  message: string | null;
+  evidence: string | null;
+}
 
 export interface ClotureReadinessDto {
   statut: 'READY' | 'READY_WITH_REVIEW' | 'NOT_READY';
   blockingItems: string[];
   warnings: string[];
   recommendations: string[];
+  checklist: ControlItemDto[];
 }
 
+export const LIBELLES_STATUT_CONTROLE: Record<StatutControleCloture, string> = {
+  OK: '✓',
+  WARNING: '⚠',
+  BLOCKING: '🔴',
+  NOT_APPLICABLE: '—',
+};
+
 export const LIBELLES_CLOTURE_READINESS: Record<string, string> = {
-  READY: '✅ Prêt à clôturer',
-  READY_WITH_REVIEW: '👀 Prêt, sous réserve de revue',
-  NOT_READY: '⛔ Pas prêt',
+  READY: 'Prêt à clôturer',
+  READY_WITH_REVIEW: 'Prêt, sous réserve de revue',
+  NOT_READY: 'Pas prêt',
 };

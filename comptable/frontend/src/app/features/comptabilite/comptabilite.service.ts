@@ -13,10 +13,12 @@ import {
   CompteResultatDto,
   CreerArticleRequest,
   CreerCommandeAchatRequest,
+  CreerDepotRequest,
   CreerEcritureRequest,
   CreerFactureAvoirRequest,
   CreerMouvementStockRequest,
   CreerTiersRequest,
+  DepotDto,
   EcritureComptableDto,
   CreerFactureRequest,
   CreerImmobilisationRequest,
@@ -24,6 +26,8 @@ import {
   FactureAvoirDto,
   FactureDto,
   FactureFournisseurDto,
+  AvoirFournisseurDto,
+  CreerAvoirFournisseurRequest,
   GenererDotationsResultDto,
   GrandLivreDto,
   ImmobilisationDto,
@@ -31,14 +35,49 @@ import {
   LettrageResultDto,
   LettrerLignesRequest,
   LigneReleveDto,
+  ModifierArticleRequest,
   MouvementStockDto,
   ReleveBancaireDto,
   TiersDto,
   TypeFacture,
   TypeTiers,
 } from './models/comptabilite.model';
+import {
+  CreerInventaireRequest,
+  InventaireDto,
+  SaisirLigneInventaireRequest,
+} from './models/inventaire.model';
+import {
+  CreerRegularisationRequest,
+  RegularisationDto,
+} from './models/regularisation.model';
+import {
+  CompteComptableArbreDto,
+  CreerSubdivisionCompteRequest,
+  ImporterReferenceRequest,
+  ImporterReferenceResultDto,
+  ModifierCompteRequest,
+  PlanComptableReferenceDto,
+} from './models/plan-comptable.model';
+import {
+  AccountingOperationProposalDto,
+  AchatOperationRequest,
+  AvoirOperationRequest,
+  ReglementOperationRequest,
+  RejeterPropositionRequest,
+  VenteOperationRequest,
+} from './models/operations.model';
+import {
+  AccountingAccountMappingDto,
+  AccountPurpose,
+  CreerAccountingAccountMappingRequest,
+  ModifierAccountingAccountMappingRequest,
+  ResolvedAccountDto,
+  TestResolutionRequest,
+} from './models/parametrage-comptable.model';
 
 const BASE_URL = '/api/entreprises';
+const REFERENTIEL_URL = '/api/plan-comptable-reference';
 
 @Injectable({ providedIn: 'root' })
 export class ComptabiliteService {
@@ -63,6 +102,97 @@ export class ComptabiliteService {
 
   listerExercices(entrepriseId: string): Observable<ExerciceComptableDto[]> {
     return this.http.get<ExerciceComptableDto[]>(`${BASE_URL}/${entrepriseId}/exercices`);
+  }
+
+  // --- Plan comptable (fondation SYSCOHADA) -----------------------------------------------
+
+  listerPlanComptable(entrepriseId: string): Observable<CompteComptableDto[]> {
+    return this.http.get<CompteComptableDto[]>(`${BASE_URL}/${entrepriseId}/plan-comptable`);
+  }
+
+  arbrePlanComptable(entrepriseId: string): Observable<CompteComptableArbreDto[]> {
+    return this.http.get<CompteComptableArbreDto[]>(`${BASE_URL}/${entrepriseId}/plan-comptable/arbre`);
+  }
+
+  importerReference(entrepriseId: string, request: ImporterReferenceRequest): Observable<ImporterReferenceResultDto> {
+    return this.http.post<ImporterReferenceResultDto>(
+      `${BASE_URL}/${entrepriseId}/plan-comptable/importer-reference`,
+      request,
+    );
+  }
+
+  creerSubdivisionCompte(entrepriseId: string, request: CreerSubdivisionCompteRequest): Observable<CompteComptableDto> {
+    return this.http.post<CompteComptableDto>(`${BASE_URL}/${entrepriseId}/plan-comptable/comptes`, request);
+  }
+
+  modifierCompte(entrepriseId: string, compteId: string, request: ModifierCompteRequest): Observable<CompteComptableDto> {
+    return this.http.put<CompteComptableDto>(`${BASE_URL}/${entrepriseId}/plan-comptable/comptes/${compteId}`, request);
+  }
+
+  supprimerCompte(entrepriseId: string, compteId: string): Observable<void> {
+    return this.http.delete<void>(`${BASE_URL}/${entrepriseId}/plan-comptable/comptes/${compteId}`);
+  }
+
+  listerReferentielGlobal(classe?: number): Observable<PlanComptableReferenceDto[]> {
+    const params = classe != null ? new HttpParams().set('classe', classe) : undefined;
+    return this.http.get<PlanComptableReferenceDto[]>(REFERENTIEL_URL, { params });
+  }
+
+  // --- Moteur d'operations courantes (proposition avant comptabilisation) -----------------
+
+  proposerAchat(entrepriseId: string, request: AchatOperationRequest): Observable<AccountingOperationProposalDto> {
+    return this.http.post<AccountingOperationProposalDto>(
+      `${BASE_URL}/${entrepriseId}/operations/achat/proposition`,
+      request,
+    );
+  }
+
+  proposerVente(entrepriseId: string, request: VenteOperationRequest): Observable<AccountingOperationProposalDto> {
+    return this.http.post<AccountingOperationProposalDto>(
+      `${BASE_URL}/${entrepriseId}/operations/vente/proposition`,
+      request,
+    );
+  }
+
+  proposerReglement(
+    entrepriseId: string,
+    request: ReglementOperationRequest,
+  ): Observable<AccountingOperationProposalDto> {
+    return this.http.post<AccountingOperationProposalDto>(
+      `${BASE_URL}/${entrepriseId}/operations/reglement/proposition`,
+      request,
+    );
+  }
+
+  proposerAvoir(entrepriseId: string, request: AvoirOperationRequest): Observable<AccountingOperationProposalDto> {
+    return this.http.post<AccountingOperationProposalDto>(
+      `${BASE_URL}/${entrepriseId}/operations/avoir/proposition`,
+      request,
+    );
+  }
+
+  obtenirProposition(entrepriseId: string, propositionId: string): Observable<AccountingOperationProposalDto> {
+    return this.http.get<AccountingOperationProposalDto>(
+      `${BASE_URL}/${entrepriseId}/operations/propositions/${propositionId}`,
+    );
+  }
+
+  validerProposition(entrepriseId: string, propositionId: string): Observable<AccountingOperationProposalDto> {
+    return this.http.post<AccountingOperationProposalDto>(
+      `${BASE_URL}/${entrepriseId}/operations/propositions/${propositionId}/valider`,
+      {},
+    );
+  }
+
+  rejeterProposition(
+    entrepriseId: string,
+    propositionId: string,
+    request: RejeterPropositionRequest,
+  ): Observable<AccountingOperationProposalDto> {
+    return this.http.post<AccountingOperationProposalDto>(
+      `${BASE_URL}/${entrepriseId}/operations/propositions/${propositionId}/rejeter`,
+      request,
+    );
   }
 
   bilan(entrepriseId: string, exerciceId: string): Observable<BilanDto> {
@@ -290,6 +420,62 @@ export class ComptabiliteService {
     return this.http.post<MouvementStockDto>(`${BASE_URL}/${entrepriseId}/mouvements-stock`, request);
   }
 
+  obtenirArticle(entrepriseId: string, articleId: string): Observable<ArticleDto> {
+    return this.http.get<ArticleDto>(`${BASE_URL}/${entrepriseId}/articles/${articleId}`);
+  }
+
+  modifierArticle(entrepriseId: string, articleId: string, request: ModifierArticleRequest): Observable<ArticleDto> {
+    return this.http.put<ArticleDto>(`${BASE_URL}/${entrepriseId}/articles/${articleId}`, request);
+  }
+
+  listerDepots(entrepriseId: string): Observable<DepotDto[]> {
+    return this.http.get<DepotDto[]>(`${BASE_URL}/${entrepriseId}/depots`);
+  }
+
+  creerDepot(entrepriseId: string, request: CreerDepotRequest): Observable<DepotDto> {
+    return this.http.post<DepotDto>(`${BASE_URL}/${entrepriseId}/depots`, request);
+  }
+
+  // --- Inventaire physique (mission stock, Etape 3) ----------------------------------------
+
+  listerInventaires(entrepriseId: string): Observable<InventaireDto[]> {
+    return this.http.get<InventaireDto[]>(`${BASE_URL}/${entrepriseId}/inventaires`);
+  }
+
+  creerInventaire(entrepriseId: string, request: CreerInventaireRequest): Observable<InventaireDto> {
+    return this.http.post<InventaireDto>(`${BASE_URL}/${entrepriseId}/inventaires`, request);
+  }
+
+  obtenirInventaire(entrepriseId: string, inventaireId: string): Observable<InventaireDto> {
+    return this.http.get<InventaireDto>(`${BASE_URL}/${entrepriseId}/inventaires/${inventaireId}`);
+  }
+
+  saisirLigneInventaire(entrepriseId: string, inventaireId: string, request: SaisirLigneInventaireRequest): Observable<InventaireDto> {
+    return this.http.post<InventaireDto>(`${BASE_URL}/${entrepriseId}/inventaires/${inventaireId}/lignes`, request);
+  }
+
+  validerInventaire(entrepriseId: string, inventaireId: string): Observable<InventaireDto> {
+    return this.http.post<InventaireDto>(`${BASE_URL}/${entrepriseId}/inventaires/${inventaireId}/valider`, {});
+  }
+
+  cloturerInventaire(entrepriseId: string, inventaireId: string): Observable<InventaireDto> {
+    return this.http.post<InventaireDto>(`${BASE_URL}/${entrepriseId}/inventaires/${inventaireId}/cloturer`, {});
+  }
+
+  // --- Regularisations de fin de periode (mission cloture Etape 4) ------------------------
+
+  listerRegularisations(entrepriseId: string): Observable<RegularisationDto[]> {
+    return this.http.get<RegularisationDto[]>(`${BASE_URL}/${entrepriseId}/regularisations`);
+  }
+
+  creerRegularisation(entrepriseId: string, request: CreerRegularisationRequest): Observable<RegularisationDto> {
+    return this.http.post<RegularisationDto>(`${BASE_URL}/${entrepriseId}/regularisations`, request);
+  }
+
+  proposerRegularisation(entrepriseId: string, regularisationId: string): Observable<RegularisationDto> {
+    return this.http.post<RegularisationDto>(`${BASE_URL}/${entrepriseId}/regularisations/${regularisationId}/proposition`, {});
+  }
+
   listerCommandesAchat(entrepriseId: string): Observable<CommandeAchatDto[]> {
     return this.http.get<CommandeAchatDto[]>(`${BASE_URL}/${entrepriseId}/commandes-achat`);
   }
@@ -307,5 +493,47 @@ export class ComptabiliteService {
       `${BASE_URL}/${entrepriseId}/commandes-achat/${commandeId}/generer-facture-fournisseur`,
       {},
     );
+  }
+
+  creerAvoirFournisseur(
+    entrepriseId: string,
+    factureId: string,
+    request: CreerAvoirFournisseurRequest,
+  ): Observable<AvoirFournisseurDto> {
+    return this.http.post<AvoirFournisseurDto>(`${BASE_URL}/${entrepriseId}/avoirs-fournisseur/factures/${factureId}`, request);
+  }
+
+  listerAccountingAccountMappings(entrepriseId: string, purpose?: AccountPurpose): Observable<AccountingAccountMappingDto[]> {
+    let params = new HttpParams();
+    if (purpose) {
+      params = params.set('purpose', purpose);
+    }
+    return this.http.get<AccountingAccountMappingDto[]>(`${BASE_URL}/${entrepriseId}/parametres-comptables/mappings`, { params });
+  }
+
+  creerAccountingAccountMapping(
+    entrepriseId: string,
+    request: CreerAccountingAccountMappingRequest,
+  ): Observable<AccountingAccountMappingDto> {
+    return this.http.post<AccountingAccountMappingDto>(`${BASE_URL}/${entrepriseId}/parametres-comptables/mappings`, request);
+  }
+
+  modifierAccountingAccountMapping(
+    entrepriseId: string,
+    mappingId: string,
+    request: ModifierAccountingAccountMappingRequest,
+  ): Observable<AccountingAccountMappingDto> {
+    return this.http.put<AccountingAccountMappingDto>(
+      `${BASE_URL}/${entrepriseId}/parametres-comptables/mappings/${mappingId}`,
+      request,
+    );
+  }
+
+  supprimerAccountingAccountMapping(entrepriseId: string, mappingId: string): Observable<void> {
+    return this.http.delete<void>(`${BASE_URL}/${entrepriseId}/parametres-comptables/mappings/${mappingId}`);
+  }
+
+  testerResolutionCompte(entrepriseId: string, request: TestResolutionRequest): Observable<ResolvedAccountDto> {
+    return this.http.post<ResolvedAccountDto>(`${BASE_URL}/${entrepriseId}/parametres-comptables/test-resolution`, request);
   }
 }

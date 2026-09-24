@@ -1,7 +1,8 @@
 .liste-carte {
   background: white;
-  border-radius: 8px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+  border: 1px solid var(--border-subtle);
   padding: 1.25rem;
 }
 
@@ -14,15 +15,15 @@
 
 .filtre {
   padding: 0.4rem 0.9rem;
-  border: 1px solid #d0d5dd;
+  border: 1px solid var(--border-default);
   border-radius: 999px;
   background: white;
   cursor: pointer;
   font-size: 0.8125rem;
 
   &.actif {
-    background: #2563eb;
-    border-color: #2563eb;
+    background: var(--color-primary);
+    border-color: var(--color-primary);
     color: white;
   }
 }
@@ -31,7 +32,7 @@
   margin-left: auto;
   border: none;
   background: none;
-  color: #2563eb;
+  color: var(--color-primary);
   cursor: pointer;
   font-size: 0.8125rem;
 }
@@ -44,56 +45,56 @@ table {
 
 th {
   text-align: left;
-  color: #667085;
+  color: var(--text-tertiary);
   font-weight: 600;
   padding: 0.5rem;
-  border-bottom: 1px solid #eaecf0;
+  border-bottom: 1px solid var(--border-subtle);
 }
 
 td {
   padding: 0.6rem 0.5rem;
-  border-bottom: 1px solid #f2f4f7;
+  border-bottom: 1px solid var(--bg-subtle-hover);
 }
 
 .badge-succes {
-  background: #ecfdf3;
-  color: #027a48;
+  background: var(--color-success-bg);
+  color: var(--color-success);
 }
 
 .badge-erreur {
-  background: #fef3f2;
-  color: #b42318;
+  background: var(--color-danger-bg);
+  color: var(--color-danger);
 }
 
 .badge-attente {
-  background: #fff8e6;
-  color: #b54708;
+  background: var(--color-warning-bg);
+  color: var(--color-warning);
 }
 
 .info-bulle {
   margin-left: 0.35rem;
   cursor: help;
-  color: #98a2b3;
+  color: var(--text-placeholder);
 }
 
 .bouton-comptabiliser {
   padding: 0.3rem 0.7rem;
-  border: 1px solid #2563eb;
-  border-radius: 6px;
+  border: 1px solid var(--color-primary);
+  border-radius: var(--radius-md);
   background: white;
-  color: #2563eb;
+  color: var(--color-primary);
   font-size: 0.8125rem;
   font-weight: 600;
   cursor: pointer;
   white-space: nowrap;
 
   &:hover {
-    background: #eff6ff;
+    background: var(--color-primary-light);
   }
 }
 
 .lien-comptabilise {
-  color: #027a48;
+  color: var(--color-success);
   font-size: 0.8125rem;
   font-weight: 600;
 }

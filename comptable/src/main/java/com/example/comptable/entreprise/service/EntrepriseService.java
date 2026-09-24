@@ -1,14 +1,11 @@
 package com.example.comptable.entreprise.service;
 
-import com.example.comptable.comptabilite.domain.CompteComptable;
 import com.example.comptable.comptabilite.domain.ExerciceComptable;
 import com.example.comptable.comptabilite.domain.Journal;
-import com.example.comptable.comptabilite.domain.PlanComptableReference;
 import com.example.comptable.comptabilite.domain.TypeJournal;
-import com.example.comptable.comptabilite.repository.CompteComptableRepository;
 import com.example.comptable.comptabilite.repository.ExerciceComptableRepository;
 import com.example.comptable.comptabilite.repository.JournalRepository;
-import com.example.comptable.comptabilite.repository.PlanComptableReferenceRepository;
+import com.example.comptable.comptabilite.service.PlanComptableImportService;
 import com.example.comptable.entreprise.domain.Entreprise;
 import com.example.comptable.entreprise.repository.EntrepriseRepository;
 import com.example.comptable.entreprise.repository.UtilisateurEntrepriseRepository;
@@ -38,8 +35,7 @@ public class EntrepriseService {
     private final TenantRepository tenantRepository;
     private final EntrepriseRepository entrepriseRepository;
     private final UtilisateurEntrepriseRepository utilisateurEntrepriseRepository;
-    private final PlanComptableReferenceRepository planComptableReferenceRepository;
-    private final CompteComptableRepository compteComptableRepository;
+    private final PlanComptableImportService planComptableImportService;
     private final JournalRepository journalRepository;
     private final ExerciceComptableRepository exerciceComptableRepository;
 
@@ -59,7 +55,7 @@ public class EntrepriseService {
         }
         entreprise = entrepriseRepository.save(entreprise);
 
-        clonerPlanComptable(entreprise);
+        planComptableImportService.importerTout(entreprise);
         creerJournauxParDefaut(entreprise);
         creerExerciceCourant(entreprise);
 
@@ -85,20 +81,6 @@ public class EntrepriseService {
         }
 
         return entreprises.stream().map(EntrepriseDto::from).toList();
-    }
-
-    private void clonerPlanComptable(Entreprise entreprise) {
-        List<PlanComptableReference> referentiel = planComptableReferenceRepository.findAll();
-        List<CompteComptable> comptes = referentiel.stream().map(reference -> {
-            CompteComptable compte = new CompteComptable();
-            compte.setEntreprise(entreprise);
-            compte.setReference(reference);
-            compte.setNumero(reference.getNumero());
-            compte.setIntitule(reference.getIntitule());
-            compte.setLettrable(reference.getNumero().startsWith("401") || reference.getNumero().startsWith("411"));
-            return compte;
-        }).toList();
-        compteComptableRepository.saveAll(comptes);
     }
 
     private void creerJournauxParDefaut(Entreprise entreprise) {

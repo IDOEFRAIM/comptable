@@ -8,6 +8,7 @@ import com.example.comptable.agent.finding.repository.FindingRepository;
 import com.example.comptable.comptabilite.domain.ExerciceComptable;
 import com.example.comptable.comptabilite.domain.StatutEcriture;
 import com.example.comptable.comptabilite.domain.StatutExercice;
+import com.example.comptable.comptabilite.regularisation.repository.RegularisationRepository;
 import com.example.comptable.comptabilite.repository.EcritureComptableRepository;
 import com.example.comptable.comptabilite.repository.ExerciceComptableRepository;
 import com.example.comptable.dossier.web.dto.ClotureReadinessDto;
@@ -47,6 +48,8 @@ class ClotureReadinessServiceTest {
     private EcritureComptableRepository ecritureComptableRepository;
     @Mock
     private FindingRepository findingRepository;
+    @Mock
+    private RegularisationRepository regularisationRepository;
 
     @InjectMocks
     private ClotureReadinessService service;
@@ -103,12 +106,35 @@ class ClotureReadinessServiceTest {
                 .thenReturn(0L);
         when(findingRepository.findByEntrepriseIdAndStatusOrderBySeverityAscCreatedAtDesc(entrepriseId, StatutFinding.OPEN))
                 .thenReturn(List.of());
+        when(regularisationRepository.findByEntrepriseIdAndExerciceId(entrepriseId, exerciceOuvert.getId()))
+                .thenReturn(List.of());
 
         ClotureReadinessDto resultat = service.evaluer(entrepriseId, principal);
 
         assertThat(resultat.statut()).isEqualTo("READY");
         assertThat(resultat.blockingItems()).isEmpty();
         assertThat(resultat.warnings()).isEmpty();
+        assertThat(resultat.checklist()).isNotEmpty();
+        assertThat(resultat.checklist()).anyMatch(item -> item.code().equals("exercices") && item.statut().equals("OK"));
+        assertThat(resultat.checklist()).anyMatch(item -> item.code().equals("banque") && item.statut().equals("NOT_APPLICABLE"));
+    }
+
+    @Test
+    void regularisation_non_finalisee_donne_ready_with_review() {
+        when(ecritureComptableRepository.countByExercice_IdAndStatut(exerciceOuvert.getId(), StatutEcriture.BROUILLON))
+                .thenReturn(0L);
+        when(findingRepository.findByEntrepriseIdAndStatusOrderBySeverityAscCreatedAtDesc(entrepriseId, StatutFinding.OPEN))
+                .thenReturn(List.of());
+        com.example.comptable.comptabilite.regularisation.domain.Regularisation regularisation =
+                new com.example.comptable.comptabilite.regularisation.domain.Regularisation();
+        regularisation.setStatut(com.example.comptable.comptabilite.regularisation.domain.StatutRegularisation.BROUILLON);
+        when(regularisationRepository.findByEntrepriseIdAndExerciceId(entrepriseId, exerciceOuvert.getId()))
+                .thenReturn(List.of(regularisation));
+
+        ClotureReadinessDto resultat = service.evaluer(entrepriseId, principal);
+
+        assertThat(resultat.statut()).isEqualTo("READY_WITH_REVIEW");
+        assertThat(resultat.checklist()).anyMatch(item -> item.code().equals("regularisations") && item.statut().equals("WARNING"));
     }
 
     @Test

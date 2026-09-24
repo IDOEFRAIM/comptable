@@ -76,6 +76,27 @@ export const routes: Routes = [
               import('./features/comptabilite/tiers/tiers-list.component').then((m) => m.TiersListComponent),
           },
           {
+            path: 'plan-comptable',
+            loadComponent: () =>
+              import('./features/comptabilite/plan-comptable/plan-comptable-page.component').then(
+                (m) => m.PlanComptablePageComponent,
+              ),
+          },
+          {
+            path: 'parametres-comptables',
+            loadComponent: () =>
+              import('./features/comptabilite/parametres-comptables/parametres-comptables.component').then(
+                (m) => m.ParametresComptablesComponent,
+              ),
+          },
+          {
+            path: 'operations',
+            loadComponent: () =>
+              import('./features/comptabilite/operations/operations-page.component').then(
+                (m) => m.OperationsPageComponent,
+              ),
+          },
+          {
             path: 'ecritures',
             loadComponent: () =>
               import('./features/comptabilite/ecritures/ecriture-list.component').then(
@@ -123,6 +144,13 @@ export const routes: Routes = [
             loadComponent: () =>
               import('./features/comptabilite/immobilisations/immobilisations.component').then(
                 (m) => m.ImmobilisationsComponent,
+              ),
+          },
+          {
+            path: 'regularisations',
+            loadComponent: () =>
+              import('./features/comptabilite/regularisations/regularisations.component').then(
+                (m) => m.RegularisationsComponent,
               ),
           },
           {

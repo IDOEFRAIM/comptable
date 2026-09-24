@@ -1,9 +1,9 @@
 export type CanalTresorerie = 'BANQUE' | 'CAISSE' | 'MOBILE_MONEY';
 
 export const LIBELLES_CANAL: Record<CanalTresorerie, string> = {
-  BANQUE: '🏦 Banque',
-  CAISSE: '💵 Caisse',
-  MOBILE_MONEY: '📱 Mobile Money',
+  BANQUE: 'Banque',
+  CAISSE: 'Caisse',
+  MOBILE_MONEY: 'Mobile Money',
 };
 
 export interface PositionTresorerieDto {

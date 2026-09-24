@@ -16,6 +16,7 @@ import {
   FindingDto,
   LIBELLES_CLOTURE_READINESS,
   LIBELLES_SEVERITE_FINDING,
+  LIBELLES_STATUT_CONTROLE,
   LIBELLES_STATUT_DOSSIER,
   TableauDeBordDto,
 } from './models/dashboard.model';
@@ -45,6 +46,7 @@ export class TableauDeBordComponent implements OnInit {
   readonly libellesSeverite = LIBELLES_SEVERITE_FINDING;
   readonly libellesStatutDossier = LIBELLES_STATUT_DOSSIER;
   readonly libellesClotureReadiness = LIBELLES_CLOTURE_READINESS;
+  readonly libellesStatutControle = LIBELLES_STATUT_CONTROLE;
 
   readonly tableau = signal<TableauDeBordDto | null>(null);
   readonly dossier = signal<DossierComptableDto | null>(null);

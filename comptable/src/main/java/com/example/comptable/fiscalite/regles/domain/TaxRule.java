@@ -9,6 +9,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.OffsetDateTime;
 
@@ -39,6 +40,11 @@ public class TaxRule extends UuidEntity {
     private String libelle;
 
     private String description;
+
+    /** Taux en pourcentage (ex. 18.00 pour 18%). Nullable : une TaxRule peut exister sans taux
+     * chiffre tant que la source n'est pas verifiee - voir TvaRateResolver, qui traite l'absence
+     * de taux comme "non supporte", jamais comme zero. */
+    private BigDecimal taux;
 
     @Column(name = "effective_from", nullable = false)
     private LocalDate effectiveFrom;

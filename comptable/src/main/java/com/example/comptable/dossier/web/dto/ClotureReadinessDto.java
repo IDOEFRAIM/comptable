@@ -9,6 +9,7 @@ public record ClotureReadinessDto(
         String statut,
         List<String> blockingItems,
         List<String> warnings,
-        List<String> recommendations
+        List<String> recommendations,
+        List<ControlItem> checklist
 ) {
 }

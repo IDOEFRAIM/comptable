@@ -1,0 +1,135 @@
+# Deploiement production en un clic : `docker compose up -d --build` demarre les 4 services
+# (base de donnees, backend Spring Boot, microservice IA, frontend Angular/nginx) sur le meme
+# reseau Docker, dans le bon ordre. Voir docs/DEPLOYMENT.md pour le guide complet et .env.example
+# pour la liste des variables a renseigner avant le premier demarrage.
+#
+# Volontairement un seul fichier compose plat (pas de Kubernetes/Helm/Swarm) : coherent avec
+# l'echelle actuelle du produit (10-500 clients par cabinet, quelques cabinets) et avec la regle
+# du projet de ne jamais ajouter de complexite d'infrastructure sans necessite prouvee.
+#
+# HTTPS / nom de domaine : ce fichier expose le frontend en HTTP. Pour un deploiement public
+# avec certificat automatique, superposer docker-compose.prod.yml :
+#   docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d --build
+# (ou simplement `make deploy` apres avoir rempli DOMAIN / ACME_EMAIL dans .env).
+
+# Rotation des logs appliquee a tous les services : sans cela le driver json-file de Docker
+# grossit sans limite jusqu'a saturer le disque de l'hote sur un service qui tourne des mois.
+x-logging: &default-logging
+  driver: json-file
+  options:
+    max-size: "10m"
+    max-file: "5"
+
+services:
+  postgres:
+    image: postgres:18-alpine
+    restart: unless-stopped
+    logging: *default-logging
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-comptable}
+      POSTGRES_USER: ${POSTGRES_USER:-comptable}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?La variable POSTGRES_PASSWORD doit etre definie dans .env}
+    volumes:
+      - postgres_data:/var/lib/postgresql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-comptable} -d ${POSTGRES_DB:-comptable}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    networks: [comptable]
+
+  ai-service:
+    build:
+      context: ./ai-service
+    restart: unless-stopped
+    logging: *default-logging
+    environment:
+      ENVIRONMENT: production
+      LOG_LEVEL: ${AI_SERVICE_LOG_LEVEL:-INFO}
+      INTERNAL_API_KEY: ${AI_SERVICE_OUTBOUND_API_KEY:?}
+      CORE_SERVICE_BASE_URL: http://backend:8081
+      CORE_SERVICE_API_KEY: ${AI_SERVICE_INBOUND_API_KEY:?}
+      GROQ_API_KEY: ${GROQ_API_KEY:-}
+      GROQ_MODEL: ${GROQ_MODEL:-qwen/qwen3.6-27b}
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
+      ANTHROPIC_MODEL: ${ANTHROPIC_MODEL:-claude-sonnet-5}
+      AI_PROVIDER: ${AI_PROVIDER:-mock}
+      RAPPROCHEMENT_SEUIL_CONFIANCE: ${RAPPROCHEMENT_SEUIL_CONFIANCE:-0.90}
+      WHATSAPP_VERIFY_TOKEN: ${WHATSAPP_VERIFY_TOKEN:-}
+      WHATSAPP_APP_SECRET: ${WHATSAPP_APP_SECRET:-}
+      WHATSAPP_ACCESS_TOKEN: ${WHATSAPP_ACCESS_TOKEN:-}
+      WHATSAPP_PHONE_NUMBER_ID: ${WHATSAPP_PHONE_NUMBER_ID:-}
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/api/v1/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 15s
+    networks: [comptable]
+
+  backend:
+    build:
+      context: ./comptable
+    restart: unless-stopped
+    logging: *default-logging
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      SPRING_DOCKER_COMPOSE_ENABLED: "false"
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/${POSTGRES_DB:-comptable}
+      SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER:-comptable}
+      SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD:?}
+      JWT_SECRET: ${JWT_SECRET:?La variable JWT_SECRET doit etre definie dans .env (32+ caracteres aleatoires)}
+      JWT_EXPIRATION_MINUTES: ${JWT_EXPIRATION_MINUTES:-480}
+      DOCUMENTS_STORAGE_DIR: /app/data/documents
+      AI_SERVICE_BASE_URL: http://ai-service:8000
+      AI_SERVICE_OUTBOUND_API_KEY: ${AI_SERVICE_OUTBOUND_API_KEY:?}
+      AI_SERVICE_API_KEY: ${AI_SERVICE_INBOUND_API_KEY:?}
+      AI_SERVICE_CONNECT_TIMEOUT_MS: ${AI_SERVICE_CONNECT_TIMEOUT_MS:-5000}
+      AI_SERVICE_READ_TIMEOUT_MS: ${AI_SERVICE_READ_TIMEOUT_MS:-30000}
+      AGENT_VLM_ENABLED: ${AGENT_VLM_ENABLED:-false}
+      AGENT_MATCHING_IA_ENABLED: ${AGENT_MATCHING_IA_ENABLED:-false}
+      AGENT_RAPPROCHEMENT_SEMANTIQUE_ENABLED: ${AGENT_RAPPROCHEMENT_SEMANTIQUE_ENABLED:-false}
+      AGENT_ACCOUNTING_PROPOSAL_ENABLED: ${AGENT_ACCOUNTING_PROPOSAL_ENABLED:-false}
+      AGENT_FRAUDE_ANALYSE_VISUELLE_ENABLED: ${AGENT_FRAUDE_ANALYSE_VISUELLE_ENABLED:-false}
+      RELANCE_ENABLED: ${RELANCE_ENABLED:-false}
+      RELANCE_CRON: ${RELANCE_CRON:-0 0 8 * * *}
+      RELANCE_TEMPLATE_NAME: ${RELANCE_TEMPLATE_NAME:-relance_pieces_comptables}
+      RELANCE_TEMPLATE_LANGUAGE: ${RELANCE_TEMPLATE_LANGUAGE:-fr}
+    volumes:
+      - documents_data:/app/data/documents
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8081/actuator/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 15
+      start_period: 30s
+    networks: [comptable]
+
+  frontend:
+    build:
+      context: ./comptable/frontend
+    restart: unless-stopped
+    logging: *default-logging
+    depends_on:
+      backend:
+        condition: service_healthy
+    ports:
+      - "${HTTP_PORT:-80}:80"
+    healthcheck:
+      # 127.0.0.1 explicite (pas "localhost") : nginx n'ecoute qu'en IPv4, "localhost" tente
+      # d'abord ::1 sur cette image et echoue.
+      test: ["CMD", "curl", "-fsS", "http://127.0.0.1/"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+    networks: [comptable]
+
+networks:
+  comptable:
+
+volumes:
+  postgres_data:
+  documents_data:

@@ -21,19 +21,19 @@
 
 .ligne-titre {
   font-weight: 700;
-  color: #1f2328;
-  border-bottom: 1px solid #eaecf0;
+  color: var(--text-primary);
+  border-bottom: 1px solid var(--border-subtle);
   padding-bottom: 0.4rem;
   margin-bottom: 0.2rem;
 }
 
 .ligne-poste {
-  color: #475467;
+  color: var(--text-secondary);
   padding-left: 0.75rem;
 }
 
 .ligne-vide {
-  color: #98a2b3;
+  color: var(--text-placeholder);
   padding-left: 0.75rem;
   font-style: italic;
 }

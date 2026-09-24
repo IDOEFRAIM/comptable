@@ -1,0 +1,38 @@
+# Reverse proxy production. Utilise uniquement avec docker-compose.prod.yml.
+# Caddy lit {$DOMAIN} et {$ACME_EMAIL} depuis l'environnement du conteneur (fournis par .env).
+#
+# Caddy gere automatiquement :
+#   - l'obtention et le renouvellement du certificat TLS (Let's Encrypt) pour {$DOMAIN} ;
+#   - la redirection HTTP -> HTTPS ;
+#   - HTTP/2 et HTTP/3.
+
+{
+	email {$ACME_EMAIL}
+}
+
+{$DOMAIN} {
+	encode zstd gzip
+
+	# Le frontend (nginx) sert l'app Angular et relaie deja lui-meme /api vers le backend :
+	# Caddy n'a qu'a tout transmettre a frontend:80 sur le reseau Docker interne.
+	reverse_proxy frontend:80
+
+	# En-tetes de securite (le contenu est une SPA statique + une API JSON, pas d'inline exotique).
+	header {
+		Strict-Transport-Security "max-age=31536000; includeSubDomains"
+		X-Content-Type-Options "nosniff"
+		X-Frame-Options "DENY"
+		Referrer-Policy "strict-origin-when-cross-origin"
+		-Server
+	}
+
+	# Taille max d'upload alignee sur spring.servlet.multipart.max-request-size (10 Mo) cote backend.
+	request_body {
+		max_size 12MB
+	}
+
+	log {
+		output stdout
+		format console
+	}
+}
