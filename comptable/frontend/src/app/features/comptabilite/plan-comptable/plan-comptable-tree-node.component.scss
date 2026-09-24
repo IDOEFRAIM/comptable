@@ -1,0 +1,78 @@
+.noeud {
+  list-style: none;
+}
+
+.ligne-noeud {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  width: 100%;
+  padding: 0.4rem 0.6rem;
+  border: none;
+  background: none;
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  text-align: left;
+  font-size: 0.875rem;
+
+  &:hover {
+    background: var(--bg-subtle);
+  }
+
+  &.selectionne {
+    background: var(--color-primary-light);
+  }
+
+  &.inactif {
+    opacity: 0.55;
+  }
+}
+
+.numero {
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+  color: var(--text-primary);
+  min-width: 4.5rem;
+}
+
+.intitule {
+  flex: 1;
+  color: var(--text-secondary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.badge-origine {
+  flex-shrink: 0;
+  padding: 0.1rem 0.5rem;
+  border-radius: 999px;
+  font-size: 0.6875rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  background: var(--color-primary-light);
+  color: var(--color-primary);
+
+  &.personnalise {
+    background: var(--bg-subtle);
+    color: var(--text-tertiary);
+  }
+}
+
+.badge-inactif {
+  flex-shrink: 0;
+  padding: 0.1rem 0.5rem;
+  border-radius: 999px;
+  font-size: 0.6875rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  background: var(--color-danger-bg);
+  color: var(--color-danger);
+}
+
+.enfants {
+  margin: 0;
+  padding-left: 1.4rem;
+  list-style: none;
+}

@@ -16,6 +16,10 @@ import com.example.comptable.comptabilite.repository.EcritureComptableRepository
 import com.example.comptable.comptabilite.repository.ExerciceComptableRepository;
 import com.example.comptable.comptabilite.repository.ImmobilisationRepository;
 import com.example.comptable.comptabilite.repository.JournalRepository;
+import com.example.comptable.comptabilite.parametrage.AccountContext;
+import com.example.comptable.comptabilite.parametrage.AccountingAccountResolver;
+import com.example.comptable.comptabilite.parametrage.ResolvedAccount;
+import com.example.comptable.comptabilite.parametrage.domain.AccountPurpose;
 import com.example.comptable.comptabilite.web.dto.CreerImmobilisationRequest;
 import com.example.comptable.comptabilite.web.dto.GenererDotationsResultDto;
 import com.example.comptable.comptabilite.web.dto.ImmobilisationDto;
@@ -50,8 +54,6 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class ImmobilisationService {
 
-    private static final String COMPTE_DOTATIONS = "681";
-
     private final EntrepriseAccessService entrepriseAccessService;
     private final ImmobilisationRepository immobilisationRepository;
     private final DotationAmortissementRepository dotationAmortissementRepository;
@@ -60,6 +62,7 @@ public class ImmobilisationService {
     private final JournalRepository journalRepository;
     private final EcritureComptableRepository ecritureComptableRepository;
     private final UtilisateurRepository utilisateurRepository;
+    private final AccountingAccountResolver accountingAccountResolver;
 
     @Transactional
     public ImmobilisationDto creer(UUID entrepriseId, CreerImmobilisationRequest request, UtilisateurPrincipal principal) {
@@ -135,8 +138,14 @@ public class ImmobilisationService {
 
         Journal journal = journalRepository.findByEntrepriseIdAndCode(entrepriseId, "OD")
                 .orElseThrow(() -> new IllegalStateException("Journal OD introuvable, l'entreprise n'a pas ete initialisee correctement"));
-        CompteComptable compteDotations = compteComptableRepository.findByEntrepriseIdAndNumero(entrepriseId, COMPTE_DOTATIONS)
-                .orElseThrow(() -> new IllegalStateException("Compte 681 introuvable, l'entreprise n'a pas ete initialisee correctement"));
+        ResolvedAccount resoluDotation = accountingAccountResolver.resolve(entrepriseId, AccountPurpose.DOTATION_AMORTISSEMENT,
+                AccountContext.vide(), null);
+        if (!resoluDotation.isResolved()) {
+            throw new ResponseStatusException(HttpStatus.UNPROCESSABLE_ENTITY,
+                    "Compte de dotation aux amortissements non configure pour cette entreprise : " + resoluDotation.explication());
+        }
+        CompteComptable compteDotations = compteComptableRepository.findById(resoluDotation.compteId())
+                .orElseThrow(() -> new IllegalStateException("Compte de dotation resolu mais introuvable"));
         Utilisateur utilisateur = utilisateurRepository.getReferenceById(principal.getId());
 
         EcritureComptable ecriture = new EcritureComptable();

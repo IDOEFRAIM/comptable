@@ -1,7 +1,8 @@
 .page-recouvrement {
   background: white;
-  border-radius: 8px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+  border: 1px solid var(--border-subtle);
   padding: 1.25rem;
 }
 
@@ -19,13 +20,13 @@
 .bouton-rafraichir {
   border: none;
   background: none;
-  color: #2563eb;
+  color: var(--color-primary);
   cursor: pointer;
   font-size: 0.8125rem;
 }
 
 .note-methode {
-  color: #667085;
+  color: var(--text-tertiary);
   font-size: 0.8125rem;
   margin: 0 0 1rem;
 }
@@ -38,15 +39,15 @@ table {
 
 th {
   text-align: left;
-  color: #667085;
+  color: var(--text-tertiary);
   font-weight: 600;
   padding: 0.5rem;
-  border-bottom: 1px solid #eaecf0;
+  border-bottom: 1px solid var(--border-subtle);
 }
 
 td {
   padding: 0.6rem 0.5rem;
-  border-bottom: 1px solid #f2f4f7;
+  border-bottom: 1px solid var(--bg-subtle-hover);
 }
 
 .colonne-montant {
@@ -55,20 +56,20 @@ td {
 }
 
 .colonne-action {
-  color: #475467;
+  color: var(--text-secondary);
 }
 
 .badge-succes {
-  background: #ecfdf3;
-  color: #027a48;
+  background: var(--color-success-bg);
+  color: var(--color-success);
 }
 
 .badge-erreur {
-  background: #fef3f2;
-  color: #b42318;
+  background: var(--color-danger-bg);
+  color: var(--color-danger);
 }
 
 .badge-attente {
-  background: #fff8e6;
-  color: #b54708;
+  background: var(--color-warning-bg);
+  color: var(--color-warning);
 }

@@ -1,3 +1,5 @@
+import { LignePropositionDto } from './operations.model';
+
 export type TypeTiers = 'CLIENT' | 'FOURNISSEUR';
 
 export interface TiersDto {
@@ -16,13 +18,29 @@ export interface CreerTiersRequest {
 }
 
 export type NatureCompte = 'ACTIF' | 'PASSIF' | 'CHARGE' | 'PRODUIT';
+export type SensNormal = 'DEBIT' | 'CREDIT';
 
+/** Champs parentId/niveau/actif/referenceId/sensNormal/compteCollectif/compteDetail/auxiliaireAutorise
+ * ajoutes par la fondation plan comptable (voir plan-comptable.model.ts pour les types dedies). */
 export interface CompteComptableDto {
   id: string;
   numero: string;
   intitule: string;
   nature: NatureCompte | null;
   lettrable: boolean;
+  parentId: string | null;
+  niveau: number;
+  actif: boolean;
+  referenceId: number | null;
+  referenceNumero: string | null;
+  sensNormal: SensNormal | null;
+  compteCollectif: boolean;
+  compteDetail: boolean;
+  auxiliaireAutorise: boolean;
+  /** Renseigne uniquement juste apres une desactivation (voir modifierCompte) - nombre de
+   * parametres comptables actifs qui referencent encore ce compte (mission Etape 6, section 23) ;
+   * null hors de ce cas. */
+  mappingsActifsCount: number | null;
 }
 
 export interface JournalDto {
@@ -435,11 +453,26 @@ export interface CompteResultatDto {
 // Stocks & Achats (Sprint 11)
 // ---------------------------------------------------------------------------
 
+export type TypeArticle = 'MARCHANDISE' | 'MATIERE_PREMIERE' | 'PRODUIT_FINI' | 'PRODUIT_INTERMEDIAIRE' | 'AUTRE';
+
+export const LIBELLES_TYPE_ARTICLE: Record<TypeArticle, string> = {
+  MARCHANDISE: 'Marchandise',
+  MATIERE_PREMIERE: 'Matière première',
+  PRODUIT_FINI: 'Produit fini',
+  PRODUIT_INTERMEDIAIRE: 'Produit intermédiaire',
+  AUTRE: 'Autre',
+};
+
+export type PolitiqueStockNegatif = 'INTERDIT' | 'AUTORISE_AVEC_ALERTE' | 'AUTORISE';
+
+export type ModeGestionStock = 'PERMANENT' | 'INTERMITTENT';
+
 export interface ArticleDto {
   id: string;
   codeArticle: string;
   designation: string;
   categorie: string | null;
+  type: TypeArticle;
   uniteMesure: string;
   prixVenteHt: number;
   tauxTva: number;
@@ -454,12 +487,19 @@ export interface ArticleDto {
   compteVenteNumero: string;
   compteVariationId: string;
   compteVariationNumero: string;
+  actif: boolean;
+  stockMinimum: number | null;
+  politiqueStockNegatif: PolitiqueStockNegatif;
+  modeGestionStock: ModeGestionStock;
+  createdAt: string;
+  updatedAt: string | null;
 }
 
 export interface CreerArticleRequest {
   codeArticle: string;
   designation: string;
   categorie?: string;
+  type: TypeArticle;
   uniteMesure: string;
   prixVenteHt: number;
   tauxTva: number;
@@ -467,14 +507,51 @@ export interface CreerArticleRequest {
   compteAchatId: string;
   compteVenteId: string;
   compteVariationId: string;
+  stockMinimum?: number;
+  politiqueStockNegatif?: PolitiqueStockNegatif;
+  modeGestionStock?: ModeGestionStock;
 }
 
-export type TypeMouvementStock = 'ENTREE' | 'SORTIE' | 'AJUSTEMENT';
+export interface ModifierArticleRequest {
+  designation?: string;
+  categorie?: string;
+  prixVenteHt?: number;
+  tauxTva?: number;
+  actif?: boolean;
+  stockMinimum?: number;
+  politiqueStockNegatif?: PolitiqueStockNegatif;
+  modeGestionStock?: ModeGestionStock;
+}
+
+/** ENTREE/SORTIE/AJUSTEMENT/TRANSFERT sont saisissables depuis le formulaire generique ; les
+ * autres valeurs (ENTREE_ACHAT, SORTIE_VENTE, *_INVENTAIRE, *_PRODUCTION, SORTIE_CONSOMMATION)
+ * sont generees automatiquement par les flux achat/vente/inventaire et affichees en lecture seule
+ * dans l'historique des mouvements. */
+export type TypeMouvementStock =
+  | 'ENTREE'
+  | 'SORTIE'
+  | 'AJUSTEMENT'
+  | 'ENTREE_ACHAT'
+  | 'ENTREE_PRODUCTION'
+  | 'ENTREE_INVENTAIRE'
+  | 'SORTIE_VENTE'
+  | 'SORTIE_CONSOMMATION'
+  | 'SORTIE_PRODUCTION'
+  | 'SORTIE_INVENTAIRE'
+  | 'TRANSFERT';
 
 export const LIBELLES_TYPE_MOUVEMENT: Record<TypeMouvementStock, string> = {
   ENTREE: 'Entrée',
   SORTIE: 'Sortie',
   AJUSTEMENT: 'Ajustement',
+  ENTREE_ACHAT: 'Entrée (achat)',
+  ENTREE_PRODUCTION: 'Entrée (production)',
+  ENTREE_INVENTAIRE: 'Entrée (inventaire)',
+  SORTIE_VENTE: 'Sortie (vente)',
+  SORTIE_CONSOMMATION: 'Sortie (consommation)',
+  SORTIE_PRODUCTION: 'Sortie (production)',
+  SORTIE_INVENTAIRE: 'Sortie (inventaire)',
+  TRANSFERT: 'Transfert',
 };
 
 export interface MouvementStockDto {
@@ -490,6 +567,11 @@ export interface MouvementStockDto {
   dateMouvement: string;
   libelle: string | null;
   ecritureId: string | null;
+  sourceType: string | null;
+  sourceId: string | null;
+  depotSourceId: string | null;
+  depotDestinationId: string | null;
+  avertissement: string | null;
 }
 
 export interface CreerMouvementStockRequest {
@@ -499,6 +581,20 @@ export interface CreerMouvementStockRequest {
   prixUnitaireHt?: number;
   dateMouvement?: string;
   libelle?: string;
+  depotSourceId?: string;
+  depotDestinationId?: string;
+}
+
+export interface DepotDto {
+  id: string;
+  code: string;
+  libelle: string;
+  actif: boolean;
+}
+
+export interface CreerDepotRequest {
+  code: string;
+  libelle: string;
 }
 
 export type StatutCommandeAchat = 'EN_COURS' | 'RECEPTIONNEE' | 'FACTUREE';
@@ -555,4 +651,27 @@ export interface FactureFournisseurDto {
   montantTva: number;
   montantTtc: number;
   ecritureId: string | null;
+  lignesEcriture: LignePropositionDto[];
+}
+
+export interface CreerAvoirFournisseurRequest {
+  motif?: string;
+  retourStock: boolean;
+}
+
+export interface AvoirFournisseurDto {
+  id: string;
+  factureId: string;
+  factureNumero: string;
+  fournisseurId: string;
+  fournisseurNom: string;
+  numero: string;
+  dateEmission: string;
+  montantHt: number;
+  montantTva: number;
+  montantTtc: number;
+  motif: string | null;
+  retourStock: boolean;
+  ecritureId: string | null;
+  lignesEcriture: LignePropositionDto[];
 }

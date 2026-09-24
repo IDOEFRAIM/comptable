@@ -1,25 +1,27 @@
 package com.example.comptable.comptabilite.service;
 
 import com.example.comptable.comptabilite.domain.CompteComptable;
-import com.example.comptable.comptabilite.domain.EcritureComptable;
 import com.example.comptable.comptabilite.domain.ExerciceComptable;
-import com.example.comptable.comptabilite.domain.Journal;
 import com.example.comptable.comptabilite.domain.PlanComptableReference;
-import com.example.comptable.comptabilite.domain.StatutEcriture;
 import com.example.comptable.comptabilite.domain.StatutExercice;
+import com.example.comptable.comptabilite.operation.cloture.ClotureRule;
+import com.example.comptable.comptabilite.operation.common.AccountingOperationEngine;
+import com.example.comptable.comptabilite.operation.common.AccountingOperationType;
+import com.example.comptable.comptabilite.operation.common.ResultatRegle;
+import com.example.comptable.comptabilite.operation.common.domain.AccountingOperationProposalLigne;
+import com.example.comptable.comptabilite.operation.common.web.dto.AccountingOperationProposalDto;
 import com.example.comptable.comptabilite.repository.CompteComptableRepository;
-import com.example.comptable.comptabilite.repository.EcritureComptableRepository;
 import com.example.comptable.comptabilite.repository.ExerciceComptableRepository;
-import com.example.comptable.comptabilite.repository.JournalRepository;
 import com.example.comptable.comptabilite.repository.LigneEcritureRepository;
 import com.example.comptable.comptabilite.web.dto.CompteResultatDto;
 import com.example.comptable.comptabilite.web.dto.ExerciceComptableDto;
 import com.example.comptable.comptabilite.web.dto.SectionFinanciereDto;
+import com.example.comptable.dossier.ClotureReadinessService;
+import com.example.comptable.dossier.web.dto.ClotureReadinessDto;
 import com.example.comptable.entreprise.domain.Entreprise;
 import com.example.comptable.entreprise.service.EntrepriseAccessService;
 import com.example.comptable.identite.domain.Role;
 import com.example.comptable.identite.domain.Utilisateur;
-import com.example.comptable.identite.repository.UtilisateurRepository;
 import com.example.comptable.security.UtilisateurPrincipal;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -40,8 +42,19 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
 
+/**
+ * ClotureExerciceService route desormais l'ecriture de determination du resultat via
+ * ClotureRule + AccountingOperationEngine.proposerEtValiderImmediatement (mission cloture Etape 4,
+ * section 17) plutot que de construire une EcritureComptable a la main - ces deux collaborateurs
+ * sont donc mockes ici comme des unites a part entiere (chacun a ses propres tests dedies :
+ * AccountingOperationEngineTest, et un test dedie a ClotureRule) plutot que re-testes en detail
+ * depuis ce fichier. La checklist de cloture (ClotureReadinessService) est le seul gardien
+ * consulte pour bloquer une cloture (section 15) : le controle brouillon "en dur" precedemment
+ * duplique ici a ete retire au profit de cette source unique.
+ */
 @ExtendWith(MockitoExtension.class)
 class ClotureExerciceServiceTest {
 
@@ -54,13 +67,13 @@ class ClotureExerciceServiceTest {
     @Mock
     private LigneEcritureRepository ligneEcritureRepository;
     @Mock
-    private EcritureComptableRepository ecritureComptableRepository;
-    @Mock
-    private JournalRepository journalRepository;
-    @Mock
     private EtatsFinanciersService etatsFinanciersService;
     @Mock
-    private UtilisateurRepository utilisateurRepository;
+    private ClotureReadinessService clotureReadinessService;
+    @Mock
+    private ClotureRule clotureRule;
+    @Mock
+    private AccountingOperationEngine accountingOperationEngine;
 
     @InjectMocks
     private ClotureExerciceService clotureExerciceService;
@@ -70,12 +83,8 @@ class ClotureExerciceServiceTest {
     private Entreprise entreprise;
     private ExerciceComptable exercice;
     private UtilisateurPrincipal principal;
-    private Utilisateur utilisateur;
-    private Journal journalOd;
     private CompteComptable achats;
     private CompteComptable ventes;
-    private CompteComptable compte120;
-    private CompteComptable compte129;
 
     @BeforeEach
     void setUp() {
@@ -93,7 +102,7 @@ class ClotureExerciceServiceTest {
 
         Role role = new Role();
         role.setCode("EXPERT_COMPTABLE");
-        utilisateur = new Utilisateur();
+        Utilisateur utilisateur = new Utilisateur();
         utilisateur.setId(UUID.randomUUID());
         utilisateur.setEmail("test@cabinet.ci");
         utilisateur.setMotDePasse("hash");
@@ -102,15 +111,8 @@ class ClotureExerciceServiceTest {
         utilisateur.setRoles(Set.of(role));
         principal = new UtilisateurPrincipal(utilisateur);
 
-        journalOd = new Journal();
-        journalOd.setId(UUID.randomUUID());
-        journalOd.setEntreprise(entreprise);
-        journalOd.setCode("OD");
-
         achats = compte("601", 6);
         ventes = compte("701", 7);
-        compte120 = compte("120", 1);
-        compte129 = compte("129", 1);
 
         when(entrepriseAccessService.verifierAcces(entrepriseId, principal)).thenReturn(entreprise);
         when(exerciceComptableRepository.findById(exerciceId)).thenReturn(Optional.of(exercice));
@@ -128,6 +130,11 @@ class ClotureExerciceServiceTest {
         return c;
     }
 
+    private void checklistPrete() {
+        when(clotureReadinessService.construireChecklist(eq(entrepriseId), any(ExerciceComptable.class)))
+                .thenReturn(new ClotureReadinessDto("READY", List.of(), List.of(), List.of(), List.of()));
+    }
+
     @Test
     void refuse_de_cloturer_un_exercice_deja_cloture() {
         exercice.setStatut(StatutExercice.CLOTURE);
@@ -138,9 +145,10 @@ class ClotureExerciceServiceTest {
     }
 
     @Test
-    void refuse_de_cloturer_si_des_brouillons_subsistent() {
-        when(ecritureComptableRepository.countByExercice_IdAndStatut(exerciceId, StatutEcriture.BROUILLON))
-                .thenReturn(1L);
+    void refuse_de_cloturer_si_la_checklist_contient_un_blocage() {
+        when(clotureReadinessService.construireChecklist(eq(entrepriseId), any(ExerciceComptable.class))).thenReturn(
+                new ClotureReadinessDto("NOT_READY", List.of("1 ecriture(s) en brouillon doivent etre validees avant cloture."),
+                        List.of(), List.of(), List.of()));
 
         assertThatThrownBy(() -> clotureExerciceService.cloturer(entrepriseId, exerciceId, principal))
                 .isInstanceOf(ResponseStatusException.class)
@@ -149,20 +157,22 @@ class ClotureExerciceServiceTest {
 
     @Test
     void genere_lecriture_de_determination_du_resultat_benefice() {
-        when(ecritureComptableRepository.countByExercice_IdAndStatut(exerciceId, StatutEcriture.BROUILLON))
-                .thenReturn(0L);
-        when(utilisateurRepository.getReferenceById(principal.getId())).thenReturn(utilisateur);
-        when(compteComptableRepository.findByEntrepriseId(entrepriseId))
-                .thenReturn(List.of(achats, ventes, compte120, compte129));
+        checklistPrete();
+        when(compteComptableRepository.findByEntrepriseId(entrepriseId)).thenReturn(List.of(achats, ventes));
         when(etatsFinanciersService.genererCompteResultatInterne(exercice)).thenReturn(compteResultat(new BigDecimal("10000")));
         when(ligneEcritureRepository.mouvementNetPeriode(achats.getId(), exercice.getDateDebut(), exercice.getDateFin()))
                 .thenReturn(new BigDecimal("-30000"));
         when(ligneEcritureRepository.mouvementNetPeriode(ventes.getId(), exercice.getDateDebut(), exercice.getDateFin()))
                 .thenReturn(new BigDecimal("40000"));
-        when(journalRepository.findByEntrepriseIdAndCode(entrepriseId, "OD")).thenReturn(Optional.of(journalOd));
-        when(compteComptableRepository.findByEntrepriseIdAndNumero(entrepriseId, "120")).thenReturn(Optional.of(compte120));
-        when(ecritureComptableRepository.countByJournalId(journalOd.getId())).thenReturn(0L);
-        when(ecritureComptableRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
+        when(clotureRule.construire(eq(entreprise), any(), eq(new BigDecimal("10000"))))
+                .thenReturn(new ResultatRegle(com.example.comptable.comptabilite.domain.TypeJournal.OPERATIONS_DIVERSES,
+                        List.of(), List.of(), List.of()));
+        when(accountingOperationEngine.proposerEtValiderImmediatement(eq(entrepriseId), eq(AccountingOperationType.CLOTURE_EXERCICE),
+                eq(null), eq(exercice.getDateFin()), any(), eq(null), any(), eq("EXERCICE"), eq(exerciceId), eq(principal)))
+                .thenReturn(new AccountingOperationProposalDto(UUID.randomUUID(), entrepriseId, "CLOTURE_EXERCICE", "APPROVED",
+                        null, null, null, exercice.getDateFin(), "Determination du resultat de l'exercice", null,
+                        List.of(), BigDecimal.ZERO, BigDecimal.ZERO, true, List.of(), List.of(), null, null, null, null,
+                        UUID.randomUUID(), "EXERCICE", exerciceId));
         when(exerciceComptableRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
         when(exerciceComptableRepository.findByEntrepriseIdAndDate(entrepriseId, LocalDate.of(2027, 1, 1)))
                 .thenReturn(Optional.empty());
@@ -172,53 +182,64 @@ class ClotureExerciceServiceTest {
         assertThat(resultat.statut()).isEqualTo("CLOTURE");
         assertThat(exercice.getStatut()).isEqualTo(StatutExercice.CLOTURE);
 
-        ArgumentCaptor<EcritureComptable> captor = ArgumentCaptor.forClass(EcritureComptable.class);
-        org.mockito.Mockito.verify(ecritureComptableRepository).save(captor.capture());
-        EcritureComptable ecriture = captor.getValue();
-        assertThat(ecriture.estEquilibree()).isTrue();
-        assertThat(ecriture.totalDebit()).isEqualByComparingTo("40000");
-        assertThat(ecriture.getLignes()).hasSize(3);
-        assertThat(ecriture.getLignes()).anyMatch(l -> l.getCompte() == compte120 && l.getCredit().compareTo(new BigDecimal("10000")) == 0);
+        ArgumentCaptor<List<AccountingOperationProposalLigne>> lignesCaptor = ArgumentCaptor.forClass(List.class);
+        org.mockito.Mockito.verify(clotureRule).construire(eq(entreprise), lignesCaptor.capture(), eq(new BigDecimal("10000")));
+        List<AccountingOperationProposalLigne> lignesASolder = lignesCaptor.getValue();
+        assertThat(lignesASolder).hasSize(2);
+        assertThat(lignesASolder).anyMatch(l -> l.getCompte() == achats && l.getCredit().compareTo(new BigDecimal("30000")) == 0);
+        assertThat(lignesASolder).anyMatch(l -> l.getCompte() == ventes && l.getDebit().compareTo(new BigDecimal("40000")) == 0);
 
-        ArgumentCaptor<ExerciceComptable> exerciceCaptor = ArgumentCaptor.forClass(ExerciceComptable.class);
-        org.mockito.Mockito.verify(exerciceComptableRepository, org.mockito.Mockito.times(2)).save(exerciceCaptor.capture());
-        assertThat(exerciceCaptor.getAllValues()).anyMatch(e -> e.getStatut() == StatutExercice.CLOTURE);
+        org.mockito.Mockito.verify(accountingOperationEngine).proposerEtValiderImmediatement(eq(entrepriseId),
+                eq(AccountingOperationType.CLOTURE_EXERCICE), eq(null), eq(exercice.getDateFin()), any(), eq(null), any(),
+                eq("EXERCICE"), eq(exerciceId), eq(principal));
+
+        org.mockito.Mockito.verify(exerciceComptableRepository, org.mockito.Mockito.times(2)).save(any());
     }
 
     @Test
     void genere_lecriture_de_determination_du_resultat_perte() {
-        when(ecritureComptableRepository.countByExercice_IdAndStatut(exerciceId, StatutEcriture.BROUILLON))
-                .thenReturn(0L);
-        when(utilisateurRepository.getReferenceById(principal.getId())).thenReturn(utilisateur);
-        when(compteComptableRepository.findByEntrepriseId(entrepriseId))
-                .thenReturn(List.of(achats, ventes, compte120, compte129));
+        checklistPrete();
+        when(compteComptableRepository.findByEntrepriseId(entrepriseId)).thenReturn(List.of(achats, ventes));
         when(etatsFinanciersService.genererCompteResultatInterne(exercice)).thenReturn(compteResultat(new BigDecimal("-5000")));
         when(ligneEcritureRepository.mouvementNetPeriode(achats.getId(), exercice.getDateDebut(), exercice.getDateFin()))
                 .thenReturn(new BigDecimal("-30000"));
         when(ligneEcritureRepository.mouvementNetPeriode(ventes.getId(), exercice.getDateDebut(), exercice.getDateFin()))
                 .thenReturn(new BigDecimal("25000"));
-        when(journalRepository.findByEntrepriseIdAndCode(entrepriseId, "OD")).thenReturn(Optional.of(journalOd));
-        when(compteComptableRepository.findByEntrepriseIdAndNumero(entrepriseId, "129")).thenReturn(Optional.of(compte129));
-        when(ecritureComptableRepository.countByJournalId(journalOd.getId())).thenReturn(0L);
-        when(ecritureComptableRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
+        when(clotureRule.construire(eq(entreprise), any(), eq(new BigDecimal("-5000"))))
+                .thenReturn(new ResultatRegle(com.example.comptable.comptabilite.domain.TypeJournal.OPERATIONS_DIVERSES,
+                        List.of(), List.of(), List.of()));
+        when(accountingOperationEngine.proposerEtValiderImmediatement(eq(entrepriseId), eq(AccountingOperationType.CLOTURE_EXERCICE),
+                eq(null), eq(exercice.getDateFin()), any(), eq(null), any(), eq("EXERCICE"), eq(exerciceId), eq(principal)))
+                .thenReturn(new AccountingOperationProposalDto(UUID.randomUUID(), entrepriseId, "CLOTURE_EXERCICE", "APPROVED",
+                        null, null, null, exercice.getDateFin(), "Determination du resultat de l'exercice", null,
+                        List.of(), BigDecimal.ZERO, BigDecimal.ZERO, true, List.of(), List.of(), null, null, null, null,
+                        UUID.randomUUID(), "EXERCICE", exerciceId));
         when(exerciceComptableRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
         when(exerciceComptableRepository.findByEntrepriseIdAndDate(entrepriseId, LocalDate.of(2027, 1, 1)))
                 .thenReturn(Optional.empty());
 
         clotureExerciceService.cloturer(entrepriseId, exerciceId, principal);
 
-        ArgumentCaptor<EcritureComptable> captor = ArgumentCaptor.forClass(EcritureComptable.class);
-        org.mockito.Mockito.verify(ecritureComptableRepository).save(captor.capture());
-        EcritureComptable ecriture = captor.getValue();
-        assertThat(ecriture.estEquilibree()).isTrue();
-        assertThat(ecriture.getLignes()).anyMatch(l -> l.getCompte() == compte129 && l.getDebit().compareTo(new BigDecimal("5000")) == 0);
+        org.mockito.Mockito.verify(clotureRule).construire(eq(entreprise), any(), eq(new BigDecimal("-5000")));
+    }
+
+    @Test
+    void ne_genere_aucune_ecriture_si_aucun_mouvement_de_charge_ou_produit() {
+        checklistPrete();
+        when(compteComptableRepository.findByEntrepriseId(entrepriseId)).thenReturn(List.of());
+        when(etatsFinanciersService.genererCompteResultatInterne(exercice)).thenReturn(compteResultat(BigDecimal.ZERO));
+        when(exerciceComptableRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
+        when(exerciceComptableRepository.findByEntrepriseIdAndDate(entrepriseId, LocalDate.of(2027, 1, 1)))
+                .thenReturn(Optional.empty());
+
+        clotureExerciceService.cloturer(entrepriseId, exerciceId, principal);
+
+        org.mockito.Mockito.verifyNoInteractions(accountingOperationEngine, clotureRule);
     }
 
     @Test
     void cree_lexercice_suivant_sil_nexiste_pas() {
-        when(ecritureComptableRepository.countByExercice_IdAndStatut(exerciceId, StatutEcriture.BROUILLON))
-                .thenReturn(0L);
-        when(utilisateurRepository.getReferenceById(principal.getId())).thenReturn(utilisateur);
+        checklistPrete();
         when(compteComptableRepository.findByEntrepriseId(entrepriseId)).thenReturn(List.of());
         when(etatsFinanciersService.genererCompteResultatInterne(exercice)).thenReturn(compteResultat(BigDecimal.ZERO));
         when(exerciceComptableRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
@@ -254,50 +275,8 @@ class ClotureExerciceServiceTest {
     }
 
     @Test
-    void echoue_si_le_compte_de_resultat_120_est_absent_du_plan() {
-        when(ecritureComptableRepository.countByExercice_IdAndStatut(exerciceId, StatutEcriture.BROUILLON))
-                .thenReturn(0L);
-        when(utilisateurRepository.getReferenceById(principal.getId())).thenReturn(utilisateur);
-        when(compteComptableRepository.findByEntrepriseId(entrepriseId))
-                .thenReturn(List.of(achats, ventes));
-        when(etatsFinanciersService.genererCompteResultatInterne(exercice)).thenReturn(compteResultat(new BigDecimal("10000")));
-        when(ligneEcritureRepository.mouvementNetPeriode(achats.getId(), exercice.getDateDebut(), exercice.getDateFin()))
-                .thenReturn(new BigDecimal("-30000"));
-        when(ligneEcritureRepository.mouvementNetPeriode(ventes.getId(), exercice.getDateDebut(), exercice.getDateFin()))
-                .thenReturn(new BigDecimal("40000"));
-        when(journalRepository.findByEntrepriseIdAndCode(entrepriseId, "OD")).thenReturn(Optional.of(journalOd));
-        when(ecritureComptableRepository.countByJournalId(journalOd.getId())).thenReturn(0L);
-        when(compteComptableRepository.findByEntrepriseIdAndNumero(entrepriseId, "120")).thenReturn(Optional.empty());
-
-        assertThatThrownBy(() -> clotureExerciceService.cloturer(entrepriseId, exerciceId, principal))
-                .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("120");
-    }
-
-    @Test
-    void echoue_si_le_journal_od_est_absent() {
-        when(ecritureComptableRepository.countByExercice_IdAndStatut(exerciceId, StatutEcriture.BROUILLON))
-                .thenReturn(0L);
-        when(utilisateurRepository.getReferenceById(principal.getId())).thenReturn(utilisateur);
-        when(compteComptableRepository.findByEntrepriseId(entrepriseId))
-                .thenReturn(List.of(achats, ventes));
-        when(etatsFinanciersService.genererCompteResultatInterne(exercice)).thenReturn(compteResultat(new BigDecimal("10000")));
-        when(ligneEcritureRepository.mouvementNetPeriode(achats.getId(), exercice.getDateDebut(), exercice.getDateFin()))
-                .thenReturn(new BigDecimal("-30000"));
-        when(ligneEcritureRepository.mouvementNetPeriode(ventes.getId(), exercice.getDateDebut(), exercice.getDateFin()))
-                .thenReturn(new BigDecimal("40000"));
-        when(journalRepository.findByEntrepriseIdAndCode(entrepriseId, "OD")).thenReturn(Optional.empty());
-
-        assertThatThrownBy(() -> clotureExerciceService.cloturer(entrepriseId, exerciceId, principal))
-                .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("OD");
-    }
-
-    @Test
     void ne_recree_pas_lexercice_suivant_sil_existe_deja() {
-        when(ecritureComptableRepository.countByExercice_IdAndStatut(exerciceId, StatutEcriture.BROUILLON))
-                .thenReturn(0L);
-        when(utilisateurRepository.getReferenceById(principal.getId())).thenReturn(utilisateur);
+        checklistPrete();
         when(compteComptableRepository.findByEntrepriseId(entrepriseId)).thenReturn(List.of());
         when(etatsFinanciersService.genererCompteResultatInterne(exercice)).thenReturn(compteResultat(BigDecimal.ZERO));
         when(exerciceComptableRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));

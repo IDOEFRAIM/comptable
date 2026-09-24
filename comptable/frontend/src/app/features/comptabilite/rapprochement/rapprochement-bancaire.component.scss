@@ -17,8 +17,9 @@
 
 .carte {
   background: white;
-  border-radius: 8px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+  border: 1px solid var(--border-subtle);
   padding: 1.25rem;
 }
 
@@ -38,8 +39,8 @@
   input,
   select {
     padding: 0.5rem;
-    border: 1px solid #d0d5dd;
-    border-radius: 6px;
+    border: 1px solid var(--border-default);
+    border-radius: var(--radius-md);
   }
 }
 
@@ -50,21 +51,21 @@
 .bouton-principal {
   padding: 0.55rem 1rem;
   border: none;
-  border-radius: 6px;
-  background: #2563eb;
+  border-radius: var(--radius-md);
+  background: var(--color-primary);
   color: white;
   font-weight: 600;
   cursor: pointer;
   white-space: nowrap;
 
   &:disabled {
-    background: #a4bcf5;
+    background: var(--color-primary-border);
     cursor: not-allowed;
   }
 }
 
 .message-erreur {
-  color: #b42318;
+  color: var(--color-danger);
   font-size: 0.875rem;
 }
 
@@ -92,16 +93,16 @@
   width: 100%;
   text-align: left;
   padding: 0.6rem 0.75rem;
-  border: 1px solid #eaecf0;
-  border-radius: 6px;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
   background: white;
   cursor: pointer;
   margin-bottom: 0.5rem;
   font-size: 0.8125rem;
 
   &.actif {
-    border-color: #2563eb;
-    background: #eff6ff;
+    border-color: var(--color-primary);
+    background: var(--color-primary-light);
   }
 
   .libelle {
@@ -109,17 +110,17 @@
   }
 
   .periode {
-    color: #667085;
+    color: var(--text-tertiary);
   }
 }
 
 .ecart-ok {
-  color: #027a48;
+  color: var(--color-success);
   font-weight: 600;
 }
 
 .ecart-ko {
-  color: #b42318;
+  color: var(--color-danger);
   font-weight: 600;
 }
 
@@ -129,7 +130,7 @@
   gap: 1rem;
   margin-bottom: 1rem;
   padding-bottom: 1rem;
-  border-bottom: 1px solid #eaecf0;
+  border-bottom: 1px solid var(--border-subtle);
 
   div {
     display: flex;
@@ -138,7 +139,7 @@
     font-size: 0.8125rem;
 
     span {
-      color: #667085;
+      color: var(--text-tertiary);
     }
   }
 
@@ -157,32 +158,32 @@ th,
 td {
   padding: 0.5rem;
   text-align: left;
-  border-bottom: 1px solid #f2f4f7;
+  border-bottom: 1px solid var(--bg-subtle-hover);
 }
 
 th {
-  color: #667085;
+  color: var(--text-tertiary);
   font-weight: 600;
 }
 
 .montant-negatif {
-  color: #b42318;
+  color: var(--color-danger);
 }
 
 .ligne-pointee {
-  background: #f0fdf4;
+  background: var(--color-success-bg);
 }
 
 .badge-pointee {
-  color: #027a48;
+  color: var(--color-success);
   font-weight: 600;
   margin-right: 0.5rem;
 }
 
 .select-candidat {
   padding: 0.3rem;
-  border: 1px solid #d0d5dd;
-  border-radius: 6px;
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-md);
   margin-right: 0.5rem;
   font-size: 0.75rem;
 }
@@ -190,14 +191,14 @@ th {
 .bouton-lien {
   border: none;
   background: none;
-  color: #2563eb;
+  color: var(--color-primary);
   cursor: pointer;
   font-size: 0.8125rem;
   font-weight: 600;
 }
 
 .etat-vide {
-  color: #667085;
+  color: var(--text-tertiary);
   text-align: center;
   padding: 1rem 0;
 }
@@ -211,17 +212,23 @@ th {
 }
 
 .badge-ia {
-  display: inline-block;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
   padding: 0.15rem 0.5rem;
   border-radius: 999px;
   background: #f4ebff;
   color: #6941c6;
   font-size: 0.75rem;
   font-weight: 600;
+
+  svg {
+    flex-shrink: 0;
+  }
 }
 
 .bouton-discret {
-  color: #667085;
+  color: var(--text-tertiary);
 }
 
 .details-ia {
@@ -229,9 +236,9 @@ th {
   margin: 0.3rem 0 0;
   padding-left: 1.1rem;
   font-size: 0.75rem;
-  color: #475467;
+  color: var(--text-secondary);
 
   .avertissement-ia {
-    color: #b54708;
+    color: var(--color-warning);
   }
 }

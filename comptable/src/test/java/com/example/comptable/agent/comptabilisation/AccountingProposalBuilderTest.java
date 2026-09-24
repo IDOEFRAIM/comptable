@@ -7,10 +7,10 @@ import com.example.comptable.comptabilite.domain.CompteComptable;
 import com.example.comptable.comptabilite.domain.Journal;
 import com.example.comptable.comptabilite.domain.Tiers;
 import com.example.comptable.comptabilite.domain.TypeTiers;
-import com.example.comptable.comptabilite.repository.CompteComptableRepository;
 import com.example.comptable.comptabilite.repository.JournalRepository;
 import com.example.comptable.comptabilite.repository.LigneEcritureRepository;
 import com.example.comptable.comptabilite.repository.TiersRepository;
+import com.example.comptable.comptabilite.service.CompteComptableValidationService;
 import com.example.comptable.document.domain.Document;
 import com.example.comptable.document.domain.StatutDocument;
 import com.example.comptable.document.domain.TypeDocument;
@@ -41,7 +41,7 @@ class AccountingProposalBuilderTest {
     @Mock
     private LigneEcritureRepository ligneEcritureRepository;
     @Mock
-    private CompteComptableRepository compteComptableRepository;
+    private CompteComptableValidationService compteComptableValidationService;
     @Mock
     private JournalRepository journalRepository;
     @Mock
@@ -101,7 +101,7 @@ class AccountingProposalBuilderTest {
         when(tiersRepository.findByEntrepriseId(entrepriseId)).thenReturn(List.of(tiers));
         when(ligneEcritureRepository.rechercherComptesChargeProduitHistoriquesPourTiers(tiers.getId()))
                 .thenReturn(List.of(compteId, compteId, compteId));
-        when(compteComptableRepository.findById(compteId)).thenReturn(Optional.of(compte));
+        when(compteComptableValidationService.chargerCompteUtilisable(entrepriseId, compteId, true)).thenReturn(compte);
         when(journalRepository.findByEntrepriseIdAndCode(entrepriseId, "ACH")).thenReturn(Optional.of(journal));
 
         Optional<AccountingProposal> resultat = builder.proposer(entreprise, document);
@@ -128,7 +128,7 @@ class AccountingProposalBuilderTest {
         when(tiersRepository.findByEntrepriseId(entrepriseId)).thenReturn(List.of(tiers));
         when(ligneEcritureRepository.rechercherComptesChargeProduitHistoriquesPourTiers(tiers.getId()))
                 .thenReturn(List.of(compteId)); // une seule occurrence, pas fiable
-        when(compteComptableRepository.findById(compteId)).thenReturn(Optional.of(compte));
+        when(compteComptableValidationService.chargerCompteUtilisable(entrepriseId, compteId, true)).thenReturn(compte);
         when(journalRepository.findByEntrepriseIdAndCode(entrepriseId, "ACH")).thenReturn(Optional.empty());
 
         Optional<AccountingProposal> resultat = builder.proposer(entreprise, document);

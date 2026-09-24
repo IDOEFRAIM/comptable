@@ -1,20 +1,22 @@
 package com.example.comptable.comptabilite.service;
 
 import com.example.comptable.comptabilite.domain.CompteComptable;
-import com.example.comptable.comptabilite.domain.EcritureComptable;
-import com.example.comptable.comptabilite.domain.ExerciceComptable;
 import com.example.comptable.comptabilite.domain.Facture;
-import com.example.comptable.comptabilite.domain.Journal;
-import com.example.comptable.comptabilite.domain.StatutExercice;
 import com.example.comptable.comptabilite.domain.StatutFacture;
 import com.example.comptable.comptabilite.domain.Tiers;
 import com.example.comptable.comptabilite.domain.TypeFacture;
 import com.example.comptable.comptabilite.domain.TypeTiers;
-import com.example.comptable.comptabilite.repository.CompteComptableRepository;
-import com.example.comptable.comptabilite.repository.EcritureComptableRepository;
-import com.example.comptable.comptabilite.repository.ExerciceComptableRepository;
+import com.example.comptable.comptabilite.operation.common.AccountingOperationEngine;
+import com.example.comptable.comptabilite.operation.common.AccountingOperationType;
+import com.example.comptable.comptabilite.operation.common.web.dto.AccountingOperationProposalDto;
+import com.example.comptable.comptabilite.operation.vente.VenteRule;
+import com.example.comptable.comptabilite.parametrage.AccountResolutionSource;
+import com.example.comptable.comptabilite.parametrage.AccountResolutionStatus;
+import com.example.comptable.comptabilite.parametrage.AccountingAccountResolver;
+import com.example.comptable.comptabilite.parametrage.NiveauConfiance;
+import com.example.comptable.comptabilite.parametrage.ResolvedAccount;
+import com.example.comptable.comptabilite.parametrage.domain.AccountPurpose;
 import com.example.comptable.comptabilite.repository.FactureRepository;
-import com.example.comptable.comptabilite.repository.JournalRepository;
 import com.example.comptable.comptabilite.repository.TiersRepository;
 import com.example.comptable.comptabilite.web.dto.CreerFactureRequest;
 import com.example.comptable.comptabilite.web.dto.FactureDto;
@@ -23,7 +25,6 @@ import com.example.comptable.entreprise.domain.Entreprise;
 import com.example.comptable.entreprise.service.EntrepriseAccessService;
 import com.example.comptable.identite.domain.Role;
 import com.example.comptable.identite.domain.Utilisateur;
-import com.example.comptable.identite.repository.UtilisateurRepository;
 import com.example.comptable.security.UtilisateurPrincipal;
 import com.example.comptable.stock.domain.Article;
 import com.example.comptable.stock.domain.MouvementStock;
@@ -39,6 +40,8 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.http.HttpStatus;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -51,11 +54,19 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+/**
+ * validerFacture route desormais la construction des lignes via VenteRule et la
+ * proposition/validation via AccountingOperationEngine.proposerEtValiderImmediatement (mission
+ * cloture Etape 4, section 20) plutot que de construire une EcritureComptable a la main - ces
+ * deux collaborateurs sont donc mockes ici comme des unites a part entiere (chacun teste ailleurs
+ * : VenteRuleTest, AccountingOperationEngineTest) plutot que re-testes en detail depuis ce fichier.
+ */
 @ExtendWith(MockitoExtension.class)
 class FacturationServiceTest {
 
@@ -66,15 +77,13 @@ class FacturationServiceTest {
     @Mock
     private TiersRepository tiersRepository;
     @Mock
-    private CompteComptableRepository compteComptableRepository;
+    private CompteComptableValidationService compteComptableValidationService;
     @Mock
-    private ExerciceComptableRepository exerciceComptableRepository;
+    private AccountingAccountResolver accountingAccountResolver;
     @Mock
-    private JournalRepository journalRepository;
+    private VenteRule venteRule;
     @Mock
-    private EcritureComptableRepository ecritureComptableRepository;
-    @Mock
-    private UtilisateurRepository utilisateurRepository;
+    private AccountingOperationEngine accountingOperationEngine;
     @Mock
     private MouvementStockService mouvementStockService;
 
@@ -84,13 +93,10 @@ class FacturationServiceTest {
     private UUID entrepriseId;
     private Entreprise entreprise;
     private UtilisateurPrincipal principal;
-    private Utilisateur utilisateur;
     private Tiers client;
     private CompteComptable compteClient;
     private CompteComptable compteVentes;
     private CompteComptable compteTva;
-    private Journal journalVte;
-    private ExerciceComptable exercice;
 
     @BeforeEach
     void setUp() {
@@ -100,7 +106,7 @@ class FacturationServiceTest {
 
         Role role = new Role();
         role.setCode("EXPERT_COMPTABLE");
-        utilisateur = new Utilisateur();
+        Utilisateur utilisateur = new Utilisateur();
         utilisateur.setId(UUID.randomUUID());
         utilisateur.setEmail("test@cabinet.ci");
         utilisateur.setMotDePasse("hash");
@@ -131,18 +137,6 @@ class FacturationServiceTest {
         compteTva.setEntreprise(entreprise);
         compteTva.setNumero("443");
 
-        journalVte = new Journal();
-        journalVte.setId(UUID.randomUUID());
-        journalVte.setEntreprise(entreprise);
-        journalVte.setCode("VTE");
-
-        exercice = new ExerciceComptable();
-        exercice.setId(UUID.randomUUID());
-        exercice.setEntreprise(entreprise);
-        exercice.setDateDebut(LocalDate.of(2027, 1, 1));
-        exercice.setDateFin(LocalDate.of(2027, 12, 31));
-        exercice.setStatut(StatutExercice.OUVERT);
-
         when(entrepriseAccessService.verifierAcces(entrepriseId, principal)).thenReturn(entreprise);
     }
 
@@ -169,6 +163,13 @@ class FacturationServiceTest {
         return f;
     }
 
+    private AccountingOperationProposalDto propositionApprouvee(Facture facture, UUID ecritureId) {
+        return new AccountingOperationProposalDto(UUID.randomUUID(), entrepriseId, "VENTE", "APPROVED", null, null,
+                client.getId(), facture.getDateEmission(), "Facture " + facture.getNumero(), facture.getNumero(),
+                List.of(), BigDecimal.ZERO, BigDecimal.ZERO, true, List.of(), List.of(), null, null, null, null,
+                ecritureId, "FACTURE", facture.getId());
+    }
+
     @Test
     void cree_un_devis_avec_montants_calcules() {
         when(tiersRepository.findById(client.getId())).thenReturn(Optional.of(client));
@@ -186,26 +187,25 @@ class FacturationServiceTest {
     @Test
     void valide_une_facture_et_genere_une_ecriture_equilibree() {
         Facture facture = facture(TypeFacture.FACTURE, StatutFacture.BROUILLON);
+        UUID ecritureId = UUID.randomUUID();
 
         when(factureRepository.findById(facture.getId())).thenReturn(Optional.of(facture));
-        when(compteComptableRepository.findById(compteVentes.getId())).thenReturn(Optional.of(compteVentes));
-        when(exerciceComptableRepository.findByEntrepriseIdAndDate(entrepriseId, facture.getDateEmission()))
-                .thenReturn(Optional.of(exercice));
-        when(journalRepository.findByEntrepriseIdAndCode(entrepriseId, "VTE")).thenReturn(Optional.of(journalVte));
-        when(utilisateurRepository.getReferenceById(principal.getId())).thenReturn(utilisateur);
-        when(ecritureComptableRepository.countByJournalId(journalVte.getId())).thenReturn(0L);
-        when(compteComptableRepository.findByEntrepriseIdAndNumero(entrepriseId, "443")).thenReturn(Optional.of(compteTva));
-        when(ecritureComptableRepository.save(any())).thenAnswer(inv -> {
-            EcritureComptable e = inv.getArgument(0);
-            e.setId(UUID.randomUUID());
-            return e;
-        });
+        when(compteComptableValidationService.chargerCompteUtilisable(entrepriseId, compteVentes.getId(), true)).thenReturn(compteVentes);
+        when(accountingAccountResolver.resolve(eq(entrepriseId), eq(AccountPurpose.TVA_COLLECTEE), any(), isNull()))
+                .thenReturn(resoluTva(compteTva));
+        when(compteComptableValidationService.chargerCompteUtilisable(entrepriseId, compteTva.getId(), true)).thenReturn(compteTva);
+        when(venteRule.construireLignesVenteDepuisMontantsPrecalcules(any(), any(), any(), any(), any(), any(), any()))
+                .thenReturn(List.of());
+        when(accountingOperationEngine.proposerEtValiderImmediatement(eq(entrepriseId), eq(AccountingOperationType.VENTE),
+                eq(client), eq(facture.getDateEmission()), any(), eq(facture.getNumero()), any(), eq("FACTURE"),
+                eq(facture.getId()), eq(principal)))
+                .thenReturn(propositionApprouvee(facture, ecritureId));
         when(factureRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
 
         FactureDto resultat = facturationService.validerFacture(entrepriseId, facture.getId(), compteVentes.getId(), principal);
 
         assertThat(resultat.statut()).isEqualTo("VALIDEE");
-        assertThat(resultat.ecritureId()).isNotNull();
+        assertThat(resultat.ecritureId()).isEqualTo(ecritureId);
     }
 
     @Test
@@ -315,12 +315,16 @@ class FacturationServiceTest {
     @Test
     void refuse_de_valider_une_facture_dont_lexercice_est_cloture() {
         Facture fact = facture(TypeFacture.FACTURE, StatutFacture.BROUILLON);
-        exercice.setStatut(StatutExercice.CLOTURE);
 
         when(factureRepository.findById(fact.getId())).thenReturn(Optional.of(fact));
-        when(compteComptableRepository.findById(compteVentes.getId())).thenReturn(Optional.of(compteVentes));
-        when(exerciceComptableRepository.findByEntrepriseIdAndDate(entrepriseId, fact.getDateEmission()))
-                .thenReturn(Optional.of(exercice));
+        when(compteComptableValidationService.chargerCompteUtilisable(entrepriseId, compteVentes.getId(), true)).thenReturn(compteVentes);
+        when(accountingAccountResolver.resolve(eq(entrepriseId), eq(AccountPurpose.TVA_COLLECTEE), any(), isNull()))
+                .thenReturn(resoluTva(compteTva));
+        when(compteComptableValidationService.chargerCompteUtilisable(entrepriseId, compteTva.getId(), true)).thenReturn(compteTva);
+        when(venteRule.construireLignesVenteDepuisMontantsPrecalcules(any(), any(), any(), any(), any(), any(), any()))
+                .thenReturn(List.of());
+        when(accountingOperationEngine.proposerEtValiderImmediatement(any(), any(), any(), any(), any(), any(), any(), any(), any(), any()))
+                .thenThrow(new ResponseStatusException(HttpStatus.UNPROCESSABLE_ENTITY, "L'exercice couvrant cette date est cloture"));
 
         assertThatThrownBy(() -> facturationService.validerFacture(entrepriseId, fact.getId(), compteVentes.getId(), principal))
                 .hasMessageContaining("cloture");
@@ -351,24 +355,27 @@ class FacturationServiceTest {
         UUID articleId = UUID.randomUUID();
         facture.getLignes().get(0).setArticleId(articleId);
         UUID mouvementId = UUID.randomUUID();
+        UUID ecritureId = UUID.randomUUID();
+        Article article = new Article();
+        article.setId(articleId);
+        article.setCodeArticle("ART-001");
 
         when(factureRepository.findById(facture.getId())).thenReturn(Optional.of(facture));
-        when(compteComptableRepository.findById(compteVentes.getId())).thenReturn(Optional.of(compteVentes));
-        when(exerciceComptableRepository.findByEntrepriseIdAndDate(entrepriseId, facture.getDateEmission()))
-                .thenReturn(Optional.of(exercice));
-        when(journalRepository.findByEntrepriseIdAndCode(entrepriseId, "VTE")).thenReturn(Optional.of(journalVte));
-        when(utilisateurRepository.getReferenceById(principal.getId())).thenReturn(utilisateur);
-        when(ecritureComptableRepository.countByJournalId(journalVte.getId())).thenReturn(0L);
-        when(compteComptableRepository.findByEntrepriseIdAndNumero(entrepriseId, "443")).thenReturn(Optional.of(compteTva));
-        when(ecritureComptableRepository.save(any())).thenAnswer(inv -> {
-            EcritureComptable e = inv.getArgument(0);
-            e.setId(UUID.randomUUID());
-            return e;
-        });
-        when(mouvementStockService.enregistrer(eq(entrepriseId), any(), eq(principal))).thenReturn(new MouvementStockDto(
-                mouvementId, articleId, "ART-001", "SORTIE", new BigDecimal("10"), new BigDecimal("1200"),
-                new BigDecimal("12000"), new BigDecimal("5"), new BigDecimal("1200"), facture.getDateEmission(),
-                "Vente FAC-2027-0001", UUID.randomUUID()));
+        when(compteComptableValidationService.chargerCompteUtilisable(entrepriseId, compteVentes.getId(), true)).thenReturn(compteVentes);
+        when(accountingAccountResolver.resolve(eq(entrepriseId), eq(AccountPurpose.TVA_COLLECTEE), any(), isNull()))
+                .thenReturn(resoluTva(compteTva));
+        when(compteComptableValidationService.chargerCompteUtilisable(entrepriseId, compteTva.getId(), true)).thenReturn(compteTva);
+        when(venteRule.construireLignesVenteDepuisMontantsPrecalcules(any(), any(), any(), any(), any(), any(), any()))
+                .thenReturn(List.of());
+        when(accountingOperationEngine.proposerEtValiderImmediatement(eq(entrepriseId), eq(AccountingOperationType.VENTE),
+                eq(client), eq(facture.getDateEmission()), any(), eq(facture.getNumero()), any(), eq("FACTURE"),
+                eq(facture.getId()), eq(principal)))
+                .thenReturn(propositionApprouvee(facture, ecritureId));
+        when(mouvementStockService.enregistrerAvecSource(eq(entrepriseId), any(), eq(principal), eq("FACTURE"), eq(facture.getId())))
+                .thenReturn(new MouvementStockDto(
+                        mouvementId, articleId, "ART-001", "SORTIE_VENTE", new BigDecimal("10"), new BigDecimal("1200"),
+                        new BigDecimal("12000"), new BigDecimal("5"), new BigDecimal("1200"), facture.getDateEmission(),
+                        "Vente FAC-2027-0001", UUID.randomUUID(), "FACTURE", facture.getId(), null, null, null));
         when(factureRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
 
         FactureDto resultat = facturationService.validerFacture(entrepriseId, facture.getId(), compteVentes.getId(), principal);
@@ -377,31 +384,34 @@ class FacturationServiceTest {
         assertThat(resultat.lignes().get(0).mouvementStockId()).isEqualTo(mouvementId);
 
         ArgumentCaptor<CreerMouvementStockRequest> captor = ArgumentCaptor.forClass(CreerMouvementStockRequest.class);
-        verify(mouvementStockService, times(1)).enregistrer(eq(entrepriseId), captor.capture(), eq(principal));
+        verify(mouvementStockService, times(1)).enregistrerAvecSource(eq(entrepriseId), captor.capture(), eq(principal), eq("FACTURE"), eq(facture.getId()));
         assertThat(captor.getValue().articleId()).isEqualTo(articleId);
-        assertThat(captor.getValue().type()).isEqualTo(TypeMouvementStock.SORTIE);
+        assertThat(captor.getValue().type()).isEqualTo(TypeMouvementStock.SORTIE_VENTE);
         assertThat(captor.getValue().quantite()).isEqualByComparingTo("10");
     }
 
     @Test
     void propage_lexception_stock_insuffisant_lors_de_la_validation() {
         Facture facture = facture(TypeFacture.FACTURE, StatutFacture.BROUILLON);
-        facture.getLignes().get(0).setArticleId(UUID.randomUUID());
+        UUID articleId = UUID.randomUUID();
+        facture.getLignes().get(0).setArticleId(articleId);
+        UUID ecritureId = UUID.randomUUID();
+        Article article = new Article();
+        article.setId(articleId);
+        article.setCodeArticle("ART-001");
 
         when(factureRepository.findById(facture.getId())).thenReturn(Optional.of(facture));
-        when(compteComptableRepository.findById(compteVentes.getId())).thenReturn(Optional.of(compteVentes));
-        when(exerciceComptableRepository.findByEntrepriseIdAndDate(entrepriseId, facture.getDateEmission()))
-                .thenReturn(Optional.of(exercice));
-        when(journalRepository.findByEntrepriseIdAndCode(entrepriseId, "VTE")).thenReturn(Optional.of(journalVte));
-        when(utilisateurRepository.getReferenceById(principal.getId())).thenReturn(utilisateur);
-        when(ecritureComptableRepository.countByJournalId(journalVte.getId())).thenReturn(0L);
-        when(compteComptableRepository.findByEntrepriseIdAndNumero(entrepriseId, "443")).thenReturn(Optional.of(compteTva));
-        when(ecritureComptableRepository.save(any())).thenAnswer(inv -> {
-            EcritureComptable e = inv.getArgument(0);
-            e.setId(UUID.randomUUID());
-            return e;
-        });
-        when(mouvementStockService.enregistrer(eq(entrepriseId), any(), eq(principal)))
+        when(compteComptableValidationService.chargerCompteUtilisable(entrepriseId, compteVentes.getId(), true)).thenReturn(compteVentes);
+        when(accountingAccountResolver.resolve(eq(entrepriseId), eq(AccountPurpose.TVA_COLLECTEE), any(), isNull()))
+                .thenReturn(resoluTva(compteTva));
+        when(compteComptableValidationService.chargerCompteUtilisable(entrepriseId, compteTva.getId(), true)).thenReturn(compteTva);
+        when(venteRule.construireLignesVenteDepuisMontantsPrecalcules(any(), any(), any(), any(), any(), any(), any()))
+                .thenReturn(List.of());
+        when(accountingOperationEngine.proposerEtValiderImmediatement(eq(entrepriseId), eq(AccountingOperationType.VENTE),
+                eq(client), eq(facture.getDateEmission()), any(), eq(facture.getNumero()), any(), eq("FACTURE"),
+                eq(facture.getId()), eq(principal)))
+                .thenReturn(propositionApprouvee(facture, ecritureId));
+        when(mouvementStockService.enregistrerAvecSource(eq(entrepriseId), any(), eq(principal), eq("FACTURE"), eq(facture.getId())))
                 .thenThrow(new StockInsuffisantException("ART-001", new BigDecimal("2"), new BigDecimal("10")));
 
         assertThatThrownBy(() -> facturationService.validerFacture(entrepriseId, facture.getId(), compteVentes.getId(), principal))
@@ -427,7 +437,8 @@ class FacturationServiceTest {
 
         when(factureRepository.findById(facture.getId())).thenReturn(Optional.of(facture));
         when(mouvementStockService.chargerEntite(entrepriseId, mouvementId)).thenReturn(sortieOrigine);
-        when(mouvementStockService.enregistrer(eq(entrepriseId), any(), eq(principal))).thenReturn(mock(MouvementStockDto.class));
+        when(mouvementStockService.enregistrerAvecSource(eq(entrepriseId), any(), eq(principal), eq("FACTURE"), eq(facture.getId())))
+                .thenReturn(mock(MouvementStockDto.class));
         when(factureRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
 
         FactureDto resultat = facturationService.annulerFacture(entrepriseId, facture.getId(), principal);
@@ -435,7 +446,7 @@ class FacturationServiceTest {
         assertThat(resultat.statut()).isEqualTo("ANNULEE");
 
         ArgumentCaptor<CreerMouvementStockRequest> captor = ArgumentCaptor.forClass(CreerMouvementStockRequest.class);
-        verify(mouvementStockService, times(1)).enregistrer(eq(entrepriseId), captor.capture(), eq(principal));
+        verify(mouvementStockService, times(1)).enregistrerAvecSource(eq(entrepriseId), captor.capture(), eq(principal), eq("FACTURE"), eq(facture.getId()));
         assertThat(captor.getValue().type()).isEqualTo(TypeMouvementStock.ENTREE);
         assertThat(captor.getValue().quantite()).isEqualByComparingTo("10");
         assertThat(captor.getValue().prixUnitaireHt()).isEqualByComparingTo("1200");
@@ -448,5 +459,10 @@ class FacturationServiceTest {
 
         assertThatThrownBy(() -> facturationService.annulerFacture(entrepriseId, facture.getId(), principal))
                 .hasMessageContaining("validee");
+    }
+
+    private ResolvedAccount resoluTva(CompteComptable compte) {
+        return new ResolvedAccount(AccountResolutionStatus.RESOLVED, compte.getId(), compte.getNumero(), compte.getIntitule(),
+                AccountResolutionSource.ROLE_SYSTEME, NiveauConfiance.CERTAIN, "resolu (test)");
     }
 }

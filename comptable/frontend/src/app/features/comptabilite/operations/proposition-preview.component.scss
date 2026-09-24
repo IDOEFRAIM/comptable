@@ -1,0 +1,124 @@
+.apercu-proposition {
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+  border-top: 1px solid var(--border-subtle);
+  margin-top: 1rem;
+  padding-top: 1rem;
+}
+
+.entete-apercu {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+
+  h3 {
+    margin: 0;
+    font-size: 1.05rem;
+  }
+}
+
+.badge-statut {
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 0.2rem 0.6rem;
+  border-radius: 999px;
+  white-space: nowrap;
+}
+
+.statut-proposed {
+  background: color-mix(in srgb, var(--color-primary) 15%, transparent);
+  color: var(--color-primary);
+}
+
+.statut-needs-review {
+  background: color-mix(in srgb, #d97706 15%, transparent);
+  color: #b45309;
+}
+
+.statut-approved {
+  background: color-mix(in srgb, #16a34a 15%, transparent);
+  color: #15803d;
+}
+
+.statut-rejected {
+  background: color-mix(in srgb, #dc2626 15%, transparent);
+  color: #b91c1c;
+}
+
+.tableau-lignes {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.875rem;
+
+  th,
+  td {
+    padding: 0.5rem 0.6rem;
+    border-bottom: 1px solid var(--border-subtle);
+    text-align: left;
+  }
+
+  tfoot td {
+    font-weight: 600;
+    border-bottom: none;
+    border-top: 2px solid var(--border-default);
+  }
+}
+
+.colonne-montant {
+  text-align: right;
+  white-space: nowrap;
+}
+
+.indicateur-equilibre {
+  margin: 0;
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+
+.equilibree {
+  color: #15803d;
+}
+
+.desequilibree {
+  color: #b91c1c;
+}
+
+.bloc-explications,
+.bloc-warnings {
+  background: var(--surface-subtle, #f8fafc);
+  border-radius: var(--radius-md);
+  padding: 0.6rem 0.85rem;
+  font-size: 0.8125rem;
+
+  .titre-bloc {
+    margin: 0 0 0.3rem;
+    font-weight: 600;
+  }
+
+  ul {
+    margin: 0;
+    padding-left: 1.1rem;
+  }
+}
+
+.bloc-explications {
+  color: #b45309;
+}
+
+.actions-proposition {
+  display: flex;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+}
+
+.bouton-rejeter {
+  color: #b91c1c;
+}
+
+.message-succes {
+  color: #15803d;
+  font-weight: 600;
+  margin: 0;
+}

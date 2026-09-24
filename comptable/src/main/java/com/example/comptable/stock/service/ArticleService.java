@@ -9,6 +9,7 @@ import com.example.comptable.stock.domain.Article;
 import com.example.comptable.stock.repository.ArticleRepository;
 import com.example.comptable.stock.web.dto.ArticleDto;
 import com.example.comptable.stock.web.dto.CreerArticleRequest;
+import com.example.comptable.stock.web.dto.ModifierArticleRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -46,6 +47,7 @@ public class ArticleService {
         article.setCodeArticle(request.codeArticle());
         article.setDesignation(request.designation());
         article.setCategorie(request.categorie());
+        article.setType(request.type());
         article.setUniteMesure(request.uniteMesure());
         article.setPrixVenteHt(request.prixVenteHt());
         article.setTauxTva(request.tauxTva());
@@ -53,6 +55,13 @@ public class ArticleService {
         article.setCompteAchat(chargerCompte(entrepriseId, request.compteAchatId(), "d'achat"));
         article.setCompteVente(chargerCompte(entrepriseId, request.compteVenteId(), "de vente"));
         article.setCompteVariation(chargerCompte(entrepriseId, request.compteVariationId(), "de variation de stock"));
+        article.setStockMinimum(request.stockMinimum());
+        if (request.politiqueStockNegatif() != null) {
+            article.setPolitiqueStockNegatif(request.politiqueStockNegatif());
+        }
+        if (request.modeGestionStock() != null) {
+            article.setModeGestionStock(request.modeGestionStock());
+        }
 
         return ArticleDto.from(articleRepository.save(article));
     }
@@ -63,6 +72,47 @@ public class ArticleService {
         return articleRepository.findByEntrepriseIdOrderByDesignationAsc(entrepriseId).stream()
                 .map(ArticleDto::from)
                 .toList();
+    }
+
+    @Transactional(readOnly = true)
+    public ArticleDto obtenir(UUID entrepriseId, UUID articleId, UtilisateurPrincipal principal) {
+        entrepriseAccessService.verifierAcces(entrepriseId, principal);
+        return ArticleDto.from(chargerEntite(entrepriseId, articleId));
+    }
+
+    /** Ne touche jamais au code, aux comptes ni a la valorisation en cours (quantite/valeur/PUMP) -
+     * ces derniers restent exclusivement pilotes par les mouvements de stock. */
+    @Transactional
+    public ArticleDto modifier(UUID entrepriseId, UUID articleId, ModifierArticleRequest request, UtilisateurPrincipal principal) {
+        entrepriseAccessService.verifierAcces(entrepriseId, principal);
+        Article article = chargerEntite(entrepriseId, articleId);
+
+        if (request.designation() != null) {
+            article.setDesignation(request.designation());
+        }
+        if (request.categorie() != null) {
+            article.setCategorie(request.categorie());
+        }
+        if (request.prixVenteHt() != null) {
+            article.setPrixVenteHt(request.prixVenteHt());
+        }
+        if (request.tauxTva() != null) {
+            article.setTauxTva(request.tauxTva());
+        }
+        if (request.actif() != null) {
+            article.setActif(request.actif());
+        }
+        if (request.stockMinimum() != null) {
+            article.setStockMinimum(request.stockMinimum());
+        }
+        if (request.politiqueStockNegatif() != null) {
+            article.setPolitiqueStockNegatif(request.politiqueStockNegatif());
+        }
+        if (request.modeGestionStock() != null) {
+            article.setModeGestionStock(request.modeGestionStock());
+        }
+
+        return ArticleDto.from(articleRepository.save(article));
     }
 
     /** Charge l'entite (pas le DTO) pour un service appelant, ex. {@link MouvementStockService}. */

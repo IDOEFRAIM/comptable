@@ -4,7 +4,7 @@
   justify-content: center;
   min-height: 100vh;
   padding: 2rem 1rem;
-  background: #f4f5f7;
+  background: var(--bg-app);
 }
 
 .carte-onboarding {
@@ -15,8 +15,9 @@
   max-width: 480px;
   padding: 2rem;
   background: white;
-  border-radius: 10px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+  border: 1px solid var(--border-subtle);
 
   h1 {
     margin: 0;
@@ -40,18 +41,18 @@
   width: 1.75rem;
   height: 1.75rem;
   border-radius: 999px;
-  background: #eaecf0;
-  color: #98a2b3;
+  background: var(--border-subtle);
+  color: var(--text-placeholder);
   font-size: 0.8125rem;
   font-weight: 700;
 
   &.active {
-    background: #2563eb;
+    background: var(--color-primary);
     color: white;
   }
 
   &.faite {
-    background: #027a48;
+    background: var(--color-success);
     color: white;
   }
 }
@@ -59,16 +60,16 @@
 .trait {
   width: 2.5rem;
   height: 2px;
-  background: #eaecf0;
+  background: var(--border-subtle);
 
   &.faite {
-    background: #027a48;
+    background: var(--color-success);
   }
 }
 
 .sous-titre {
   margin: 0 0 0.5rem;
-  color: #667085;
+  color: var(--text-tertiary);
   font-size: 0.875rem;
 }
 
@@ -93,25 +94,25 @@
   input,
   select {
     padding: 0.55rem;
-    border: 1px solid #d0d5dd;
-    border-radius: 6px;
+    border: 1px solid var(--border-default);
+    border-radius: var(--radius-md);
     font-size: 0.9rem;
   }
 }
 
 .aide-champ {
   margin: -0.4rem 0 0;
-  color: #667085;
+  color: var(--text-tertiary);
   font-size: 0.75rem;
 }
 
 .encadre-explicatif {
-  background: #eff6ff;
-  border: 1px solid #bfdbfe;
-  border-radius: 8px;
+  background: var(--color-primary-light);
+  border: 1px solid var(--color-primary-border);
+  border-radius: var(--radius-lg);
   padding: 1rem 1.1rem;
   font-size: 0.875rem;
-  color: #344054;
+  color: var(--text-secondary);
   display: flex;
   flex-direction: column;
   gap: 0.6rem;
@@ -126,21 +127,21 @@
 
   code {
     background: white;
-    border: 1px solid #d0d5dd;
-    border-radius: 4px;
+    border: 1px solid var(--border-default);
+    border-radius: var(--radius-sm);
     padding: 0.05rem 0.3rem;
     font-size: 0.8125rem;
   }
 
   .note {
     margin: 0;
-    color: #667085;
+    color: var(--text-tertiary);
     font-size: 0.8125rem;
   }
 }
 
 .message-erreur {
-  color: #b42318;
+  color: var(--color-danger);
   font-size: 0.875rem;
   margin: 0;
 }
@@ -151,7 +152,7 @@
   font-size: 0.8125rem;
 
   a {
-    color: #667085;
+    color: var(--text-tertiary);
     text-decoration: none;
 
     &:hover {
@@ -163,27 +164,27 @@
 button {
   padding: 0.65rem;
   border: none;
-  border-radius: 6px;
-  background: #2563eb;
+  border-radius: var(--radius-md);
+  background: var(--color-primary);
   color: white;
   font-weight: 600;
   cursor: pointer;
 
   &:disabled {
-    background: #a4bcf5;
+    background: var(--color-primary-border);
     cursor: not-allowed;
   }
 }
 
 .bouton-secondaire {
   background: white;
-  color: #344054;
-  border: 1px solid #d0d5dd;
+  color: var(--text-secondary);
+  border: 1px solid var(--border-default);
 }
 
 .bouton-lien {
   background: none;
-  color: #667085;
+  color: var(--text-tertiary);
   font-weight: 600;
   padding: 0.65rem 0;
 
@@ -193,12 +194,12 @@ button {
 }
 
 .bouton-cta {
-  background: #027a48;
+  background: var(--color-success);
   font-size: 0.9375rem;
   padding: 0.85rem;
 
   &:hover {
-    background: #026a3f;
+    background: var(--color-success);
   }
 }
 

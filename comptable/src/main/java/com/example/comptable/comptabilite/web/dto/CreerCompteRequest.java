@@ -4,7 +4,7 @@ import jakarta.validation.constraints.NotBlank;
 
 /**
  * Ajout d'un compte general personnalise, hors plan SYSCOHADA (celui-ci reste clone en lecture
- * seule a la creation de l'entreprise, cf. {@code EntrepriseService.clonerPlanComptable}) - un
+ * seule a la creation de l'entreprise, cf. {@code PlanComptableImportService.importerTout}) - un
  * cabinet garde besoin d'un compte non prevu par le referentiel (ex: subdivision analytique).
  * Reserve aux roles COLLABORATEUR/EXPERT_COMPTABLE (cf. SecurityConfig).
  */

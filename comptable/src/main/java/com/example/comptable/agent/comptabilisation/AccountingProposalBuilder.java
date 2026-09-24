@@ -6,16 +6,17 @@ import com.example.comptable.agent.comptabilisation.repository.AccountingProposa
 import com.example.comptable.comptabilite.domain.CompteComptable;
 import com.example.comptable.comptabilite.domain.Journal;
 import com.example.comptable.comptabilite.domain.Tiers;
-import com.example.comptable.comptabilite.repository.CompteComptableRepository;
 import com.example.comptable.comptabilite.repository.JournalRepository;
 import com.example.comptable.comptabilite.repository.LigneEcritureRepository;
 import com.example.comptable.comptabilite.repository.TiersRepository;
+import com.example.comptable.comptabilite.service.CompteComptableValidationService;
 import com.example.comptable.document.domain.Document;
 import com.example.comptable.document.domain.StatutDocument;
 import com.example.comptable.document.domain.TypeDocument;
 import com.example.comptable.entreprise.domain.Entreprise;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -49,18 +50,18 @@ public class AccountingProposalBuilder {
 
     private final TiersRepository tiersRepository;
     private final LigneEcritureRepository ligneEcritureRepository;
-    private final CompteComptableRepository compteComptableRepository;
+    private final CompteComptableValidationService compteComptableValidationService;
     private final JournalRepository journalRepository;
     private final AccountingProposalRepository accountingProposalRepository;
 
     public AccountingProposalBuilder(TiersRepository tiersRepository,
                                       LigneEcritureRepository ligneEcritureRepository,
-                                      CompteComptableRepository compteComptableRepository,
+                                      CompteComptableValidationService compteComptableValidationService,
                                       JournalRepository journalRepository,
                                       AccountingProposalRepository accountingProposalRepository) {
         this.tiersRepository = tiersRepository;
         this.ligneEcritureRepository = ligneEcritureRepository;
-        this.compteComptableRepository = compteComptableRepository;
+        this.compteComptableValidationService = compteComptableValidationService;
         this.journalRepository = journalRepository;
         this.accountingProposalRepository = accountingProposalRepository;
     }
@@ -80,7 +81,7 @@ public class AccountingProposalBuilder {
         }
 
         Optional<Tiers> tiersResolu = resoudreTiers(entreprise, extraireFournisseur(document));
-        Optional<CompteResolu> compteResolu = tiersResolu.flatMap(t -> resoudreCompte(t.getId()));
+        Optional<CompteResolu> compteResolu = tiersResolu.flatMap(t -> resoudreCompte(entreprise.getId(), t.getId()));
         Optional<Journal> journal = resoudreJournal(entreprise, document.getTypeDocument());
 
         List<String> raisons = new ArrayList<>();
@@ -151,7 +152,7 @@ public class AccountingProposalBuilder {
     private record CompteResolu(CompteComptable compte, long occurrences) {
     }
 
-    private Optional<CompteResolu> resoudreCompte(UUID tiersId) {
+    private Optional<CompteResolu> resoudreCompte(UUID entrepriseId, UUID tiersId) {
         List<UUID> historique = ligneEcritureRepository.rechercherComptesChargeProduitHistoriquesPourTiers(tiersId);
         if (historique.isEmpty()) {
             return Optional.empty();
@@ -161,8 +162,17 @@ public class AccountingProposalBuilder {
         Map.Entry<UUID, Long> meilleur = frequences.entrySet().stream()
                 .max(Map.Entry.comparingByValue())
                 .orElseThrow();
-        return compteComptableRepository.findById(meilleur.getKey())
-                .map(compte -> new CompteResolu(compte, meilleur.getValue()));
+        // Verification centralisee (tenant + actif + utilisable en detail) au lieu du findById brut
+        // d'origine. Degrade gracieusement (Optional vide) plutot que de laisser une exception
+        // remonter : ce moteur d'heuristique doit toujours pouvoir produire une proposition a
+        // confiance degradee si le compte historique n'est plus utilisable, jamais echouer.
+        try {
+            CompteComptable compte = compteComptableValidationService
+                    .chargerCompteUtilisable(entrepriseId, meilleur.getKey(), true);
+            return Optional.of(new CompteResolu(compte, meilleur.getValue()));
+        } catch (ResponseStatusException e) {
+            return Optional.empty();
+        }
     }
 
     /** FACTURE_ACHAT uniquement pour ce P0 : seul type de document dont le journal (ACH) est sans

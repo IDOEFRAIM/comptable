@@ -9,6 +9,7 @@ import com.example.comptable.comptabilite.domain.TypeTiers;
 import com.example.comptable.comptabilite.repository.LigneEcritureRepository;
 import com.example.comptable.comptabilite.web.dto.BalanceAgeeDto;
 import com.example.comptable.entreprise.domain.Entreprise;
+import com.example.comptable.entreprise.repository.EntrepriseRepository;
 import com.example.comptable.entreprise.service.EntrepriseAccessService;
 import com.example.comptable.identite.domain.Role;
 import com.example.comptable.identite.domain.Utilisateur;
@@ -19,6 +20,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -27,6 +29,8 @@ import java.util.Set;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -34,6 +38,8 @@ class BalanceAgeeServiceTest {
 
     @Mock
     private EntrepriseAccessService entrepriseAccessService;
+    @Mock
+    private EntrepriseRepository entrepriseRepository;
     @Mock
     private LigneEcritureRepository ligneEcritureRepository;
 
@@ -79,7 +85,7 @@ class BalanceAgeeServiceTest {
 
         dateArrete = LocalDate.of(2026, 8, 5);
 
-        when(entrepriseAccessService.verifierAcces(entrepriseId, principal)).thenReturn(entreprise);
+        lenient().when(entrepriseAccessService.verifierAcces(entrepriseId, principal)).thenReturn(entreprise);
     }
 
     private LigneEcriture ligne(Tiers tiers, BigDecimal debit, BigDecimal credit, LocalDate dateEcriture) {
@@ -179,5 +185,23 @@ class BalanceAgeeServiceTest {
         assertThat(resultat.lignes().get(0).typeTiers()).isEqualTo("FOURNISSEUR");
         assertThat(resultat.lignes().get(0).tranche0a30()).isEqualByComparingTo("-25000");
         assertThat(resultat.totalGeneral()).isEqualByComparingTo("-25000");
+    }
+
+    @Test
+    void genererSysteme_calcule_sans_principal_quand_lentreprise_existe() {
+        when(entrepriseRepository.existsById(entrepriseId)).thenReturn(true);
+        when(ligneEcritureRepository.rechercherLignesEnInstance(entrepriseId, dateArrete)).thenReturn(List.of());
+
+        BalanceAgeeDto resultat = balanceAgeeService.genererSysteme(entrepriseId, dateArrete);
+
+        assertThat(resultat.dateArrete()).isEqualTo(dateArrete);
+    }
+
+    @Test
+    void genererSysteme_refuse_une_entreprise_introuvable() {
+        when(entrepriseRepository.existsById(entrepriseId)).thenReturn(false);
+
+        assertThatThrownBy(() -> balanceAgeeService.genererSysteme(entrepriseId, dateArrete))
+                .isInstanceOf(ResponseStatusException.class);
     }
 }

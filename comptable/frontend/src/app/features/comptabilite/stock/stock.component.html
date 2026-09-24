@@ -2,15 +2,28 @@
   <div class="entete">
     <h2>Stocks</h2>
     <div class="actions-entete">
-      <button type="button" class="bouton-principal" (click)="afficherFormulaireArticle.set(!afficherFormulaireArticle())">
-        {{ afficherFormulaireArticle() ? 'Annuler' : '+ Article' }}
-      </button>
+      @if (onglet() === 'articles') {
+        <button type="button" class="bouton-principal" (click)="afficherFormulaireArticle.set(!afficherFormulaireArticle())">
+          {{ afficherFormulaireArticle() ? 'Annuler' : '+ Article' }}
+        </button>
+      } @else {
+        <button type="button" class="bouton-principal" (click)="afficherFormulaireInventaire.set(!afficherFormulaireInventaire())">
+          {{ afficherFormulaireInventaire() ? 'Annuler' : '+ Inventaire' }}
+        </button>
+      }
     </div>
+  </div>
+
+  <div class="onglets-stock">
+    <button type="button" [class.actif]="onglet() === 'articles'" (click)="changerOnglet('articles')">Articles</button>
+    <button type="button" [class.actif]="onglet() === 'inventaires'" (click)="changerOnglet('inventaires')">Inventaires</button>
   </div>
 
   @if (erreur()) {
     <p class="message-erreur">{{ erreur() }}</p>
   }
+
+  @if (onglet() === 'articles') {
 
   @if (afficherFormulaireArticle()) {
     <form [formGroup]="form" (ngSubmit)="creerArticle()" class="carte formulaire-creation">
@@ -25,6 +38,16 @@
       <label class="champ">
         <span>Catégorie</span>
         <input type="text" formControlName="categorie" placeholder="Optionnel" />
+      </label>
+      <label class="champ champ-etroit">
+        <span>Nature</span>
+        <select formControlName="type">
+          <option value="MARCHANDISE">Marchandise</option>
+          <option value="MATIERE_PREMIERE">Matière première</option>
+          <option value="PRODUIT_FINI">Produit fini</option>
+          <option value="PRODUIT_INTERMEDIAIRE">Produit intermédiaire</option>
+          <option value="AUTRE">Autre</option>
+        </select>
       </label>
       <label class="champ champ-etroit">
         <span>Unité</span>
@@ -91,9 +114,11 @@
           <tr>
             <th>Code</th>
             <th>Désignation</th>
+            <th>Type</th>
             <th>Stock actuel</th>
             <th>PUMP (FCFA)</th>
             <th>Valeur totale (FCFA)</th>
+            <th>Statut</th>
           </tr>
         </thead>
         <tbody>
@@ -101,9 +126,13 @@
             <tr [class.ligne-selectionnee]="articleSelectionne()?.id === a.id" (click)="selectionnerArticle(a)">
               <td>{{ a.codeArticle }}</td>
               <td>{{ a.designation }}</td>
+              <td>{{ libellesTypeArticle[a.type] }}</td>
               <td>{{ a.quantiteEnStock | number: '1.0-3' }} {{ a.uniteMesure }}</td>
               <td>{{ a.pump | number: '1.0-2' }}</td>
               <td>{{ a.valeurStockTotale | number: '1.0-2' }}</td>
+              <td>
+                <span class="badge-type" [class.badge-ajustement]="!a.actif">{{ a.actif ? 'Actif' : 'Désactivé' }}</span>
+              </td>
             </tr>
           }
         </tbody>
@@ -187,5 +216,65 @@
         </table>
       }
     </div>
+  }
+
+  } <!-- fin onglet articles -->
+
+  @if (onglet() === 'inventaires') {
+    @if (afficherFormulaireInventaire()) {
+      <div class="carte formulaire-creation">
+        <label class="champ champ-etroit">
+          <span>Date</span>
+          <input type="date" [(ngModel)]="nouvelleDateInventaire" name="dateInventaire" />
+        </label>
+        <label class="champ champ-large">
+          <span>Commentaire</span>
+          <input type="text" [(ngModel)]="nouveauCommentaireInventaire" name="commentaireInventaire" placeholder="Optionnel" />
+        </label>
+        <button type="button" class="bouton-principal" [disabled]="envoiEnCours()" (click)="creerInventaire()">
+          {{ envoiEnCours() ? 'Création…' : 'Créer' }}
+        </button>
+      </div>
+    }
+
+    @if (chargementInventaires()) {
+      <p class="etat-vide">Chargement…</p>
+    } @else if (inventaires().length === 0) {
+      <p class="etat-vide">Aucun inventaire.</p>
+    } @else {
+      <div class="carte">
+        <table>
+          <thead>
+            <tr>
+              <th>Date</th>
+              <th>Statut</th>
+              <th>Nb articles</th>
+              <th>Valeur écart</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (i of inventaires(); track i.id) {
+              <tr [class.ligne-selectionnee]="inventaireSelectionneId() === i.id" (click)="selectionnerInventaire(i)">
+                <td>{{ i.date }}</td>
+                <td>{{ libellesStatutInventaire[i.statut] }}</td>
+                <td>{{ i.nbLignes }}</td>
+                <td>{{ i.valeurEcartTotal | number: '1.0-2' }}</td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    }
+
+    @if (inventaireSelectionneId(); as inventaireId) {
+      <div class="carte carte-mouvements">
+        <app-inventaire-detail
+          [entrepriseId]="entrepriseId()"
+          [inventaireId]="inventaireId"
+          [articles]="articles()"
+          (misAJour)="surInventaireMisAJour($event)"
+        />
+      </div>
+    }
   }
 </div>

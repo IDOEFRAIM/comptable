@@ -5,10 +5,13 @@ import com.example.comptable.common.domain.UuidEntity;
 import com.example.comptable.entreprise.domain.Entreprise;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.PrePersist;
+import jakarta.persistence.PreUpdate;
 import jakarta.persistence.Table;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -77,13 +80,39 @@ public class Article extends UuidEntity {
     @JoinColumn(name = "compte_variation_id", nullable = false)
     private CompteComptable compteVariation;
 
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private TypeArticle type = TypeArticle.MARCHANDISE;
+
+    @Column(nullable = false)
+    private boolean actif = true;
+
+    @Column(name = "stock_minimum")
+    private BigDecimal stockMinimum;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "politique_stock_negatif", nullable = false)
+    private PolitiqueStockNegatif politiqueStockNegatif = PolitiqueStockNegatif.INTERDIT;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "mode_gestion_stock", nullable = false)
+    private ModeGestionStock modeGestionStock = ModeGestionStock.PERMANENT;
+
     @Column(name = "created_at", nullable = false)
     private OffsetDateTime createdAt;
+
+    @Column(name = "updated_at")
+    private OffsetDateTime updatedAt;
 
     @PrePersist
     private void onCreate() {
         if (createdAt == null) {
             createdAt = OffsetDateTime.now();
         }
+    }
+
+    @PreUpdate
+    private void onUpdate() {
+        updatedAt = OffsetDateTime.now();
     }
 }

@@ -5,6 +5,7 @@ import com.example.comptable.comptabilite.service.BalanceAgeeService;
 import com.example.comptable.comptabilite.web.dto.BalanceAgeeDto;
 import com.example.comptable.comptabilite.web.dto.BalanceAgeeLigneDto;
 import com.example.comptable.entreprise.domain.Entreprise;
+import com.example.comptable.entreprise.repository.EntrepriseRepository;
 import com.example.comptable.entreprise.service.EntrepriseAccessService;
 import com.example.comptable.finance.web.dto.ComparaisonFinancialSnapshotDto;
 import com.example.comptable.finance.web.dto.FinancialSnapshotDto;
@@ -20,6 +21,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -28,6 +30,7 @@ import java.util.Set;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.lenient;
@@ -38,6 +41,8 @@ class FinancialSnapshotServiceTest {
 
     @Mock
     private EntrepriseAccessService entrepriseAccessService;
+    @Mock
+    private EntrepriseRepository entrepriseRepository;
     @Mock
     private LigneEcritureRepository ligneEcritureRepository;
     @Mock
@@ -132,6 +137,34 @@ class FinancialSnapshotServiceTest {
 
         assertThat(comparaison.periodeComparaison().periodeDebut()).isEqualTo(LocalDate.of(2025, 8, 1));
         assertThat(comparaison.periodeComparaison().periodeFin()).isEqualTo(LocalDate.of(2025, 8, 31));
+    }
+
+    @Test
+    void genererSysteme_calcule_sans_principal_quand_lentreprise_existe() {
+        LocalDate debut = LocalDate.of(2026, 8, 1);
+        LocalDate fin = LocalDate.of(2026, 8, 31);
+        when(entrepriseRepository.existsById(entrepriseId)).thenReturn(true);
+        when(ligneEcritureRepository.soldeTresorerie(entrepriseId, fin)).thenReturn(new BigDecimal("1000000"));
+        when(balanceAgeeService.genererSysteme(entrepriseId, fin))
+                .thenReturn(new BalanceAgeeDto(fin, List.of(), BigDecimal.ZERO));
+        when(ligneEcritureRepository.mouvementNetClasseSurPeriode(entrepriseId, "6%", debut, fin)).thenReturn(new BigDecimal("500000"));
+        when(ligneEcritureRepository.mouvementNetClasseSurPeriode(entrepriseId, "7%", debut, fin)).thenReturn(new BigDecimal("-900000"));
+        when(declarationFiscaleRepository.findByEntrepriseIdAndDateEcheanceBetween(entrepriseId, debut, fin)).thenReturn(List.of());
+
+        FinancialSnapshotDto snapshot = financialSnapshotService.genererSysteme(entrepriseId, debut, fin);
+
+        assertThat(snapshot.cash()).isEqualByComparingTo("1000000");
+        assertThat(snapshot.revenue()).isEqualByComparingTo("900000");
+        assertThat(snapshot.expenses()).isEqualByComparingTo("500000");
+        assertThat(snapshot.profit()).isEqualByComparingTo("400000");
+    }
+
+    @Test
+    void genererSysteme_refuse_une_entreprise_introuvable() {
+        when(entrepriseRepository.existsById(entrepriseId)).thenReturn(false);
+
+        assertThatThrownBy(() -> financialSnapshotService.genererSysteme(entrepriseId, LocalDate.now(), LocalDate.now()))
+                .isInstanceOf(ResponseStatusException.class);
     }
 
     private void stubValeursNeutres() {

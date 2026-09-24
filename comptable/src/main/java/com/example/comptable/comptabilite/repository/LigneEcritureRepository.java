@@ -57,6 +57,10 @@ public interface LigneEcritureRepository extends JpaRepository<LigneEcriture, UU
 
     List<LigneEcriture> findByCompteIdAndLettrage(UUID compteId, String lettrage);
 
+    /** Utilise avant suppression d'un compte du PCE : un compte deja mouvemente ne doit jamais
+     * etre supprime (seule la desactivation est proposee), quel que soit le statut de l'ecriture. */
+    boolean existsByCompteId(UUID compteId);
+
     /** Historique des comptes de charge/produit deja utilises pour ce tiers (mission P0,
      * AccountingProposalBuilder) : une ligne par ecriture ou ce tiers apparait, cote de l'AUTRE
      * ligne (charge/produit) de la meme ecriture - jamais le compte 411/401 du tiers lui-meme. Pas
@@ -86,4 +90,34 @@ public interface LigneEcritureRepository extends JpaRepository<LigneEcriture, UU
             + "and l.lettrage is null and e.statut = 'VALIDEE' and e.dateEcriture <= :dateArrete "
             + "order by e.dateEcriture asc")
     List<LigneEcriture> rechercherLignesEnInstance(UUID entrepriseId, LocalDate dateArrete);
+
+    /** Lignes DEJA lettrees (reconciliees) d'un tiers donne (mission P2, Cash Forecast -
+     * comportement de paiement) : symetrique de {@link #rechercherLignesEnInstance} mais pour les
+     * paiements deja rapproches, seule source reelle de "date de paiement effective" dans ce
+     * systeme (aucune colonne date_paiement n'existe sur Facture - voir PaymentBehaviorService). */
+    @Query("select l from LigneEcriture l join fetch l.ecriture e "
+            + "where l.tiers.id = :tiersId and l.lettrage is not null and e.statut = 'VALIDEE' "
+            + "order by l.lettrage asc, e.dateEcriture asc")
+    List<LigneEcriture> rechercherLignesLettreesPourTiers(UUID tiersId);
+
+    /** Retrouve la ligne cote compte tiers d'une ecriture donnee (mission P2, Cash Forecast) :
+     * relie l'ecriture de facturation (Facture.ecritureId) a sa ligne 411/401 pour en lire le
+     * code de lettrage eventuel. */
+    List<LigneEcriture> findByEcritureIdAndCompteId(UUID ecritureId, UUID compteId);
+
+    /** Lignes individuelles (pas un simple total, contrairement a {@link #mouvementNetClasseSurPeriode})
+     * d'une classe de comptes sur une periode - mission P2, Cash Forecast (RecurringFlowDetector,
+     * historique de charges recurrentes). */
+    @Query("select l from LigneEcriture l join fetch l.ecriture e join fetch l.compte c "
+            + "where c.entreprise.id = :entrepriseId and c.numero like :prefixeClasse "
+            + "and e.statut = 'VALIDEE' and e.dateEcriture between :dateDebut and :dateFin "
+            + "order by c.numero asc, e.dateEcriture asc")
+    List<LigneEcriture> rechercherLignesClasseSurPeriode(UUID entrepriseId, String prefixeClasse, LocalDate dateDebut, LocalDate dateFin);
+
+    /** Date de la plus ancienne ecriture validee de l'entreprise (mission P2, Cash Forecast -
+     * profondeur d'historique disponible pour la confiance du forecast) - null si aucune ecriture
+     * validee n'existe encore. */
+    @Query("select min(e.dateEcriture) from LigneEcriture l join l.ecriture e "
+            + "where l.compte.entreprise.id = :entrepriseId and e.statut = 'VALIDEE'")
+    LocalDate trouverDatePlusAncienneEcritureValidee(UUID entrepriseId);
 }

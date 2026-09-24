@@ -1,28 +1,79 @@
 <div class="workspace">
-  <nav class="onglets">
-    @if (estMembreCabinet) {
-      <a routerLink="tableau-de-bord" routerLinkActive="actif">Tableau de bord</a>
-    }
-    <a routerLink="documents" routerLinkActive="actif">Documents</a>
-    <a routerLink="demandes-pieces" routerLinkActive="actif">Pièces demandées</a>
-    @if (estMembreCabinet) {
-      <a routerLink="validation" routerLinkActive="actif">Validation</a>
-      <a routerLink="tiers" routerLinkActive="actif">Tiers</a>
-      <a routerLink="ecritures" routerLinkActive="actif">Écritures</a>
-      <a routerLink="rapports" routerLinkActive="actif">Rapports</a>
-      <a routerLink="etats-financiers" routerLinkActive="actif">États financiers</a>
-      <a routerLink="tresorerie" routerLinkActive="actif">Trésorerie</a>
-      <a routerLink="recouvrement" routerLinkActive="actif">Recouvrement</a>
-      <a routerLink="rapprochement" routerLinkActive="actif">Rapprochement</a>
-      <a routerLink="immobilisations" routerLinkActive="actif">Immobilisations</a>
-      <a routerLink="facturation" routerLinkActive="actif">Facturation</a>
-      <a routerLink="stocks" routerLinkActive="actif">Stocks</a>
-      <a routerLink="achats" routerLinkActive="actif">Achats</a>
-      <a routerLink="fiscalite" routerLinkActive="actif">Fiscalité</a>
-      <a routerLink="conformite" routerLinkActive="actif">Conformité</a>
-      <a routerLink="inviter" routerLinkActive="actif">Inviter</a>
-    }
-  </nav>
+  <button
+    type="button"
+    class="bouton-menu-mobile"
+    (click)="basculerMenuMobile()"
+    [attr.aria-expanded]="menuMobileOuvert()"
+    aria-label="Ouvrir le menu de navigation"
+  >
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+      <path d="M4 6h16M4 12h16M4 18h16" />
+    </svg>
+    Menu
+  </button>
+
+  @if (menuMobileOuvert()) {
+    <div class="fond-menu-mobile" (click)="fermerMenuMobile()"></div>
+  }
+
+  <aside class="barre-laterale" [class.ouvert]="menuMobileOuvert()">
+    <nav class="nav-groupee" (click)="fermerMenuMobile()">
+      @if (estMembreCabinet) {
+        <div class="groupe">
+          <a routerLink="tableau-de-bord" routerLinkActive="actif">Tableau de bord</a>
+        </div>
+      }
+
+      <div class="groupe">
+        <p class="titre-groupe">Pièces &amp; validation</p>
+        <a routerLink="documents" routerLinkActive="actif">Documents</a>
+        <a routerLink="demandes-pieces" routerLinkActive="actif">Pièces demandées</a>
+        @if (estMembreCabinet) {
+          <a routerLink="validation" routerLinkActive="actif">Validation</a>
+        }
+      </div>
+
+      @if (estMembreCabinet) {
+        <div class="groupe">
+          <p class="titre-groupe">Comptabilité</p>
+          <a routerLink="tiers" routerLinkActive="actif">Tiers</a>
+          <a routerLink="plan-comptable" routerLinkActive="actif">Plan comptable</a>
+          <a routerLink="parametres-comptables" routerLinkActive="actif">Paramètres comptables</a>
+          <a routerLink="operations" routerLinkActive="actif">Opérations</a>
+          <a routerLink="ecritures" routerLinkActive="actif">Écritures</a>
+          <a routerLink="rapprochement" routerLinkActive="actif">Rapprochement</a>
+          <a routerLink="rapports" routerLinkActive="actif">Rapports</a>
+          <a routerLink="etats-financiers" routerLinkActive="actif">États financiers</a>
+          <a routerLink="regularisations" routerLinkActive="actif">Régularisations</a>
+        </div>
+
+        <div class="groupe">
+          <p class="titre-groupe">Trésorerie</p>
+          <a routerLink="tresorerie" routerLinkActive="actif">Trésorerie</a>
+          <a routerLink="recouvrement" routerLinkActive="actif">Recouvrement</a>
+        </div>
+
+        <div class="groupe">
+          <p class="titre-groupe">Facturation &amp; achats</p>
+          <a routerLink="facturation" routerLinkActive="actif">Facturation</a>
+          <a routerLink="stocks" routerLinkActive="actif">Stocks</a>
+          <a routerLink="achats" routerLinkActive="actif">Achats</a>
+          <a routerLink="immobilisations" routerLinkActive="actif">Immobilisations</a>
+        </div>
+
+        <div class="groupe">
+          <p class="titre-groupe">Conformité</p>
+          <a routerLink="fiscalite" routerLinkActive="actif">Fiscalité</a>
+          <a routerLink="conformite" routerLinkActive="actif">Conformité</a>
+        </div>
+
+        <div class="groupe">
+          <p class="titre-groupe">Administration</p>
+          <a routerLink="inviter" routerLinkActive="actif">Inviter</a>
+        </div>
+      }
+    </nav>
+  </aside>
   <div class="contenu-onglet">
     <router-outlet />
   </div>

@@ -1,22 +1,26 @@
 import { Component, inject, OnInit, signal } from '@angular/core';
-import { DecimalPipe } from '@angular/common';
+import { CommonModule, DecimalPipe } from '@angular/common';
 import { toSignal } from '@angular/core/rxjs-interop';
-import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { FormBuilder, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
 import { finalize, map } from 'rxjs/operators';
 import { ComptabiliteService } from '../comptabilite.service';
 import {
   ArticleDto,
   CompteComptableDto,
+  LIBELLES_TYPE_ARTICLE,
   LIBELLES_TYPE_MOUVEMENT,
   MouvementStockDto,
+  TypeArticle,
   TypeMouvementStock,
 } from '../models/comptabilite.model';
+import { InventaireDto, LIBELLES_STATUT_INVENTAIRE } from '../models/inventaire.model';
+import { InventaireDetailComponent } from '../inventaire/inventaire-detail.component';
 
 @Component({
   selector: 'app-stock',
   standalone: true,
-  imports: [ReactiveFormsModule, DecimalPipe],
+  imports: [ReactiveFormsModule, FormsModule, DecimalPipe, CommonModule, InventaireDetailComponent],
   templateUrl: './stock.component.html',
   styleUrl: './stock.component.scss',
 })
@@ -26,10 +30,14 @@ export class StockComponent implements OnInit {
   private readonly route = inject(ActivatedRoute);
 
   readonly libellesTypeMouvement = LIBELLES_TYPE_MOUVEMENT;
+  readonly libellesTypeArticle = LIBELLES_TYPE_ARTICLE;
+  readonly libellesStatutInventaire = LIBELLES_STATUT_INVENTAIRE;
 
   readonly entrepriseId = toSignal(this.route.paramMap.pipe(map((p) => p.get('entrepriseId')!)), {
     initialValue: '',
   });
+
+  readonly onglet = signal<'articles' | 'inventaires'>('articles');
 
   readonly comptes = signal<CompteComptableDto[]>([]);
   readonly articles = signal<ArticleDto[]>([]);
@@ -42,10 +50,18 @@ export class StockComponent implements OnInit {
   readonly envoiEnCours = signal(false);
   readonly mouvementEnCours = signal(false);
 
+  readonly inventaires = signal<InventaireDto[]>([]);
+  readonly inventaireSelectionneId = signal<string | null>(null);
+  readonly chargementInventaires = signal(false);
+  readonly afficherFormulaireInventaire = signal(false);
+  nouvelleDateInventaire = new Date().toISOString().slice(0, 10);
+  nouveauCommentaireInventaire = '';
+
   readonly form = this.fb.nonNullable.group({
     codeArticle: ['', Validators.required],
     designation: ['', Validators.required],
     categorie: [''],
+    type: this.fb.nonNullable.control<TypeArticle>('MARCHANDISE', Validators.required),
     uniteMesure: ['unite', Validators.required],
     prixVenteHt: ['', Validators.required],
     tauxTva: ['18', Validators.required],
@@ -83,6 +99,53 @@ export class StockComponent implements OnInit {
     this.rafraichirArticles();
   }
 
+  changerOnglet(onglet: 'articles' | 'inventaires'): void {
+    this.onglet.set(onglet);
+    if (onglet === 'inventaires' && this.inventaires().length === 0) {
+      this.rafraichirInventaires();
+    }
+  }
+
+  rafraichirInventaires(): void {
+    this.chargementInventaires.set(true);
+    this.comptabiliteService
+      .listerInventaires(this.entrepriseId())
+      .pipe(finalize(() => this.chargementInventaires.set(false)))
+      .subscribe({
+        next: (inventaires) => this.inventaires.set(inventaires),
+        error: () => this.erreur.set('Impossible de charger les inventaires.'),
+      });
+  }
+
+  creerInventaire(): void {
+    this.envoiEnCours.set(true);
+    this.erreur.set(null);
+    this.comptabiliteService
+      .creerInventaire(this.entrepriseId(), {
+        date: this.nouvelleDateInventaire,
+        commentaire: this.nouveauCommentaireInventaire || undefined,
+      })
+      .pipe(finalize(() => this.envoiEnCours.set(false)))
+      .subscribe({
+        next: (inventaire) => {
+          this.inventaires.update((liste) => [inventaire, ...liste]);
+          this.afficherFormulaireInventaire.set(false);
+          this.nouveauCommentaireInventaire = '';
+          this.inventaireSelectionneId.set(inventaire.id);
+        },
+        error: (err) => this.erreur.set(err.error?.message ?? "Impossible de créer cet inventaire."),
+      });
+  }
+
+  selectionnerInventaire(inventaire: InventaireDto): void {
+    this.inventaireSelectionneId.set(inventaire.id);
+  }
+
+  surInventaireMisAJour(inventaire: InventaireDto): void {
+    this.inventaires.update((liste) => liste.map((i) => (i.id === inventaire.id ? inventaire : i)));
+    this.rafraichirArticles();
+  }
+
   rafraichirArticles(): void {
     this.chargement.set(true);
     this.comptabiliteService
@@ -114,6 +177,7 @@ export class StockComponent implements OnInit {
         codeArticle: v.codeArticle,
         designation: v.designation,
         categorie: v.categorie || undefined,
+        type: v.type,
         uniteMesure: v.uniteMesure,
         prixVenteHt: Number(v.prixVenteHt),
         tauxTva: Number(v.tauxTva),
@@ -127,7 +191,7 @@ export class StockComponent implements OnInit {
         next: (article) => {
           this.articles.update((liste) => [...liste, article]);
           this.form.reset({
-            codeArticle: '', designation: '', categorie: '', uniteMesure: 'unite',
+            codeArticle: '', designation: '', categorie: '', type: 'MARCHANDISE', uniteMesure: 'unite',
             prixVenteHt: '', tauxTva: '18', compteStockId: '', compteAchatId: '', compteVenteId: '', compteVariationId: '',
           });
           this.afficherFormulaireArticle.set(false);

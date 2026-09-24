@@ -4,6 +4,7 @@ import com.example.comptable.security.UtilisateurPrincipal;
 import com.example.comptable.stock.service.ArticleService;
 import com.example.comptable.stock.web.dto.ArticleDto;
 import com.example.comptable.stock.web.dto.CreerArticleRequest;
+import com.example.comptable.stock.web.dto.ModifierArticleRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -12,6 +13,7 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -37,5 +39,18 @@ public class ArticleController {
     @GetMapping
     public List<ArticleDto> lister(@PathVariable UUID entrepriseId, @AuthenticationPrincipal UtilisateurPrincipal principal) {
         return articleService.lister(entrepriseId, principal);
+    }
+
+    @GetMapping("/{articleId}")
+    public ArticleDto obtenir(@PathVariable UUID entrepriseId, @PathVariable UUID articleId,
+                              @AuthenticationPrincipal UtilisateurPrincipal principal) {
+        return articleService.obtenir(entrepriseId, articleId, principal);
+    }
+
+    @PutMapping("/{articleId}")
+    public ArticleDto modifier(@PathVariable UUID entrepriseId, @PathVariable UUID articleId,
+                               @Valid @RequestBody ModifierArticleRequest request,
+                               @AuthenticationPrincipal UtilisateurPrincipal principal) {
+        return articleService.modifier(entrepriseId, articleId, request, principal);
     }
 }

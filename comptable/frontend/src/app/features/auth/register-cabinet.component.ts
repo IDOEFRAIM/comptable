@@ -3,6 +3,7 @@ import { AbstractControl, FormBuilder, ReactiveFormsModule, ValidationErrors, Va
 import { Router, RouterLink } from '@angular/router';
 import { finalize } from 'rxjs/operators';
 import { AuthService } from '../../core/auth/auth.service';
+import { messageErreurChamp } from '../../core/forms/messages-validation';
 import { PAYS_OHADA_OUEST_AFRICAIN } from './models/auth.model';
 
 /** Les deux mots de passe doivent correspondre. */
@@ -23,6 +24,8 @@ export class RegisterCabinetComponent {
   private readonly fb = inject(FormBuilder);
   private readonly authService = inject(AuthService);
   private readonly router = inject(Router);
+
+  protected readonly messageErreurChamp = messageErreurChamp;
 
   readonly paysDisponibles = PAYS_OHADA_OUEST_AFRICAIN;
   readonly envoiEnCours = signal(false);

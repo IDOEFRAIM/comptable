@@ -24,7 +24,7 @@
 .bouton-rafraichir {
   border: none;
   background: none;
-  color: #2563eb;
+  color: var(--color-primary);
   cursor: pointer;
   font-size: 0.8125rem;
 }
@@ -37,8 +37,9 @@
 
 .carte {
   background: white;
-  border-radius: 8px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+  border: 1px solid var(--border-subtle);
 }
 
 .liste-ecritures {
@@ -66,11 +67,11 @@
   }
 
   .journal {
-    color: #667085;
+    color: var(--text-tertiary);
   }
 
   .libelle {
-    color: #1f2328;
+    color: var(--text-primary);
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
@@ -78,7 +79,7 @@
 
   .date,
   .montant {
-    color: #667085;
+    color: var(--text-tertiary);
     text-align: right;
   }
 }
@@ -88,19 +89,19 @@
   border-radius: 999px;
   font-size: 0.75rem;
   font-weight: 600;
-  background: #fff8e6;
-  color: #b54708;
+  background: var(--color-warning-bg);
+  color: var(--color-warning);
   justify-self: end;
 
   &.badge-validee {
-    background: #ecfdf3;
-    color: #027a48;
+    background: var(--color-success-bg);
+    color: var(--color-success);
   }
 }
 
 .details {
   padding: 0 1.1rem 1.1rem;
-  border-top: 1px solid #f2f4f7;
+  border-top: 1px solid var(--bg-subtle-hover);
 
   table {
     width: 100%;
@@ -111,14 +112,14 @@
 
   th {
     text-align: left;
-    color: #667085;
+    color: var(--text-tertiary);
     font-weight: 600;
     padding: 0.4rem;
   }
 
   td {
     padding: 0.4rem;
-    border-top: 1px solid #f2f4f7;
+    border-top: 1px solid var(--bg-subtle-hover);
   }
 }
 
@@ -132,38 +133,38 @@
 .bouton-principal {
   padding: 0.5rem 1rem;
   border: none;
-  border-radius: 6px;
-  background: #2563eb;
+  border-radius: var(--radius-md);
+  background: var(--color-primary);
   color: white;
   font-weight: 600;
   cursor: pointer;
 
   &:disabled {
-    background: #a4bcf5;
+    background: var(--color-primary-border);
     cursor: not-allowed;
   }
 }
 
 .bouton-secondaire {
   padding: 0.5rem 1rem;
-  border: 1px solid #d0d5dd;
-  border-radius: 6px;
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-md);
   background: white;
   cursor: pointer;
 
   &:disabled {
-    color: #98a2b3;
+    color: var(--text-placeholder);
     cursor: not-allowed;
   }
 }
 
 .etat-vide {
-  color: #667085;
+  color: var(--text-tertiary);
   text-align: center;
   padding: 2rem 0;
 }
 
 .message-erreur {
-  color: #b42318;
+  color: var(--color-danger);
   font-size: 0.875rem;
 }

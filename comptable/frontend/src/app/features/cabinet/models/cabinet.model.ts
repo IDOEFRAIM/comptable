@@ -61,8 +61,10 @@ export interface CabinetAnalyticsDto {
   tauxDemandesResoluesPourcent: number | null;
 }
 
+/** Classe de modificateur pour `.point-statut` (styles.scss) - remplace l'ancien mapping vers un
+ * caractere emoji (rendu incoherent selon OS/navigateur, pas un vrai indicateur visuel). */
 export const LIBELLES_STATUT_CLIENT: Record<string, string> = {
-  PRET: '🟢',
-  A_SURVEILLER: '🟠',
-  BLOQUE: '🔴',
+  PRET: 'succes',
+  A_SURVEILLER: 'attention',
+  BLOQUE: 'danger',
 };

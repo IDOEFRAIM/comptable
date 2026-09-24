@@ -60,7 +60,7 @@
     </div>
     @if (b.totalActif !== b.totalPassif) {
       <p class="message-erreur">
-        ⚠ Le bilan ne s'équilibre pas (écart {{ b.totalActif - b.totalPassif | number: '1.0-0' }}) — vérifiez les
+        Le bilan ne s'équilibre pas (écart {{ b.totalActif - b.totalPassif | number: '1.0-0' }}) — vérifiez les
         écritures non validées ou l'initialisation du plan comptable.
       </p>
     }
@@ -99,7 +99,7 @@
           [disabled]="clotureEnCours()"
           (click)="cloturerExercice()"
         >
-          {{ clotureEnCours() ? 'Clôture en cours…' : '🔒 Clôturer cet exercice' }}
+          {{ clotureEnCours() ? 'Clôture en cours…' : 'Clôturer cet exercice' }}
         </button>
       } @else {
         <p class="note-cloture">Exercice clôturé — saisie impossible sur cette période.</p>

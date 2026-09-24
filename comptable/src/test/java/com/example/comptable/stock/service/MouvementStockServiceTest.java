@@ -26,6 +26,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.math.BigDecimal;
@@ -37,6 +38,8 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -56,6 +59,10 @@ class MouvementStockServiceTest {
     private EcritureComptableRepository ecritureComptableRepository;
     @Mock
     private UtilisateurRepository utilisateurRepository;
+    /** Instance reelle (pas un mock) : le calcul CUMP doit rester exactement celui deja teste par
+     * PumpCalculatorTest, seul le point d'injection a change. */
+    @Spy
+    private StockValuationService stockValuationService = new CumpValuationService();
 
     @InjectMocks
     private MouvementStockService mouvementStockService;
@@ -278,5 +285,19 @@ class MouvementStockServiceTest {
                         new BigDecimal("10"), new BigDecimal("1000"), LocalDate.of(2026, 3, 1), "Achat"),
                 principal))
                 .hasMessageContaining("Aucun exercice");
+    }
+
+    @Test
+    void mouvement_automatique_sur_article_intermittent_ne_genere_rien() {
+        article.setModeGestionStock(com.example.comptable.stock.domain.ModeGestionStock.INTERMITTENT);
+
+        MouvementStockDto resultat = mouvementStockService.enregistrerAvecSource(entrepriseId,
+                new CreerMouvementStockRequest(article.getId(), TypeMouvementStock.ENTREE_ACHAT,
+                        new BigDecimal("10"), new BigDecimal("1000"), LocalDate.of(2026, 3, 1), "Reception"),
+                principal, "COMMANDE_ACHAT", UUID.randomUUID());
+
+        assertThat(resultat).isNull();
+        verify(mouvementStockRepository, never()).save(any());
+        verify(ecritureComptableRepository, never()).save(any());
     }
 }

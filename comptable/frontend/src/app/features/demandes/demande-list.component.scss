@@ -17,14 +17,15 @@
 
 .aide {
   margin: 0;
-  color: #667085;
+  color: var(--text-tertiary);
   font-size: 0.875rem;
 }
 
 .carte {
   background: white;
-  border-radius: 8px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+  border: 1px solid var(--border-subtle);
   padding: 1.25rem;
 }
 
@@ -46,8 +47,8 @@
   input,
   select {
     padding: 0.5rem;
-    border: 1px solid #d0d5dd;
-    border-radius: 6px;
+    border: 1px solid var(--border-default);
+    border-radius: var(--radius-md);
   }
 }
 
@@ -83,14 +84,14 @@
 
 .description {
   margin: 0.2rem 0 0;
-  color: #475467;
+  color: var(--text-secondary);
   font-size: 0.8125rem;
 }
 
 .meta {
   display: block;
   margin-top: 0.3rem;
-  color: #98a2b3;
+  color: var(--text-placeholder);
   font-size: 0.75rem;
 }
 
@@ -103,18 +104,18 @@
 }
 
 .badge-attente {
-  background: #fff8e6;
-  color: #b54708;
+  background: var(--color-warning-bg);
+  color: var(--color-warning);
 }
 
 .badge-recu {
-  background: #ecfdf3;
-  color: #027a48;
+  background: var(--color-success-bg);
+  color: var(--color-success);
 }
 
 .badge-annulee {
-  background: #f2f4f7;
-  color: #667085;
+  background: var(--bg-subtle-hover);
+  color: var(--text-tertiary);
 }
 
 .actions {
@@ -128,13 +129,13 @@
   gap: 0.5rem;
   flex-wrap: wrap;
   padding-top: 0.5rem;
-  border-top: 1px solid #f2f4f7;
+  border-top: 1px solid var(--bg-subtle-hover);
 
   select,
   input[type='file'] {
     padding: 0.4rem;
-    border: 1px solid #d0d5dd;
-    border-radius: 6px;
+    border: 1px solid var(--border-default);
+    border-radius: var(--radius-md);
     font-size: 0.8125rem;
   }
 }
@@ -142,15 +143,15 @@
 .bouton-principal {
   padding: 0.5rem 0.9rem;
   border: none;
-  border-radius: 6px;
-  background: #2563eb;
+  border-radius: var(--radius-md);
+  background: var(--color-primary);
   color: white;
   font-weight: 600;
   cursor: pointer;
   white-space: nowrap;
 
   &:disabled {
-    background: #a4bcf5;
+    background: var(--color-primary-border);
     cursor: not-allowed;
   }
 }
@@ -158,19 +159,19 @@
 .bouton-lien {
   border: none;
   background: none;
-  color: #2563eb;
+  color: var(--color-primary);
   cursor: pointer;
   font-size: 0.8125rem;
   font-weight: 600;
 }
 
 .etat-vide {
-  color: #667085;
+  color: var(--text-tertiary);
   text-align: center;
   padding: 2rem 0;
 }
 
 .message-erreur {
-  color: #b42318;
+  color: var(--color-danger);
   font-size: 0.875rem;
 }

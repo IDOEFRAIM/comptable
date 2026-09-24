@@ -120,7 +120,10 @@
                     @if (propositionsIA()[ligne.id]; as proposition) {
                       <div class="suggestion-ia">
                         <span class="badge-ia">
-                          🤖 Suggestion IA {{ proposition.confidence * 100 | number: '1.0-0' }}% —
+                          <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                            <path d="M12 2.5l1.9 5.6 5.6 1.9-5.6 1.9-1.9 5.6-1.9-5.6-5.6-1.9 5.6-1.9L12 2.5z" />
+                          </svg>
+                          Suggestion IA {{ proposition.confidence * 100 | number: '1.0-0' }}% —
                           {{ libelleTypeCandidatIA(proposition.candidateType) }}
                         </span>
                         <button type="button" class="bouton-lien" (click)="accepterPropositionIA(proposition.id)">
@@ -146,7 +149,7 @@
                               <li>{{ motif }}</li>
                             }
                             @for (avertissement of proposition.warnings; track avertissement) {
-                              <li class="avertissement-ia">⚠ {{ avertissement }}</li>
+                              <li class="avertissement-ia">{{ avertissement }}</li>
                             }
                           </ul>
                         }

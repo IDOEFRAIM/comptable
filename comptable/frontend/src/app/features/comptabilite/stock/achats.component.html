@@ -158,6 +158,47 @@
                 <p class="info-reception">
                   Réceptionnée le {{ commande.dateReception }} et facturée — écritures de stock et d'achat comptabilisées.
                 </p>
+
+                @if (dernieresFactures()[commande.id]; as facture) {
+                  <div class="apercu-comptable">
+                    <h4>Écriture comptabilisée — {{ facture.numero }}</h4>
+                    <table>
+                      <thead>
+                        <tr>
+                          <th>Compte</th>
+                          <th>Intitulé</th>
+                          <th class="col-montant">Débit</th>
+                          <th class="col-montant">Crédit</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        @for (ligne of facture.lignesEcriture; track ligne.compteId) {
+                          <tr>
+                            <td>{{ ligne.compteNumero }}</td>
+                            <td>{{ ligne.compteIntitule }}</td>
+                            <td class="col-montant">{{ ligne.debit ? (ligne.debit | number: '1.0-2') : '' }}</td>
+                            <td class="col-montant">{{ ligne.credit ? (ligne.credit | number: '1.0-2') : '' }}</td>
+                          </tr>
+                        }
+                      </tbody>
+                    </table>
+
+                    @if (!avoirsGeneres()[commande.id]) {
+                      <div class="actions">
+                        <button
+                          type="button"
+                          class="bouton-secondaire"
+                          [disabled]="actionEnCours() === commande.id"
+                          (click)="creerAvoirFournisseur(commande)"
+                        >
+                          {{ actionEnCours() === commande.id ? 'Génération…' : 'Avoir fournisseur (retour marchandise)' }}
+                        </button>
+                      </div>
+                    } @else {
+                      <p class="info-reception">Avoir fournisseur généré — marchandises réintégrées en stock.</p>
+                    }
+                  </div>
+                }
               }
             </div>
           }

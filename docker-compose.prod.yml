@@ -1,0 +1,48 @@
+# Surcouche production : HTTPS automatique (Let's Encrypt) devant le frontend.
+#
+#   docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d --build
+#   (equivalent : `make deploy`)
+#
+# Ce que ca change par rapport au docker-compose.yml seul :
+#   - ajoute un reverse proxy Caddy qui termine le TLS sur 80/443 et relaie vers `frontend`
+#     (Caddy obtient et renouvelle le certificat tout seul, aucune commande certbot) ;
+#   - `frontend` n'expose plus aucun port sur l'hote : il n'est joignable que par Caddy sur le
+#     reseau Docker interne. Seuls 80 et 443 (Caddy) sont ouverts vers l'exterieur.
+#
+# Prerequis dans .env : DOMAIN (le nom de domaine qui pointe deja vers l'IP du serveur) et
+# ACME_EMAIL (adresse pour les avis d'expiration Let's Encrypt).
+
+x-logging: &default-logging
+  driver: json-file
+  options:
+    max-size: "10m"
+    max-file: "5"
+
+services:
+  caddy:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    logging: *default-logging
+    depends_on:
+      frontend:
+        condition: service_healthy
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"
+    environment:
+      DOMAIN: "${DOMAIN:?DOMAIN doit etre defini dans .env pour le mode production HTTPS}"
+      ACME_EMAIL: "${ACME_EMAIL:?ACME_EMAIL doit etre defini dans .env pour Let's Encrypt}"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    networks: [comptable]
+
+  frontend:
+    # Plus aucun port publie : Caddy est le seul point d'entree.
+    ports: !reset []
+
+volumes:
+  caddy_data:
+  caddy_config:

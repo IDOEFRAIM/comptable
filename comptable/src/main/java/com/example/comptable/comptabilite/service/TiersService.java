@@ -75,11 +75,23 @@ public class TiersService {
                 .max()
                 .orElse(0) + 1;
 
+        // Rattachement au compte collectif (401/411) de l'entreprise quand il existe deja (PCE
+        // clone/importe depuis le referentiel) : donne au sous-compte auxiliaire sa place dans la
+        // hierarchie locale des sa creation, plutot que de compter uniquement sur le backfill de
+        // migration pour les comptes deja existants (voir V32).
+        CompteComptable compteCollectif = compteComptableRepository
+                .findByEntrepriseIdAndNumero(entreprise.getId(), racine)
+                .orElse(null);
+
         CompteComptable sousCompte = new CompteComptable();
         sousCompte.setEntreprise(entreprise);
         sousCompte.setNumero(racine + String.format("%03d", prochainSuffixe));
         sousCompte.setIntitule((type == TypeTiers.CLIENT ? "Client - " : "Fournisseur - ") + prochainSuffixe);
         sousCompte.setLettrable(true);
+        if (compteCollectif != null) {
+            sousCompte.setParent(compteCollectif);
+            sousCompte.setNiveau((short) (compteCollectif.getNiveau() + 1));
+        }
         return compteComptableRepository.save(sousCompte);
     }
 }

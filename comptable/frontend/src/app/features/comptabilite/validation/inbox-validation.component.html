@@ -14,7 +14,7 @@
   @if (chargement()) {
     <p class="etat-vide">Chargement…</p>
   } @else if (documents().length === 0) {
-    <p class="etat-vide">Aucune pièce en attente de validation. 🎉</p>
+    <p class="etat-vide">Aucune pièce en attente de validation.</p>
   } @else {
     <div class="barre-lot">
       <label class="case-tout">
@@ -55,14 +55,14 @@
             <div class="badges-document">
               @if (document.scoreRisqueFraude === 'CRITIQUE') {
                 <span class="badge-fraude badge-fraude-critique" [title]="alerteDuScore(document)">
-                  🛑 {{ alerteDuScore(document) }}
+                  {{ alerteDuScore(document) }}
                 </span>
               }
               <span class="badge-confiance" [class.badge-haute]="document.niveauConfiance === 'HAUTE'">
                 @if (document.niveauConfiance === 'HAUTE') {
                   IA sûre à {{ document.confiance * 100 | number: '1.0-0' }}%
                 } @else {
-                  ⚠️ À vérifier ({{ document.confiance * 100 | number: '1.0-0' }}%)
+                  À vérifier ({{ document.confiance * 100 | number: '1.0-0' }}%)
                 }
               </span>
             </div>
@@ -91,9 +91,9 @@
               <h3>{{ document.nomFichierOriginal || 'Pièce' }}</h3>
               <span class="badge-confiance" [class.badge-haute]="document.niveauConfiance === 'HAUTE'">
                 @if (document.niveauConfiance === 'HAUTE') {
-                  ✓ IA sûre à {{ document.confiance * 100 | number: '1.0-0' }}%
+                  IA sûre à {{ document.confiance * 100 | number: '1.0-0' }}%
                 } @else {
-                  ⚠️ À vérifier — {{ document.confiance * 100 | number: '1.0-0' }}%
+                  À vérifier — {{ document.confiance * 100 | number: '1.0-0' }}%
                 }
               </span>
             </div>
@@ -102,13 +102,13 @@
             </p>
 
             @if (document.niveauConfiance === 'A_VERIFIER' && document.messageExtraction) {
-              <p class="explication-confiance">🔎 {{ document.messageExtraction }}</p>
+              <p class="explication-confiance">{{ document.messageExtraction }}</p>
             }
 
             @if (document.alertesFraude.length > 0) {
               <div class="bloc-alertes-fraude" [class.critique]="document.scoreRisqueFraude === 'CRITIQUE'">
                 <p class="titre-alertes">
-                  {{ document.scoreRisqueFraude === 'CRITIQUE' ? '🛑 Risque de fraude critique' : '⚠️ Points à vérifier' }}
+                  {{ document.scoreRisqueFraude === 'CRITIQUE' ? 'Risque de fraude critique' : 'Points à vérifier' }}
                 </p>
                 <ul>
                   @for (alerte of document.alertesFraude; track alerte.code) {

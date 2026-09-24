@@ -8,6 +8,7 @@ import com.example.comptable.identite.domain.Role;
 import com.example.comptable.identite.domain.Utilisateur;
 import com.example.comptable.security.UtilisateurPrincipal;
 import com.example.comptable.stock.domain.Article;
+import com.example.comptable.stock.domain.TypeArticle;
 import com.example.comptable.stock.repository.ArticleRepository;
 import com.example.comptable.stock.web.dto.ArticleDto;
 import com.example.comptable.stock.web.dto.CreerArticleRequest;
@@ -84,9 +85,10 @@ class ArticleServiceTest {
     }
 
     private CreerArticleRequest requeteValide() {
-        return new CreerArticleRequest("ART-001", "Sac de ciment 50kg", "Materiaux", "unite",
+        return new CreerArticleRequest("ART-001", "Sac de ciment 50kg", "Materiaux", TypeArticle.MARCHANDISE, "unite",
                 new BigDecimal("2000"), new BigDecimal("18"),
-                compteStock.getId(), compteAchat.getId(), compteVente.getId(), compteVariation.getId());
+                compteStock.getId(), compteAchat.getId(), compteVente.getId(), compteVariation.getId(),
+                null, null, null);
     }
 
     @Test

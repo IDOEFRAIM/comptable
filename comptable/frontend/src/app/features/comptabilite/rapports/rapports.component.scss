@@ -23,15 +23,15 @@
 
   button {
     padding: 0.4rem 0.9rem;
-    border: 1px solid #d0d5dd;
+    border: 1px solid var(--border-default);
     border-radius: 999px;
     background: white;
     cursor: pointer;
     font-size: 0.8125rem;
 
     &.actif {
-      background: #2563eb;
-      border-color: #2563eb;
+      background: var(--color-primary);
+      border-color: var(--color-primary);
       color: white;
     }
   }
@@ -39,8 +39,9 @@
 
 .carte {
   background: white;
-  border-radius: 8px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+  border: 1px solid var(--border-subtle);
   padding: 1.25rem;
 }
 
@@ -60,8 +61,8 @@
   input,
   select {
     padding: 0.5rem;
-    border: 1px solid #d0d5dd;
-    border-radius: 6px;
+    border: 1px solid var(--border-default);
+    border-radius: var(--radius-md);
   }
 }
 
@@ -72,8 +73,8 @@
 .bouton-principal {
   padding: 0.55rem 1rem;
   border: none;
-  border-radius: 6px;
-  background: #2563eb;
+  border-radius: var(--radius-md);
+  background: var(--color-primary);
   color: white;
   font-weight: 600;
   cursor: pointer;
@@ -89,7 +90,7 @@ th,
 td {
   padding: 0.5rem;
   text-align: right;
-  border-bottom: 1px solid #f2f4f7;
+  border-bottom: 1px solid var(--bg-subtle-hover);
 
   &:first-child {
     text-align: left;
@@ -97,21 +98,21 @@ td {
 }
 
 th {
-  color: #667085;
+  color: var(--text-tertiary);
   font-weight: 600;
-  border-bottom: 1px solid #eaecf0;
+  border-bottom: 1px solid var(--border-subtle);
 }
 
 tfoot td {
   font-weight: 700;
-  border-top: 2px solid #eaecf0;
+  border-top: 2px solid var(--border-subtle);
   border-bottom: none;
 }
 
 .solde-ouverture,
 .solde-cloture {
   font-size: 0.875rem;
-  color: #667085;
+  color: var(--text-tertiary);
   font-weight: 600;
 }
 
@@ -128,18 +129,18 @@ tfoot td {
 }
 
 .entete-grand-livre .bouton-principal:disabled {
-  background: #a4bcf5;
+  background: var(--color-primary-border);
   cursor: not-allowed;
 }
 
 .ligne-lettree {
-  background: #f0fdf4;
+  background: var(--color-success-bg);
 }
 
 .badge-lettrage {
   border: none;
-  background: #ecfdf3;
-  color: #027a48;
+  background: var(--color-success-bg);
+  color: var(--color-success);
   border-radius: 999px;
   padding: 0.15rem 0.5rem;
   font-size: 0.75rem;
@@ -147,23 +148,23 @@ tfoot td {
   cursor: pointer;
 
   &:hover {
-    background: #d1fadf;
+    background: var(--color-success-border);
   }
 }
 
 .etat-vide {
-  color: #667085;
+  color: var(--text-tertiary);
   text-align: center;
   padding: 1.5rem 0;
 }
 
 .message-erreur {
-  color: #b42318;
+  color: var(--color-danger);
   font-size: 0.875rem;
 }
 
 .message-succes {
-  color: #027a48;
+  color: var(--color-success);
   font-size: 0.875rem;
 }
 
@@ -178,21 +179,21 @@ tfoot td {
   align-items: center;
   gap: 0.35rem;
   font-size: 0.8125rem;
-  color: #667085;
+  color: var(--text-tertiary);
 }
 
 .bouton-secondaire {
   padding: 0.55rem 1rem;
-  border: 1px solid #2563eb;
-  border-radius: 6px;
+  border: 1px solid var(--color-primary);
+  border-radius: var(--radius-md);
   background: white;
-  color: #2563eb;
+  color: var(--color-primary);
   font-weight: 600;
   cursor: pointer;
 
   &:disabled {
-    color: #a4bcf5;
-    border-color: #a4bcf5;
+    color: var(--color-primary-border);
+    border-color: var(--color-primary-border);
     cursor: not-allowed;
   }
 }
@@ -213,8 +214,8 @@ tfoot td {
   align-items: center;
   gap: 1rem;
   padding: 0.75rem 1.1rem;
-  background: #f9fafb;
-  border-bottom: 1px solid #f2f4f7;
+  background: var(--bg-subtle);
+  border-bottom: 1px solid var(--bg-subtle-hover);
   font-size: 0.875rem;
 
   .piece {
@@ -223,11 +224,11 @@ tfoot td {
 
   .libelle {
     flex: 1;
-    color: #1f2328;
+    color: var(--text-primary);
   }
 
   .date {
-    color: #667085;
+    color: var(--text-tertiary);
   }
 }
 

@@ -5,7 +5,13 @@ import { FormArray, FormBuilder, ReactiveFormsModule, Validators } from '@angula
 import { ActivatedRoute } from '@angular/router';
 import { finalize, map } from 'rxjs/operators';
 import { ComptabiliteService } from '../comptabilite.service';
-import { ArticleDto, CommandeAchatDto, LIBELLES_STATUT_COMMANDE_ACHAT, TiersDto } from '../models/comptabilite.model';
+import {
+  ArticleDto,
+  CommandeAchatDto,
+  FactureFournisseurDto,
+  LIBELLES_STATUT_COMMANDE_ACHAT,
+  TiersDto,
+} from '../models/comptabilite.model';
 
 function aujourdhui(): string {
   return new Date().toISOString().slice(0, 10);
@@ -39,6 +45,12 @@ export class AchatsComponent implements OnInit {
   readonly erreur = signal<string | null>(null);
   readonly succes = signal<string | null>(null);
   readonly afficherFormulaire = signal(false);
+
+  /** Facture generee pour une commande, gardee en memoire pour cette session afin d'afficher les
+   * comptes reels et le bouton "Avoir fournisseur" juste apres generation - pas de nouvel ecran de
+   * detail facture-fournisseur dans cette mission (voir DOCUMENTATION.md). */
+  readonly dernieresFactures = signal<Record<string, FactureFournisseurDto>>({});
+  readonly avoirsGeneres = signal<Record<string, boolean>>({});
 
   readonly form = this.fb.nonNullable.group({
     fournisseurId: ['', Validators.required],
@@ -160,12 +172,33 @@ export class AchatsComponent implements OnInit {
       .pipe(finalize(() => this.actionEnCours.set(null)))
       .subscribe({
         next: (facture) => {
-          this.succes.set(
-            `Facture fournisseur ${facture.numero} générée (${facture.montantTtc} FCFA TTC) : écriture 601/4456/401 comptabilisée.`,
-          );
+          this.succes.set(`Facture fournisseur ${facture.numero} générée (${facture.montantTtc} FCFA TTC).`);
+          this.dernieresFactures.update((m) => ({ ...m, [commande.id]: facture }));
           this.rafraichir();
         },
         error: (err) => this.erreur.set(err.error?.message ?? 'Impossible de générer la facture fournisseur.'),
+      });
+  }
+
+  creerAvoirFournisseur(commande: CommandeAchatDto): void {
+    const facture = this.dernieresFactures()[commande.id];
+    if (!facture) {
+      return;
+    }
+    this.actionEnCours.set(commande.id);
+    this.erreur.set(null);
+    this.succes.set(null);
+    this.comptabiliteService
+      .creerAvoirFournisseur(this.entrepriseId(), facture.id, { retourStock: true })
+      .pipe(finalize(() => this.actionEnCours.set(null)))
+      .subscribe({
+        next: (avoir) => {
+          this.succes.set(`Avoir fournisseur ${avoir.numero} généré (${avoir.montantTtc} FCFA TTC) : stock réintégré.`);
+          this.avoirsGeneres.update((m) => ({ ...m, [commande.id]: true }));
+          this.rafraichir();
+          this.comptabiliteService.listerArticles(this.entrepriseId()).subscribe((a) => this.articles.set(a));
+        },
+        error: (err) => this.erreur.set(err.error?.message ?? "Impossible de générer l'avoir fournisseur."),
       });
   }
 }

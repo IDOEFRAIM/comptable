@@ -17,19 +17,19 @@
 .bouton-rafraichir {
   border: none;
   background: none;
-  color: #2563eb;
+  color: var(--color-primary);
   cursor: pointer;
   font-size: 0.8125rem;
 }
 
 .note-methode {
-  color: #667085;
+  color: var(--text-tertiary);
   font-size: 0.8125rem;
   margin: 0;
 }
 
 .note-methode-carte {
-  color: #98a2b3;
+  color: var(--text-placeholder);
   font-size: 0.75rem;
   margin: -0.4rem 0 0.6rem;
 }
@@ -42,8 +42,9 @@
 
 .carte {
   background: white;
-  border-radius: 8px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+  border: 1px solid var(--border-subtle);
   padding: 1.25rem;
 
   h3 {
@@ -68,7 +69,7 @@
   }
 
   .libelle {
-    color: #667085;
+    color: var(--text-tertiary);
     font-size: 0.8125rem;
   }
 }
@@ -81,10 +82,10 @@
   flex-wrap: wrap;
   gap: 0.4rem 1.2rem;
   font-size: 0.8125rem;
-  color: #475467;
+  color: var(--text-secondary);
 
   .discret {
-    color: #98a2b3;
+    color: var(--text-placeholder);
   }
 }
 
@@ -96,7 +97,7 @@ dl {
 }
 
 dt {
-  color: #667085;
+  color: var(--text-tertiary);
   font-size: 0.8125rem;
 }
 
@@ -108,11 +109,11 @@ dd {
 }
 
 .valeur-alerte {
-  color: #b42318;
+  color: var(--color-danger);
 }
 
 .echantillon {
   margin: 0.75rem 0 0;
   font-size: 0.75rem;
-  color: #98a2b3;
+  color: var(--text-placeholder);
 }

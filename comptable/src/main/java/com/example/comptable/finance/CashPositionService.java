@@ -3,13 +3,16 @@ package com.example.comptable.finance;
 import com.example.comptable.comptabilite.domain.CompteComptable;
 import com.example.comptable.comptabilite.repository.CompteComptableRepository;
 import com.example.comptable.comptabilite.repository.LigneEcritureRepository;
+import com.example.comptable.entreprise.repository.EntrepriseRepository;
 import com.example.comptable.entreprise.service.EntrepriseAccessService;
 import com.example.comptable.finance.web.dto.CashPositionDto;
 import com.example.comptable.finance.web.dto.PositionTresorerieDto;
 import com.example.comptable.security.UtilisateurPrincipal;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -29,12 +32,30 @@ import java.util.UUID;
 public class CashPositionService {
 
     private final EntrepriseAccessService entrepriseAccessService;
+    private final EntrepriseRepository entrepriseRepository;
     private final CompteComptableRepository compteComptableRepository;
     private final LigneEcritureRepository ligneEcritureRepository;
 
     @Transactional(readOnly = true)
     public CashPositionDto generer(UUID entrepriseId, LocalDate date, UtilisateurPrincipal principal) {
         entrepriseAccessService.verifierAcces(entrepriseId, principal);
+        return calculer(entrepriseId, date);
+    }
+
+    /** Variante sans principal humain (STEP 8 du plan AI Accounting/AI Finance) : appel
+     * serveur-a-serveur (ai-service, cle API interne) sans utilisateur interactif - verifie
+     * seulement que l'entreprise existe, jamais de contournement du tenant (aucun tenant a
+     * verifier ici puisqu'aucun autre tenant n'est implique dans un appel direct par
+     * entrepriseId). Meme discipline que AccountingOperationEngine.validerSysteme (STEP 7). */
+    @Transactional(readOnly = true)
+    public CashPositionDto genererSysteme(UUID entrepriseId, LocalDate date) {
+        if (!entrepriseRepository.existsById(entrepriseId)) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Entreprise introuvable");
+        }
+        return calculer(entrepriseId, date);
+    }
+
+    private CashPositionDto calculer(UUID entrepriseId, LocalDate date) {
         LocalDate dateReference = date != null ? date : LocalDate.now();
 
         List<PositionTresorerieDto> positions = compteComptableRepository.findByEntrepriseId(entrepriseId).stream()

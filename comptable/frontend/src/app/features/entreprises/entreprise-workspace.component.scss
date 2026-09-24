@@ -1,44 +1,163 @@
+// Remplace l'ancienne barre d'onglets à plat (18 liens sur une seule ligne, débordement
+// horizontal sur écran étroit) par une barre latérale groupée par domaine — un seul écran
+// affiche déjà cette liste complète ; la grouper la rend scannable au lieu de la faire défiler.
 .workspace {
-  max-width: 1100px;
+  display: flex;
+  align-items: flex-start;
+  max-width: 1360px;
   margin: 0 auto;
 }
 
-.onglets {
+// Hauteur fixe + defilement interne (pas juste min-height) : avec 6 groupes de liens, la barre
+// laterale est plus haute que la fenetre sur la plupart des ecrans. Sans defilement propre a
+// elle, ses derniers groupes (Facturation, Conformite, Administration...) deviennent inatteignables
+// des que le contenu de la page est court - on ne peut alors plus scroller pour les reveler. La
+// barre defile desormais independamment du contenu, sous l'entete qui reste toujours visible
+// (voir shell.component.scss, entete-app est maintenant sticky).
+.barre-laterale {
+  flex: 0 0 216px;
+  padding: 1.5rem 0.75rem 2rem;
+  position: sticky;
+  top: 57px;
+  align-self: flex-start;
+  border-right: 1px solid var(--border-subtle);
+  height: calc(100vh - 57px);
+  overflow-y: auto;
+}
+
+.bouton-menu-mobile {
+  display: none;
+}
+
+.fond-menu-mobile {
+  display: none;
+}
+
+.nav-groupee {
   display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 0.1rem;
-  padding: 0 1rem;
-  border-bottom: 1px solid #eaecf0;
-  row-gap: 0;
+  flex-direction: column;
+  gap: 1.25rem;
+}
 
-  a {
-    padding: 0.7rem 0.6rem;
-    text-decoration: none;
-    color: #667085;
-    font-size: 0.8125rem;
+.groupe {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+
+.titre-groupe {
+  margin: 0 0 0.35rem;
+  padding: 0 0.6rem;
+  font-size: 0.6875rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--text-placeholder);
+}
+
+.nav-groupee a {
+  padding: 0.45rem 0.6rem;
+  border-radius: var(--radius-md);
+  text-decoration: none;
+  color: var(--text-secondary);
+  font-size: 0.8125rem;
+  font-weight: 500;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+
+  &.actif {
+    color: var(--color-primary);
+    background: var(--color-primary-light);
     font-weight: 600;
-    white-space: nowrap;
-    border-bottom: 2px solid transparent;
-
-    &.actif {
-      color: #2563eb;
-      border-bottom-color: #2563eb;
-    }
-
-    &:hover:not(.actif) {
-      color: #1f2328;
-    }
   }
 
-  @media (max-width: 640px) {
-    flex-wrap: nowrap;
-    overflow-x: auto;
-    -webkit-overflow-scrolling: touch;
-    scrollbar-width: thin;
+  &:hover:not(.actif) {
+    background: var(--bg-subtle);
+    color: var(--text-primary);
   }
 }
 
 .contenu-onglet {
-  padding: 1.5rem;
+  flex: 1;
+  min-width: 0;
+  padding: 1.5rem 1.75rem 2.5rem;
+}
+
+// Sous 960px : une rangee horizontale de 18 liens grattant l'ecran au doigt n'est ni lisible ni
+// efficace sur telephone. On repasse a un panneau coulissant classique declenche par un bouton
+// menu, plutot qu'un defilement horizontal qui oblige a deviner ou se trouve chaque lien.
+@media (max-width: 960px) {
+  .workspace {
+    flex-direction: column;
+  }
+
+  .bouton-menu-mobile {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    position: sticky;
+    top: 57px;
+    z-index: 15;
+    margin: 0.75rem 1rem 0;
+    padding: 0.55rem 0.9rem;
+    border: 1px solid var(--border-default);
+    border-radius: var(--radius-md);
+    background: white;
+    color: var(--text-primary);
+    font-size: 0.8125rem;
+    font-weight: 600;
+    cursor: pointer;
+    box-shadow: var(--shadow-sm);
+  }
+
+  .fond-menu-mobile {
+    display: block;
+    position: fixed;
+    top: 57px;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(15, 23, 42, 0.4);
+    z-index: 25;
+    overscroll-behavior: contain;
+    touch-action: none;
+  }
+
+  // height explicite (pas top+bottom+auto) : sur Safari iOS, la barre d'adresse qui
+  // apparait/disparait pendant un geste de defilement fait varier 100vh en cours de geste, ce qui
+  // peut faire "sauter" un panneau ancre en haut ET en bas et bloquer le scroll qu'on essaie de
+  // faire dessus. dvh (dynamic viewport height) est concu pour ce cas ; vh reste en repli pour les
+  // navigateurs qui ne le supportent pas encore. overscroll-behavior:contain empeche un geste qui
+  // atteint le bord du panneau de "deborder" vers le defilement de la page en dessous.
+  .barre-laterale {
+    position: fixed;
+    top: 57px;
+    left: 0;
+    z-index: 30;
+    width: min(280px, 82vw);
+    height: calc(100vh - 57px);
+    height: calc(100dvh - 57px);
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior: contain;
+    background: white;
+    border-right: 1px solid var(--border-subtle);
+    padding: 1.25rem 0.75rem 2rem;
+    transform: translateX(-100%);
+    transition: transform 0.2s ease;
+    box-shadow: var(--shadow-lg);
+
+    &.ouvert {
+      transform: translateX(0) !important;
+    }
+  }
+
+  .titre-groupe {
+    display: block;
+  }
+
+  .contenu-onglet {
+    padding: 1.25rem 1rem 2rem;
+  }
 }

@@ -47,6 +47,14 @@ public class SecurityConfig {
                         // agent_orchestrator.py) pendant sa boucle de raisonnement - meme principe
                         // d'authentification par cle partagee que la ligne ci-dessus.
                         .requestMatchers("/api/v1/internal/agent-tools/**").permitAll()
+                        // Validation de proposition comptable appelee par le workflow LangGraph
+                        // Python "AI Accounting" (STEP 4) - meme principe d'authentification par
+                        // cle partagee que les deux lignes ci-dessus, jamais un utilisateur final.
+                        .requestMatchers("/api/v1/internal/ai-accounting/**").permitAll()
+                        // Financial Intelligence Layer (STEP 8) appelee par le workflow LangGraph
+                        // Python "Financial Health" - meme principe d'authentification par cle
+                        // partagee que la ligne ci-dessus, jamais un utilisateur final.
+                        .requestMatchers("/api/v1/internal/ai-finance/**").permitAll()
                         .requestMatchers("/api/admin/**").hasRole("SUPER_ADMIN")
                         .requestMatchers(HttpMethod.POST, "/api/entreprises")
                         .hasAnyRole("COLLABORATEUR", "EXPERT_COMPTABLE")
@@ -84,10 +92,33 @@ public class SecurityConfig {
                         .hasAnyRole("COLLABORATEUR", "EXPERT_COMPTABLE")
                         .requestMatchers("/api/entreprises/*/commandes-achat", "/api/entreprises/*/commandes-achat/**")
                         .hasAnyRole("COLLABORATEUR", "EXPERT_COMPTABLE")
+                        .requestMatchers("/api/entreprises/*/avoirs-fournisseur", "/api/entreprises/*/avoirs-fournisseur/**")
+                        .hasAnyRole("COLLABORATEUR", "EXPERT_COMPTABLE")
+                        .requestMatchers("/api/entreprises/*/depots", "/api/entreprises/*/depots/**")
+                        .hasAnyRole("COLLABORATEUR", "EXPERT_COMPTABLE")
+                        .requestMatchers("/api/entreprises/*/inventaires", "/api/entreprises/*/inventaires/**")
+                        .hasAnyRole("COLLABORATEUR", "EXPERT_COMPTABLE")
+                        .requestMatchers("/api/entreprises/*/regularisations", "/api/entreprises/*/regularisations/**")
+                        .hasAnyRole("COLLABORATEUR", "EXPERT_COMPTABLE")
+                        .requestMatchers("/api/entreprises/*/provisions", "/api/entreprises/*/provisions/**")
+                        .hasAnyRole("COLLABORATEUR", "EXPERT_COMPTABLE")
+                        .requestMatchers("/api/entreprises/*/depreciations", "/api/entreprises/*/depreciations/**")
+                        .hasAnyRole("COLLABORATEUR", "EXPERT_COMPTABLE")
                         .requestMatchers("/api/entreprises/*/etats-financiers/**")
                         .hasAnyRole("COLLABORATEUR", "EXPERT_COMPTABLE")
                         .requestMatchers("/api/entreprises/*/comptes", "/api/entreprises/*/journaux",
                                 "/api/entreprises/*/exercices", "/api/entreprises/*/exercices/**")
+                        .hasAnyRole("COLLABORATEUR", "EXPERT_COMPTABLE")
+                        // Fondation plan comptable SYSCOHADA (hierarchie/PCE) : meme role que la route
+                        // /comptes ci-dessus. Le matcher global (sans scope entreprise) ci-dessous est
+                        // obligatoire, pas optionnel - sans lui il tomberait sur anyRequest().authenticated()
+                        // et laisserait un CLIENT le lire, exactement le bug deja corrige une fois pour
+                        // /api/fiscalite/tax-rules/** (cf. commentaire plus bas).
+                        .requestMatchers("/api/entreprises/*/plan-comptable", "/api/entreprises/*/plan-comptable/**")
+                        .hasAnyRole("COLLABORATEUR", "EXPERT_COMPTABLE")
+                        .requestMatchers("/api/entreprises/*/parametres-comptables", "/api/entreprises/*/parametres-comptables/**")
+                        .hasAnyRole("COLLABORATEUR", "EXPERT_COMPTABLE")
+                        .requestMatchers("/api/plan-comptable-reference", "/api/plan-comptable-reference/**")
                         .hasAnyRole("COLLABORATEUR", "EXPERT_COMPTABLE")
                         .requestMatchers("/api/entreprises/*/declarations-fiscales", "/api/entreprises/*/declarations-fiscales/**")
                         .hasAnyRole("COLLABORATEUR", "EXPERT_COMPTABLE")
@@ -106,6 +137,13 @@ public class SecurityConfig {
                         .requestMatchers("/api/entreprises/*/dossier")
                         .hasAnyRole("COLLABORATEUR", "EXPERT_COMPTABLE")
                         .requestMatchers("/api/entreprises/*/comptabilisation/**")
+                        .hasAnyRole("COLLABORATEUR", "EXPERT_COMPTABLE")
+                        // Moteur d'operations comptables (achat/vente/reglement/avoir) : meme role
+                        // que le reste de la comptabilite. Matcher obligatoire, pas optionnel -
+                        // sans lui il tomberait sur anyRequest().authenticated() plus bas et un
+                        // CLIENT pourrait y acceder (meme bug deja corrige pour plan-comptable et
+                        // tax-rules, voir les commentaires plus haut/bas).
+                        .requestMatchers("/api/entreprises/*/operations/**")
                         .hasAnyRole("COLLABORATEUR", "EXPERT_COMPTABLE")
                         .requestMatchers("/api/entreprises/*/cloture-readiness")
                         .hasAnyRole("COLLABORATEUR", "EXPERT_COMPTABLE")

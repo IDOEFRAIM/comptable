@@ -28,6 +28,12 @@ public class CompteComptable extends UuidEntity {
     @JoinColumn(name = "reference_id")
     private PlanComptableReference reference;
 
+    /** Subdivision locale : compte parent au sein du PCE de la meme entreprise (jamais un lien
+     * vers le referentiel global). Null pour un compte de premier niveau. */
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "parent_id")
+    private CompteComptable parent;
+
     @Column(nullable = false)
     private String numero;
 
@@ -37,8 +43,32 @@ public class CompteComptable extends UuidEntity {
     @Column(nullable = false)
     private boolean lettrable;
 
+    @Column(nullable = false)
+    private Short niveau = 1;
+
+    /** Compte utilise par l'entreprise (independant du champ actif du referentiel global). */
+    @Column(nullable = false)
+    private boolean actif = true;
+
     /** Nature du compte (ACTIF/PASSIF/CHARGE/PRODUIT), null pour un sous-compte auxiliaire de tiers. */
     public NatureCompte getNature() {
         return reference != null ? reference.getNature() : null;
+    }
+
+    /** Sens comptable normal (DEBIT/CREDIT), null si le compte n'est pas derive du referentiel. */
+    public SensNormal getSensNormal() {
+        return reference != null ? reference.getSensNormal() : null;
+    }
+
+    /** Compte collectif au sens tiers (ex. 401/411), false si non derive du referentiel. */
+    public boolean isCompteCollectif() {
+        return reference != null && reference.isCompteCollectif();
+    }
+
+    /** Autorise la creation d'une subdivision locale sous ce compte. Pour un compte purement
+     * local (sans reference), l'autorisation reste implicite : rien n'empeche aujourd'hui de
+     * creer un enfant sous un compte local, seule isUsableCommeDetail() se met a jour ensuite. */
+    public boolean isAuxiliaireAutorise() {
+        return reference == null || reference.isAuxiliaireAutorise();
     }
 }
