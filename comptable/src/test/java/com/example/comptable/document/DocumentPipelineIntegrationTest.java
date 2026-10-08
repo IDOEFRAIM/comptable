@@ -323,7 +323,7 @@ class DocumentPipelineIntegrationTest {
 
         // audit : toute la chaine est tracee
         for (String action : List.of("DOCUMENT_RECU", "DOCUMENT_EXTRAIT", "DOCUMENT_CLASSE", "DOCUMENT_RAPPROCHE", "DOCUMENT_RAPPROCHEMENT_PROPOSE",
-                "DOCUMENT_VALIDE", "DOCUMENT_MARQUE_DOUBLON", "DOCUMENT_DEMANDE", "DOCUMENT_RECU_APRES_DEMANDE")) {
+                "DOCUMENT_VALIDE", "DOCUMENT_MARQUE_DOUBLON", "DOCUMENT_REQUEST_CREATED", "DOCUMENT_RECU_APRES_DEMANDE")) {
             assertThat(evenements(action)).as(action).isNotEmpty();
         }
     }

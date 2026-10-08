@@ -1,0 +1,2 @@
+# Les scripts shell doivent rester en LF (un retour chariot CRLF les casse sous Linux / dans Docker).
+*.sh text eol=lf

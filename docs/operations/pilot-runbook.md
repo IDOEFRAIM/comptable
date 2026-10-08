@@ -19,7 +19,7 @@ Périmètre : installer, démarrer, surveiller, sauvegarder, restaurer, mettre �
 
 Le validateur de démarrage (`ProductionStartupValidator`) liste **tous** les défauts en une fois, sans jamais afficher de valeur secrète.
 **Ordre de validation** : les contrôles qui ne dépendent que de la configuration (secrets, mode d'inscription, stockage, URL publique, journalisation) s'exécutent **avant la migration Flyway** (`FlywayMigrationStrategy`) : une configuration invalide est refusée sans qu'aucune migration soit appliquée (prouvé par `smoke-prod-local.sh` : la table d'historique Flyway n'existe pas après le refus). Seuls deux contrôles lisent la base (cadres fiscaux de test, données de démonstration) et s'exécutent après la migration, puisqu'ils l'exigent.
-**Mise à jour d'une installation antérieure à P0** : les variables `COMPTABLE_PROVISIONING_TOKEN` et `COLLECTE_LIEN_DEPOT_BASE_URL` sont désormais obligatoires dans `.env` ; sans elles, **toute** commande `docker compose` (y compris `backup.sh`) refuse de s'exécuter. Ajouter ces deux lignes (voir `.env.example`, `scripts/generate-env.sh`) avant de mettre à jour.
+**Mise à jour d'une installation antérieure à P0** : les variables `COMPTABLE_PROVISIONING_TOKEN` et `COLLECTE_LIEN_DEPOT_BASE_URL` sont désormais obligatoires dans `.env` ; sans elles, **toute** commande `docker compose` (y compris `backup.sh`) refuse de s'exécuter. Exécuter `./scripts/generate-env.sh --completer` : il ajoute au `.env` existant le jeton d'approvisionnement généré, le mode d'inscription et le profil, sans modifier aucune valeur présente ; `COLLECTE_LIEN_DEPOT_BASE_URL` (URL publique de votre domaine) reste à renseigner à la main. Vérifier ensuite avec `docker compose config --quiet`.
 
 ## 2. Installation (machine neuve)
 

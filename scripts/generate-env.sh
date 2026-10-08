@@ -6,7 +6,41 @@
 #
 # Usage :  ./scripts/generate-env.sh [chemin_du_.env]
 # Refuse d'ecraser un .env existant (le deplacer ou le supprimer d'abord).
+#
+# Mise a jour d'une installation anterieure a P0 :  ./scripts/generate-env.sh --completer [chemin_du_.env]
+#   ajoute au .env EXISTANT les variables obligatoires manquantes (jeton d'approvisionnement genere, mode d'inscription PROVISIONING) sans modifier aucune valeur deja presente.
 set -euo pipefail
+
+if [ "${1:-}" = "--completer" ]; then
+	ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+	TARGET="${2:-$ROOT/.env}"
+	[ -f "$TARGET" ] || { echo "Introuvable : $TARGET (utilisez ./scripts/generate-env.sh sans option pour en creer un)." >&2; exit 1; }
+	command -v openssl >/dev/null || { echo "openssl requis." >&2; exit 1; }
+	manque() { ! grep -qE "^$1=.+" "$TARGET"; }   # absente ou vide
+	ajoute() {
+		if grep -qE "^$1=" "$TARGET"; then
+			local esc; esc="$(printf '%s' "$2" | sed -e 's/[&/\]/\&/g')"
+			sed -i.bak "s/^$1=.*/$1=${esc}/" "$TARGET" && rm -f "$TARGET.bak"
+		else
+			printf '
+%s=%s
+' "$1" "$2" >> "$TARGET"
+		fi
+		echo "  $1  ajoute"
+	}
+	echo "Completion de $TARGET (aucune valeur existante n'est modifiee) :"
+	if manque COMPTABLE_PROVISIONING_TOKEN; then ajoute COMPTABLE_PROVISIONING_TOKEN "$(openssl rand -hex 32)"; fi
+	if manque COMPTABLE_REGISTRATION_MODE; then ajoute COMPTABLE_REGISTRATION_MODE PROVISIONING; fi
+	if manque SPRING_PROFILES_ACTIVE; then ajoute SPRING_PROFILES_ACTIVE prod; fi
+	if manque COLLECTE_LIEN_DEPOT_BASE_URL; then
+		grep -qE "^COLLECTE_LIEN_DEPOT_BASE_URL=" "$TARGET" || printf '
+COLLECTE_LIEN_DEPOT_BASE_URL=
+' >> "$TARGET"
+		echo "  COLLECTE_LIEN_DEPOT_BASE_URL  A RENSEIGNER A LA MAIN (URL publique des liens de depot, ex. https://votre-domaine/depot) : ne peut pas etre devine."
+	fi
+	echo "Termine. Verifiez avec : docker compose config --quiet"
+	exit 0
+fi
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 EXAMPLE="$ROOT/.env.example"
