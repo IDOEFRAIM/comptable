@@ -39,6 +39,11 @@ export interface InboxItemDto {
   assignedToId: string | null;
   assignedToNom: string | null;
   createdAt: string;
+  /** Code de controle (ex. MISSING_DOCUMENT) ; DEMANDE_PIECE pour une demande. */
+  code: string;
+  categorie: string;
+  /** INFO / WARNING / ERROR / BLOCKING pour un constat ; null pour une demande de piece. */
+  gravite: string | null;
 }
 
 export interface WorkloadDto {

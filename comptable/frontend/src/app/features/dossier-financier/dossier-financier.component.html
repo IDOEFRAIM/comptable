@@ -1,0 +1,143 @@
+<div class="page-dossier">
+  <header class="entete-page">
+    <div class="identite">
+      <h1 class="ui-page-title">Dossier financier</h1>
+      <p class="ui-meta contexte" data-champ="contexte">
+        {{ nomEntreprise() ?? 'Entreprise' }} · Exercice {{ libelleExercice() }}
+        @if (exercices().length > 1) {
+          <label class="ui-sr-only" for="exercice-dossier">Exercice</label>
+          <select id="exercice-dossier" class="ui-input selecteur" [(ngModel)]="exerciceSelectionne" (ngModelChange)="changerExercice()">
+            @for (e of exercices(); track e.id) {
+              <option [value]="e.id">{{ e.dateDebut }} → {{ e.dateFin }} ({{ e.statut === 'CLOTURE' ? 'clôturé' : 'ouvert' }})</option>
+            }
+          </select>
+        }
+      </p>
+    </div>
+    <div class="actions-page">
+      <button type="button" class="ui-btn ui-btn--tertiary" (click)="charger()" [disabled]="chargement()" data-action="recalculer"><app-icon nom="refresh" />Recalculer</button>
+      <button type="button" class="ui-btn ui-btn--secondary" (click)="apercu()" data-action="previsualiser-ensemble">Prévisualiser</button>
+      @if (!synthese()?.finalised) {
+        <button type="button" class="ui-btn ui-btn--primary" (click)="onglet.set('VERSION_FINALE')" data-action="aller-finaliser">Finaliser</button>
+      }
+    </div>
+  </header>
+
+  @if (erreur()) {
+    <p class="ui-notice ui-notice--danger" role="alert" data-zone="erreur-dossier">{{ erreur() }}</p>
+  }
+  @if (chargement() && !synthese()) {
+    <p class="ui-meta chargement" role="status">Chargement du dossier financier…</p>
+  }
+
+  @if (synthese(); as s) {
+    <p class="statut-global" data-champ="statut-global">
+      <app-status [statut]="statutGlobal(s).statut" [texte]="statutGlobal(s).texte" />
+    </p>
+
+    <nav class="ui-tabs" role="tablist" aria-label="Sections du dossier financier">
+      @for (o of onglets; track o.code) {
+        <button type="button" role="tab" class="ui-tab" [attr.aria-selected]="onglet() === o.code" (click)="onglet.set(o.code)" [attr.data-onglet]="o.code">
+          {{ o.libelle }}
+          @if (compteurOnglet(o.code); as c) {
+            <span class="ui-tab__count">{{ c }}</span>
+          }
+        </button>
+      }
+    </nav>
+
+    <div class="contenu">
+      @switch (onglet()) {
+        @case ('VUE_ENSEMBLE') {
+          <section data-zone="vue-ensemble">
+            <dl class="resume">
+              <div class="resume__item" data-etat-tuile="COMPTE_RESULTAT"><dt>Compte de résultat</dt><dd><app-status [statut]="s.incomeStatement.status" /></dd></div>
+              <div class="resume__item" data-etat-tuile="BILAN"><dt>Bilan</dt><dd><app-status [statut]="s.balanceSheet.status" /></dd></div>
+              <div class="resume__item" data-etat-tuile="TFT"><dt>TFT</dt><dd><app-status [statut]="s.cashFlow.status" /></dd></div>
+              <div class="resume__item" data-etat-tuile="NOTES">
+                <dt>Notes annexes</dt>
+                <dd><span class="progression" data-champ="progression-notes">{{ s.notes.decided }} / {{ s.notes.total }} décidées</span></dd>
+              </div>
+              <div class="resume__item"><dt>Exercice</dt><dd><app-status [statut]="s.exerciseStatus" /></dd></div>
+            </dl>
+            <p class="ui-sr-only" data-champ="controles-bloquants">Contrôles bloquants : {{ s.blockingFindings }}</p>
+            @if (s.warnings > 0) {
+              <p class="ui-meta decompte" data-champ="warnings">{{ s.warnings }} avertissement{{ s.warnings > 1 ? 's' : '' }}</p>
+            }
+            <p class="ui-sr-only" data-champ="finalisable">Finalisable : {{ s.finalizable ? 'OUI' : 'NON' }}</p>
+          </section>
+
+          <section class="ui-section" data-zone="par-exception">
+            @if (s.exceptions.length) {
+              <app-section-header titre="À traiter" [compteur]="s.exceptions.length">
+                <button type="button" class="ui-btn ui-btn--secondary ui-btn--sm" (click)="onglet.set('CONTROLES')" data-action="voir-anomalies">Ouvrir les contrôles</button>
+              </app-section-header>
+              <p class="ui-sr-only" data-champ="nb-interventions">{{ s.exceptions.length }} élément(s) nécessite(nt) votre intervention</p>
+              <ul class="a-traiter">
+                @for (e of interventions(); track e.id) {
+                  <li class="a-traiter__ligne" [class.a-traiter__ligne--bloquant]="e.severity === 'BLOCKING'">
+                    <div class="a-traiter__texte">
+                      <p class="a-traiter__titre">{{ e.title }}</p>
+                      @if (e.detail) {
+                        <p class="ui-meta">{{ e.detail }}</p>
+                      }
+                    </div>
+                    <span class="ui-muted ui-meta a-traiter__zone">{{ libelleOnglet(e.tab) }}</span>
+                    <button type="button" class="ui-btn ui-btn--link" (click)="aller({ onglet: e.tab === 'NOTES' ? 'NOTES' : 'CONTROLES' })">Traiter <app-icon nom="chevron-right" [taille]="14" /></button>
+                  </li>
+                }
+              </ul>
+              @if (s.exceptions.length > interventions().length) {
+                <button type="button" class="ui-btn ui-btn--link voir-tout" (click)="onglet.set('CONTROLES')">Voir les {{ s.exceptions.length }} éléments</button>
+              }
+            } @else {
+              <app-empty-state data-champ="rien-a-traiter" titre="Aucune anomalie bloquante" detail="Votre dossier est prêt pour la prochaine étape." />
+            }
+          </section>
+        }
+        @case ('COMPTE_RESULTAT') {
+          @if (compteResultat(); as cr) {
+            <app-onglet-etat [etat]="cr" mode="CR" titre="Compte de résultat" (pourquoi)="pourquoi($event)" />
+          }
+        }
+        @case ('BILAN') {
+          @if (bilan(); as b) {
+            <app-onglet-etat [etat]="b.actif" mode="ACTIF" titre="Actif" [controle]="s.balanceCheck" (pourquoi)="pourquoi($event)" />
+            <app-onglet-etat [etat]="b.passif" mode="PASSIF" titre="Passif" (pourquoi)="pourquoi($event)" />
+          }
+        }
+        @case ('TFT') {
+          @if (tft(); as t) {
+            @if (t.status !== 'READY') {
+              <p class="ui-notice" data-zone="tft-incomplet">
+                Le tableau des flux de trésorerie est incomplet.
+                <button type="button" class="ui-btn ui-btn--link" (click)="onglet.set('CONTROLES')" data-action="tft-voir-anomalies">Voir les contrôles</button>
+              </p>
+            }
+            <app-onglet-etat [etat]="t" mode="TFT" titre="Tableau des flux de trésorerie" (pourquoi)="pourquoi($event)" />
+          }
+        }
+        @case ('NOTES') {
+          <app-onglet-notes
+            [entrepriseId]="entrepriseId()"
+            [exerciceId]="exerciceSelectionne"
+            [espace]="notes()"
+            [permissions]="s.permissions"
+            [noteInitiale]="noteCible()"
+            (modifiee)="rechargerNotes()"
+            (recharger)="rechargerNotes()"
+          />
+        }
+        @case ('CONTROLES') {
+          <app-onglet-controles [entrepriseId]="entrepriseId()" [exceptions]="s.exceptions" [permissions]="s.permissions" (aller)="aller($event)" (modifiee)="rechargerFlux()" />
+        }
+        @case ('POURQUOI') {
+          <app-onglet-pourquoi [entrepriseId]="entrepriseId()" [exerciceId]="exerciceSelectionne" [selection]="selection()" />
+        }
+        @case ('VERSION_FINALE') {
+          <app-onglet-finalisation [entrepriseId]="entrepriseId()" [exerciceId]="exerciceSelectionne" [synthese]="s" (modifiee)="charger()" />
+        }
+      }
+    </div>
+  }
+</div>

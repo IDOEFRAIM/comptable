@@ -237,10 +237,7 @@ class InventaireServiceTest {
         inventaire.ajouterLigne(ligne);
 
         UUID propositionId = UUID.randomUUID();
-        AccountingOperationProposalDto propositionDto = new AccountingOperationProposalDto(
-                propositionId, entrepriseId, "REGULARISATION_INVENTAIRE", "PROPOSED", null, null, null,
-                inventaire.getDate(), "Regularisation", null, List.of(), new BigDecimal("600"), new BigDecimal("600"),
-                true, List.of(), List.of(), null, null, null, null, null, null, null);
+        AccountingOperationProposalDto propositionDto = new AccountingOperationProposalDto(propositionId, entrepriseId, "REGULARISATION_INVENTAIRE", "PROPOSED", null, null, null, inventaire.getDate(), "Regularisation", null, List.of(), new BigDecimal("600"), new BigDecimal("600"), true, List.of(), List.of(), null, null, null, null, null, null, null, null);
 
         when(entrepriseAccessService.verifierAcces(entrepriseId, principal)).thenReturn(entreprise);
         when(inventaireRepository.findById(inventaire.getId())).thenReturn(Optional.of(inventaire));

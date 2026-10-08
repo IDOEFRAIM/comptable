@@ -22,7 +22,11 @@ public record FactureDto(
         BigDecimal montantTtc,
         UUID devisOrigineId,
         UUID ecritureId,
-        List<LigneFactureDto> lignes
+        List<LigneFactureDto> lignes,
+        /** Statut de paiement CALCULE depuis les allocations de reglements (NON_PAYEE, PARTIELLEMENT_PAYEE, PAYEE) ; null tant que la facture n'est pas comptabilisee. */
+        String statutPaiement,
+        BigDecimal montantRegle,
+        BigDecimal resteAPayer
 ) {
     public static FactureDto from(Facture facture) {
         return new FactureDto(
@@ -31,7 +35,13 @@ public record FactureDto(
                 facture.getDateEmission(), facture.getDateEcheance(), facture.getStatut().name(), facture.getObjet(),
                 facture.montantHt(), facture.montantTva(), facture.montantTtc(),
                 facture.getDevisOrigineId(), facture.getEcritureId(),
-                facture.getLignes().stream().map(LigneFactureDto::from).toList()
+                facture.getLignes().stream().map(LigneFactureDto::from).toList(),
+                null, null, null
         );
+    }
+
+    public FactureDto avecPaiement(String statutPaiement, BigDecimal montantRegle, BigDecimal resteAPayer) {
+        return new FactureDto(id, type, numero, tiersId, tiersNom, dateEmission, dateEcheance, statut, objet, montantHt, montantTva, montantTtc,
+                devisOrigineId, ecritureId, lignes, statutPaiement, montantRegle, resteAPayer);
     }
 }

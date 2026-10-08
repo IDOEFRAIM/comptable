@@ -49,6 +49,16 @@ class MatchDecisionEngineTest {
     @Mock
     private DocumentRepository documentRepository;
 
+    @org.mockito.Mock
+    private com.example.comptable.banque.BankReconciliationService reconciliationService;
+
+    private void reconciliationPoseLePointeur() {
+        org.mockito.Mockito.lenient().when(reconciliationService.confirmerParLeSysteme(any(), any(), any(), any(), any(), any())).thenAnswer(inv -> {
+            ((LigneReleve) inv.getArgument(0)).setLigneEcritureId(inv.getArgument(1));
+            return new com.example.comptable.banque.BankReconciliation();
+        });
+    }
+
     private MatchDecisionEngine engine;
     private Entreprise entreprise;
     private LigneReleve ligne;
@@ -56,7 +66,8 @@ class MatchDecisionEngineTest {
     @BeforeEach
     void setUp() {
         engine = new MatchDecisionEngine(aiMatchProposalRepository, ligneEcritureRepository, factureRepository,
-                documentRepository, 0.95, 0.70);
+                documentRepository, reconciliationService, 0.95, 0.70);
+        reconciliationPoseLePointeur();
 
         entreprise = new Entreprise();
         entreprise.setId(UUID.randomUUID());

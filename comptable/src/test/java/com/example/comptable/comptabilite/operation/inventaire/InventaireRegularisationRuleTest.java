@@ -24,15 +24,16 @@ import java.time.LocalDate;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 class InventaireRegularisationRuleTest {
 
     @Mock
-    private CompteComptableValidationService compteComptableValidationService;
+    private com.example.comptable.comptabilite.parametrage.AccountingAccountResolver accountingAccountResolver;
 
-    @InjectMocks
     private InventaireRegularisationRule rule;
 
     private UUID entrepriseId;
@@ -43,6 +44,7 @@ class InventaireRegularisationRuleTest {
 
     @BeforeEach
     void setUp() {
+        rule = new InventaireRegularisationRule(new com.example.comptable.comptabilite.operation.stock.StockAccountResolver(accountingAccountResolver));
         entrepriseId = UUID.randomUUID();
         entreprise = new Entreprise();
         entreprise.setId(entrepriseId);
@@ -57,6 +59,18 @@ class InventaireRegularisationRuleTest {
         article.setDesignation("Sac de ciment");
         article.setCompteStock(compteStock);
         article.setCompteVariation(compteVariation);
+    }
+
+    private void stubStock(CompteComptable compteStock) {
+        when(accountingAccountResolver.resoudreCompte(eq(entrepriseId),
+                eq(com.example.comptable.comptabilite.parametrage.domain.AccountPurpose.STOCK_MARCHANDISE), any(), eq(compteStock.getId())))
+                .thenReturn(new com.example.comptable.comptabilite.parametrage.AccountingAccountResolver.CompteResolu(compteStock, null));
+    }
+
+    private void stubVariation(CompteComptable compteVariation) {
+        when(accountingAccountResolver.resoudreCompte(eq(entrepriseId),
+                eq(com.example.comptable.comptabilite.parametrage.domain.AccountPurpose.VARIATION_STOCK), any(), eq(compteVariation.getId())))
+                .thenReturn(new com.example.comptable.comptabilite.parametrage.AccountingAccountResolver.CompteResolu(compteVariation, null));
     }
 
     private CompteComptable compte(String numero) {
@@ -91,8 +105,8 @@ class InventaireRegularisationRuleTest {
 
     @Test
     void surplus_debite_le_compte_de_stock_et_credite_la_variation() {
-        when(compteComptableValidationService.chargerCompteUtilisable(entrepriseId, compteStock.getId(), true)).thenReturn(compteStock);
-        when(compteComptableValidationService.chargerCompteUtilisable(entrepriseId, compteVariation.getId(), true)).thenReturn(compteVariation);
+        stubStock(compteStock);
+        stubVariation(compteVariation);
 
         ResultatRegle resultat = rule.construire(entreprise, inventaireAvec(ligne(article, new BigDecimal("5"), new BigDecimal("600"))));
 
@@ -114,8 +128,8 @@ class InventaireRegularisationRuleTest {
 
     @Test
     void perte_debite_la_variation_et_credite_le_compte_de_stock() {
-        when(compteComptableValidationService.chargerCompteUtilisable(entrepriseId, compteStock.getId(), true)).thenReturn(compteStock);
-        when(compteComptableValidationService.chargerCompteUtilisable(entrepriseId, compteVariation.getId(), true)).thenReturn(compteVariation);
+        stubStock(compteStock);
+        stubVariation(compteVariation);
 
         ResultatRegle resultat = rule.construire(entreprise, inventaireAvec(ligne(article, new BigDecimal("-2"), new BigDecimal("240"))));
 
@@ -139,12 +153,17 @@ class InventaireRegularisationRuleTest {
 
     @Test
     void compte_inactif_produit_une_explication_plutot_quune_ligne_incorrecte() {
-        when(compteComptableValidationService.chargerCompteUtilisable(entrepriseId, compteStock.getId(), true))
-                .thenThrow(new ResponseStatusException(HttpStatus.UNPROCESSABLE_ENTITY, "Le compte 311 est desactive"));
+        when(accountingAccountResolver.resoudreCompte(eq(entrepriseId),
+                eq(com.example.comptable.comptabilite.parametrage.domain.AccountPurpose.STOCK_MARCHANDISE), any(), eq(compteStock.getId())))
+                .thenReturn(new com.example.comptable.comptabilite.parametrage.AccountingAccountResolver.CompteResolu(null,
+                        com.example.comptable.comptabilite.parametrage.ResolvedAccount.invalide("Compte configure indisponible : Le compte 311 est desactive")));
+        when(accountingAccountResolver.resoudreCompte(eq(entrepriseId),
+                eq(com.example.comptable.comptabilite.parametrage.domain.AccountPurpose.VARIATION_STOCK), any(), eq(compteVariation.getId())))
+                .thenReturn(new com.example.comptable.comptabilite.parametrage.AccountingAccountResolver.CompteResolu(compteVariation, null));
 
         ResultatRegle resultat = rule.construire(entreprise, inventaireAvec(ligne(article, new BigDecimal("5"), new BigDecimal("600"))));
 
         assertThat(resultat.lignes()).isEmpty();
-        assertThat(resultat.explications()).anySatisfy(e -> assertThat(e).contains("ART-001"));
+        assertThat(resultat.explications()).anySatisfy(e -> assertThat(e).contains("ART-001").contains("INVALID").contains("311"));
     }
 }

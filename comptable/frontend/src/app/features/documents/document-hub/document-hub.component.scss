@@ -1,0 +1,350 @@
+.hub {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.entete {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+
+  h2 {
+    margin: 0;
+    font-size: 1.2rem;
+  }
+}
+
+.sous-titre {
+  margin: 0.25rem 0 0;
+  color: var(--text-tertiary);
+  font-size: 0.85rem;
+}
+
+.periode {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+
+  input[type='month'] {
+    padding: 0.35rem 0.5rem;
+    border: 1px solid var(--border-default);
+    border-radius: var(--radius-md);
+    font: inherit;
+  }
+}
+
+.carte {
+  background: var(--bg-surface);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+  border: 1px solid var(--border-subtle);
+  padding: 1rem 1.25rem;
+}
+
+.tuiles {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+  gap: 0.75rem;
+}
+
+.tuile {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.15rem;
+  padding: 0.8rem 1rem;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-xs);
+  cursor: pointer;
+  font: inherit;
+  text-align: left;
+  transition: border-color 0.15s;
+
+  &:hover {
+    border-color: var(--color-primary-border);
+  }
+  &.active {
+    border-color: var(--color-primary);
+    background: var(--color-primary-light);
+  }
+  &.vide .tuile-nombre {
+    color: var(--text-placeholder);
+  }
+}
+
+.tuile-externe {
+  border-style: dashed;
+}
+
+.tuile-nombre {
+  font-size: 1.5rem;
+  font-weight: 700;
+  line-height: 1.1;
+}
+
+.tuile-libelle {
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+}
+
+.bandeau-lot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.6rem 0.9rem;
+  border-radius: var(--radius-md);
+  background: var(--color-primary-light);
+  border: 1px solid var(--color-primary-border);
+  font-size: 0.85rem;
+}
+
+.apercu {
+  h3 {
+    margin: 0 0 0.25rem;
+    font-size: 1rem;
+  }
+  ul {
+    list-style: none;
+    padding: 0;
+    margin: 0.5rem 0;
+    max-height: 260px;
+    overflow: auto;
+  }
+  li label {
+    display: flex;
+    gap: 0.6rem;
+    align-items: center;
+    padding: 0.25rem 0;
+    font-size: 0.85rem;
+  }
+}
+
+.filtres {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  align-items: flex-end;
+}
+
+.champ {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  font-size: 0.78rem;
+  color: var(--text-secondary);
+  min-width: 160px;
+
+  input,
+  select {
+    padding: 0.45rem 0.55rem;
+    border: 1px solid var(--border-default);
+    border-radius: var(--radius-md);
+    font: inherit;
+    background: var(--bg-surface);
+  }
+}
+
+.compteur {
+  margin: 0;
+  color: var(--text-tertiary);
+  font-size: 0.82rem;
+}
+
+.liste {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.ligne {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+
+  &.doublon {
+    background: var(--bg-subtle);
+
+    .col-id strong,
+    .col-montant strong {
+      color: var(--text-tertiary);
+    }
+  }
+}
+
+.ligne-principale {
+  display: grid;
+  grid-template-columns: minmax(150px, 1.2fr) minmax(160px, 1.4fr) minmax(100px, 0.8fr) minmax(120px, 0.9fr);
+  gap: 1rem;
+  align-items: start;
+}
+
+@media (max-width: 800px) {
+  .ligne-principale {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+.col-id,
+.col-tiers,
+.col-statut {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+
+.col-id strong {
+  font-size: 0.9375rem;
+  letter-spacing: -0.01em;
+}
+
+.col-montant {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+
+  strong {
+    font-size: 1rem;
+  }
+}
+
+.col-statut {
+  align-items: flex-end;
+}
+
+.espaceur {
+  flex: 1;
+}
+
+.meta {
+  font-size: 0.75rem;
+  color: var(--text-tertiary);
+}
+
+.alerte {
+  color: var(--color-warning);
+}
+
+.inconnu {
+  color: var(--color-warning);
+  font-weight: 600;
+}
+
+.association {
+  margin: 0;
+  font-size: 0.82rem;
+  color: var(--text-secondary);
+}
+
+.constats {
+  margin: 0;
+  display: flex;
+  gap: 0.4rem;
+  flex-wrap: wrap;
+}
+
+.badge {
+  align-self: flex-start;
+  padding: 0.15rem 0.55rem;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  white-space: nowrap;
+
+  &.badge-succes {
+    background: var(--color-success-bg);
+    color: var(--color-success);
+  }
+  &.badge-erreur {
+    background: var(--color-danger-bg);
+    color: var(--color-danger);
+  }
+  &.badge-attente {
+    background: var(--color-warning-bg);
+    color: var(--color-warning);
+  }
+  &.badge-info {
+    background: var(--color-primary-light);
+    color: var(--color-primary);
+  }
+  &.badge-neutre {
+    background: var(--gray-100);
+    color: var(--text-secondary);
+  }
+}
+
+.actions {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.panneau {
+  margin-top: 0.25rem;
+  padding: 0.75rem 1rem;
+  background: var(--bg-subtle);
+  border-radius: var(--radius-md);
+
+  h4 {
+    margin: 0 0 0.5rem;
+    font-size: 0.9rem;
+  }
+}
+
+.candidat {
+  display: grid;
+  grid-template-columns: auto minmax(120px, 1.5fr) minmax(90px, 1fr) minmax(80px, 0.8fr) 2fr;
+  gap: 0.6rem;
+  align-items: center;
+  padding: 0.35rem 0.25rem;
+  font-size: 0.85rem;
+  border-radius: var(--radius-sm);
+
+  &.fort {
+    background: var(--color-primary-light);
+  }
+}
+
+.aide {
+  margin: 0.25rem 0;
+  color: var(--text-tertiary);
+  font-size: 0.82rem;
+}
+
+.pagination {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 1rem;
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+}
+
+.etat-vide {
+  text-align: center;
+  color: var(--text-tertiary);
+  padding: 2rem 0;
+}
+
+.message-erreur {
+  margin: 0;
+  color: var(--color-danger);
+  font-size: 0.85rem;
+}
+
+.message-info {
+  margin: 0;
+  padding: 0.55rem 0.8rem;
+  border-radius: var(--radius-md);
+  background: var(--color-success-bg);
+  border: 1px solid var(--color-success-border);
+  color: var(--color-success);
+  font-size: 0.85rem;
+}

@@ -91,6 +91,10 @@ class ComplianceCenterServiceTest {
         anomalie.setEntreprise(new Entreprise());
         anomalie.setType(TypeFinding.TAX_REVIEW);
         anomalie.setSeverity(SeveriteFinding.IMPORTANT);
+        anomalie.setControlCode("TAX_DECLARATION_MISSING");
+        anomalie.setCategory(com.example.comptable.controle.ControlCategory.TAX);
+        anomalie.setControlSeverity(com.example.comptable.controle.ControlSeverity.WARNING);
+        anomalie.setLastDetectedAt(java.time.OffsetDateTime.now());
         anomalie.setSourceType("DECLARATION_FISCALE");
         anomalie.setSourceId("TVA-2026-06");
         anomalie.setTitle("Declaration TVA manquante");

@@ -93,6 +93,10 @@ class FindingServiceTest {
         finding.setSourceId("ligne-1");
         finding.setTitle("Justificatif manquant");
         finding.setStatus(StatutFinding.OPEN);
+        finding.setControlCode("MISSING_DOCUMENT");
+        finding.setCategory(com.example.comptable.controle.ControlCategory.DOCUMENT);
+        finding.setControlSeverity(com.example.comptable.controle.ControlSeverity.WARNING);
+        finding.setLastDetectedAt(java.time.OffsetDateTime.now());
 
         lenient().when(entrepriseAccessService.verifierAcces(entrepriseId, principal)).thenReturn(entreprise);
         lenient().when(findingRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));

@@ -43,4 +43,15 @@ public interface EcritureComptableRepository extends JpaRepository<EcritureCompt
             + "where e.exercice.id = :exerciceId and e.statut = :statut "
             + "order by e.journal.code asc, e.dateEcriture asc, e.numeroPiece asc")
     List<EcritureComptable> findByExerciceIdAndStatutFetchAll(UUID exerciceId, StatutEcriture statut);
+
+    /** Ecritures (brouillon ou validees) d'un exercice dont le total debit differe du total credit :
+     * donnee corrompue, normalement impossible (chaque creation verifie l'equilibre). */
+    @Query("select e.id from EcritureComptable e join e.lignes l where e.exercice.id = :exerciceId "
+            + "group by e.id having sum(l.debit) <> sum(l.credit)")
+    List<UUID> rechercherEcrituresDesequilibrees(UUID exerciceId);
+
+    /** Comptes desactives portant des lignes dans l'exercice : (numero, nombre d'ecritures concernees). */
+    @Query("select c.numero, count(distinct e.id) from LigneEcriture l join l.ecriture e join l.compte c "
+            + "where e.exercice.id = :exerciceId and c.actif = false group by c.numero order by c.numero")
+    List<Object[]> rechercherComptesDesactivesUtilises(UUID exerciceId);
 }

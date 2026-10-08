@@ -102,8 +102,8 @@
                 + Ajouter une ligne (ou Entrée en fin de ligne)
               </button>
             </td>
-            <td class="total" [class.total-ok]="totalDebit() > 0">{{ totalDebit() }}</td>
-            <td class="total" [class.total-ok]="totalCredit() > 0">{{ totalCredit() }}</td>
+            <td class="total" [class.total-ok]="totalDebit() > 0">{{ totalDebit() | number: '1.0-2' }}</td>
+            <td class="total" [class.total-ok]="totalCredit() > 0">{{ totalCredit() | number: '1.0-2' }}</td>
             <td></td>
           </tr>
         </tfoot>

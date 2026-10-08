@@ -29,4 +29,10 @@ public interface UtilisateurRepository extends JpaRepository<Utilisateur, UUID> 
     @Query(value = "SELECT * FROM utilisateur WHERE regexp_replace(telephone, '[^0-9]', '', 'g') = :telephoneNormalise",
             nativeQuery = true)
     Optional<Utilisateur> findByTelephoneNormalise(@Param("telephoneNormalise") String telephoneNormalise);
+
+    /** Utilisateurs du portail client rattaches a une entreprise (interlocuteurs a qui adresser les demandes de pieces). */
+    @org.springframework.data.jpa.repository.Query("select u from Utilisateur u where u.id in ("
+            + "select ue.id.utilisateurId from com.example.comptable.entreprise.domain.UtilisateurEntreprise ue where ue.id.entrepriseId = :entrepriseId) "
+            + "order by u.nom, u.prenom, u.id")
+    java.util.List<Utilisateur> findInterlocuteursDeLEntreprise(java.util.UUID entrepriseId);
 }

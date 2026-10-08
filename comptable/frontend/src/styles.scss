@@ -1,3 +1,4 @@
+@use 'styles/ui';
 // Design system — tokens + éléments de base. Centralise ce qui était auparavant dupliqué à
 // l'identique (couleurs en dur, ombre de carte, rayon de bordure) dans plus de 30 feuilles de
 // style par composant. Les composants continuent de définir leur mise en page locale, mais
@@ -185,56 +186,26 @@ a {
 }
 
 // --- Boutons -----------------------------------------------------------------------------
-// Conventions déjà utilisées dans les gabarits (.bouton-principal / .bouton-secondaire,
-// >55 usages cumulés) — définies une seule fois avec un état hover/disabled cohérent partout.
+// Une hierarchie, partout la meme : PRINCIPAL (l'action recommandee, une par zone), SECONDAIRE
+// (contour), LIEN (action discrete, sans cadre), DANGER. Tout <button> sans classe recoit le style
+// secondaire : aucun bouton ne s'affiche jamais avec l'apparence native du navigateur.
 
-.bouton-principal,
-button.bouton-principal {
+button {
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 0.4rem;
-  padding: 0.55rem 1rem;
-  border: 1px solid var(--color-primary);
-  border-radius: var(--radius-md);
-  background: var(--color-primary);
-  color: var(--text-on-primary);
-  font-size: 0.8125rem;
-  font-weight: 600;
-  cursor: pointer;
-  transition: background-color 0.12s ease, border-color 0.12s ease;
-
-  &:hover:not(:disabled) {
-    background: var(--color-primary-hover);
-    border-color: var(--color-primary-hover);
-  }
-
-  &:active:not(:disabled) {
-    background: var(--color-primary-active);
-    border-color: var(--color-primary-active);
-  }
-
-  &:disabled {
-    opacity: 0.55;
-    cursor: not-allowed;
-  }
-}
-
-.bouton-secondaire,
-button.bouton-secondaire {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.4rem;
-  padding: 0.55rem 1rem;
+  padding: 0.5rem 0.95rem;
   border: 1px solid var(--border-default);
   border-radius: var(--radius-md);
   background: var(--bg-surface);
   color: var(--text-secondary);
+  font-family: inherit;
   font-size: 0.8125rem;
   font-weight: 600;
+  line-height: 1.25;
   cursor: pointer;
-  transition: background-color 0.12s ease, border-color 0.12s ease;
+  transition: background-color 0.12s ease, border-color 0.12s ease, color 0.12s ease, box-shadow 0.12s ease;
 
   &:hover:not(:disabled) {
     background: var(--bg-subtle-hover);
@@ -243,9 +214,91 @@ button.bouton-secondaire {
   }
 
   &:disabled {
-    opacity: 0.55;
+    opacity: 0.5;
     cursor: not-allowed;
   }
+}
+
+.bouton-principal,
+.bouton-secondaire,
+.bouton-danger {
+  box-shadow: var(--shadow-xs);
+}
+
+.bouton-principal,
+button.bouton-principal {
+  border-color: var(--color-primary);
+  background: var(--color-primary);
+  color: var(--text-on-primary);
+
+  &:hover:not(:disabled) {
+    background: var(--color-primary-hover);
+    border-color: var(--color-primary-hover);
+    color: var(--text-on-primary);
+  }
+
+  &:active:not(:disabled) {
+    background: var(--color-primary-active);
+    border-color: var(--color-primary-active);
+  }
+}
+
+.bouton-secondaire,
+button.bouton-secondaire {
+  border-color: var(--border-default);
+  background: var(--bg-surface);
+  color: var(--text-secondary);
+}
+
+.bouton-danger,
+button.bouton-danger {
+  border-color: var(--color-danger-border);
+  background: var(--color-danger-bg);
+  color: var(--color-danger);
+
+  &:hover:not(:disabled) {
+    background: var(--color-danger);
+    border-color: var(--color-danger);
+    color: #fff;
+  }
+}
+
+// Action discrete : texte colore, sans cadre ni ombre ; un fond leger apparait au survol.
+.bouton-lien,
+button.bouton-lien {
+  padding: 0.35rem 0.6rem;
+  border-color: transparent;
+  background: transparent;
+  box-shadow: none;
+  color: var(--color-primary);
+
+  &:hover:not(:disabled) {
+    background: var(--color-primary-light);
+    border-color: transparent;
+    color: var(--color-primary-hover);
+  }
+
+  &.bouton-discret {
+    color: var(--text-tertiary);
+    font-weight: 500;
+
+    &:hover:not(:disabled) {
+      background: var(--gray-100);
+      color: var(--text-primary);
+    }
+  }
+}
+
+.bouton-discret:not(.bouton-lien) {
+  color: var(--text-tertiary);
+}
+
+// Variante compacte, pour les actions de ligne et de tuile.
+.petit,
+button.petit {
+  padding: 0.3rem 0.7rem;
+  font-size: 0.75rem;
+  border-radius: var(--radius-sm);
 }
 
 // --- Champs de formulaire ------------------------------------------------------------------
@@ -347,4 +400,217 @@ tbody tr:hover {
   &.neutre {
     background: var(--gray-400);
   }
+}
+
+// --- Pastilles (badges) ---------------------------------------------------------------------
+// Une palette semantique unique ; les gabarits gardent leurs noms de classe historiques
+// (badge-attente, badge-recu...) qui se rattachent tous a l'une des cinq familles.
+
+.badge {
+  background: var(--gray-100);
+  color: var(--text-secondary);
+  white-space: nowrap;
+  border: 1px solid transparent;
+}
+
+.badge:is(.badge-succes, .badge-validee, .badge-payee, .badge-resolu, .badge-pointee, .badge-deposee, .badge-haute, .badge-genere, .sev-ok) {
+  background: var(--color-success-bg);
+  color: var(--color-success);
+  border-color: var(--color-success-border);
+}
+
+.badge:is(.badge-attente, .badge-retard, .badge-ambigu, .badge-ajustement, .sev-warning, .sev-error) {
+  background: var(--color-warning-bg);
+  color: var(--color-warning);
+  border-color: var(--color-warning-border);
+}
+
+.badge:is(.badge-erreur, .badge-fraude, .badge-annulee, .badge-non, .sev-blocking) {
+  background: var(--color-danger-bg);
+  color: var(--color-danger);
+  border-color: var(--color-danger-border);
+}
+
+.badge:is(.badge-recu, .badge-info, .badge-client, .badge-ia, .badge-lettrage, .badge-entree, .badge-confiance, .sev-info) {
+  background: var(--color-primary-light);
+  color: var(--color-primary);
+  border-color: var(--color-primary-border);
+}
+
+.badge:is(.badge-neutre, .badge-inactif, .badge-sortie, .badge-avoir, .badge-type, .badge-origine, .badge-statut) {
+  background: var(--gray-100);
+  color: var(--text-secondary);
+  border-color: var(--gray-200);
+}
+
+// --- Tuiles de synthese (filtres cliquables en tete d'ecran) -------------------------------------
+
+.tuiles {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 0.75rem;
+}
+
+.tuile {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.2rem;
+  padding: 0.85rem 1rem;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-xs);
+  color: var(--text-primary);
+  font: inherit;
+  font-weight: 500;
+  text-align: left;
+
+  &:hover:not(:disabled) {
+    background: var(--bg-surface);
+    border-color: var(--color-primary-border);
+    box-shadow: var(--shadow-sm);
+  }
+
+  &.active {
+    border-color: var(--color-primary);
+    background: var(--color-primary-light);
+    box-shadow: 0 0 0 1px var(--color-primary);
+  }
+
+  &.tuile-alerte .tuile-nombre {
+    color: var(--color-danger);
+  }
+
+  &.vide .tuile-nombre {
+    color: var(--text-placeholder);
+  }
+}
+
+.tuile-nombre {
+  font-size: 1.625rem;
+  font-weight: 700;
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+  font-variant-numeric: tabular-nums;
+}
+
+.tuile-libelle {
+  font-size: 0.78rem;
+  font-weight: 500;
+  color: var(--text-tertiary);
+}
+
+// --- Entetes de page et gabarits de liste ------------------------------------------------------
+
+.entete {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+
+  h2 {
+    margin: 0;
+    font-size: 1.375rem;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+  }
+}
+
+.sous-titre {
+  margin: 0.25rem 0 0;
+  max-width: 62ch;
+  color: var(--text-tertiary);
+  font-size: 0.875rem;
+}
+
+.compteur {
+  margin: 0;
+  color: var(--text-tertiary);
+  font-size: 0.8125rem;
+  font-weight: 500;
+}
+
+.aide {
+  margin: 0.25rem 0;
+  color: var(--text-tertiary);
+  font-size: 0.8125rem;
+}
+
+.pagination {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.5rem 0;
+  font-size: 0.8125rem;
+  color: var(--text-secondary);
+}
+
+.message-info,
+.message-succes {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin: 0;
+  padding: 0.65rem 0.85rem;
+  border-radius: var(--radius-md);
+  background: var(--color-success-bg);
+  border: 1px solid var(--color-success-border);
+  color: var(--color-success);
+  font-size: 0.8125rem;
+  font-weight: 500;
+}
+
+.filtres {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem 1rem;
+  align-items: flex-end;
+  padding: 0.85rem 1rem;
+}
+
+.champ {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  min-width: 160px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+
+  input,
+  select {
+    font-weight: 400;
+  }
+}
+
+.liste {
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+}
+
+// Ligne de liste : une carte dont l'action principale est a droite du dernier bloc, separee du contenu.
+.carte.ligne {
+  padding: 1rem 1.15rem;
+  transition: box-shadow 0.15s ease, border-color 0.15s ease;
+
+  &:hover {
+    border-color: var(--gray-300);
+    box-shadow: var(--shadow-sm);
+  }
+
+  .actions {
+    margin-top: 0.15rem;
+    padding-top: 0.7rem;
+    border-top: 1px solid var(--border-subtle);
+  }
+}
+
+.etat-vide {
+  border: 1px dashed var(--border-default);
+  border-radius: var(--radius-lg);
+  background: var(--bg-surface);
 }

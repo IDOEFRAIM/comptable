@@ -1,5 +1,6 @@
 package com.example.comptable.comptabilite.web.dto;
 
+import com.example.comptable.comptabilite.domain.CashFlowEvent;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
@@ -13,6 +14,10 @@ public record CreerEcritureRequest(
         @NotNull LocalDate dateEcriture,
         String libelle,
         String numeroPiece,
-        @NotEmpty @Valid List<LigneEcritureRequest> lignes
+        @NotEmpty @Valid List<LigneEcritureRequest> lignes,
+        CashFlowEvent cashFlowEvent
 ) {
+    public CreerEcritureRequest(UUID journalId, LocalDate dateEcriture, String libelle, String numeroPiece, List<LigneEcritureRequest> lignes) {
+        this(journalId, dateEcriture, libelle, numeroPiece, lignes, null);
+    }
 }

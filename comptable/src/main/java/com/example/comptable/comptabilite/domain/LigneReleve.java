@@ -43,9 +43,58 @@ public class LigneReleve extends UuidEntity {
     @Column(name = "ligne_ecriture_id")
     private UUID ligneEcritureId;
 
+    @Column(name = "entreprise_id", nullable = false)
+    private UUID entrepriseId;
+
+    @Column(name = "compte_id", nullable = false)
+    private UUID compteId;
+
+    @Column(name = "date_valeur")
+    private LocalDate dateValeur;
+
+    @Column(nullable = false)
+    private String currency = "XOF";
+
+    /** CREDIT = entree d'argent (montant positif), DEBIT = sortie. Derive du signe, jamais saisi. */
+    @Column(nullable = false)
+    private String direction;
+
+    /** Libelle normalise (casse, espaces, ponctuation) : sert au matching ; {@link #libelle} garde toujours l'original. */
+    @Column(name = "libelle_normalise")
+    private String libelleNormalise;
+
+    @Column(name = "reference")
+    private String reference;
+
+    /** Indices extraits du libelle (jamais des verites) : nom probable du tiers, moyen de paiement, numero de facture probable. */
+    @Column(name = "counterparty_name")
+    private String counterpartyName;
+
+    @Column(name = "payment_method")
+    private String paymentMethod;
+
+    @Column(name = "invoice_hint")
+    private String invoiceHint;
+
+    @Column(nullable = false)
+    private String source = "CSV";
+
+    @Column(name = "import_batch_id")
+    private UUID importBatchId;
+
+    /** Identite stable de la transaction (SHA-256) : voir {@code BankFingerprint}. */
+    @Column(name = "content_fingerprint")
+    private String contentFingerprint;
+
+    /** {@code NONE} ou {@code POSSIBLE_DUPLICATE} (meme compte, date, montant et sens qu'une autre ligne, mais autre libelle/reference). */
+    @Column(name = "duplicate_status", nullable = false)
+    private String duplicateStatus = "NONE";
+
     public LigneReleve(LocalDate dateOperation, String libelle, BigDecimal montant) {
         this.dateOperation = dateOperation;
         this.libelle = libelle;
         this.montant = montant;
+        this.direction = montant.signum() >= 0 ? "CREDIT" : "DEBIT";
+        this.libelleNormalise = com.example.comptable.banque.BankLabelNormalizer.normaliser(libelle);
     }
 }

@@ -25,4 +25,7 @@ public interface FactureAvoirRepository extends JpaRepository<FactureAvoir, UUID
     List<Object[]> sommeQuantitesCrediteesParLigne(UUID factureId, StatutFactureAvoir statut);
 
     long countByEntrepriseId(UUID entrepriseId);
+
+    /** Vrai si la facture a deja des avoirs d'un statut donne (annulation d'une facture deja creditee : refusee, l'ecriture serait contrepassee deux fois). */
+    boolean existsByFactureOrigineIdAndStatut(UUID factureId, StatutFactureAvoir statut);
 }

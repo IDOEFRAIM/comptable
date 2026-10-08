@@ -24,6 +24,7 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 public class SecurityConfig {
 
     private final JwtAuthFilter jwtAuthFilter;
+    private final io.micrometer.core.instrument.MeterRegistry meterRegistry;
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
@@ -31,9 +32,12 @@ public class SecurityConfig {
                 .csrf(AbstractHttpConfigurer::disable)
                 .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
+                        // Changement de mot de passe : réservé à un utilisateur authentifié (la seule route permise avec un mot de passe temporaire). Doit précéder /api/auth/**.
+                        .requestMatchers("/api/auth/change-password").authenticated()
                         .requestMatchers("/api/auth/**").permitAll()
                         .requestMatchers("/error").permitAll()
-                        .requestMatchers("/actuator/health").permitAll()
+                        // Sondes d'exploitation : seulement l'état (aucun détail, aucune information interne) ; tout autre point d'actuator reste protégé.
+                        .requestMatchers("/actuator/health", "/actuator/health/**").permitAll()
                         // Le webhook Meta (/api/v1/whatsapp/webhook) est desormais recu directement
                         // par ai-service (FastAPI), plus par ce module Spring Boot - voir
                         // ai-service/app/api/v1/endpoints/whatsapp.py. Seul l'appel retour
@@ -55,6 +59,11 @@ public class SecurityConfig {
                         // Python "Financial Health" - meme principe d'authentification par cle
                         // partagee que la ligne ci-dessus, jamais un utilisateur final.
                         .requestMatchers("/api/v1/internal/ai-finance/**").permitAll()
+                        // Webhook de confirmation asynchrone des fournisseurs de telepaiement fiscal
+                        // (e-Syntaxe, Faso Arzeka) - appele par eux, jamais par un utilisateur final,
+                        // donc pas de JWT possible. Securise par cle partagee X-Webhook-Api-Key (voir
+                        // PaiementWebhookController), meme principe que les endpoints internes ci-dessus.
+                        .requestMatchers("/api/webhooks/paiements/**").permitAll()
                         .requestMatchers("/api/admin/**").hasRole("SUPER_ADMIN")
                         .requestMatchers(HttpMethod.POST, "/api/entreprises")
                         .hasAnyRole("COLLABORATEUR", "EXPERT_COMPTABLE")
@@ -70,6 +79,37 @@ public class SecurityConfig {
                         .hasAnyRole("COLLABORATEUR", "EXPERT_COMPTABLE")
                         .requestMatchers(HttpMethod.GET, "/api/entreprises/*/documents/*/fichier")
                         .hasAnyRole("CLIENT", "COLLABORATEUR", "EXPERT_COMPTABLE")
+                        // Phase B/C : revue des constats, lineage comptable, Hub documents (rapprochement, doublons, validation) et
+                        // demande de piece depuis un constat : travail du cabinet, jamais du role CLIENT (qui garde le depot, la liste
+                        // de ses pieces et la reponse a une demande). Matchers obligatoires : sans eux ces routes tomberaient sur
+                        // anyRequest().authenticated() et un CLIENT pourrait lire/ecarter les constats internes.
+                        .requestMatchers("/api/entreprises/*/revue/**")
+                        .hasAnyRole("COLLABORATEUR", "EXPERT_COMPTABLE")
+                        .requestMatchers("/api/entreprises/*/lineage/**")
+                        .hasAnyRole("COLLABORATEUR", "EXPERT_COMPTABLE")
+                        .requestMatchers("/api/entreprises/*/documents/hub/**")
+                        .hasAnyRole("COLLABORATEUR", "EXPERT_COMPTABLE")
+                        .requestMatchers(HttpMethod.GET, "/api/entreprises/*/documents/*/candidats", "/api/entreprises/*/documents/*/originaux-possibles")
+                        .hasAnyRole("COLLABORATEUR", "EXPERT_COMPTABLE")
+                        .requestMatchers(HttpMethod.POST, "/api/entreprises/*/documents/*/associer", "/api/entreprises/*/documents/*/rejeter-proposition",
+                                "/api/entreprises/*/documents/*/marquer-doublon", "/api/entreprises/*/documents/*/valider",
+                                "/api/entreprises/*/documents/*/retraiter", "/api/entreprises/*/documents/*/lier-ecriture")
+                        .hasAnyRole("COLLABORATEUR", "EXPERT_COMPTABLE")
+                        .requestMatchers(HttpMethod.POST, "/api/entreprises/*/demandes-pieces/depuis-constat/*")
+                        .hasAnyRole("COLLABORATEUR", "EXPERT_COMPTABLE")
+                        // Phase C+ : collecte active (demandes groupees, envoi, relance, synthese, metriques) et association manuelle
+                        // piece <-> demande : travail du cabinet. Le CLIENT garde le depot, sa liste simplifiee et la reponse a une demande.
+                        .requestMatchers("/api/entreprises/*/demandes-pieces/collecte/**")
+                        .hasAnyRole("COLLABORATEUR", "EXPERT_COMPTABLE")
+                        .requestMatchers(HttpMethod.POST, "/api/entreprises/*/demandes-pieces/bulk", "/api/entreprises/*/demandes-pieces/*/envoyer",
+                                "/api/entreprises/*/demandes-pieces/*/relancer", "/api/entreprises/*/demandes-pieces/*/marquer-recue")
+                        .hasAnyRole("COLLABORATEUR", "EXPERT_COMPTABLE")
+                        .requestMatchers(HttpMethod.GET, "/api/entreprises/*/demandes-pieces/*/messages", "/api/entreprises/*/documents/*/demandes-candidates")
+                        .hasAnyRole("COLLABORATEUR", "EXPERT_COMPTABLE")
+                        .requestMatchers(HttpMethod.POST, "/api/entreprises/*/documents/*/associer-demande")
+                        .hasAnyRole("COLLABORATEUR", "EXPERT_COMPTABLE")
+                        // Depot par lien : public, MAIS l'autorisation reelle est le jeton signe (verifie puis recharge la demande reelle).
+                        .requestMatchers("/api/depot/**").permitAll()
                         .requestMatchers("/api/entreprises/*/documents-agent/**")
                         .hasAnyRole("COLLABORATEUR", "EXPERT_COMPTABLE")
                         .requestMatchers("/api/entreprises/*/ecritures", "/api/entreprises/*/ecritures/**")
@@ -79,6 +119,9 @@ public class SecurityConfig {
                         .requestMatchers("/api/entreprises/*/lettrage/**")
                         .hasAnyRole("COLLABORATEUR", "EXPERT_COMPTABLE")
                         .requestMatchers("/api/entreprises/*/rapprochements", "/api/entreprises/*/rapprochements/**")
+                        .hasAnyRole("COLLABORATEUR", "EXPERT_COMPTABLE")
+                        // Phase D : ecran Banque (import, rapprochements, affectation des reglements) = travail du cabinet, jamais du role CLIENT.
+                        .requestMatchers("/api/entreprises/*/banque", "/api/entreprises/*/banque/**")
                         .hasAnyRole("COLLABORATEUR", "EXPERT_COMPTABLE")
                         .requestMatchers("/api/entreprises/*/immobilisations", "/api/entreprises/*/immobilisations/**")
                         .hasAnyRole("COLLABORATEUR", "EXPERT_COMPTABLE")
@@ -104,7 +147,7 @@ public class SecurityConfig {
                         .hasAnyRole("COLLABORATEUR", "EXPERT_COMPTABLE")
                         .requestMatchers("/api/entreprises/*/depreciations", "/api/entreprises/*/depreciations/**")
                         .hasAnyRole("COLLABORATEUR", "EXPERT_COMPTABLE")
-                        .requestMatchers("/api/entreprises/*/etats-financiers/**")
+                        .requestMatchers("/api/entreprises/*/etats-financiers-syscohada/**")
                         .hasAnyRole("COLLABORATEUR", "EXPERT_COMPTABLE")
                         .requestMatchers("/api/entreprises/*/comptes", "/api/entreprises/*/journaux",
                                 "/api/entreprises/*/exercices", "/api/entreprises/*/exercices/**")
@@ -119,6 +162,9 @@ public class SecurityConfig {
                         .requestMatchers("/api/entreprises/*/parametres-comptables", "/api/entreprises/*/parametres-comptables/**")
                         .hasAnyRole("COLLABORATEUR", "EXPERT_COMPTABLE")
                         .requestMatchers("/api/plan-comptable-reference", "/api/plan-comptable-reference/**")
+                        .hasAnyRole("COLLABORATEUR", "EXPERT_COMPTABLE")
+                        // Espace TVA (Phase G) : travail du cabinet, jamais du role CLIENT.
+                        .requestMatchers("/api/entreprises/*/fiscalite/tva", "/api/entreprises/*/fiscalite/tva/**")
                         .hasAnyRole("COLLABORATEUR", "EXPERT_COMPTABLE")
                         .requestMatchers("/api/entreprises/*/declarations-fiscales", "/api/entreprises/*/declarations-fiscales/**")
                         .hasAnyRole("COLLABORATEUR", "EXPERT_COMPTABLE")
@@ -192,6 +238,7 @@ public class SecurityConfig {
                         .authenticated()
                         .anyRequest().authenticated())
                 .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class)
+                .addFilterAfter(new com.example.comptable.common.web.AccessLogFilter(meterRegistry), JwtAuthFilter.class)
                 .build();
     }
 

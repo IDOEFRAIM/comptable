@@ -80,6 +80,10 @@ class RapprochementBancaireServiceMatchingIaTest {
     private MissingEvidenceAnalyzer missingEvidenceAnalyzer;
     @Mock
     private WhatsAppResolutionService whatsAppResolutionService;
+    @Mock
+    private com.example.comptable.banque.BankImportBatchRepository batchRepository;
+    @Mock
+    private com.example.comptable.audit.AuditTrailService auditTrailService;
 
     private RapprochementBancaireService service;
     private UUID entrepriseId;
@@ -87,12 +91,47 @@ class RapprochementBancaireServiceMatchingIaTest {
     private UtilisateurPrincipal principal;
     private CompteComptable compteBanque;
 
+    @org.mockito.Mock
+    private com.example.comptable.banque.BankReconciliationService reconciliationService;
+    @org.mockito.Mock
+    private com.example.comptable.banque.InternalTransferService internalTransferService;
+
+    private void reconciliationPoseLePointeur() {
+        org.mockito.Mockito.lenient().when(reconciliationService.confirmerParLeSysteme(any(), any(), any(), any(), any(), any())).thenAnswer(inv -> {
+            ((LigneReleve) inv.getArgument(0)).setLigneEcritureId(inv.getArgument(1));
+            return new com.example.comptable.banque.BankReconciliation();
+        });
+        // Application par lot (import et controles) : les demandes « confirmer » posent le pointeur, les propositions n'en posent aucun.
+        org.mockito.Mockito.lenient().when(reconciliationService.appliquerLot(any(), any())).thenAnswer(inv -> {
+            java.util.List<com.example.comptable.banque.BankReconciliationService.DemandeAutomatique> demandes = inv.getArgument(1);
+            int confirmees = 0;
+            for (var d : demandes) {
+                if (d.confirmer()) {
+                    d.transaction().setLigneEcritureId(d.ligneEcritureId());
+                    confirmees++;
+                }
+            }
+            return new com.example.comptable.banque.BankReconciliationService.BilanLot(confirmees, 0, 0);
+        });
+    }
+
+    private com.example.comptable.banque.BankStatementImporter bankStatementImporter() {
+        org.mockito.Mockito.lenient().when(batchRepository.save(any())).thenAnswer(inv -> {
+            com.example.comptable.banque.BankImportBatch lot = inv.getArgument(0);
+            lot.setId(UUID.randomUUID());
+            return lot;
+        });
+        return new com.example.comptable.banque.BankStatementImporter(entrepriseAccessService, compteComptableRepository, ligneReleveRepository,
+                releveBancaireRepository, batchRepository, auditTrailService);
+    }
+
     @BeforeEach
     void setUp() {
         service = new RapprochementBancaireService(entrepriseAccessService, compteComptableRepository,
                 releveBancaireRepository, ligneReleveRepository, ligneEcritureRepository, matchingSemantiqueService,
                 matchingContextBuilder, matchDecisionEngine, aiServiceClient, missingEvidenceAnalyzer,
-                whatsAppResolutionService, new SimpleMeterRegistry(), true);
+                whatsAppResolutionService, new SimpleMeterRegistry(), bankStatementImporter(), reconciliationService, internalTransferService, true);
+        reconciliationPoseLePointeur();
 
         entrepriseId = UUID.randomUUID();
         entreprise = new Entreprise();
@@ -126,7 +165,7 @@ class RapprochementBancaireServiceMatchingIaTest {
 
     private void stubberEtapesPrecedentes() {
         when(compteComptableRepository.findById(compteBanque.getId())).thenReturn(Optional.of(compteBanque));
-        when(releveBancaireRepository.save(any())).thenAnswer(inv -> {
+        when(releveBancaireRepository.saveAndFlush(any())).thenAnswer(inv -> {
             ReleveBancaire r = inv.getArgument(0);
             r.setId(UUID.randomUUID());
             return r;

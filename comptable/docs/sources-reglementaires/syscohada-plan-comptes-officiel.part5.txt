@@ -1,0 +1,162 @@
+496|DÉPRÉCIATIONS DES COMPTES APPORTEURS, ASSOCIÉS ET GROUPE|245
+4962|Associés, comptes courants|245
+4963|Associés, opérations faites en commun|245
+4966|Groupe, comptes courants|245
+497|DÉPRÉCIATIONS DES COMPTES DÉBITEURS DIVERS|245
+498|DÉPRÉCIATIONS DES COMPTES DE CRÉANCES H.A.O.|245
+4985|Créances sur cessions d'immobilisations|245
+4986|Créances sur cessions de titres de placement|245
+4988|Autres créances H.A.O.|245
+499|PROVISIONS POUR RISQUES À COURT TERME|245
+4991|sur opérations d'exploitation|245
+4997|sur opérations financières|245
+4998|sur opérations H.A.O.|245
+50|TITRES DE PLACEMENT|246
+51|VALEURS À ENCAISSER|246
+52|BANQUES|246
+53|ÉTABLISSEMENTS FINANCIERS ET ASSIMILÉS|246
+54|INSTRUMENTS DE TRÉSORERIE|246
+55|INSTRUMENTS DE MONNAIE ÉLECTRONIQUE|246
+56|BANQUES, CRÉDITS DE TRÉSORERIE ET D'ESCOMPTE|246
+57|CAISSE|246
+58|RÉGIES D'AVANCES, ACCRÉDITIFS ET VIREMENTS INTERNES|246
+59|DÉPRÉCIATIONS ET PROVISIONS POUR RISQUES À COURT TERME|246
+501|TITRES DU TRÉSOR ET BONS DE CAISSE À COURT TERME|246
+5011|Titres du Trésor à court terme|246
+5012|Titres d'organismes financiers|246
+5013|Bons de caisse à court terme|246
+5016|Frais d'acquisition des titres de trésor et bons de caisse|246
+502|ACTIONS|246
+5021|Actions ou parts propres|246
+5022|Actions cotées|246
+5023|Actions non cotées|246
+5024|Actions démembrées (certificats d'investissement ; droits de vote)|246
+5025|Autres actions|246
+5026|Frais d'acquisition des actions|246
+503|OBLIGATIONS|246
+5031|Obligations émises par la société et rachetées par elle|246
+5032|Obligations cotées|246
+5033|Obligations non cotées|246
+5035|Autres obligations|246
+5036|Frais d'acquisition des obligations|246
+504|BONS DE SOUSCRIPTION|246
+5042|Bons de souscription d'actions|246
+5043|Bons de souscription d'obligations|246
+505|TITRES NÉGOCIABLES HORS RÉGION|247
+506|INTÉRÊTS COURUS|247
+5061|Titres du Trésor et bons de caisse à court terme|247
+5062|Actions|247
+5063|Obligations|247
+508|AUTRES TITRES DE PLACEMENT ET CRÉANCES ASSIMILÉES|247
+511|EFFETS À ENCAISSER|247
+512|EFFETS À L'ENCAISSEMENT|247
+513|CHÈQUES À ENCAISSER|247
+514|CHÈQUES À L'ENCAISSEMENT|247
+515|CARTES DE CRÉDIT À ENCAISSER|247
+518|AUTRES VALEURS À L'ENCAISSEMENT|247
+5181|Warrants|247
+5182|Billets de fonds|247
+5185|Chèques de voyage|247
+5186|Coupons échus|247
+5187|Intérêts échus des obligations|247
+521|BANQUES LOCALES|247
+5211|Banques en monnaie nationale|247
+5215|Banques en devises|247
+522|BANQUES AUTRES ÉTATS RÉGION|247
+523|BANQUES AUTRES ÉTATS ZONE MONÉTAIRE|247
+524|BANQUES HORS ZONE MONÉTAIRE|247
+525|BANQUES DÉPÔT À TERME|247
+526|BANQUES, INTÉRÊTS COURUS|248
+5261|Banque, intérêts courus charges à payer|248
+5267|Banque, intérêts courus produits à recevoir|248
+531|CHÈQUES POSTAUX|248
+532|TRÉSOR|248
+533|SOCIÉTÉS DE GESTION ET D'INTERMÉDIATION (S.G.I.)|248
+536|ÉTABLISSEMENTS FINANCIERS, INTÉRÊTS COURUS|248
+538|AUTRES ORGANISMES FINANCIERS|248
+541|OPTIONS DE TAUX D'INTÉRÊT|248
+542|OPTIONS DE TAUX DE CHANGE|248
+543|OPTIONS DE TAUX BOURSIERS|248
+544|INSTRUMENTS DE MARCHÉS À TERME|248
+545|AVOIRS D'OR ET AUTRES MÉTAUX PRÉCIEUX|248
+551|MONNAIE ÉLECTRONIQUE - CARTE CARBURANT|248
+552|MONNAIE ÉLECTRONIQUE - TÉLÉPHONE PORTABLE|248
+553|MONNAIE ÉLECTRONIQUE - CARTE PÉAGE|248
+554|PORTE-MONNAIE ÉLECTRONIQUE|248
+558|AUTRES INSTRUMENTS MONNAIES ÉLECTRONIQUES|248
+561|CRÉDITS DE TRÉSORERIE|249
+564|ESCOMPTE DE CRÉDITS DE CAMPAGNE|249
+565|ESCOMPTE DE CRÉDITS ORDINAIRES|249
+566|BANQUES, CRÉDITS DE TRÉSORERIE, INTÉRÊTS COURUS|249
+571|CAISSE SIÈGE SOCIAL|249
+5711|Caisse en monnaie nationale|249
+5712|Caisse en devises|249
+572|CAISSE SUCCURSALE A|249
+5721|en monnaie nationale|249
+5722|en devises|249
+573|CAISSE SUCCURSALE B|249
+5731|en monnaie nationale|249
+5732|en devises|249
+581|RÉGIES D'AVANCE|249
+582|ACCRÉDITIFS|249
+585|VIREMENTS DE FONDS|249
+588|AUTRES VIREMENTS INTERNES|249
+590|DÉPRÉCIATIONS DES TITRES DE PLACEMENT|249
+591|DÉPRÉCIATIONS DES TITRES ET VALEURS À ENCAISSER|249
+592|DÉPRÉCIATIONS DES COMPTES BANQUES|249
+593|DÉPRÉCIATIONS DES COMPTES ÉTABLISSEMENTS FINANCIERS ET ASSIMILÉS|249
+594|DÉPRÉCIATIONS DES COMPTES D'INSTRUMENTS DE TRÉSORERIE|249
+599|PROVISIONS POUR RISQUE À COURT TERME À CARACTÈRE FINANCIER|249
+60|ACHATS ET VARIATIONS DE STOCKS|250
+61|TRANSPORTS|250
+62|SERVICES EXTÉRIEURS|250
+63|AUTRES SERVICES EXTÉRIEURS|250
+64|IMPÔTS ET TAXES|250
+65|AUTRES CHARGES|250
+66|CHARGES DE PERSONNEL|250
+67|FRAIS FINANCIERS ET CHARGES ASSIMILÉES|250
+68|DOTATIONS AUX AMORTISSEMENTS|250
+69|DOTATIONS AUX PROVISIONS ET AUX DÉPRÉCIATIONS|250
+601|ACHATS DE MARCHANDISES|250
+6011|dans la Région|250
+6012|hors Région|250
+6013|aux entités du groupe dans la Région|250
+6014|aux entités du groupe hors Région|250
+6015|frais sur achats|250
+6019|Rabais, remises et ristournes obtenus (non ventilés)|250
+602|ACHATS DE MATIÈRES PREMIÈRES ET FOURNITURES LIÉES|250
+6021|dans la Région|250
+6022|hors Région|250
+6023|aux entités du groupe dans la Région|250
+6024|aux entités du groupe hors Région|250
+6025|frais sur achats|250
+6029|Rabais, remises et ristournes obtenus (non ventilés)|250
+603|VARIATIONS DES STOCKS DE BIENS ACHETÉS|250
+6031|Variations des stocks de marchandises|250
+6032|Variations des stocks de matières premières et fournitures liées|250
+6033|Variations des stocks d'autres approvisionnements|251
+604|ACHATS STOCKÉS DE MATIÈRES ET FOURNITURES CONSOMMABLES|251
+6041|Matières consommables|251
+6042|Matières combustibles|251
+6043|Produits d'entretien|251
+6044|Fournitures d'atelier et d'usine|251
+6045|Frais sur achats|251
+6046|Fournitures de magasin|251
+6047|Fournitures de bureau|251
+6049|Rabais, remises et ristournes obtenus (non ventilés)|251
+605|AUTRES ACHATS|251
+6051|Fournitures non stockables - Eau|251
+6052|Fournitures non stockables - Électricité|251
+6053|Fournitures non stockables - Autres énergies|251
+6054|Fournitures d'entretien non stockables|251
+6055|Fournitures de bureau non stockables|251
+6056|Achats de petit matériel et outillage|251
+6057|Achats d'études et prestations de services|251
+6058|Achats de travaux, matériels et équipements|251
+6059|Rabais, remises et ristournes obtenus (non ventilés)|251
+608|ACHATS D'EMBALLAGES|251
+6081|Emballages perdus|251
+6082|Emballages récupérables non identifiables|251
+6083|Emballages à usage mixte|251
+6085|Frais sur achats|251
+6089|Rabais, remises et ristournes obtenus (non ventilés)|251

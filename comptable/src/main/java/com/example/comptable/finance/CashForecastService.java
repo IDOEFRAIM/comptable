@@ -88,6 +88,7 @@ public class CashForecastService {
     private final FactureRepository factureRepository;
     private final DeclarationFiscaleRepository declarationFiscaleRepository;
     private final PaymentBehaviorService paymentBehaviorService;
+    private final com.example.comptable.comptabilite.allocation.StatutPaiementFactureService statutPaiementFactureService;
 
     @Transactional(readOnly = true)
     public List<PrevisionTresorerieDto> generer(UUID entrepriseId, UtilisateurPrincipal principal) {
@@ -95,9 +96,10 @@ public class CashForecastService {
         LocalDate aujourdHui = LocalDate.now();
 
         BigDecimal soldeActuel = ligneEcritureRepository.soldeTresorerie(entrepriseId, aujourdHui);
-        BigDecimal encaissementsAttendus = ponderer(factureRepository
+        // Le reste a encaisser vient des allocations de reglements (source unique du statut de paiement), pas d'un drapeau.
+        BigDecimal encaissementsAttendus = ponderer(statutPaiementFactureService.ouvertes(entrepriseId, factureRepository
                 .findByEntrepriseIdAndTypeAndStatutAndDateEcheanceBeforeOrderByDateEcheanceAsc(
-                        entrepriseId, TypeFacture.FACTURE, StatutFacture.VALIDEE, aujourdHui), aujourdHui);
+                        entrepriseId, TypeFacture.FACTURE, StatutFacture.VALIDEE, aujourdHui)), aujourdHui);
 
         return Arrays.stream(HORIZONS_JOURS)
                 .mapToObj(horizon -> construire(entrepriseId, aujourdHui, horizon, soldeActuel, encaissementsAttendus))
@@ -108,11 +110,11 @@ public class CashForecastService {
                                                BigDecimal soldeActuel, BigDecimal encaissementsAttendus) {
         LocalDate limite = aujourdHui.plusDays(horizonJours);
 
-        BigDecimal encaissementsConnus = factureRepository
+        BigDecimal encaissementsConnus = statutPaiementFactureService.ouvertes(entrepriseId, factureRepository
                 .findByEntrepriseIdAndTypeAndStatutAndDateEcheanceBetweenOrderByDateEcheanceAsc(
-                        entrepriseId, TypeFacture.FACTURE, StatutFacture.VALIDEE, aujourdHui, limite)
+                        entrepriseId, TypeFacture.FACTURE, StatutFacture.VALIDEE, aujourdHui, limite))
                 .stream()
-                .map(Facture::montantTtc)
+                .map(com.example.comptable.comptabilite.allocation.StatutPaiementFactureService.FactureOuverte::reste)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
 
         BigDecimal decaissementsConnus = declarationFiscaleRepository
@@ -133,12 +135,13 @@ public class CashForecastService {
 
     /** Ponderation deterministe (pas de LLM, pas de modele statistique) par anciennete de retard -
      * memes bornes que {@code BalanceAgeeService} pour rester coherent avec le reste du systeme. */
-    private BigDecimal ponderer(List<Facture> facturesEnRetard, LocalDate aujourdHui) {
+    private BigDecimal ponderer(List<com.example.comptable.comptabilite.allocation.StatutPaiementFactureService.FactureOuverte> facturesEnRetard,
+                                LocalDate aujourdHui) {
         return facturesEnRetard.stream()
                 .map(f -> {
-                    long joursRetard = ChronoUnit.DAYS.between(f.getDateEcheance(), aujourdHui);
+                    long joursRetard = ChronoUnit.DAYS.between(f.facture().getDateEcheance(), aujourdHui);
                     BigDecimal probabilite = probabiliteRecouvrement(joursRetard);
-                    return f.montantTtc().multiply(probabilite).setScale(0, RoundingMode.HALF_UP);
+                    return f.reste().multiply(probabilite).setScale(0, RoundingMode.HALF_UP);
                 })
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
     }
@@ -206,23 +209,26 @@ public class CashForecastService {
         // --- Connus (KNOWN) ---
         BigDecimal soldeOuvertureGlobal = ligneEcritureRepository.soldeTresorerie(entrepriseId, asOf.minusDays(1));
 
-        List<Facture> facturesAEcheanceFuture = factureRepository
-                .findByEntrepriseIdAndTypeAndStatutAndDateEcheanceBetweenOrderByDateEcheanceAsc(
-                        entrepriseId, TypeFacture.FACTURE, StatutFacture.VALIDEE, asOf, finHorizon);
+        List<com.example.comptable.comptabilite.allocation.StatutPaiementFactureService.FactureOuverte> facturesAEcheanceFuture =
+                statutPaiementFactureService.ouvertes(entrepriseId, factureRepository
+                        .findByEntrepriseIdAndTypeAndStatutAndDateEcheanceBetweenOrderByDateEcheanceAsc(
+                                entrepriseId, TypeFacture.FACTURE, StatutFacture.VALIDEE, asOf, finHorizon));
 
         List<DeclarationFiscale> declarationsDues = declarationFiscaleRepository
                 .findByEntrepriseIdAndDateEcheanceBetween(entrepriseId, asOf, finHorizon);
 
         // --- Attendus (EXPECTED) : factures deja en retard, date de collecte estimee ---
-        List<Facture> facturesEnRetard = factureRepository
-                .findByEntrepriseIdAndTypeAndStatutAndDateEcheanceBeforeOrderByDateEcheanceAsc(
-                        entrepriseId, TypeFacture.FACTURE, StatutFacture.VALIDEE, asOf);
+        List<com.example.comptable.comptabilite.allocation.StatutPaiementFactureService.FactureOuverte> facturesEnRetard =
+                statutPaiementFactureService.ouvertes(entrepriseId, factureRepository
+                        .findByEntrepriseIdAndTypeAndStatutAndDateEcheanceBeforeOrderByDateEcheanceAsc(
+                                entrepriseId, TypeFacture.FACTURE, StatutFacture.VALIDEE, asOf));
         Map<UUID, PaymentBehaviorDto> comportementParTiers = new HashMap<>();
         List<FluxEstime> encaissementsAttendus = new ArrayList<>();
         Map<UUID, BigDecimal> creanceARisqueParTiers = new HashMap<>();
         Map<UUID, String> nomTiersParId = new HashMap<>();
         Map<UUID, LiquiditySeverity> risqueSeveriteParTiers = new HashMap<>();
-        for (Facture facture : facturesEnRetard) {
+        for (com.example.comptable.comptabilite.allocation.StatutPaiementFactureService.FactureOuverte ouverte : facturesEnRetard) {
+            Facture facture = ouverte.facture();
             Tiers tiers = facture.getTiers();
             PaymentBehaviorDto comportement = comportementParTiers.computeIfAbsent(
                     tiers.getId(), id -> paymentBehaviorService.analyser(id, tiers.getNom()));
@@ -242,13 +248,13 @@ public class CashForecastService {
             }
 
             if (!dateEstimee.isAfter(finHorizon)) {
-                encaissementsAttendus.add(new FluxEstime(dateEstimee, facture.montantTtc()));
+                encaissementsAttendus.add(new FluxEstime(dateEstimee, ouverte.reste()));
             } else {
                 dataQualityWarnings.add("receivable_beyond_horizon: creance de " + tiers.getNom()
                         + " estimee au-dela des " + nombreSemaines + " semaines de l'horizon, non projetee.");
             }
 
-            creanceARisqueParTiers.merge(tiers.getId(), facture.montantTtc(), BigDecimal::add);
+            creanceARisqueParTiers.merge(tiers.getId(), ouverte.reste(), BigDecimal::add);
             nomTiersParId.put(tiers.getId(), tiers.getNom());
             risqueSeveriteParTiers.merge(tiers.getId(), severiteRisque,
                     (a, b) -> a == LiquiditySeverity.MEDIUM || b == LiquiditySeverity.MEDIUM ? LiquiditySeverity.MEDIUM : a);
@@ -295,8 +301,8 @@ public class CashForecastService {
             LocalDate finSemaine = debutSemaine.plusDays(6);
 
             BigDecimal encaissementsConnusSemaine = facturesAEcheanceFuture.stream()
-                    .filter(f -> !f.getDateEcheance().isBefore(debutSemaine) && !f.getDateEcheance().isAfter(finSemaine))
-                    .map(Facture::montantTtc)
+                    .filter(f -> !f.facture().getDateEcheance().isBefore(debutSemaine) && !f.facture().getDateEcheance().isAfter(finSemaine))
+                    .map(com.example.comptable.comptabilite.allocation.StatutPaiementFactureService.FactureOuverte::reste)
                     .reduce(BigDecimal.ZERO, BigDecimal::add);
             BigDecimal encaissementsAttendusSemaine = sommerFluxDansSemaine(encaissementsAttendus, debutSemaine, finSemaine);
             BigDecimal encaissementsPreditsSemaine = BigDecimal.ZERO; // voir limitations : pas de baseline de ventes

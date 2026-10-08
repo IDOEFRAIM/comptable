@@ -8,6 +8,7 @@ import com.example.comptable.comptabilite.domain.Tiers;
 import com.example.comptable.comptabilite.domain.TypeFacture;
 import com.example.comptable.comptabilite.domain.TypeJournal;
 import com.example.comptable.comptabilite.operation.common.AccountingOperationEngine;
+import com.example.comptable.comptabilite.operation.common.AccountingSource;
 import com.example.comptable.comptabilite.operation.common.AccountingOperationType;
 import com.example.comptable.comptabilite.operation.common.ResultatRegle;
 import com.example.comptable.comptabilite.operation.common.domain.AccountingOperationProposalLigne;
@@ -60,6 +61,9 @@ public class FacturationService {
     private final VenteRule venteRule;
     private final AccountingOperationEngine accountingOperationEngine;
     private final MouvementStockService mouvementStockService;
+    private final com.example.comptable.comptabilite.allocation.StatutPaiementFactureService statutPaiementFactureService;
+    private final com.example.comptable.comptabilite.repository.LigneEcritureRepository ligneEcritureRepository;
+    private final com.example.comptable.comptabilite.repository.FactureAvoirRepository factureAvoirRepository;
 
     @Transactional
     public FactureDto creer(UUID entrepriseId, TypeFacture type, CreerFactureRequest request, UtilisateurPrincipal principal) {
@@ -187,7 +191,7 @@ public class FacturationService {
         // cloture d'exercice, traçabilite via sourceType/sourceId, idempotent sur double appel).
         var proposition = accountingOperationEngine.proposerEtValiderImmediatement(entrepriseId, AccountingOperationType.VENTE,
                 facture.getTiers(), facture.getDateEmission(), libelle, facture.getNumero(), resultat,
-                "FACTURE", facture.getId(), principal);
+                AccountingSource.de("FACTURE", facture.getId(), "VALIDATION"), principal);
 
         destockerLignesArticle(entrepriseId, facture, principal);
 
@@ -227,6 +231,22 @@ public class FacturationService {
         if (facture.getStatut() != StatutFacture.VALIDEE) {
             throw new ResponseStatusException(HttpStatus.CONFLICT, "Seule une facture validee peut etre annulee");
         }
+        // Invariant : une facture qui porte des reglements affectes ne disparait pas en laissant des affectations economiquement incoherentes. Rien n'est
+        // desaffecte automatiquement : le comptable annule d'abord les affectations (ecran Banque), puis annule la facture.
+        var affectations = statutPaiementFactureService.affectationsActives(entrepriseId, facture);
+        if (!affectations.isEmpty()) {
+            java.math.BigDecimal alloue = affectations.stream().map(a -> a.getAllocatedAmount()).reduce(java.math.BigDecimal.ZERO, java.math.BigDecimal::add);
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "La facture " + facture.getNumero() + " ne peut pas etre annulee : " + affectations.size()
+                    + " affectation(s) de reglement active(s) pour " + alloue.stripTrailingZeros().toPlainString() + ". Annulez d'abord ces affectations (Banque > Affectations), puis annulez la facture.");
+        }
+
+        // Une facture deja creditee par un avoir valide n'est pas annulee : l'avoir a deja corrige la comptabilite (annuler contrepasserait l'ecriture une seconde fois).
+        if (factureAvoirRepository.existsByFactureOrigineIdAndStatut(facture.getId(), com.example.comptable.comptabilite.domain.StatutFactureAvoir.VALIDEE)) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "La facture " + facture.getNumero()
+                    + " a deja un avoir valide : elle ne peut pas etre annulee (la comptabilite est deja corrigee par l'avoir).");
+        }
+
+        contrepasserEcritureDeValidation(entrepriseId, facture, principal);
 
         for (LigneFacture ligne : facture.getLignes()) {
             if (ligne.getMouvementStockId() == null) {
@@ -244,14 +264,32 @@ public class FacturationService {
         return FactureDto.from(factureRepository.save(facture));
     }
 
-    @Transactional
-    public FactureDto marquerPayee(UUID entrepriseId, UUID factureId, UtilisateurPrincipal principal) {
-        Facture facture = chargerFacture(entrepriseId, factureId, principal);
-        if (facture.getStatut() != StatutFacture.VALIDEE) {
-            throw new ResponseStatusException(HttpStatus.CONFLICT, "Seule une facture validee peut etre marquee payee");
+    /**
+     * Contrepassation de l'ecriture de validation : une ecriture validee n'est jamais supprimee ni modifiee, l'annulation produit une SECONDE ecriture
+     * qui inverse la premiere (memes comptes, memes tiers, debit et credit echanges), tracee par la source {@code FACTURE/<id>/ANNULATION}. Le moteur
+     * d'operations garantit l'idempotence : un deuxieme appel retrouve la contrepassation deja produite au lieu d'en creer une autre. Une facture validee
+     * sans ecriture liee (donnee ancienne) n'a rien a contrepasser. La contrepassation est datee du jour : l'exercice de la facture a pu etre cloture.
+     */
+    private void contrepasserEcritureDeValidation(UUID entrepriseId, Facture facture, UtilisateurPrincipal principal) {
+        if (facture.getEcritureId() == null) {
+            return;
         }
-        facture.setStatut(StatutFacture.PAYEE);
-        return FactureDto.from(factureRepository.save(facture));
+        List<AccountingOperationProposalLigne> lignes = new java.util.ArrayList<>();
+        for (var origine : ligneEcritureRepository.chargerDeLEcriture(facture.getEcritureId())) {
+            String libelle = "Annulation " + facture.getNumero() + " - " + (origine.getLibelle() == null ? "" : origine.getLibelle());
+            AccountingOperationProposalLigne inverse = origine.getDebit().signum() > 0
+                    ? AccountingOperationProposalLigne.credit(origine.getCompte(), origine.getDebit(), libelle)
+                    : AccountingOperationProposalLigne.debit(origine.getCompte(), origine.getCredit(), libelle);
+            inverse.setTiers(origine.getTiers());
+            lignes.add(inverse);
+        }
+        if (lignes.isEmpty()) {
+            return;
+        }
+        ResultatRegle resultat = new ResultatRegle(TypeJournal.VENTES, lignes, List.of(), List.of());
+        accountingOperationEngine.proposerEtValiderImmediatement(entrepriseId, AccountingOperationType.ANNULATION_FACTURE,
+                facture.getTiers(), LocalDate.now(), "Annulation facture " + facture.getNumero(), facture.getNumero(), resultat,
+                AccountingSource.de("FACTURE", facture.getId(), "ANNULATION"), principal);
     }
 
     private void ajouterLignes(Facture facture, List<LigneFactureRequest> lignes) {

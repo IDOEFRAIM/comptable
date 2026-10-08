@@ -4,6 +4,8 @@ export interface AuthResponse {
   tenantId: string;
   email: string;
   roles: string[];
+  /** Mot de passe temporaire ou réinitialisé : seule la page de changement de mot de passe est accessible. */
+  mustChangePassword?: boolean;
 }
 
 export interface RegisterCabinetRequest {

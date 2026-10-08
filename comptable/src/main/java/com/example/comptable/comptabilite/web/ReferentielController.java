@@ -60,7 +60,8 @@ public class ReferentielController {
 
     @PostMapping("/exercices/{exerciceId}/cloturer")
     public ExerciceComptableDto cloturerExercice(@PathVariable UUID entrepriseId, @PathVariable UUID exerciceId,
+                                                  @RequestBody(required = false) ClotureExerciceService.ConfirmationCloture confirmation,
                                                   @AuthenticationPrincipal UtilisateurPrincipal principal) {
-        return clotureExerciceService.cloturer(entrepriseId, exerciceId, principal);
+        return clotureExerciceService.cloturerAvecConfirmation(entrepriseId, exerciceId, principal, confirmation);
     }
 }

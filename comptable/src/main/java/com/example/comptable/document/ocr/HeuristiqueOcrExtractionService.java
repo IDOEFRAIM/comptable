@@ -33,7 +33,10 @@ public class HeuristiqueOcrExtractionService implements OcrExtractionService {
     // dupliquer les expressions regulieres exactes dans une classe de test separee.
     static final Pattern MONTANT_TTC = montantApres("total\\s*ttc|net\\s*a\\s*payer|montant\\s*ttc");
     static final Pattern MONTANT_HT = montantApres("total\\s*ht|montant\\s*ht");
-    static final Pattern MONTANT_TVA = montantApres("tva");
+    static final Pattern MONTANT_TVA = montantApres("tva(?:\\s*\\(?\\s*\\d+(?:[.,]\\d+)?\\s*%\\s*\\)?)?");
+    /** Numero imprime apres « Facture » / « Invoice » : doit contenir au moins un chiffre (sinon « Facture du ... » donnerait « du »). */
+    static final Pattern NUMERO_FACTURE = Pattern.compile(
+            "(?i)(?:facture|invoice)\\s*(?:n[\u00b0\u00ba]|no\\.?|num[e\u00e9]ro|#)?\\s*[:.]?\\s*((?=[A-Z0-9/_.-]*\\d)[A-Z0-9][A-Z0-9/_.-]{2,29})");
     private static final Pattern DATE_JJMMAAAA = Pattern.compile("(\\d{2})[/.-](\\d{2})[/.-](\\d{4})");
 
     @Override
@@ -73,7 +76,7 @@ public class HeuristiqueOcrExtractionService implements OcrExtractionService {
         // reperage regex), contrairement au VLM qui peut estimer sa propre certitude.
         double confiance = reussite ? 0.6 : 0.0;
 
-        return new OcrResult(ht, tva, ttc, date, reussite, message, confiance, null);
+        return new OcrResult(ht, tva, ttc, date, reussite, message, confiance, null, extraireNumeroFacture(texte), null);
     }
 
     private String extraireTexte(byte[] contenu) throws IOException {
@@ -93,11 +96,18 @@ public class HeuristiqueOcrExtractionService implements OcrExtractionService {
     /** Visibilite package (non private) pour etre testee directement sur des chaines de texte,
      * sans avoir a generer un PDF reel juste pour exercer la logique de reperage. */
     BigDecimal extraireMontant(String texte, Pattern pattern) {
+        // Derniere occurrence valide, pas la premiere : un en-tete de tableau ("Total HT" suivi de
+        // la ligne "Q-001 ...") precede le vrai bloc de totaux situe en bas de facture et faisait
+        // lire 1 au lieu du montant.
         Matcher matcher = pattern.matcher(texte);
-        if (!matcher.find()) {
-            return null;
+        BigDecimal retenu = null;
+        while (matcher.find()) {
+            BigDecimal candidat = normaliserMontant(matcher.group(1));
+            if (candidat != null) {
+                retenu = candidat;
+            }
         }
-        return normaliserMontant(matcher.group(1));
+        return retenu;
     }
 
     BigDecimal normaliserMontant(String brut) {
@@ -114,6 +124,12 @@ public class HeuristiqueOcrExtractionService implements OcrExtractionService {
         } catch (NumberFormatException e) {
             return null;
         }
+    }
+
+    /** Premier numero de facture lu (celui de l'en-tete) ; null si aucun motif reconnaissable. */
+    String extraireNumeroFacture(String texte) {
+        Matcher matcher = NUMERO_FACTURE.matcher(texte);
+        return matcher.find() ? matcher.group(1) : null;
     }
 
     private LocalDate extraireDate(String texte) {

@@ -46,13 +46,18 @@ public class WhatsAppCloudApiClient {
         } catch (RestClientException e) {
             throw new WhatsAppEnvoiIndisponibleException(
                     "Echec de l'envoi WhatsApp vers " + numeroDestinataire + " (template " + nomTemplate + ") : "
-                            + e.getMessage());
+                            + e.getMessage(), e);
         }
     }
 
     public static class WhatsAppEnvoiIndisponibleException extends RuntimeException {
         public WhatsAppEnvoiIndisponibleException(String message) {
             super(message);
+        }
+
+        /** Conserve la cause : le code HTTP distingue un refus definitif (destinataire/template) d'une panne passagere. */
+        public WhatsAppEnvoiIndisponibleException(String message, Throwable cause) {
+            super(message, cause);
         }
     }
 }

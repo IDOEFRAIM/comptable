@@ -34,6 +34,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -58,6 +59,9 @@ class CopilotServiceTest {
     @Mock
     private CopilotTelemetryRecorder telemetryRecorder;
 
+    @Mock
+    private com.example.comptable.comptabilite.allocation.StatutPaiementFactureService statutPaiementFactureService;
+
     @InjectMocks
     private CopilotService copilotService;
 
@@ -66,6 +70,10 @@ class CopilotServiceTest {
 
     @BeforeEach
     void setUp() {
+        lenient().when(statutPaiementFactureService.ouvertes(org.mockito.ArgumentMatchers.any(), org.mockito.ArgumentMatchers.anyCollection()))
+                .thenAnswer(inv -> ((java.util.Collection<com.example.comptable.comptabilite.domain.Facture>) inv.getArgument(1)).stream()
+                        .map(f -> new com.example.comptable.comptabilite.allocation.StatutPaiementFactureService.FactureOuverte(f, f.montantTtc(), java.math.BigDecimal.ZERO, f.montantTtc(),
+                                com.example.comptable.comptabilite.allocation.StatutPaiement.NON_PAYEE)).toList());
         entrepriseId = UUID.randomUUID();
         Entreprise entreprise = new Entreprise();
         entreprise.setId(entrepriseId);
@@ -189,6 +197,7 @@ class CopilotServiceTest {
     private FindingDto finding(String type, String sourceType, String sourceId) {
         return new FindingDto(UUID.randomUUID(), type, SeveriteFinding.IMPORTANT.name(), sourceType, sourceId,
                 "Justificatif manquant", "description", null, null, "Contacter le client",
-                StatutFinding.OPEN.name(), OffsetDateTime.now(), null, null, null, null);
+                StatutFinding.OPEN.name(), OffsetDateTime.now(), null, null, null, null,
+                type, "DOCUMENT", "WARNING", null, null, OffsetDateTime.now());
     }
 }

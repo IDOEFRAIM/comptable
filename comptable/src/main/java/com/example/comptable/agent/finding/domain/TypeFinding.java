@@ -18,5 +18,11 @@ public enum TypeFinding {
     /** Ecriture BROUILLON ancienne, jamais validee. */
     ECRITURE_A_CONTROLER,
     /** Blocage identifie lors du calcul de Closing Readiness. */
-    CLOSING_BLOCKER
+    CLOSING_BLOCKER,
+    /** Imputation a confirmer : compte non configure/ambigu/invalide, nature a valider (jamais un compte devine). */
+    ACCOUNT_REVIEW,
+    /** Ecart bancaire : lignes de releve non pointees, solde du releve different du solde comptable. */
+    BANK_DIFFERENCE,
+    /** Donnee incoherente detectee de facon deterministe (ex. HT + TVA different du TTC). */
+    DATA_INCONSISTENCY
 }

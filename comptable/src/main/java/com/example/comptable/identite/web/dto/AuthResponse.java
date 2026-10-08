@@ -8,6 +8,7 @@ public record AuthResponse(
         UUID utilisateurId,
         UUID tenantId,
         String email,
-        List<String> roles
+        List<String> roles,
+        boolean mustChangePassword
 ) {
 }

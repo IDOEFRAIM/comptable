@@ -38,6 +38,7 @@ class OcrResult(BaseModel):
     confiance: float
 
     fournisseur: str | None = None
+    numero_facture: str | None = Field(default=None, alias="numeroFacture")
     devise: str = "XOF"
     mode_paiement: str | None = Field(default=None, alias="modePaiement")
 

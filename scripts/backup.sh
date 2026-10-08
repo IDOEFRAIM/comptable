@@ -9,12 +9,19 @@
 # A planifier via cron sur l'hote, ex. tous les jours a 2h :
 #   0 2 * * * cd /opt/saas-comptable && ./scripts/backup.sh /var/backups/comptable >> /var/log/comptable-backup.log 2>&1
 set -euo pipefail
+export MSYS_NO_PATHCONV=1   # Git Bash (Windows) : ne pas reecrire les chemins /backup, /data passes a docker
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$ROOT"
 
 OUT_BASE="${1:-$ROOT/backups}"
 STAMP="$(date +%Y%m%d-%H%M%S)"
+mkdir -p "$OUT_BASE"
+# Supervision : le resultat de la derniere execution est ecrit dans $OUT_BASE/LAST_BACKUP_STATUS (OK|FAIL + horodatage ISO + dossier) ; code de sortie 0 = succes, non nul = echec.
+# scripts/check-backup.sh lit ce fichier (age maximum) et peut etre branche sur un cron / une supervision externe.
+statut() { printf '%s %s %s
+' "$1" "$(date -u +%Y-%m-%dT%H:%M:%SZ)" "${OUT:-}" > "$OUT_BASE/LAST_BACKUP_STATUS"; }
+trap 'code=$?; if [ "$code" -ne 0 ]; then statut FAIL; echo "[backup] ECHEC (code $code)" >&2; rm -rf "${OUT:-}"; fi' EXIT
 OUT="$OUT_BASE/comptable-$STAMP"
 mkdir -p "$OUT"
 
@@ -35,8 +42,10 @@ VOL="$($COMPOSE ps -q frontend >/dev/null 2>&1; docker volume ls --format '{{.Na
 docker run --rm -v "$VOL":/data:ro -v "$OUT":/backup alpine \
 	tar czf /backup/documents.tar.gz -C /data .
 
+[ -s "$OUT/db.dump" ] && [ -s "$OUT/documents.tar.gz" ] || { echo "Sauvegarde incomplete (fichier vide)." >&2; exit 1; }
 SIZE="$(du -sh "$OUT" | cut -f1)"
-echo "OK -> $OUT ($SIZE)"
+statut OK
+echo "[backup] $(date -u +%Y-%m-%dT%H:%M:%SZ) OK -> $OUT ($SIZE)"
 echo "Restauration :  ./scripts/restore.sh $OUT"
 
 # Retention : garde les 14 sauvegardes les plus recentes dans OUT_BASE.

@@ -201,8 +201,6 @@ class RegularisationServiceTest {
     }
 
     private AccountingOperationProposalDto propositionDto(UUID id, String statut) {
-        return new AccountingOperationProposalDto(id, entrepriseId, "REGULARISATION", statut, null, null, null,
-                LocalDate.of(2026, 12, 31), "libelle", null, java.util.List.of(), BigDecimal.ZERO, BigDecimal.ZERO,
-                true, java.util.List.of(), java.util.List.of(), null, null, null, null, null, "REGULARISATION", id);
+        return new AccountingOperationProposalDto(id, entrepriseId, "REGULARISATION", statut, null, null, null, LocalDate.of(2026, 12, 31), "libelle", null, java.util.List.of(), BigDecimal.ZERO, BigDecimal.ZERO, true, java.util.List.of(), java.util.List.of(), null, null, null, null, null, "REGULARISATION", id, "COMPTABILISATION");
     }
 }

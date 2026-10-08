@@ -136,20 +136,23 @@ td {
   }
 }
 
-.bouton-lien {
-  border: none;
-  background: none;
-  color: var(--color-primary);
-  cursor: pointer;
-  font-size: 0.8125rem;
-  font-weight: 600;
-  white-space: nowrap;
-  margin-left: 0.5rem;
+.ligne-paiement {
+  background: var(--bg-subtle-hover);
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  align-items: flex-end;
+}
 
-  &:disabled {
-    color: var(--text-placeholder);
-    cursor: not-allowed;
-  }
+.ligne-paiement-statut {
+  background: var(--bg-subtle-hover);
+  font-size: 0.8125rem;
+  color: var(--text-tertiary);
+}
+
+.message-paiement {
+  font-style: italic;
+  margin-left: 0.3rem;
 }
 
 .etat-vide {

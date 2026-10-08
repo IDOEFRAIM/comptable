@@ -1,4 +1,4 @@
-import { DatePipe } from '@angular/common';
+import { DatePipe, DecimalPipe } from '@angular/common';
 import { Component, inject, input, OnChanges, OnInit, signal } from '@angular/core';
 import { ComptabiliserModalComponent } from '../../comptabilite/comptabiliser-modal.component';
 import { DocumentService } from '../document.service';
@@ -15,7 +15,7 @@ const TYPES_COMPTABILISABLES = new Set(['FACTURE_ACHAT', 'FACTURE_VENTE']);
 @Component({
   selector: 'app-document-list',
   standalone: true,
-  imports: [DatePipe, ComptabiliserModalComponent],
+  imports: [DecimalPipe, DatePipe, ComptabiliserModalComponent],
   templateUrl: './document-list.component.html',
   styleUrl: './document-list.component.scss',
 })

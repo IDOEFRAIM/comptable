@@ -41,12 +41,26 @@ public class JwtAuthFilter extends OncePerRequestFilter {
                 }
 
                 UtilisateurPrincipal principal = userDetailsService.loadUserById(claims.getSubject());
+                Integer version = claims.get("cv", Integer.class);
+                // Compte désactivé ou mot de passe modifié depuis l'émission du jeton : le jeton est révoqué (effet immédiat, pas à l'expiration).
+                if (!principal.isEnabled() || version == null || version != principal.getCredentialsVersion()) {
+                    throw new JwtException("Jeton révoqué");
+                }
+                // Mot de passe temporaire ou réinitialisé : seule la route de changement de mot de passe est permise.
+                if (principal.isMustChangePassword() && !"/api/auth/change-password".equals(request.getRequestURI())) {
+                    TenantContext.clear();
+                    response.setStatus(HttpServletResponse.SC_FORBIDDEN);
+                    response.setContentType("application/json;charset=UTF-8");
+                    response.getWriter().write("{\"code\":\"PASSWORD_CHANGE_REQUIRED\",\"message\":\"Vous devez choisir un nouveau mot de passe avant de continuer.\"}");
+                    return;
+                }
                 var authentication = new UsernamePasswordAuthenticationToken(
                         principal, null, principal.getAuthorities());
                 authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
                 SecurityContextHolder.getContext().setAuthentication(authentication);
             } catch (JwtException | IllegalArgumentException e) {
                 SecurityContextHolder.clearContext();
+                TenantContext.clear();
             }
         }
 

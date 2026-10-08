@@ -251,10 +251,6 @@ export class FacturationComponent implements OnInit {
     this.executer(doc.id, this.comptabiliteService.validerFacture(this.entrepriseId(), doc.id, compteProduitId));
   }
 
-  marquerPayee(doc: FactureDto): void {
-    this.executer(doc.id, this.comptabiliteService.marquerFacturePayee(this.entrepriseId(), doc.id));
-  }
-
   annuler(doc: FactureDto): void {
     if (!confirm(`Annuler la facture ${doc.numero} ? Les articles de stock vendus seront réintégrés.`)) {
       return;

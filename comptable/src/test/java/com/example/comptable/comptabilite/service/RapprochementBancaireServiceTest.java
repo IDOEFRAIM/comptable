@@ -69,6 +69,10 @@ class RapprochementBancaireServiceTest {
     private MissingEvidenceAnalyzer missingEvidenceAnalyzer;
     @Mock
     private WhatsAppResolutionService whatsAppResolutionService;
+    @Mock
+    private com.example.comptable.banque.BankImportBatchRepository batchRepository;
+    @Mock
+    private com.example.comptable.audit.AuditTrailService auditTrailService;
 
     // Construction explicite (pas @InjectMocks) : le constructeur de RapprochementBancaireService
     // n'est plus le constructeur "tout mockable genere par Lombok" depuis la mission Universal
@@ -83,12 +87,47 @@ class RapprochementBancaireServiceTest {
     private UtilisateurPrincipal principal;
     private CompteComptable compteBanque;
 
+    @org.mockito.Mock
+    private com.example.comptable.banque.BankReconciliationService reconciliationService;
+    @org.mockito.Mock
+    private com.example.comptable.banque.InternalTransferService internalTransferService;
+
+    private void reconciliationPoseLePointeur() {
+        org.mockito.Mockito.lenient().when(reconciliationService.confirmerParLeSysteme(any(), any(), any(), any(), any(), any())).thenAnswer(inv -> {
+            ((LigneReleve) inv.getArgument(0)).setLigneEcritureId(inv.getArgument(1));
+            return new com.example.comptable.banque.BankReconciliation();
+        });
+        // Application par lot (import et controles) : les demandes « confirmer » posent le pointeur, les propositions n'en posent aucun.
+        org.mockito.Mockito.lenient().when(reconciliationService.appliquerLot(any(), any())).thenAnswer(inv -> {
+            java.util.List<com.example.comptable.banque.BankReconciliationService.DemandeAutomatique> demandes = inv.getArgument(1);
+            int confirmees = 0;
+            for (var d : demandes) {
+                if (d.confirmer()) {
+                    d.transaction().setLigneEcritureId(d.ligneEcritureId());
+                    confirmees++;
+                }
+            }
+            return new com.example.comptable.banque.BankReconciliationService.BilanLot(confirmees, 0, 0);
+        });
+    }
+
+    private com.example.comptable.banque.BankStatementImporter bankStatementImporter() {
+        org.mockito.Mockito.lenient().when(batchRepository.save(any())).thenAnswer(inv -> {
+            com.example.comptable.banque.BankImportBatch lot = inv.getArgument(0);
+            lot.setId(UUID.randomUUID());
+            return lot;
+        });
+        return new com.example.comptable.banque.BankStatementImporter(entrepriseAccessService, compteComptableRepository, ligneReleveRepository,
+                releveBancaireRepository, batchRepository, auditTrailService);
+    }
+
     @BeforeEach
     void setUp() {
         rapprochementBancaireService = new RapprochementBancaireService(entrepriseAccessService,
                 compteComptableRepository, releveBancaireRepository, ligneReleveRepository, ligneEcritureRepository,
                 matchingSemantiqueService, matchingContextBuilder, matchDecisionEngine, aiServiceClient,
-                missingEvidenceAnalyzer, whatsAppResolutionService, new SimpleMeterRegistry(), false);
+                missingEvidenceAnalyzer, whatsAppResolutionService, new SimpleMeterRegistry(), bankStatementImporter(), reconciliationService, internalTransferService, false);
+        reconciliationPoseLePointeur();
 
         entrepriseId = UUID.randomUUID();
         entreprise = new Entreprise();
@@ -148,7 +187,7 @@ class RapprochementBancaireServiceTest {
         LigneEcriture mouvementCorrespondant = ligneEcritureValidee(new BigDecimal("30000"), BigDecimal.ZERO, LocalDate.of(2027, 1, 5));
 
         when(compteComptableRepository.findById(compteBanque.getId())).thenReturn(Optional.of(compteBanque));
-        when(releveBancaireRepository.save(any())).thenAnswer(inv -> {
+        when(releveBancaireRepository.saveAndFlush(any())).thenAnswer(inv -> {
             ReleveBancaire r = inv.getArgument(0);
             r.setId(UUID.randomUUID());
             return r;
@@ -193,7 +232,10 @@ class RapprochementBancaireServiceTest {
 
         when(releveBancaireRepository.findById(releve.getId())).thenReturn(Optional.of(releve));
         when(ligneEcritureRepository.findById(ligneEcriture.getId())).thenReturn(Optional.of(ligneEcriture));
-        when(ligneReleveRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
+        when(reconciliationService.pointer(any(), any(), any(), any(), any())).thenAnswer(inv -> {
+            ligneReleve.setLigneEcritureId(ligneEcriture.getId());
+            return new com.example.comptable.banque.BankReconciliation();
+        });
 
         var resultat = rapprochementBancaireService.pointer(entrepriseId, releve.getId(), ligneReleve.getId(),
                 ligneEcriture.getId(), principal);

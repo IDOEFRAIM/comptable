@@ -49,6 +49,14 @@ public class Facture extends UuidEntity {
     @Column(nullable = false)
     private String numero;
 
+    @Column(name = "numero_normalise")
+    private String numeroNormalise;
+
+    public void setNumero(String numero) {
+        this.numero = numero;
+        this.numeroNormalise = com.example.comptable.document.service.NumeroFactureNormalizer.normaliser(numero);
+    }
+
     @Column(name = "date_emission", nullable = false)
     private LocalDate dateEmission;
 

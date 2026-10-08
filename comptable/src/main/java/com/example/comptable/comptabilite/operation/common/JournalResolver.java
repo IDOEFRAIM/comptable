@@ -27,10 +27,4 @@ public class JournalResolver {
                 .filter(j -> j.getType() == type)
                 .findFirst();
     }
-
-    /** Passthrough de compatibilite pour un appelant qui connait deja le code exact (flux
-     * manuels existants) - le nouveau moteur n'utilise jamais cette methode. */
-    public Optional<Journal> resoudreParCode(UUID entrepriseId, String code) {
-        return journalRepository.findByEntrepriseIdAndCode(entrepriseId, code);
-    }
 }

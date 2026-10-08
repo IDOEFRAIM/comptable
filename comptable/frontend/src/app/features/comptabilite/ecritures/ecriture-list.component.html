@@ -3,7 +3,7 @@
     <h2>Écritures</h2>
     <div class="actions-entete">
       <a routerLink="nouvelle" class="bouton-principal">+ Nouvelle écriture</a>
-      <button type="button" class="bouton-rafraichir" (click)="rafraichir()">↻ Actualiser</button>
+      <button type="button" class="bouton-secondaire" (click)="rafraichir()">Actualiser</button>
     </div>
   </div>
 
@@ -17,14 +17,22 @@
     <p class="etat-vide">Aucune écriture pour le moment — comptabilisez un document depuis l'onglet Documents.</p>
   } @else {
     <div class="liste-ecritures">
+      <div class="ligne-titres" aria-hidden="true">
+        <span>Pièce</span>
+        <span>Journal</span>
+        <span>Libellé</span>
+        <span class="droite">Date</span>
+        <span class="droite">Montant</span>
+        <span class="droite">Statut</span>
+      </div>
       @for (ecriture of ecritures(); track ecriture.id) {
         <div class="carte carte-ecriture">
           <button type="button" class="ligne-entete" (click)="basculer(ecriture)">
             <span class="piece">{{ ecriture.numeroPiece }}</span>
             <span class="journal">{{ ecriture.journalCode }}</span>
             <span class="libelle">{{ ecriture.libelle }}</span>
-            <span class="date">{{ ecriture.dateEcriture }}</span>
-            <span class="montant">{{ ecriture.totalDebit }}</span>
+            <span class="date">{{ ecriture.dateEcriture | date: 'dd/MM/yyyy' }}</span>
+            <span class="montant">{{ ecriture.totalDebit | number: '1.0-2' }}</span>
             <span class="badge" [class.badge-validee]="ecriture.statut === 'VALIDEE'">
               {{ ecriture.statut === 'VALIDEE' ? 'Validée' : 'Brouillon' }}
             </span>
@@ -37,8 +45,8 @@
                   <tr>
                     <th>Compte</th>
                     <th>Libellé</th>
-                    <th>Débit</th>
-                    <th>Crédit</th>
+                    <th class="droite">Débit</th>
+                    <th class="droite">Crédit</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -46,8 +54,8 @@
                     <tr>
                       <td>{{ ligne.compteNumero }} — {{ ligne.compteIntitule }}</td>
                       <td>{{ ligne.libelle }}</td>
-                      <td>{{ ligne.debit || '—' }}</td>
-                      <td>{{ ligne.credit || '—' }}</td>
+                      <td class="droite">{{ ligne.debit ? (ligne.debit | number: '1.0-2') : '—' }}</td>
+                      <td class="droite">{{ ligne.credit ? (ligne.credit | number: '1.0-2') : '—' }}</td>
                     </tr>
                   }
                 </tbody>

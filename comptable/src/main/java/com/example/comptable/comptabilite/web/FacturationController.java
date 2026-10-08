@@ -31,6 +31,8 @@ public class FacturationController {
 
     private final FacturationService facturationService;
     private final FactureAvoirService factureAvoirService;
+    private final com.example.comptable.comptabilite.allocation.PaiementFactureEnrichisseur paiementFactureEnrichisseur;
+    private final com.example.comptable.audit.AuditTrailService auditTrailService;
 
     @PostMapping
     public ResponseEntity<FactureDto> creer(@PathVariable UUID entrepriseId,
@@ -44,7 +46,7 @@ public class FacturationController {
     @GetMapping
     public List<FactureDto> lister(@PathVariable UUID entrepriseId, @RequestParam TypeFacture type,
                                     @AuthenticationPrincipal UtilisateurPrincipal principal) {
-        return facturationService.lister(entrepriseId, type, principal);
+        return paiementFactureEnrichisseur.enrichir(entrepriseId, facturationService.lister(entrepriseId, type, principal));
     }
 
     @PostMapping("/{factureId}/envoyer")
@@ -77,12 +79,6 @@ public class FacturationController {
                                       @RequestParam UUID compteProduitId,
                                       @AuthenticationPrincipal UtilisateurPrincipal principal) {
         return facturationService.validerFacture(entrepriseId, factureId, compteProduitId, principal);
-    }
-
-    @PostMapping("/{factureId}/marquer-payee")
-    public FactureDto marquerPayee(@PathVariable UUID entrepriseId, @PathVariable UUID factureId,
-                                    @AuthenticationPrincipal UtilisateurPrincipal principal) {
-        return facturationService.marquerPayee(entrepriseId, factureId, principal);
     }
 
     @PostMapping("/{factureId}/annuler")

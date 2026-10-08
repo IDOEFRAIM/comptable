@@ -1,7 +1,6 @@
 package com.example.comptable.fiscalite.service;
 
 import com.example.comptable.comptabilite.domain.CompteComptable;
-import com.example.comptable.comptabilite.repository.CompteComptableRepository;
 import com.example.comptable.comptabilite.repository.LigneEcritureRepository;
 import com.example.comptable.entreprise.domain.Entreprise;
 import com.example.comptable.entreprise.service.EntrepriseAccessService;
@@ -30,6 +29,8 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -40,7 +41,7 @@ class DeclarationFiscaleServiceTest {
     @Mock
     private DeclarationFiscaleRepository declarationFiscaleRepository;
     @Mock
-    private CompteComptableRepository compteComptableRepository;
+    private com.example.comptable.comptabilite.parametrage.AccountingAccountResolver accountingAccountResolver;
     @Mock
     private LigneEcritureRepository ligneEcritureRepository;
 
@@ -97,10 +98,12 @@ class DeclarationFiscaleServiceTest {
         DeclarationFiscale declaration = declarationTva("2026-03", StatutDeclaration.A_FAIRE);
         when(entrepriseAccessService.verifierAcces(entrepriseId, principal)).thenReturn(entreprise);
         when(declarationFiscaleRepository.findById(declaration.getId())).thenReturn(Optional.of(declaration));
-        when(compteComptableRepository.findByEntrepriseIdAndNumero(entrepriseId, "443"))
-                .thenReturn(Optional.of(compteCollectee));
-        when(compteComptableRepository.findByEntrepriseIdAndNumero(entrepriseId, "4456"))
-                .thenReturn(Optional.of(compteDeductible));
+        when(accountingAccountResolver.resoudreCompte(eq(entrepriseId),
+                eq(com.example.comptable.comptabilite.parametrage.domain.AccountPurpose.TVA_COLLECTEE), any(), isNull()))
+                .thenReturn(new com.example.comptable.comptabilite.parametrage.AccountingAccountResolver.CompteResolu(compteCollectee, null));
+        when(accountingAccountResolver.resoudreCompte(eq(entrepriseId),
+                eq(com.example.comptable.comptabilite.parametrage.domain.AccountPurpose.TVA_RECUPERABLE), any(), isNull()))
+                .thenReturn(new com.example.comptable.comptabilite.parametrage.AccountingAccountResolver.CompteResolu(compteDeductible, null));
         when(ligneEcritureRepository.mouvementNetPeriode(compteCollectee.getId(), LocalDate.of(2026, 3, 1), LocalDate.of(2026, 3, 31)))
                 .thenReturn(new BigDecimal("18000"));
         when(ligneEcritureRepository.mouvementNetPeriode(compteDeductible.getId(), LocalDate.of(2026, 3, 1), LocalDate.of(2026, 3, 31)))
@@ -110,6 +113,23 @@ class DeclarationFiscaleServiceTest {
         DeclarationFiscaleDto resultat = declarationFiscaleService.recalculerMontantTva(entrepriseId, declaration.getId(), principal);
 
         assertThat(resultat.montant()).isEqualByComparingTo("10800");
+    }
+
+    @Test
+    void compte_de_tva_non_configure_bloque_le_calcul_avec_une_explication_jamais_un_numero_suppose() {
+        DeclarationFiscale declaration = declarationTva("2026-03", StatutDeclaration.A_FAIRE);
+        when(entrepriseAccessService.verifierAcces(entrepriseId, principal)).thenReturn(entreprise);
+        when(declarationFiscaleRepository.findById(declaration.getId())).thenReturn(Optional.of(declaration));
+        when(accountingAccountResolver.resoudreCompte(eq(entrepriseId),
+                eq(com.example.comptable.comptabilite.parametrage.domain.AccountPurpose.TVA_COLLECTEE), any(), isNull()))
+                .thenReturn(new com.example.comptable.comptabilite.parametrage.AccountingAccountResolver.CompteResolu(null,
+                        com.example.comptable.comptabilite.parametrage.ResolvedAccount.nonConfigure("Aucun mapping ni role systeme")));
+
+        assertThatThrownBy(() -> declarationFiscaleService.recalculerMontantTva(entrepriseId, declaration.getId(), principal))
+                .isInstanceOfSatisfying(ResponseStatusException.class, e -> {
+                    assertThat(e.getStatusCode().value()).isEqualTo(422);
+                    assertThat(e.getReason()).contains("TVA collectee").contains("NOT_CONFIGURED");
+                });
     }
 
     @Test

@@ -1,7 +1,6 @@
 package com.example.comptable.comptabilite.operation.vente;
 
 import com.example.comptable.comptabilite.domain.CompteComptable;
-import com.example.comptable.comptabilite.domain.RoleCompteSysteme;
 import com.example.comptable.comptabilite.domain.Tiers;
 import com.example.comptable.comptabilite.domain.TypeJournal;
 import com.example.comptable.comptabilite.operation.common.FraisAccessoireRequest;
@@ -30,6 +29,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.isNull;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -39,6 +40,8 @@ class VenteRuleTest {
     private CompteComptableValidationService compteComptableValidationService;
     @Mock
     private TvaRateResolver tvaRateResolver;
+    @Mock
+    private com.example.comptable.comptabilite.parametrage.AccountingAccountResolver accountingAccountResolver;
 
     @InjectMocks
     private VenteRule venteRule;
@@ -62,6 +65,19 @@ class VenteRuleTest {
         client.setCompteComptable(compteClient);
     }
 
+    private void stubCompteTva(CompteComptable compteTva) {
+        lenient().when(accountingAccountResolver.resoudreCompte(eq(entrepriseId),
+                        eq(com.example.comptable.comptabilite.parametrage.domain.AccountPurpose.TVA_COLLECTEE), any(), isNull()))
+                .thenReturn(new com.example.comptable.comptabilite.parametrage.AccountingAccountResolver.CompteResolu(compteTva, null));
+    }
+
+    private void stubCompteTvaNonConfigure() {
+        lenient().when(accountingAccountResolver.resoudreCompte(eq(entrepriseId),
+                        eq(com.example.comptable.comptabilite.parametrage.domain.AccountPurpose.TVA_COLLECTEE), any(), isNull()))
+                .thenReturn(new com.example.comptable.comptabilite.parametrage.AccountingAccountResolver.CompteResolu(null,
+                        com.example.comptable.comptabilite.parametrage.ResolvedAccount.nonConfigure("Aucun mapping ni role systeme pour la TVA")));
+    }
+
     private CompteComptable compte(String numero) {
         CompteComptable c = new CompteComptable();
         c.setId(UUID.randomUUID());
@@ -80,13 +96,29 @@ class VenteRuleTest {
     }
 
     @Test
+    void taux_connu_mais_compte_de_tva_collectee_non_configure_donne_une_explication_et_aucune_ligne_devinee() {
+        CompteComptable compteProduit = compte("701");
+        when(compteComptableValidationService.chargerCompteUtilisable(entrepriseId, compteProduit.getId(), true))
+                .thenReturn(compteProduit);
+        when(tvaRateResolver.resoudre(eq("CI"), any(), eq(new BigDecimal("100000"))))
+                .thenReturn(new TvaResultat(new BigDecimal("18"), new BigDecimal("18000"), UUID.randomUUID(), false, null, false));
+        stubCompteTvaNonConfigure();
+
+        ResultatRegle resultat = venteRule.construire(entreprise, client,
+                request(NatureVente.VENTE_MARCHANDISE, new BigDecimal("100000"), compteProduit.getId(), null, null, null, null));
+
+        assertThat(resultat.explications()).anySatisfy(e -> assertThat(e).contains("TVA collectee").contains("NOT_CONFIGURED"));
+    }
+
+    @Test
     void vente_marchandise_avec_tva_produit_client_produit_et_tva() {
         CompteComptable compteProduit = compte("701");
         CompteComptable compteTva = compte("443");
         when(compteComptableValidationService.chargerCompteUtilisable(entrepriseId, compteProduit.getId(), true))
                 .thenReturn(compteProduit);
-        when(tvaRateResolver.resoudre(eq(entrepriseId), eq("CI"), any(), eq(new BigDecimal("100000")), eq(RoleCompteSysteme.TVA_COLLECTEE)))
-                .thenReturn(new TvaResultat(new BigDecimal("18"), new BigDecimal("18000"), compteTva, UUID.randomUUID(), false, null, false));
+        when(tvaRateResolver.resoudre(eq("CI"), any(), eq(new BigDecimal("100000"))))
+                .thenReturn(new TvaResultat(new BigDecimal("18"), new BigDecimal("18000"), UUID.randomUUID(), false, null, false));
+        stubCompteTva(compteTva);
 
         ResultatRegle resultat = venteRule.construire(entreprise, client,
                 request(NatureVente.VENTE_MARCHANDISE, new BigDecimal("100000"), compteProduit.getId(), null, null, null, null));
@@ -114,7 +146,7 @@ class VenteRuleTest {
         CompteComptable compteProduit = compte("706");
         when(compteComptableValidationService.chargerCompteUtilisable(entrepriseId, compteProduit.getId(), true))
                 .thenReturn(compteProduit);
-        when(tvaRateResolver.resoudre(eq(entrepriseId), eq("CI"), any(), eq(new BigDecimal("50000")), eq(RoleCompteSysteme.TVA_COLLECTEE)))
+        when(tvaRateResolver.resoudre(eq("CI"), any(), eq(new BigDecimal("50000"))))
                 .thenReturn(TvaResultat.nonSupporte("Aucune regle TVA applicable"));
 
         ResultatRegle resultat = venteRule.construire(entreprise, client,
@@ -142,10 +174,12 @@ class VenteRuleTest {
                 .thenReturn(compteProduit);
         when(compteComptableValidationService.chargerCompteUtilisable(entrepriseId, compteFrais.getId(), true))
                 .thenReturn(compteFrais);
-        when(tvaRateResolver.resoudreParRegle(entrepriseId, tauxFrais, new BigDecimal("5000"), RoleCompteSysteme.TVA_COLLECTEE))
-                .thenReturn(new TvaResultat(new BigDecimal("18"), new BigDecimal("900"), compteTva, tauxFrais, false, null, false));
-        when(tvaRateResolver.resoudre(eq(entrepriseId), eq("CI"), any(), eq(new BigDecimal("100000")), eq(RoleCompteSysteme.TVA_COLLECTEE)))
-                .thenReturn(new TvaResultat(new BigDecimal("18"), new BigDecimal("18000"), compteTva, UUID.randomUUID(), false, null, false));
+        when(tvaRateResolver.resoudreParRegle(tauxFrais, new BigDecimal("5000")))
+                .thenReturn(new TvaResultat(new BigDecimal("18"), new BigDecimal("900"), tauxFrais, false, null, false));
+        stubCompteTva(compteTva);
+        when(tvaRateResolver.resoudre(eq("CI"), any(), eq(new BigDecimal("100000"))))
+                .thenReturn(new TvaResultat(new BigDecimal("18"), new BigDecimal("18000"), UUID.randomUUID(), false, null, false));
+        stubCompteTva(compteTva);
 
         FraisAccessoireRequest frais = new FraisAccessoireRequest("Emballage", new BigDecimal("5000"), tauxFrais, compteFrais.getId(), false);
         ResultatRegle resultat = venteRule.construire(entreprise, client,
@@ -164,7 +198,7 @@ class VenteRuleTest {
         CompteComptable compteProduit = compte("701");
         when(compteComptableValidationService.chargerCompteUtilisable(entrepriseId, compteProduit.getId(), true))
                 .thenReturn(compteProduit);
-        when(tvaRateResolver.resoudre(eq(entrepriseId), eq("CI"), any(), eq(new BigDecimal("100000")), eq(RoleCompteSysteme.TVA_COLLECTEE)))
+        when(tvaRateResolver.resoudre(eq("CI"), any(), eq(new BigDecimal("100000"))))
                 .thenReturn(TvaResultat.nonSupporte("non teste"));
 
         ReductionRequest escompte = new ReductionRequest(TypeReduction.ESCOMPTE, null, new BigDecimal("2"), "reglement comptant");

@@ -150,7 +150,7 @@ class P0CoreIntelligentE2ETest {
         assertThat(demandes.get(0).getFindingId()).isEqualTo(dossierDegrade.actionsPrioritaires().get(0).id());
 
         ClotureReadinessDto readinessAvant = clotureReadinessService.evaluer(entreprise.id(), principal);
-        assertThat(readinessAvant.statut()).isIn("READY_WITH_REVIEW", "NOT_READY");
+        assertThat(readinessAvant.statut()).isIn("READY_WITH_WARNINGS", "NOT_READY");
 
         // --- Etape 3 : le client envoie la preuve (simulee ici par une ecriture bancaire reelle,
         // deja validee, sur le meme compte/montant) - le rematching doit desormais la trouver.

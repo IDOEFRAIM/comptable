@@ -3,6 +3,7 @@ package com.example.comptable.agent.pipeline;
 import org.bsc.langgraph4j.action.NodeAction;
 import org.springframework.stereotype.Component;
 
+import com.example.comptable.comptabilite.service.CoherenceMontants;
 import java.math.BigDecimal;
 import java.util.Map;
 
@@ -49,11 +50,10 @@ public class ConformiteNode implements NodeAction<PieceJustificativeState> {
             return "Montant negatif detecte";
         }
         if (extraction.montantHt() != null) {
-            BigDecimal tva = extraction.montantTva() != null ? extraction.montantTva() : BigDecimal.ZERO;
-            BigDecimal ecart = extraction.montantHt().add(tva).subtract(extraction.montantTtc()).abs();
-            if (ecart.compareTo(TOLERANCE_ARRONDI) > 0) {
-                return "HT + TVA (%s) ne correspond pas au TTC (%s), ecart de %s"
-                        .formatted(extraction.montantHt().add(tva), extraction.montantTtc(), ecart);
+            var ecart = CoherenceMontants.verifier(extraction.montantHt(), extraction.montantTva(),
+                    extraction.montantTtc(), TOLERANCE_ARRONDI);
+            if (ecart.isPresent()) {
+                return "Montants incoherents : " + ecart.get().explication();
             }
         }
         return null;

@@ -84,6 +84,8 @@ class CabinetAnalyticsServiceTest {
         Finding f2 = findingResolu(OffsetDateTime.now().minusDays(10), OffsetDateTime.now().minusDays(6));
         when(findingRepository.findByEntrepriseIdInAndStatus(any(), any())).thenReturn(List.of(f1, f2));
 
+        when(demandePieceRepository.countByEntrepriseIdInAndStatut(any(), org.mockito.ArgumentMatchers.eq(StatutDemandePiece.RAPPROCHEE)))
+                .thenReturn(0L);
         when(demandePieceRepository.countByEntrepriseIdInAndStatut(any(), org.mockito.ArgumentMatchers.eq(StatutDemandePiece.RECU)))
                 .thenReturn(7L);
         when(demandePieceRepository.countByEntrepriseIdInAndStatut(any(), org.mockito.ArgumentMatchers.eq(StatutDemandePiece.EN_ATTENTE)))

@@ -75,7 +75,7 @@ public class PlanComptableReference {
     private boolean actif;
 
     /** Role technique joue par ce compte dans les traitements automatiques (TVA, dotations,
-     * resultat...), voir CompteSystemeResolver. Null pour la grande majorite des comptes. */
+     * resultat...), voir AccountingAccountResolver (repli de niveau 4). Null pour la grande majorite des comptes. */
     @Enumerated(EnumType.STRING)
     @Column(name = "role_systeme")
     private RoleCompteSysteme roleSysteme;

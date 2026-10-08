@@ -3,6 +3,10 @@ package com.example.comptable.comptabilite.service;
 import com.example.comptable.comptabilite.domain.CompteComptable;
 import com.example.comptable.comptabilite.domain.Tiers;
 import com.example.comptable.comptabilite.domain.TypeTiers;
+import com.example.comptable.comptabilite.parametrage.AccountContext;
+import com.example.comptable.comptabilite.parametrage.AccountingAccountResolver;
+import com.example.comptable.comptabilite.parametrage.ResolvedAccount;
+import com.example.comptable.comptabilite.parametrage.domain.AccountPurpose;
 import com.example.comptable.comptabilite.repository.CompteComptableRepository;
 import com.example.comptable.comptabilite.repository.TiersRepository;
 import com.example.comptable.comptabilite.web.dto.TiersDto;
@@ -10,6 +14,8 @@ import com.example.comptable.entreprise.domain.Entreprise;
 import com.example.comptable.entreprise.service.EntrepriseAccessService;
 import com.example.comptable.security.UtilisateurPrincipal;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
+import org.springframework.web.server.ResponseStatusException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -20,13 +26,10 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class TiersService {
 
-    /** Compte collectif racine sous lequel chaque tiers recoit un sous-compte auxiliaire dedie. */
-    private static final String COMPTE_RACINE_CLIENT = "411";
-    private static final String COMPTE_RACINE_FOURNISSEUR = "401";
-
     private final EntrepriseAccessService entrepriseAccessService;
     private final TiersRepository tiersRepository;
     private final CompteComptableRepository compteComptableRepository;
+    private final AccountingAccountResolver accountingAccountResolver;
 
     @Transactional
     public TiersDto creer(UUID entrepriseId, TypeTiers type, String nom, String numeroContribuable,
@@ -56,7 +59,20 @@ public class TiersService {
     }
 
     private CompteComptable provisionnerSousCompte(Entreprise entreprise, TypeTiers type) {
-        String racine = type == TypeTiers.CLIENT ? COMPTE_RACINE_CLIENT : COMPTE_RACINE_FOURNISSEUR;
+        // Compte collectif sous lequel le tiers recoit son sous-compte auxiliaire : jamais un numero
+        // suppose, toujours celui que l'entreprise a configure (mapping CLIENT/FOURNISSEUR, puis role
+        // systeme du referentiel). Non configure/ambigu/invalide : refus explicite.
+        AccountPurpose purpose = type == TypeTiers.CLIENT ? AccountPurpose.CLIENT : AccountPurpose.FOURNISSEUR;
+        ResolvedAccount resolu = accountingAccountResolver.resolve(entreprise.getId(), purpose,
+                new AccountContext(null, null, null, type.name(), entreprise.getPays(), null, java.util.Map.of()), null, false);
+        if (!resolu.isResolved()) {
+            throw new ResponseStatusException(HttpStatus.UNPROCESSABLE_ENTITY,
+                    "Compte collectif " + (type == TypeTiers.CLIENT ? "clients" : "fournisseurs")
+                            + " non utilisable pour cette entreprise (" + resolu.status() + ") : " + resolu.explication());
+        }
+        CompteComptable compteCollectif = compteComptableRepository.findById(resolu.compteId())
+                .orElseThrow(() -> new IllegalStateException("Compte collectif resolu mais introuvable : " + resolu.compteId()));
+        String racine = compteCollectif.getNumero();
 
         List<CompteComptable> existants = compteComptableRepository
                 .findByEntrepriseIdAndNumeroStartingWithOrderByNumeroDesc(entreprise.getId(), racine);
@@ -75,23 +91,15 @@ public class TiersService {
                 .max()
                 .orElse(0) + 1;
 
-        // Rattachement au compte collectif (401/411) de l'entreprise quand il existe deja (PCE
-        // clone/importe depuis le referentiel) : donne au sous-compte auxiliaire sa place dans la
-        // hierarchie locale des sa creation, plutot que de compter uniquement sur le backfill de
-        // migration pour les comptes deja existants (voir V32).
-        CompteComptable compteCollectif = compteComptableRepository
-                .findByEntrepriseIdAndNumero(entreprise.getId(), racine)
-                .orElse(null);
-
+        // Rattachement au compte collectif resolu : place le sous-compte dans la hierarchie locale des
+        // sa creation (voir V32 pour les comptes deja existants).
         CompteComptable sousCompte = new CompteComptable();
         sousCompte.setEntreprise(entreprise);
         sousCompte.setNumero(racine + String.format("%03d", prochainSuffixe));
         sousCompte.setIntitule((type == TypeTiers.CLIENT ? "Client - " : "Fournisseur - ") + prochainSuffixe);
         sousCompte.setLettrable(true);
-        if (compteCollectif != null) {
-            sousCompte.setParent(compteCollectif);
-            sousCompte.setNiveau((short) (compteCollectif.getNiveau() + 1));
-        }
+        sousCompte.setParent(compteCollectif);
+        sousCompte.setNiveau((short) (compteCollectif.getNiveau() + 1));
         return compteComptableRepository.save(sousCompte);
     }
 }

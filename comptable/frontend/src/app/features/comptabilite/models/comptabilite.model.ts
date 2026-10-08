@@ -231,6 +231,10 @@ export interface FactureDto {
   devisOrigineId: string | null;
   ecritureId: string | null;
   lignes: LigneFactureDto[];
+  /** Statut de paiement CALCULÉ depuis les affectations de règlements (null tant que la facture n'est pas comptabilisée). */
+  statutPaiement?: 'NON_PAYEE' | 'PARTIELLEMENT_PAYEE' | 'PAYEE' | null;
+  montantRegle?: number | null;
+  resteAPayer?: number | null;
 }
 
 export const LIBELLES_STATUT_FACTURE: Record<StatutFacture, string> = {
@@ -300,7 +304,9 @@ export interface FactureAvoirDto {
 }
 
 export type ModeAmortissement = 'LINEAIRE' | 'DEGRESSIF';
-export type StatutImmobilisation = 'EN_SERVICE' | 'CEDEE';
+export type StatutImmobilisation = 'ACQUISE' | 'EN_SERVICE' | 'SORTIE';
+export type TypeImmobilisation = 'CORPORELLE' | 'INCORPORELLE';
+export type MotifSortie = 'CESSION' | 'MISE_AU_REBUT';
 
 export interface LigneAmortissementDto {
   annee: number;
@@ -315,11 +321,20 @@ export interface ImmobilisationDto {
   compteIntitule: string;
   compteAmortissementNumero: string;
   libelle: string;
+  type: TypeImmobilisation;
   dateAcquisition: string;
+  dateMiseEnService: string | null;
   valeurOrigine: number;
   dureeAnnees: number;
   mode: ModeAmortissement;
   statut: StatutImmobilisation;
+  acquisitionProposalId: string | null;
+  acquisitionEcritureId: string | null;
+  /** Cause comptable de l'acquisition (ex. DOCUMENT/<id>/COMPTABILISATION, IMMOBILISATION/<id>/ACQUISITION). */
+  acquisitionSource: string | null;
+  dateSortie: string | null;
+  motifSortie: MotifSortie | null;
+  montantCession: number | null;
   valeurNetteComptableActuelle: number;
   plan: LigneAmortissementDto[];
 }
@@ -328,14 +343,47 @@ export interface CreerImmobilisationRequest {
   compteId: string;
   compteAmortissementId: string;
   libelle: string;
+  type: TypeImmobilisation;
   dateAcquisition: string;
   valeurOrigine: number;
   dureeAnnees: number;
   mode: ModeAmortissement;
 }
 
+export interface ComptabiliserAcquisitionRequest {
+  fournisseurId: string;
+  montantTva: number | null;
+  /** A cocher seulement si aucune facture d'achat deja comptabilisee ne porte cet achat (evite un double comptage). */
+  confirmerAbsenceDeFacture?: boolean | null;
+}
+
+/** Facture d'achat déjà comptabilisée qui peut porter l'acquisition d'un bien (selecteur : aucun identifiant à saisir). */
+export interface CandidatAcquisitionDto {
+  sourceType: string;
+  sourceId: string;
+  sourceEvent: string;
+  libelle: string;
+  date: string;
+  montantDebite: number;
+  dejaAffecte: number;
+  capaciteRestante: number;
+  suffisant: boolean;
+}
+
+/** Rattache l'acquisition a une facture d'achat deja comptabilisee (aucune seconde ecriture). */
+export interface LierAcquisitionRequest {
+  sourceType: string;
+  sourceId: string;
+}
+
+export interface SortirImmobilisationRequest {
+  dateSortie: string;
+  motif: MotifSortie;
+  montantCession: number | null;
+}
+
 export interface GenererDotationsResultDto {
-  ecritureId: string | null;
+  ecritureIds: string[];
   annee: number;
   totalDotations: number;
   nombreImmobilisations: number;
@@ -411,42 +459,6 @@ export interface ExerciceComptableDto {
   dateDebut: string;
   dateFin: string;
   statut: StatutExercice;
-}
-
-export interface PosteFinancierDto {
-  numero: string;
-  intitule: string;
-  montant: number;
-}
-
-export interface SectionFinanciereDto {
-  libelle: string;
-  postes: PosteFinancierDto[];
-  total: number;
-}
-
-export interface BilanDto {
-  dateArrete: string;
-  actifImmobilise: SectionFinanciereDto;
-  actifCirculant: SectionFinanciereDto;
-  tresorerieActif: SectionFinanciereDto;
-  totalActif: number;
-  ressourcesDurables: SectionFinanciereDto;
-  passifCirculant: SectionFinanciereDto;
-  tresoreriePassif: SectionFinanciereDto;
-  totalPassif: number;
-}
-
-export interface CompteResultatDto {
-  dateDebut: string;
-  dateFin: string;
-  chargesExploitation: SectionFinanciereDto;
-  produitsExploitation: SectionFinanciereDto;
-  resultatExploitation: number;
-  chargesFinancieres: SectionFinanciereDto;
-  produitsFinanciers: SectionFinanciereDto;
-  resultatFinancier: number;
-  resultatNet: number;
 }
 
 // ---------------------------------------------------------------------------

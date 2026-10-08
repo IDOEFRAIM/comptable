@@ -1,8 +1,8 @@
 package com.example.comptable.telemetry;
 
-import com.example.comptable.agent.comptabilisation.domain.AccountingProposal;
-import com.example.comptable.agent.comptabilisation.domain.StatutAccountingProposal;
-import com.example.comptable.agent.comptabilisation.repository.AccountingProposalRepository;
+import com.example.comptable.agent.imputation.domain.ImputationSuggestion;
+import com.example.comptable.agent.imputation.domain.StatutImputationSuggestion;
+import com.example.comptable.agent.imputation.repository.ImputationSuggestionRepository;
 import com.example.comptable.agent.finding.domain.Finding;
 import com.example.comptable.agent.finding.domain.StatutFinding;
 import com.example.comptable.agent.finding.repository.FindingRepository;
@@ -50,19 +50,19 @@ public class ProductKpiService {
     private final FindingRepository findingRepository;
     private final DemandePieceRepository demandePieceRepository;
     private final AiMatchProposalRepository aiMatchProposalRepository;
-    private final AccountingProposalRepository accountingProposalRepository;
+    private final ImputationSuggestionRepository imputationSuggestionRepository;
     private final CopilotQueryRepository copilotQueryRepository;
 
     public ProductKpiService(EntrepriseRepository entrepriseRepository, FindingRepository findingRepository,
                               DemandePieceRepository demandePieceRepository,
                               AiMatchProposalRepository aiMatchProposalRepository,
-                              AccountingProposalRepository accountingProposalRepository,
+                              ImputationSuggestionRepository imputationSuggestionRepository,
                               CopilotQueryRepository copilotQueryRepository) {
         this.entrepriseRepository = entrepriseRepository;
         this.findingRepository = findingRepository;
         this.demandePieceRepository = demandePieceRepository;
         this.aiMatchProposalRepository = aiMatchProposalRepository;
-        this.accountingProposalRepository = accountingProposalRepository;
+        this.imputationSuggestionRepository = imputationSuggestionRepository;
         this.copilotQueryRepository = copilotQueryRepository;
     }
 
@@ -75,7 +75,7 @@ public class ProductKpiService {
         }
 
         List<AiMatchProposal> propositionsBanque = aiMatchProposalRepository.findByEntrepriseIdIn(entrepriseIds);
-        List<AccountingProposal> propositionsCompta = accountingProposalRepository.findByEntrepriseIdIn(entrepriseIds);
+        List<ImputationSuggestion> propositionsCompta = imputationSuggestionRepository.findByEntrepriseIdIn(entrepriseIds);
         List<Finding> findingsResolus = findingRepository.findByEntrepriseIdInAndStatus(entrepriseIds, StatutFinding.RESOLVED);
         List<Finding> findingsOuverts = findingRepository
                 .findByEntrepriseIdInAndStatusOrderBySeverityAscCreatedAtDesc(entrepriseIds, StatutFinding.OPEN);
@@ -93,7 +93,7 @@ public class ProductKpiService {
 
     // --- KPI n°1/2 : Human Touch Rate / Automation Rate (section 6/7) -------------------------
 
-    private HumanTouchRateDto humanTouchRate(List<AiMatchProposal> banque, List<AccountingProposal> compta) {
+    private HumanTouchRateDto humanTouchRate(List<AiMatchProposal> banque, List<ImputationSuggestion> compta) {
         int automatique = 0;
         int assiste = 0;
         int humainSeul = 0;
@@ -107,7 +107,7 @@ public class ProductKpiService {
                 case PROPOSED -> enAttente++;
             }
         }
-        for (AccountingProposal p : compta) {
+        for (ImputationSuggestion p : compta) {
             switch (p.getStatus()) {
                 case APPLIED -> automatique++;
                 case ACCEPTED, REJECTED -> assiste++;
@@ -135,11 +135,11 @@ public class ProductKpiService {
                 tranchees == 0 ? null : (rejetees * 100.0) / tranchees);
     }
 
-    private MatchingQualityDto matchingComptabilisation(List<AccountingProposal> propositions) {
-        int acceptees = compter(propositions, p -> p.getStatus() == StatutAccountingProposal.ACCEPTED
-                || p.getStatus() == StatutAccountingProposal.APPLIED);
-        int rejetees = compter(propositions, p -> p.getStatus() == StatutAccountingProposal.REJECTED);
-        int enAttente = compter(propositions, p -> p.getStatus() == StatutAccountingProposal.PROPOSED);
+    private MatchingQualityDto matchingComptabilisation(List<ImputationSuggestion> propositions) {
+        int acceptees = compter(propositions, p -> p.getStatus() == StatutImputationSuggestion.ACCEPTED
+                || p.getStatus() == StatutImputationSuggestion.APPLIED);
+        int rejetees = compter(propositions, p -> p.getStatus() == StatutImputationSuggestion.REJECTED);
+        int enAttente = compter(propositions, p -> p.getStatus() == StatutImputationSuggestion.PROPOSED);
         int total = propositions.size();
         int tranchees = acceptees + rejetees;
         return new MatchingQualityDto("COMPTABILISATION", total, acceptees, rejetees, enAttente, 0,
@@ -154,12 +154,14 @@ public class ProductKpiService {
     // --- KPI n°5 : Evidence Resolution (section 10) --------------------------------------------
 
     private EvidenceResolutionDto evidenceResolution(List<UUID> entrepriseIds) {
-        long completees = demandePieceRepository.countByEntrepriseIdInAndStatut(entrepriseIds, StatutDemandePiece.RECU);
+        long completees = demandePieceRepository.countByEntrepriseIdInAndStatut(entrepriseIds, StatutDemandePiece.RECU)
+                + demandePieceRepository.countByEntrepriseIdInAndStatut(entrepriseIds, StatutDemandePiece.RAPPROCHEE);
         long enAttente = demandePieceRepository.countByEntrepriseIdInAndStatut(entrepriseIds, StatutDemandePiece.EN_ATTENTE);
         long annulees = demandePieceRepository.countByEntrepriseIdInAndStatut(entrepriseIds, StatutDemandePiece.ANNULEE);
         long total = completees + enAttente + annulees;
 
-        List<DemandePiece> resolues = demandePieceRepository.findByEntrepriseIdInAndStatutOrderByDateLimiteAsc(entrepriseIds, StatutDemandePiece.RECU);
+        List<DemandePiece> resolues = new java.util.ArrayList<>(demandePieceRepository.findByEntrepriseIdInAndStatutOrderByDateLimiteAsc(entrepriseIds, StatutDemandePiece.RECU));
+        resolues.addAll(demandePieceRepository.findByEntrepriseIdInAndStatutOrderByDateLimiteAsc(entrepriseIds, StatutDemandePiece.RAPPROCHEE));
         Double dureeMoyenneHeures = resolues.stream()
                 .filter(d -> d.getResolueAt() != null)
                 .mapToDouble(d -> Duration.between(d.getCreatedAt(), d.getResolueAt()).toMinutes() / 60.0)

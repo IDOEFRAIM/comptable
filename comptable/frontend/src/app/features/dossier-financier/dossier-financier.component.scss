@@ -1,0 +1,116 @@
+.page-dossier {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ui-s4);
+  max-width: var(--ui-page-max);
+  margin: 0 auto;
+}
+
+.entete-page {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  gap: var(--ui-s4);
+  flex-wrap: wrap;
+}
+
+.contexte {
+  display: flex;
+  align-items: center;
+  gap: var(--ui-s3);
+  margin: var(--ui-s1) 0 0;
+}
+
+.selecteur {
+  width: auto;
+  padding: var(--ui-s1) var(--ui-s2);
+  font-size: var(--ui-fs-sm);
+}
+
+.actions-page {
+  display: flex;
+  align-items: center;
+  gap: var(--ui-s2);
+}
+
+.statut-global {
+  margin: 0;
+  font-size: var(--ui-fs-md);
+}
+
+.contenu {
+  padding-top: var(--ui-s2);
+}
+
+.chargement {
+  margin: 0;
+}
+
+// Vue d'ensemble : une ligne synthétique, sans cadres.
+.resume {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--ui-s6);
+  margin: 0;
+}
+
+.resume__item {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ui-s1);
+}
+
+.resume__item dt {
+  font-size: var(--ui-fs-xs);
+  font-weight: var(--ui-fw-semibold);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--ui-text-3);
+}
+
+.resume__item dd {
+  margin: 0;
+  font-size: var(--ui-fs-md);
+  font-weight: var(--ui-fw-medium);
+  font-variant-numeric: tabular-nums;
+}
+
+.decompte {
+  margin: var(--ui-s3) 0 0;
+}
+
+// Liste « À traiter » : filets fins, une fine barre à gauche pour les bloquants uniquement.
+.a-traiter {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  border-top: 1px solid var(--ui-line);
+}
+
+.a-traiter__ligne {
+  display: grid;
+  grid-template-columns: 1fr auto auto;
+  align-items: center;
+  gap: var(--ui-s5);
+  padding: var(--ui-s3) var(--ui-s4);
+  border-bottom: 1px solid var(--ui-line);
+  box-shadow: inset 2px 0 0 transparent;
+}
+
+.a-traiter__ligne--bloquant {
+  box-shadow: inset 2px 0 0 var(--ui-danger);
+}
+
+.a-traiter__titre {
+  margin: 0;
+  font-size: var(--ui-fs-md);
+  font-weight: var(--ui-fw-medium);
+}
+
+.a-traiter__texte .ui-meta {
+  margin: 2px 0 0;
+}
+
+.voir-tout {
+  margin-top: var(--ui-s3);
+}

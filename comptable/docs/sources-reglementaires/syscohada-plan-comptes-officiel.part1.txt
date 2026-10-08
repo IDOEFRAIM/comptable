@@ -1,0 +1,181 @@
+code|intitule|page
+10|CAPITAL|216
+101|CAPITAL SOCIAL|216
+1011|Capital souscrit, non appelé|216
+1012|Capital souscrit, appelé, non versé|216
+1013|Capital souscrit, appelé, versé, non amorti|216
+1014|Capital souscrit, appelé, versé, amorti|216
+1018|Capital souscrit soumis à des conditions particulières|216
+102|CAPITAL PAR DOTATION|216
+1021|Dotation initiale|216
+1022|Dotations complémentaires|216
+1028|Autres dotations|216
+103|CAPITAL PERSONNEL|216
+104|COMPTE DE L'EXPLOITANT|216
+1041|Apports temporaires|216
+1042|Opérations courantes|216
+1043|Rémunérations, impôts et autres charges personnelles|216
+1047|Prélèvements d'autoconsommation|216
+1048|Autres prélèvements|216
+105|PRIMES LIÉES AU CAPITAL SOCIAL|217
+1051|Primes d'émission|217
+1052|Primes d'apport|217
+1053|Primes de fusion|217
+1054|Primes de conversion|217
+1058|Autres primes|217
+106|ÉCARTS DE RÉÉVALUATION|217
+1061|Écarts de réévaluation légale|217
+1062|Écarts de réévaluation libre|217
+109|APPORTEURS, CAPITAL SOUSCRIT, NON APPELÉ|217
+11|RÉSERVES|217
+111|RÉSERVE LÉGALE|217
+112|RÉSERVES STATUTAIRES OU CONTRACTUELLES|217
+113|RÉSERVES RÉGLEMENTÉES|217
+1131|Réserves de plus-values nettes à long terme|217
+1132|Réserves d'attribution gratuite d'actions au personnel salarié et aux dirigeants|217
+1133|Réserves consécutives à l'octroi de subventions d'investissement|217
+1134|Réserves des valeurs mobilières donnant accès au capital|217
+1138|Autres réserves réglementées|217
+118|AUTRES RÉSERVES|217
+1181|Réserves facultatives|217
+1188|Réserves diverses|217
+12|REPORT À NOUVEAU|217
+121|REPORT À NOUVEAU CRÉDITEUR|217
+129|REPORT À NOUVEAU DÉBITEUR|217
+1291|Perte nette à reporter|217
+1292|Perte - Amortissements réputés différés|217
+13|RÉSULTAT NET DE L'EXERCICE|218
+130|RÉSULTAT EN INSTANCE D'AFFECTATION|218
+1301|Résultat en instance d'affectation : bénéfice|218
+1309|Résultat en instance d'affectation : perte|218
+131|RÉSULTAT NET : BÉNÉFICE|218
+132|MARGE COMMERCIALE (MC)|218
+133|VALEUR AJOUTÉE (VA)|218
+134|EXCÉDENT BRUT D'EXPLOITATION (EBE)|218
+135|RÉSULTAT D'EXPLOITATION (RE)|218
+136|RÉSULTAT FINANCIER (RF)|218
+137|RÉSULTAT DES ACTIVITÉS ORDINAIRES (RAO)|218
+138|RÉSULTAT HORS ACTIVITÉS ORDINAIRES (RHAO)|218
+1381|Résultat de fusion|218
+1382|Résultat d'apport partiel d'actif|218
+1383|Résultat de scission|218
+1384|Résultat de liquidation|218
+139|RÉSULTAT NET : PERTE|218
+14|SUBVENTIONS D'INVESTISSEMENT|218
+141|SUBVENTIONS D'ÉQUIPEMENT|218
+148|AUTRES SUBVENTIONS D'INVESTISSEMENT|218
+15|PROVISIONS RÉGLEMENTÉES ET FONDS ASSIMILÉS|219
+151|AMORTISSEMENTS DÉROGATOIRES|219
+152|PLUS-VALUES DE CESSION À RÉINVESTIR|219
+153|FONDS RÉGLEMENTÉS|219
+1531|Fonds National|219
+1532|Prélèvement pour le Budget|219
+154|PROVISIONS SPÉCIALES DE RÉÉVALUATION|219
+155|PROVISIONS RÉGLEMENTÉES RELATIVES AUX IMMOBILISATIONS|219
+1551|Reconstitution des gisements miniers et pétroliers|219
+156|PROVISIONS RÉGLEMENTÉES RELATIVES AUX STOCKS|219
+1561|Hausse de prix|219
+1562|Fluctuation des cours|219
+157|PROVISIONS POUR INVESTISSEMENT|219
+158|AUTRES PROVISIONS ET FONDS RÉGLEMENTÉS|219
+16|EMPRUNTS ET DETTES ASSIMILÉES|219
+161|EMPRUNTS OBLIGATAIRES|219
+1611|Emprunts obligataires ordinaires|219
+1612|Emprunts obligataires convertibles en actions|219
+1613|Emprunts obligataires remboursables en actions|219
+1618|Autres emprunts obligataires|219
+162|EMPRUNTS ET DETTES AUPRÈS DES ÉTABLISSEMENTS DE CRÉDIT|219
+163|AVANCES REÇUES DE L'ÉTAT|219
+164|AVANCES REÇUES ET COMPTES COURANTS BLOQUÉS|219
+165|DÉPÔTS ET CAUTIONNEMENTS REÇUS|219
+1651|Dépôts|219
+1652|Cautionnements|219
+166|INTÉRÊTS COURUS|220
+1661|sur emprunts obligataires|220
+1662|sur emprunts et dettes auprès des établissements de crédit|220
+1663|sur avances reçues de l'État|220
+1664|sur avances reçues et comptes courants bloqués|220
+1665|sur dépôts et cautionnements reçus|220
+1667|sur avances assorties de conditions particulières|220
+1668|sur autres emprunts et dettes|220
+167|AVANCES ASSORTIES DE CONDITIONS PARTICULIÈRES|220
+1671|Avances bloquées pour augmentation du capital|220
+1672|Avances conditionnées par l'État|220
+1673|Avances conditionnées par les autres organismes africains|220
+1674|Avances conditionnées par les organismes internationaux|220
+168|AUTRES EMPRUNTS ET DETTES|220
+1681|Rentes viagères capitalisées|220
+1682|Billets de fonds|220
+1683|Dettes consécutives à des titres empruntés|220
+1684|Emprunts participatifs|220
+1685|Participation des travailleurs aux bénéfices|220
+1686|Emprunts et dettes contractés auprès des autres tiers|220
+17|DETTES DE LOCATION ACQUISITION|220
+172|DETTES DE LOCATION ACQUISITION / CRÉDIT-BAIL IMMOBILIER|220
+173|DETTES DE LOCATION ACQUISITION / CRÉDIT-BAIL MOBILIER|220
+174|DETTES DE LOCATION ACQUISITION / LOCATION DE VENTE|220
+176|INTÉRÊTS COURUS|220
+1762|sur dettes de location acquisition / crédit-bail immobilier|220
+1763|sur dettes de location acquisition / crédit-bail mobilier|220
+1764|sur dettes de location acquisition / location-vente|220
+1768|sur autres dettes de location acquisition|220
+178|AUTRES DETTES DE LOCATION ACQUISITION|220
+18|DETTES LIÉES À DES PARTICIPATIONS ET COMPTES DE LIAISON DES ÉTABLISSEMENTS ET SOCIÉTÉS EN PARTICIPATION|221
+181|DETTES LIÉES À DES PARTICIPATIONS|221
+1811|Dettes liées à des participations (groupe)|221
+1812|Dettes liées à des participations (hors groupe)|221
+182|DETTES LIÉES À DES SOCIÉTÉS EN PARTICIPATION|221
+183|INTÉRÊTS COURUS SUR DETTES LIÉES À DES PARTICIPATIONS|221
+184|COMPTES PERMANENTS BLOQUÉS DES ÉTABLISSEMENTS ET SUCCURSALES|221
+185|COMPTES PERMANENTS NON BLOQUÉS DES ÉTABLISSEMENTS ET SUCCURSALES|221
+186|COMPTES DE LIAISON CHARGES|221
+187|COMPTES DE LIAISON PRODUITS|221
+188|COMPTES DE LIAISON DES SOCIÉTÉS EN PARTICIPATION|221
+19|PROVISIONS POUR RISQUES ET CHARGES|221
+191|PROVISIONS POUR LITIGES|221
+192|PROVISIONS POUR GARANTIES DONNÉES AUX CLIENTS|221
+193|PROVISIONS POUR PERTES SUR MARCHÉS À ACHÈVEMENT FUTUR|221
+194|PROVISIONS POUR PERTES DE CHANGE|221
+195|PROVISIONS POUR IMPÔTS|221
+196|PROVISIONS POUR PENSIONS ET OBLIGATIONS SIMILAIRES|221
+1961|Provisions pour pensions et obligations similaires - engagement de retraite|221
+1962|Actif du régime de retraite|221
+197|PROVISIONS POUR RESTRUCTURATION|221
+198|AUTRES PROVISIONS POUR RISQUES ET CHARGES|221
+1981|Provisions pour amendes et pénalités|221
+1983|Provisions pour propre assureur|221
+1984|Provisions pour démantèlement et remise en état|222
+1985|Provisions pour droits à réduction ou avantage en nature (chèques cadeau, cartes de fidélité...)|222
+1988|Provisions pour divers risques et charges|222
+21|IMMOBILISATIONS INCORPORELLES|223
+22|TERRAINS|223
+23|BÂTIMENTS, INSTALLATIONS TECHNIQUES ET AGENCEMENTS|223
+24|MATÉRIEL, MOBILIER ET ACTIFS BIOLOGIQUES|223
+25|AVANCES ET ACOMPTES VERSÉS SUR IMMOBILISATIONS|223
+26|TITRES DE PARTICIPATION|223
+27|AUTRES IMMOBILISATIONS FINANCIÈRES|223
+28|AMORTISSEMENTS|223
+29|DÉPRÉCIATIONS DES IMMOBILISATIONS|223
+211|FRAIS DE DÉVELOPPEMENT|223
+212|BREVETS, LICENCES, CONCESSIONS ET DROITS SIMILAIRES|223
+2121|Brevets|223
+2122|Licences|223
+2123|Concessions de service public|223
+2128|Autres concessions et droits similaires|223
+213|LOGICIELS ET SITES INTERNET|223
+2131|Logiciels|223
+2132|Sites internet|223
+214|MARQUES|223
+215|FONDS COMMERCIAL|223
+216|DROIT AU BAIL|223
+217|INVESTISSEMENTS DE CRÉATION|223
+218|AUTRES DROITS ET VALEURS INCORPORELS|223
+2181|Frais de prospection et d'évaluation de ressources minérales|223
+2182|Coûts d'obtention du contrat|223
+2183|Fichiers clients, notices, titres de journaux et magazines|223
+2184|Coûts des franchises|223
+2188|Divers droits et valeurs incorporelles|223
+219|IMMOBILISATIONS INCORPORELLES EN COURS|223
+2191|Frais de développement|223
+2193|Logiciels et internet|223
+2198|Autres droits et valeurs incorporels|223

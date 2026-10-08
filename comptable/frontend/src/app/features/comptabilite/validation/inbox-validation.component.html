@@ -46,25 +46,28 @@
               (click)="basculerSelection(document.id, $event)"
             />
             <div class="infos-document">
-              <span class="nom-fichier">{{ document.nomFichierOriginal || 'Pièce sans nom' }}</span>
-              <span class="meta">
-                {{ document.montantTtc !== null ? (document.montantTtc | number: '1.0-0') + ' XOF' : 'Montant inconnu' }}
-                · {{ document.datePiece ? (document.datePiece | date: 'dd/MM/yyyy') : 'Date inconnue' }}
-              </span>
-            </div>
-            <div class="badges-document">
-              @if (document.scoreRisqueFraude === 'CRITIQUE') {
-                <span class="badge-fraude badge-fraude-critique" [title]="alerteDuScore(document)">
-                  {{ alerteDuScore(document) }}
+              <span class="nom-fichier" [title]="document.nomFichierOriginal">{{ document.nomFichierOriginal || 'Pièce sans nom' }}</span>
+              <div class="ligne-montant">
+                <span class="montant">
+                  {{ document.montantTtc !== null ? (document.montantTtc | number: '1.0-0') + ' XOF' : 'Montant inconnu' }}
                 </span>
+                <span class="date">{{ document.datePiece ? (document.datePiece | date: 'dd/MM/yyyy') : 'Date inconnue' }}</span>
+              </div>
+              <div class="badges-document">
+                <span class="badge-confiance" [class.badge-haute]="document.niveauConfiance === 'HAUTE'">
+                  @if (document.niveauConfiance === 'HAUTE') {
+                    IA sûre à {{ document.confiance * 100 | number: '1.0-0' }}%
+                  } @else {
+                    À vérifier ({{ document.confiance * 100 | number: '1.0-0' }}%)
+                  }
+                </span>
+              </div>
+              @if (document.scoreRisqueFraude === 'CRITIQUE') {
+                <p class="alerte-fraude-carte" [title]="alerteDuScore(document)">
+                  <span class="icone-alerte" aria-hidden="true">⚠</span>
+                  <span>{{ alerteDuScore(document) }}</span>
+                </p>
               }
-              <span class="badge-confiance" [class.badge-haute]="document.niveauConfiance === 'HAUTE'">
-                @if (document.niveauConfiance === 'HAUTE') {
-                  IA sûre à {{ document.confiance * 100 | number: '1.0-0' }}%
-                } @else {
-                  À vérifier ({{ document.confiance * 100 | number: '1.0-0' }}%)
-                }
-              </span>
             </div>
           </div>
         }

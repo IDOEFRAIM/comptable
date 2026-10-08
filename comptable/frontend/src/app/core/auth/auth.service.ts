@@ -21,6 +21,18 @@ export class AuthService {
       .pipe(tap((reponse) => this.tokenStorage.setToken(reponse.token)));
   }
 
+  /** Change le mot de passe de l'utilisateur connecté ; le serveur renvoie un nouveau jeton (les anciens sont révoqués). */
+  changerMotDePasse(motDePasseActuel: string, nouveauMotDePasse: string): Observable<AuthResponse> {
+    return this.http
+      .post<AuthResponse>('/api/auth/change-password', { motDePasseActuel, nouveauMotDePasse })
+      .pipe(tap((reponse) => this.tokenStorage.setToken(reponse.token)));
+  }
+
+  /** Public : le jeton à usage unique remis par l'expert du cabinet tient lieu d'authentification. */
+  reinitialiserMotDePasse(jeton: string, nouveauMotDePasse: string): Observable<void> {
+    return this.http.post<void>('/api/auth/reset-password', { jeton, nouveauMotDePasse });
+  }
+
   logout(): void {
     this.tokenStorage.clear();
   }

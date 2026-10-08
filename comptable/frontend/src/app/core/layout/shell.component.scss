@@ -69,8 +69,12 @@
 }
 
 .email {
+  max-width: 240px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
   color: var(--text-tertiary);
-  font-size: 0.875rem;
+  font-size: 0.8125rem;
 }
 
 .zone-notifications {
@@ -167,15 +171,6 @@
   color: var(--text-placeholder);
   font-size: 0.8125rem;
   margin: 0;
-}
-
-.bouton-lien {
-  border: none;
-  background: none;
-  color: var(--color-primary);
-  cursor: pointer;
-  font-size: 0.75rem;
-  font-weight: 600;
 }
 
 button {

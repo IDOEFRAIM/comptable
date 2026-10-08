@@ -156,15 +156,4 @@ class DemandePieceServiceTest {
 
         verify(documentService, never()).uploader(any(), any(), any(), any());
     }
-
-    @Test
-    void annuler_refuse_si_la_demande_a_deja_ete_satisfaite() {
-        DemandePiece demande = demandeEnAttente();
-        demande.setStatut(StatutDemandePiece.RECU);
-        when(demandePieceRepository.findById(demande.getId())).thenReturn(Optional.of(demande));
-
-        assertThatThrownBy(() -> demandePieceService.annuler(entrepriseId, demande.getId(), principal))
-                .isInstanceOf(ResponseStatusException.class)
-                .hasMessageContaining("impossible de l'annuler");
-    }
 }

@@ -1,19 +1,27 @@
 package com.example.comptable.comptabilite.service;
 
+import com.example.comptable.audit.AuditTrailService;
 import com.example.comptable.comptabilite.domain.CompteComptable;
-import com.example.comptable.comptabilite.domain.EcritureComptable;
-import com.example.comptable.comptabilite.domain.ExerciceComptable;
-import com.example.comptable.comptabilite.domain.Journal;
-import com.example.comptable.comptabilite.domain.LigneEcriture;
 import com.example.comptable.comptabilite.domain.NatureCompte;
 import com.example.comptable.comptabilite.domain.StatutEcriture;
-import com.example.comptable.comptabilite.domain.StatutExercice;
 import com.example.comptable.comptabilite.domain.Tiers;
+import com.example.comptable.comptabilite.domain.TypeJournal;
 import com.example.comptable.comptabilite.domain.TypeTiers;
+import com.example.comptable.comptabilite.operation.achat.AchatRule;
+import com.example.comptable.comptabilite.operation.common.AccountingOperationEngine;
+import com.example.comptable.comptabilite.operation.common.Blocages;
+import com.example.comptable.comptabilite.operation.common.AccountingSource;
+import com.example.comptable.comptabilite.operation.common.AccountingOperationType;
+import com.example.comptable.comptabilite.operation.common.ResultatRegle;
+import com.example.comptable.comptabilite.operation.common.domain.AccountingOperationProposalLigne;
+import com.example.comptable.comptabilite.operation.vente.VenteRule;
+import com.example.comptable.comptabilite.operation.common.web.dto.AccountingOperationProposalDto;
+import com.example.comptable.comptabilite.parametrage.AccountContext;
+import com.example.comptable.comptabilite.parametrage.domain.AccountPurpose;
+import com.example.comptable.comptabilite.parametrage.AccountingAccountResolver;
+import com.example.comptable.comptabilite.parametrage.ResolvedAccount;
 import com.example.comptable.comptabilite.repository.CompteComptableRepository;
 import com.example.comptable.comptabilite.repository.EcritureComptableRepository;
-import com.example.comptable.comptabilite.repository.ExerciceComptableRepository;
-import com.example.comptable.comptabilite.repository.JournalRepository;
 import com.example.comptable.comptabilite.repository.TiersRepository;
 import com.example.comptable.comptabilite.web.dto.ComptabiliserDocumentRequest;
 import com.example.comptable.comptabilite.web.dto.EcritureComptableDto;
@@ -22,7 +30,6 @@ import com.example.comptable.document.domain.TypeDocument;
 import com.example.comptable.document.repository.DocumentRepository;
 import com.example.comptable.entreprise.domain.Entreprise;
 import com.example.comptable.entreprise.service.EntrepriseAccessService;
-import com.example.comptable.identite.repository.UtilisateurRepository;
 import com.example.comptable.security.UtilisateurPrincipal;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -32,30 +39,45 @@ import org.springframework.web.server.ResponseStatusException;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 /**
  * Transforme un Document valide (montants extraits + confirmes) en ecriture comptable
  * equilibree, en s'appuyant sur le tiers et le compte de charge/produit choisis par
  * l'utilisateur (l'OCR ne peut pas deviner ces deux informations de maniere fiable).
- * L'ecriture est toujours creee en BROUILLON : {@link #valider} est l'etape separee
- * qui la rend intangible.
+ * L'ecriture est toujours creee en BROUILLON : {@code EcritureComptableService.valider} est
+ * l'etape separee qui la rend intangible.
+ * <p>
+ * Depuis la Phase 1 (unification du chemin comptable), ce service est un ORCHESTRATEUR : il valide
+ * le document et les choix de l'utilisateur, resout le compte de TVA via
+ * {@link AccountingAccountResolver} (purposes TVA_RECUPERABLE / TVA_COLLECTEE, jamais un numero en
+ * dur), construit les lignes via {@link AchatRule}/{@link VenteRule}, puis confie la proposition, la
+ * resolution du journal, le controle d'exercice ouvert, la numerotation et la creation de
+ * l'ecriture a {@link AccountingOperationEngine}. Il ne construit plus d'{@code EcritureComptable}
+ * lui-meme. Le comportement observable historique est fige par
+ * {@code ComptabilisationDocumentCaracterisationTest}.
+ * <p>
+ * Compte de TVA non configure/ambigu/invalide : la proposition passe en NEEDS_REVIEW et la
+ * comptabilisation est refusee (422) avec l'explication du resolveur - jamais de repli silencieux
+ * sur un numero code en dur.
  */
 @Service
 @RequiredArgsConstructor
 public class ComptabilisationService {
 
-    private static final String COMPTE_TVA_DEDUCTIBLE = "4456";
-    private static final String COMPTE_TVA_COLLECTEE = "443";
-
     private final EntrepriseAccessService entrepriseAccessService;
     private final DocumentRepository documentRepository;
     private final TiersRepository tiersRepository;
     private final CompteComptableRepository compteComptableRepository;
-    private final ExerciceComptableRepository exerciceComptableRepository;
-    private final JournalRepository journalRepository;
     private final EcritureComptableRepository ecritureComptableRepository;
-    private final UtilisateurRepository utilisateurRepository;
+    private final AccountingAccountResolver accountingAccountResolver;
+    private final AccountingOperationEngine accountingOperationEngine;
+    private final AchatRule achatRule;
+    private final VenteRule venteRule;
+    private final AuditTrailService auditTrailService;
 
     @Transactional
     public EcritureComptableDto comptabiliser(UUID entrepriseId, UUID documentId,
@@ -73,10 +95,10 @@ public class ComptabilisationService {
             throw new ResponseStatusException(HttpStatus.UNPROCESSABLE_ENTITY,
                     "Montants insuffisants (HT/TTC) pour comptabiliser automatiquement ; corrigez le document.");
         }
-        if (montantHt.add(montantTva).compareTo(montantTtc) != 0) {
+        CoherenceMontants.verifier(montantHt, montantTva, montantTtc, BigDecimal.ZERO).ifPresent(ecart -> {
             throw new ResponseStatusException(HttpStatus.UNPROCESSABLE_ENTITY,
-                    "Le total HT + TVA ne correspond pas au TTC du document ; corrigez les montants avant comptabilisation.");
-        }
+                    "Montants incoherents : " + ecart.explication() + ". Corrigez les montants avant comptabilisation.");
+        });
 
         LocalDate dateEcriture = request.dateEcriture() != null ? request.dateEcriture() : document.getDatePiece();
         if (dateEcriture == null) {
@@ -85,38 +107,12 @@ public class ComptabilisationService {
 
         Tiers tiers = chargerTiers(entrepriseId, request.tiersId(), operation);
         CompteComptable compteChargeOuProduit = chargerCompteChargeOuProduit(entrepriseId, request.compteChargeOuProduitId(), operation);
-        ExerciceComptable exercice = chargerExerciceOuvert(entrepriseId, dateEcriture);
-        Journal journal = chargerJournal(entrepriseId, operation);
-        CompteComptable compteTva = montantTva.compareTo(BigDecimal.ZERO) > 0
-                ? chargerCompteTva(entrepriseId, operation)
-                : null;
 
         String libelle = request.libelle() != null ? request.libelle()
                 : document.getTypeDocument() + " - " + tiers.getNom();
 
-        EcritureComptable ecriture = new EcritureComptable();
-        ecriture.setEntreprise(entreprise);
-        ecriture.setExercice(exercice);
-        ecriture.setJournal(journal);
-        ecriture.setNumeroPiece(genererNumeroPiece(journal));
-        ecriture.setDateEcriture(dateEcriture);
-        ecriture.setLibelle(libelle);
-        ecriture.setCreatedBy(utilisateurRepository.getReferenceById(principal.getId()));
-        ecriture.setStatut(StatutEcriture.BROUILLON);
-
-        genererLignes(ecriture, operation, compteChargeOuProduit, compteTva, tiers, montantHt, montantTva, montantTtc, libelle);
-
-        if (!ecriture.estEquilibree()) {
-            // Ne devrait jamais se produire vu les controles ci-dessus ; filet de securite explicite.
-            throw new IllegalStateException("Ecriture generee desequilibree, comptabilisation annulee");
-        }
-
-        ecriture = ecritureComptableRepository.save(ecriture);
-
-        document.setEcritureId(ecriture.getId());
-        documentRepository.save(document);
-
-        return EcritureComptableDto.from(ecriture);
+        return confierAuMoteur(entreprise, document, operation, tiers, compteChargeOuProduit, dateEcriture,
+                libelle, montantHt, montantTva, montantTtc, principal);
     }
 
     /**
@@ -127,7 +123,7 @@ public class ComptabilisationService {
      * <p>
      * Depuis la mission P0 (section 15, "Niveau 3"), {@code tiersId}/{@code compteChargeOuProduitId}
      * sont fournis par l'appelant, jamais devines ici : c'est
-     * {@code agent.comptabilisation.AccountingProposalBuilder#eligibleNiveau3} qui a deja etabli,
+     * {@code agent.comptabilisation.ImputationSuggestionBuilder#eligibleNiveau3} qui a deja etabli,
      * par un historique coherent (jamais un appel LLM), que ce couple tiers/compte est fiable pour
      * CE document precis avant d'appeler cette methode - elle re-verifie neanmoins tout
      * independamment (montants, exercice ouvert, nature du compte) exactement comme la voie
@@ -150,10 +146,14 @@ public class ComptabilisationService {
             BigDecimal montantHt = document.getMontantHt();
             BigDecimal montantTtc = document.getMontantTtc();
             BigDecimal montantTva = document.getMontantTva() != null ? document.getMontantTva() : BigDecimal.ZERO;
-            if (montantHt == null || montantTtc == null || montantHt.add(montantTva).compareTo(montantTtc) != 0) {
+            if (montantHt == null || montantTtc == null) {
                 throw new ComptabilisationAutomatiqueIndisponibleException(
-                        "Montants insuffisants ou incoherents (HT/TVA/TTC) pour une comptabilisation automatique.");
+                        "Montants insuffisants (HT/TTC) pour une comptabilisation automatique.");
             }
+            CoherenceMontants.verifier(montantHt, montantTva, montantTtc, BigDecimal.ZERO).ifPresent(ecart -> {
+                throw new ComptabilisationAutomatiqueIndisponibleException(
+                        "Montants incoherents pour une comptabilisation automatique : " + ecart.explication() + ".");
+            });
 
             LocalDate dateEcriture = document.getDatePiece();
             if (dateEcriture == null) {
@@ -162,36 +162,12 @@ public class ComptabilisationService {
 
             Tiers tiers = chargerTiers(entrepriseId, tiersId, operation);
             CompteComptable compteChargeOuProduit = chargerCompteChargeOuProduit(entrepriseId, compteChargeOuProduitId, operation);
-            ExerciceComptable exercice = chargerExerciceOuvert(entrepriseId, dateEcriture);
-            Journal journal = chargerJournal(entrepriseId, operation);
-            CompteComptable compteTva = montantTva.compareTo(BigDecimal.ZERO) > 0
-                    ? chargerCompteTva(entrepriseId, operation)
-                    : null;
-
             String libelle = document.getTypeDocument() + " - " + tiers.getNom();
 
-            EcritureComptable ecriture = new EcritureComptable();
-            ecriture.setEntreprise(entreprise);
-            ecriture.setExercice(exercice);
-            ecriture.setJournal(journal);
-            ecriture.setNumeroPiece(genererNumeroPiece(journal));
-            ecriture.setDateEcriture(dateEcriture);
-            ecriture.setLibelle(libelle);
-            ecriture.setStatut(StatutEcriture.BROUILLON);
-
-            genererLignes(ecriture, operation, compteChargeOuProduit, compteTva, tiers, montantHt, montantTva, montantTtc, libelle);
-
-            if (!ecriture.estEquilibree()) {
-                throw new IllegalStateException("Ecriture generee desequilibree, comptabilisation automatique annulee");
-            }
-
-            ecriture = ecritureComptableRepository.save(ecriture);
-            document.setEcritureId(ecriture.getId());
-            documentRepository.save(document);
-
-            return EcritureComptableDto.from(ecriture);
+            return confierAuMoteur(entreprise, document, operation, tiers, compteChargeOuProduit, dateEcriture,
+                    libelle, montantHt, montantTva, montantTtc, null);
         } catch (ResponseStatusException e) {
-            // chargerTiers/chargerCompteChargeOuProduit/chargerExerciceOuvert levent des
+            // chargerTiers/chargerCompteChargeOuProduit et le moteur levent des
             // ResponseStatusException (voie manuelle, contexte HTTP) : hors contexte HTTP, cette
             // methode ne doit jamais laisser une telle exception remonter jusqu'au pipeline.
             throw new ComptabilisationAutomatiqueIndisponibleException(
@@ -199,26 +175,75 @@ public class ComptabilisationService {
         }
     }
 
-    private void genererLignes(EcritureComptable ecriture, TypeOperation operation, CompteComptable compteChargeOuProduit,
-                                CompteComptable compteTva, Tiers tiers, BigDecimal montantHt, BigDecimal montantTva,
-                                BigDecimal montantTtc, String libelle) {
-        if (operation == TypeOperation.ACHAT) {
-            ecriture.ajouterLigne(LigneEcriture.debit(compteChargeOuProduit, montantHt, libelle));
-            if (compteTva != null) {
-                ecriture.ajouterLigne(LigneEcriture.debit(compteTva, montantTva, libelle));
-            }
-            LigneEcriture ligneTiers = LigneEcriture.credit(tiers.getCompteComptable(), montantTtc, libelle);
-            ligneTiers.setTiers(tiers);
-            ecriture.ajouterLigne(ligneTiers);
-        } else {
-            LigneEcriture ligneTiers = LigneEcriture.debit(tiers.getCompteComptable(), montantTtc, libelle);
-            ligneTiers.setTiers(tiers);
-            ecriture.ajouterLigne(ligneTiers);
-            ecriture.ajouterLigne(LigneEcriture.credit(compteChargeOuProduit, montantHt, libelle));
-            if (compteTva != null) {
-                ecriture.ajouterLigne(LigneEcriture.credit(compteTva, montantTva, libelle));
-            }
+    /**
+     * Seul endroit ou le flux Documents produit une ecriture : resolution du compte de TVA par
+     * purpose, construction des lignes par la regle metier, puis proposition + validation en
+     * BROUILLON par le moteur. {@code principal == null} = flux systeme (pipeline), sans utilisateur.
+     */
+    private EcritureComptableDto confierAuMoteur(Entreprise entreprise, Document document, TypeOperation operation,
+                                                   Tiers tiers, CompteComptable compteChargeOuProduit, LocalDate dateEcriture,
+                                                   String libelle, BigDecimal montantHt, BigDecimal montantTva,
+                                                   BigDecimal montantTtc, UtilisateurPrincipal principal) {
+        boolean achat = operation == TypeOperation.ACHAT;
+        AccountingOperationType type = achat ? AccountingOperationType.ACHAT : AccountingOperationType.VENTE;
+
+        Blocages explications = new Blocages();
+        CompteComptable compteTva = null;
+        if (montantTva.signum() > 0) {
+            compteTva = resoudreCompteTva(entreprise, document, type, tiers, achat, explications, principal);
         }
+
+        ResultatRegle resultat;
+        if (explications.isEmpty()) {
+            List<AccountingOperationProposalLigne> lignes = achat
+                    ? achatRule.construireLignesAchatDepuisMontantsPrecalcules(tiers, compteChargeOuProduit, montantHt,
+                            compteTva, montantTva, montantTtc, libelle)
+                    : venteRule.construireLignesVenteDepuisMontantsPrecalcules(tiers, compteChargeOuProduit, montantHt,
+                            compteTva, montantTva, montantTtc, libelle);
+            resultat = new ResultatRegle(achat ? TypeJournal.ACHATS : TypeJournal.VENTES, lignes, List.of(), List.of());
+        } else {
+            // NOT_CONFIGURED / AMBIGUOUS / INVALID : aucune ligne devinee, la proposition reste en
+            // NEEDS_REVIEW avec l'explication et le moteur refuse (422).
+            resultat = new ResultatRegle(achat ? TypeJournal.ACHATS : TypeJournal.VENTES, List.of(), explications, List.of());
+        }
+
+        AccountingOperationProposalDto proposition = principal != null
+                ? accountingOperationEngine.proposerEtValider(entreprise.getId(), type, tiers, dateEcriture, libelle,
+                        null, resultat, AccountingSource.document(document.getId()), StatutEcriture.BROUILLON, principal)
+                : accountingOperationEngine.proposerEtValiderSysteme(entreprise.getId(), type, tiers, dateEcriture,
+                        libelle, null, resultat, AccountingSource.document(document.getId()), StatutEcriture.BROUILLON);
+
+        var ecriture = ecritureComptableRepository.findById(proposition.ecritureId())
+                .orElseThrow(() -> new IllegalStateException(
+                        "Proposition validee mais ecriture introuvable : " + proposition.ecritureId()));
+        document.setEcritureId(ecriture.getId());
+        documentRepository.save(document);
+        return EcritureComptableDto.from(ecriture);
+    }
+
+    /** TVA recuperable (achat) / collectee (vente) : le COMPTE vient du parametrage de l'entreprise
+     * (puis du role systeme historique), jamais d'un numero ; le TAUX/montant reste un fait de la piece. */
+    private CompteComptable resoudreCompteTva(Entreprise entreprise, Document document, AccountingOperationType type, Tiers tiers,
+                                               boolean achat, Blocages explications, UtilisateurPrincipal principal) {
+        AccountPurpose purpose = achat ? AccountPurpose.TVA_RECUPERABLE : AccountPurpose.TVA_COLLECTEE;
+        AccountContext contexte = new AccountContext(type, null, null, tiers.getType().name(), entreprise.getPays(), null, Map.of());
+        ResolvedAccount resolu = accountingAccountResolver.resolve(entreprise.getId(), purpose, contexte, null);
+        if (!resolu.isResolved()) {
+            explications.ajouter(resolu.code(), "Compte de " + (achat ? "TVA recuperable" : "TVA collectee")
+                    + " non utilisable pour cette entreprise (" + resolu.status() + ") : " + resolu.explication());
+            String action = switch (resolu.status()) {
+                case AMBIGUOUS -> "COMPTE_AMBIGU";
+                case INVALID -> "COMPTE_INVALIDE";
+                default -> "COMPTE_NON_CONFIGURE";
+            };
+            // Transaction independante : le refus (422) annule la transaction courante.
+            auditTrailService.enregistrerRefus(entreprise.getTenant() != null ? entreprise.getTenant().getId() : null,
+                    principal != null ? principal.getId() : null, action, "DOCUMENT", document.getId().toString(),
+                    Map.of("purpose", purpose.name(), "statut", resolu.status().name(), "explication", resolu.explication()));
+            return null;
+        }
+        return compteComptableRepository.findById(resolu.compteId())
+                .orElseThrow(() -> new IllegalStateException("Compte de TVA resolu mais introuvable : " + resolu.compteId()));
     }
 
     private Document chargerDocument(UUID entrepriseId, UUID documentId) {
@@ -229,6 +254,12 @@ public class ComptabilisationService {
         }
         if (document.getEcritureId() != null) {
             throw new ResponseStatusException(HttpStatus.CONFLICT, "Ce document a deja ete comptabilise");
+        }
+        if (document.getCibleId() != null
+                && document.getStatutRapprochement() == com.example.comptable.document.domain.StatutRapprochementDocument.RAPPROCHE) {
+            // La facture existe deja (et porte sa propre ecriture) : la comptabiliser aussi depuis la piece compterait deux fois.
+            throw new ResponseStatusException(HttpStatus.CONFLICT,
+                    "Cette piece est rapprochee d'une facture deja comptabilisee : elle ne se comptabilise pas separement");
         }
         return document;
     }
@@ -267,34 +298,5 @@ public class ComptabilisationService {
                     "Le compte selectionne doit etre de nature " + natureAttendue);
         }
         return compte;
-    }
-
-    private CompteComptable chargerCompteTva(UUID entrepriseId, TypeOperation operation) {
-        String numero = operation == TypeOperation.ACHAT ? COMPTE_TVA_DEDUCTIBLE : COMPTE_TVA_COLLECTEE;
-        return compteComptableRepository.findByEntrepriseIdAndNumero(entrepriseId, numero)
-                .orElseThrow(() -> new IllegalStateException(
-                        "Compte TVA " + numero + " introuvable, l'entreprise n'a pas ete initialisee correctement"));
-    }
-
-    private ExerciceComptable chargerExerciceOuvert(UUID entrepriseId, LocalDate date) {
-        ExerciceComptable exercice = exerciceComptableRepository.findByEntrepriseIdAndDate(entrepriseId, date)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNPROCESSABLE_ENTITY,
-                        "Aucun exercice comptable ne couvre la date " + date));
-        if (exercice.getStatut() != StatutExercice.OUVERT) {
-            throw new ResponseStatusException(HttpStatus.UNPROCESSABLE_ENTITY, "L'exercice couvrant cette date est cloture");
-        }
-        return exercice;
-    }
-
-    private Journal chargerJournal(UUID entrepriseId, TypeOperation operation) {
-        String code = operation == TypeOperation.ACHAT ? "ACH" : "VTE";
-        return journalRepository.findByEntrepriseIdAndCode(entrepriseId, code)
-                .orElseThrow(() -> new IllegalStateException(
-                        "Journal " + code + " introuvable, l'entreprise n'a pas ete initialisee correctement"));
-    }
-
-    private String genererNumeroPiece(Journal journal) {
-        long sequence = ecritureComptableRepository.countByJournalId(journal.getId()) + 1;
-        return "%s-%d-%04d".formatted(journal.getCode(), LocalDate.now().getYear(), sequence);
     }
 }

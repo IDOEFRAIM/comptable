@@ -1,4 +1,15 @@
-export type TypeDocument = 'FACTURE_ACHAT' | 'FACTURE_VENTE' | 'RECU' | 'RELEVE_BANCAIRE' | 'AUTRE';
+export type TypeDocument =
+  | 'FACTURE_ACHAT'
+  | 'FACTURE_VENTE'
+  | 'RECU'
+  | 'RELEVE_BANCAIRE'
+  | 'DOCUMENT_PAIE'
+  | 'DOCUMENT_SOCIAL'
+  | 'DOCUMENT_FISCAL'
+  | 'CONTRAT'
+  | 'AUTRE';
+
+export type CanalSource = 'WEB' | 'WHATSAPP' | 'EMAIL' | 'API' | 'SCAN' | 'MANUAL';
 
 export type StatutDocument =
   | 'EN_ATTENTE'
@@ -11,7 +22,7 @@ export interface DocumentDto {
   id: string;
   entrepriseId: string;
   typeDocument: TypeDocument;
-  canalSource: 'WEB' | 'WHATSAPP' | 'EMAIL';
+  canalSource: CanalSource;
   nomFichierOriginal: string;
   contentType: string;
   tailleOctets: number;
@@ -30,6 +41,10 @@ export const LIBELLES_TYPE_DOCUMENT: Record<TypeDocument, string> = {
   FACTURE_VENTE: 'Facture de vente',
   RECU: 'Reçu',
   RELEVE_BANCAIRE: 'Relevé bancaire',
+  DOCUMENT_PAIE: 'Paie',
+  DOCUMENT_SOCIAL: 'Social',
+  DOCUMENT_FISCAL: 'Fiscal',
+  CONTRAT: 'Contrat',
   AUTRE: 'Autre',
 };
 
@@ -39,4 +54,13 @@ export const LIBELLES_STATUT: Record<StatutDocument, string> = {
   TRAITE: 'Traité',
   ERREUR: 'Erreur',
   EN_ATTENTE_VALIDATION_HUMAINE: 'En attente de validation (IA)',
+};
+
+export const LIBELLES_CANAL: Record<CanalSource, string> = {
+  WEB: 'Dépôt',
+  WHATSAPP: 'WhatsApp',
+  EMAIL: 'E-mail',
+  API: 'API',
+  SCAN: 'Scan',
+  MANUAL: 'Saisie',
 };

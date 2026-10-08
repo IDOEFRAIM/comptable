@@ -1,0 +1,225 @@
+409|FOURNISSEURS DÉBITEURS|238
+4091|Fournisseurs avances et acomptes versés|238
+4092|Fournisseurs - Groupe avances et acomptes versés|238
+4093|Fournisseurs sous-traitants avances et acomptes versés|238
+4094|Fournisseurs créances pour emballages et matériels à rendre|238
+4098|Fournisseurs, rabais, remises, ristournes et autres avoirs à obtenir|238
+411|CLIENTS|238
+4111|Clients|238
+4112|Clients - Groupe|238
+4114|Clients, État et collectivités publiques|238
+4115|Clients, organismes internationaux|238
+4116|Clients, réserve de propriété|238
+4117|Clients, retenues de garantie|238
+4118|Clients, dégrèvement de Taxes sur la Valeur Ajoutée (T.V.A.)|238
+412|CLIENTS, EFFETS À RECEVOIR EN PORTEFEUILLE|238
+4121|Clients, Effets à recevoir|238
+4122|Clients - Groupe, Effets à recevoir|238
+4124|État et collectivités publiques, Effets à recevoir|238
+412|Organismes Internationaux, Effets à recevoir|238|ANOMALIE_SOURCE: code imprimé « 412 » (dupliqué sous le compte 412) ; ne pas inventer 4125
+413|CLIENTS, CHÈQUES, EFFETS ET AUTRES VALEURS IMPAYÉS|238
+4131|Clients, chèques impayés|238
+4132|Clients, effets impayés|238
+4133|Clients, cartes de crédit impayées|238
+4138|Clients, autres valeurs impayées|238
+414|CRÉANCES SUR CESSIONS COURANTES D'IMMOBILISATIONS|238
+4141|Créances en compte, immobilisations incorporelles|238
+4142|Créances en compte, immobilisations corporelles|238
+4146|Effets à recevoir, immobilisations incorporelles|238
+4147|Effets à recevoir, immobilisations corporelles|238
+415|CLIENTS, EFFETS ESCOMPTÉS NON ÉCHUS|238
+416|CRÉANCES CLIENTS LITIGIEUSES OU DOUTEUSES|238
+4161|Créances litigieuses|238
+4162|Créances douteuses|238
+418|CLIENTS, PRODUITS À RECEVOIR|239
+4181|Clients, factures à établir|239
+4186|Clients, intérêts courus|239
+419|CLIENTS CRÉDITEURS|239
+4191|Clients, avances et acomptes reçus|239
+4192|Clients - Groupe, avances et acomptes reçus|239
+4194|Clients, dettes pour emballages et matériels consignés|239
+4198|Clients, rabais, remises, ristournes et autres avoirs à accorder|239
+421|PERSONNEL, AVANCES ET ACOMPTES|239
+4211|Personnel, avances|239
+4212|Personnel, acomptes|239
+4213|Frais avancés et fournitures au personnel|239
+422|PERSONNEL, RÉMUNÉRATIONS DUES|239
+423|PERSONNEL, OPPOSITIONS, SAISIES-ARRÊTS|239
+4231|Personnel, oppositions|239
+4232|Personnel, saisies-arrêts|239
+4233|Personnel, avis à tiers détenteur|239
+424|PERSONNEL, ŒUVRES SOCIALES INTERNES|239
+4241|Assistance médicale|239
+4242|Allocations familiales|239
+4245|Organismes sociaux rattachés à l'entité|239
+4248|Autres œuvres sociales internes|239
+425|REPRÉSENTANTS DU PERSONNEL|239
+4251|Délégués du personnel|239
+4252|Syndicats et comités d'entreprises, d'établissement|239
+4258|Autres représentants du personnel|239
+426|PERSONNEL, PARTICIPATION AUX BÉNÉFICES ET AU CAPITAL|239
+4261|Participation aux bénéfices|239
+4264|Participation au capital|239
+427|PERSONNEL - DÉPÔTS|239
+428|PERSONNEL, CHARGES À PAYER ET PRODUITS À RECEVOIR|239
+4281|Dettes provisionnées pour congés à payer|239
+4286|Autres charges à payer|240|ANOMALIE_SOURCE: la source passe de 4281 (p.239) à 4286 (p.240) ; 4282-4285 absents des pages adjacentes (absence vérifiée), ne pas inventer
+4287|Produits à recevoir|240
+43|ORGANISMES SOCIAUX|240
+431|SÉCURITÉ SOCIALE|240
+4311|Prestations familiales|240
+4312|Accidents de travail|240
+4313|Caisse de retraite obligatoire|240
+4314|Caisse de retraite facultative|240
+4318|Autres cotisations sociales|240
+432|CAISSES DE RETRAITE COMPLÉMENTAIRE|240
+433|AUTRES ORGANISMES SOCIAUX|240
+4331|Mutuelle|240
+4332|Assurances retraite|240
+4333|Assurances et organismes de santé|240
+438|ORGANISMES SOCIAUX, CHARGES À PAYER ET PRODUITS À RECEVOIR|240
+4381|Charges sociales sur gratifications à payer|240
+4382|Charges sociales sur congés à payer|240
+4386|Autres charges à payer|240
+4387|Produits à recevoir|240
+44|ÉTAT ET COLLECTIVITÉS PUBLIQUES|240
+441|ÉTAT, IMPÔT SUR LES BÉNÉFICES|240
+442|ÉTAT, AUTRES IMPÔTS ET TAXES|240
+4421|Impôts et taxes d'État|240
+4422|Impôts et taxes pour les collectivités publiques|240
+4423|Impôts et taxes recouvrables sur des obligataires|240
+4424|Impôts et taxes recouvrables sur des associés|240
+4426|Droits de douane|240
+4428|Autres impôts et taxes|240
+443|ÉTAT, T.V.A. FACTURÉE|240
+4431|T.V.A. facturée sur ventes|240
+4432|T.V.A. facturée sur prestations de services|240
+4433|T.V.A. facturée sur travaux|240
+4434|T.V.A. facturée sur production livrée à soi-même|240
+4435|T.V.A. sur factures à établir|240
+444|ÉTAT, T.V.A. DUE OU CRÉDIT DE T.V.A.|241
+4441|État, T.V.A. due|241
+4449|État, crédit de T.V.A. à reporter|241
+445|ÉTAT, T.V.A. RÉCUPÉRABLE|241
+4451|T.V.A. récupérable sur immobilisations|241
+4452|T.V.A. récupérable sur achats|241
+4453|T.V.A. récupérable sur transport|241
+4454|T.V.A. récupérable sur services extérieurs et autres charges|241
+4455|T.V.A. récupérable sur factures non parvenues|241
+4456|T.V.A. transférée par d'autres entités|241
+446|ÉTAT, AUTRES TAXES SUR LE CHIFFRE D'AFFAIRES|241
+447|ÉTAT, IMPÔTS RETENUS À LA SOURCE|241
+4471|Impôt Général sur le revenu|241
+4472|Impôts sur salaires|241
+4473|Contribution nationale|241
+4474|Contribution nationale de solidarité|241
+4478|Autres impôts et contributions|241
+448|ÉTAT, CHARGES À PAYER ET PRODUITS À RECEVOIR|241
+4486|Charges à payer|241
+4487|Produits à recevoir|241
+449|ÉTAT, CRÉANCES ET DETTES DIVERSES|241
+4491|État, obligations cautionnées|241
+4492|État, avances et acomptes versés sur impôts|241
+4493|État, fonds de dotation à recevoir|241
+4494|État, subventions d'investissement à recevoir|241
+4495|État, subventions d'exploitation à recevoir|241
+4496|État, subventions d'équilibre à recevoir|241
+4497|État, avances sur subventions|241
+4499|État, fonds réglementés provisionnés|241
+45|ORGANISMES INTERNATIONAUX|241
+451|OPÉRATIONS AVEC LES ORGANISMES AFRICAINS|241
+452|OPÉRATIONS AVEC LES AUTRES ORGANISMES INTERNATIONAUX|241
+458|ORGANISMES INTERNATIONAUX, FONDS DE DOTATION ET SUBVENTIONS À RECEVOIR|241
+4581|Organismes internationaux, fonds de dotation à recevoir|242
+4582|Organismes internationaux, subventions à recevoir|242
+46|APPORTEURS, ASSOCIÉS ET GROUPE|242
+461|APPORTEURS, OPÉRATIONS SUR LE CAPITAL|242
+4611|Apporteurs, apports en nature|242
+4612|Apporteurs, apports en numéraire|242
+4613|Apporteurs, capital appelé, non versé|242
+4614|Apporteurs, compte d'apport, opérations de restructuration (fusion...)|242
+4615|Apporteurs, versements reçus sur augmentation de capital|242
+4616|Apporteurs, versements anticipés|242
+4617|Apporteurs défaillants|242
+4618|Apporteurs, titres à échanger|242
+4619|Apporteurs, capital à rembourser|242
+462|ASSOCIÉS, COMPTES COURANTS|242
+4621|Principal|242
+4626|Intérêts courus|242
+463|ASSOCIÉS, OPÉRATIONS FAITES EN COMMUN ET GIE|242
+4631|Opérations courantes|242
+4636|Intérêts courus|242
+465|ASSOCIÉS, DIVIDENDES À PAYER|242
+466|GROUPE, COMPTES COURANTS|242
+467|APPORTEURS RESTANT DÛ SUR CAPITAL APPELÉ|242
+47|DÉBITEURS ET CRÉDITEURS DIVERS|242
+471|DÉBITEURS ET CRÉDITEURS DIVERS|242
+4711|Débiteurs divers|242
+4712|Créditeurs divers|242
+4713|Obligataires|242
+4715|Rémunérations d'administrateurs|242
+4716|Compte d'affacturage|242
+4717|Débiteurs divers - retenues de garantie|242
+4718|Apport, compte de fusion et opérations assimilées|242
+4719|Bons de souscription d'actions et d'obligations|242
+472|CRÉANCES ET DETTES SUR TITRES DE PLACEMENT|243
+4721|Créances sur cessions de titres de placement|243
+4726|Versements restant à effectuer sur titres de placement non libérés|243
+473|INTERMÉDIAIRES - OPÉRATIONS FAITES POUR COMPTE DE TIERS|243
+4731|Mandants|243
+4732|Mandataires|243
+4733|Commettants|243
+4734|Commissionnaires|243
+4739|État, collectivités publiques, fonds global d'allocation|243
+474|COMPTE DE RÉPARTITION PÉRIODIQUE DES CHARGES ET DES PRODUITS|243
+4746|Compte de répartition périodique des charges|243
+4747|Compte de répartition périodique des produits|243
+475|COMPTE TRANSITOIRE, AJUSTEMENT SPÉCIAL LIÉ À LA RÉVISION DU SYSCOHADA|243
+4751|Compte actif|243
+4752|Compte passif|243
+476|CHARGES CONSTATÉES D'AVANCE|243
+477|PRODUITS CONSTATÉS D'AVANCE|243
+478|ÉCARTS DE CONVERSION - ACTIF|243
+4781|Diminution des créances d'exploitation|243
+4782|Diminution des créances financières|243
+4783|Augmentation des dettes d'exploitation|243
+4784|Augmentation des dettes financières|243
+4786|Différences d'évaluation sur instruments de trésorerie|243
+4788|Différences compensées par couverture de change|243
+479|ÉCARTS DE CONVERSION - PASSIF|243
+4791|Augmentation des créances d'exploitation|243
+4792|Augmentation des créances financières|243
+4793|Diminution des dettes d'exploitation|243
+4794|Diminution des dettes d'exploitation|243|ANOMALIE_SOURCE: intitulé imprimé identique à 4793 (vérifié tel qu'imprimé) ; non corrigé
+4797|Différences d'évaluation sur instruments de trésorerie|243
+4798|Différences compensées par couverture de change|243
+48|CRÉANCES ET DETTES HORS ACTIVITÉS ORDINAIRES (HAO)|243
+481|FOURNISSEURS D'INVESTISSEMENTS|243
+4811|Immobilisations incorporelles|244
+4812|Immobilisations corporelles|244
+4813|Versements restant à effectuer sur titres de participation et titres immobilisés non libérés|244
+4816|Réserve de propriété|244
+4817|Retenues de garantie|244
+4818|Factures non parvenues|244
+482|FOURNISSEURS D'INVESTISSEMENTS, EFFETS À PAYER|244
+4821|Immobilisations incorporelles|244
+4822|Immobilisations corporelles|244
+484|AUTRES DETTES HORS ACTIVITÉS ORDINAIRES (H.A.O.)|244
+485|CRÉANCES SUR CESSIONS D'IMMOBILISATIONS|244
+4851|En compte, immobilisations incorporelles|244
+4852|En compte, immobilisations corporelles|244
+4853|Effets à recevoir, immobilisations incorporelles|244
+4854|Effets à recevoir, immobilisations corporelles|244
+4855|Effets escomptés non échus|244
+4857|Retenues de garantie|244
+4858|Factures à établir|244
+488|AUTRES CRÉANCES HORS ACTIVITÉS ORDINAIRES (H.A.O.)|244
+49|DÉPRÉCIATIONS ET PROVISIONS POUR RISQUES À COURT TERME (TIERS)|244
+490|DÉPRÉCIATIONS DES COMPTES FOURNISSEURS|244
+491|DÉPRÉCIATIONS DES COMPTES CLIENTS|244
+4911|Créances litigieuses|244
+4912|Créances douteuses|244
+492|DÉPRÉCIATIONS DES COMPTES PERSONNEL|244
+493|DÉPRÉCIATIONS DES COMPTES ORGANISMES SOCIAUX|244
+494|DÉPRÉCIATIONS DES COMPTES ÉTAT ET COLLECTIVITÉS PUBLIQUES|244
+495|DÉPRÉCIATIONS DES COMPTES ORGANISMES INTERNATIONAUX|244

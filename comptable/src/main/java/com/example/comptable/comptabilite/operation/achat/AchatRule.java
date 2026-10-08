@@ -1,7 +1,8 @@
 package com.example.comptable.comptabilite.operation.achat;
 
+import com.example.comptable.comptabilite.operation.common.Blocages;
+
 import com.example.comptable.comptabilite.domain.CompteComptable;
-import com.example.comptable.comptabilite.domain.RoleCompteSysteme;
 import com.example.comptable.comptabilite.domain.Tiers;
 import com.example.comptable.comptabilite.domain.TypeJournal;
 import com.example.comptable.comptabilite.operation.common.FraisAccessoireRequest;
@@ -12,6 +13,7 @@ import com.example.comptable.comptabilite.operation.common.domain.AccountingOper
 import com.example.comptable.comptabilite.operation.tva.TvaRateResolver;
 import com.example.comptable.comptabilite.operation.tva.TvaResultat;
 import com.example.comptable.comptabilite.parametrage.AccountContext;
+import com.example.comptable.comptabilite.operation.common.AccountingOperationType;
 import com.example.comptable.comptabilite.parametrage.AccountingAccountResolver;
 import com.example.comptable.comptabilite.parametrage.ResolvedAccount;
 import com.example.comptable.comptabilite.parametrage.domain.AccountPurpose;
@@ -55,7 +57,7 @@ public class AchatRule {
                 .chargerCompteUtilisable(entreprise.getId(), request.compteChargeId(), true);
         verifierCoherenceNatureClasse(request.natureAchat(), compteCharge);
 
-        List<String> explications = new ArrayList<>();
+        Blocages explications = new Blocages();
         List<String> warnings = new ArrayList<>();
 
         BigDecimal montantHtPrincipal = appliquerReductions(request.reductions(), request.montantHt(), explications);
@@ -80,8 +82,7 @@ public class AchatRule {
                 if (frais.inclusDansBaseTva()) {
                     montantHtBaseTva = montantHtBaseTva.add(frais.montantHt());
                 } else if (frais.tauxTvaId() != null) {
-                    TvaResultat tvaFrais = tvaRateResolver.resoudreParRegle(entreprise.getId(), frais.tauxTvaId(),
-                            frais.montantHt(), RoleCompteSysteme.TVA_DEDUCTIBLE);
+                    TvaResultat tvaFrais = tvaRateResolver.resoudreParRegle(frais.tauxTvaId(), frais.montantHt());
                     if (!tvaFrais.nonSupporte()) {
                         montantTvaFraisHorsBase = montantTvaFraisHorsBase.add(tvaFrais.montantTva());
                     }
@@ -96,8 +97,8 @@ public class AchatRule {
         BigDecimal montantTvaTotal = BigDecimal.ZERO;
         if (montantHtBaseTva.signum() > 0 || montantTvaFraisHorsBase.signum() > 0) {
             TvaResultat tva = request.tauxTvaId() != null
-                    ? tvaRateResolver.resoudreParRegle(entreprise.getId(), request.tauxTvaId(), montantHtBaseTva, RoleCompteSysteme.TVA_DEDUCTIBLE)
-                    : tvaRateResolver.resoudre(entreprise.getId(), entreprise.getPays(), request.date(), montantHtBaseTva, RoleCompteSysteme.TVA_DEDUCTIBLE);
+                    ? tvaRateResolver.resoudreParRegle(request.tauxTvaId(), montantHtBaseTva)
+                    : tvaRateResolver.resoudre(entreprise.getPays(), request.date(), montantHtBaseTva);
 
             if (tva.nonSupporte()) {
                 explications.add("TVA deductible non calculee : " + tva.motif());
@@ -107,8 +108,13 @@ public class AchatRule {
                     warnings.add("Taux TVA issu d'une regle de demonstration non verifiee reglementairement.");
                 }
                 if (montantTvaTotal.signum() > 0) {
-                    lignes.add(AccountingOperationProposalLigne.debit(tva.compte(), montantTvaTotal,
-                            "TVA deductible - " + request.libelle()));
+                    AccountingAccountResolver.CompteResolu compteTva = resoudreCompteTva(entreprise);
+                    if (compteTva.estResolu()) {
+                        lignes.add(AccountingOperationProposalLigne.debit(compteTva.compte(), montantTvaTotal,
+                                "TVA deductible - " + request.libelle()));
+                    } else {
+                        explications.compte(compteTva, "de TVA recuperable");
+                    }
                 }
             }
         }
@@ -121,20 +127,49 @@ public class AchatRule {
         return new ResultatRegle(TypeJournal.ACHATS, lignes, explications, warnings);
     }
 
+    /**
+     * Lignes d'achat (charge debit HT / TVA recuperable debit si &gt; 0 / fournisseur credit TTC) a
+     * partir des montants figurant sur la piece justificative - jamais de re-derivation TVA ici :
+     * la TVA d'une facture fournisseur est un fait porte par la piece (deja confirme par le
+     * comptable), pas un calcul. Symetrique de {@code VenteRule.construireLignesVenteDepuisMontantsPrecalcules}.
+     * Utilise par le flux Documents ({@code ComptabilisationService}).
+     */
+    public List<AccountingOperationProposalLigne> construireLignesAchatDepuisMontantsPrecalcules(
+            Tiers fournisseur, CompteComptable compteCharge, BigDecimal montantHt,
+            CompteComptable compteTva, BigDecimal montantTva, BigDecimal montantTtc, String libelle) {
+        List<AccountingOperationProposalLigne> lignes = new ArrayList<>();
+        lignes.add(AccountingOperationProposalLigne.debit(compteCharge, montantHt, libelle));
+        if (montantTva.signum() > 0) {
+            lignes.add(AccountingOperationProposalLigne.debit(compteTva, montantTva, libelle));
+        }
+        AccountingOperationProposalLigne ligneFournisseur = AccountingOperationProposalLigne.credit(
+                fournisseur.getCompteComptable(), montantTtc, libelle);
+        ligneFournisseur.setTiers(fournisseur);
+        lignes.add(ligneFournisseur);
+        return lignes;
+    }
+
+    /** Compte de TVA recuperable : toujours par le parametrage de l'entreprise (purpose TVA_RECUPERABLE),
+     * jamais lie au calcul du taux (fiscalite). */
+    private AccountingAccountResolver.CompteResolu resoudreCompteTva(Entreprise entreprise) {
+        return accountingAccountResolver.resoudreCompte(entreprise.getId(), AccountPurpose.TVA_RECUPERABLE,
+                new AccountContext(AccountingOperationType.ACHAT, null, null, null, entreprise.getPays(), null, java.util.Map.of()), null);
+    }
+
     /** Reutilise par AvoirRule pour AVOIR_ACHAT : construit les lignes "core" (charge + TVA +
      * fournisseur) sans frais/reductions (non modelises sur un avoir generique), avant inversion
      * debit/credit par l'appelant. */
     public List<AccountingOperationProposalLigne> construireLignesCore(Entreprise entreprise, Tiers fournisseur,
             CompteComptable compteCharge, BigDecimal montantHt, UUID tauxTvaId, LocalDate date, String libelle,
-            List<String> explications, List<String> warnings) {
+            Blocages explications, List<String> warnings) {
         List<AccountingOperationProposalLigne> lignes = new ArrayList<>();
         lignes.add(AccountingOperationProposalLigne.debit(compteCharge, montantHt, libelle));
 
         BigDecimal montantTva = BigDecimal.ZERO;
         if (montantHt.signum() > 0) {
             TvaResultat tva = tauxTvaId != null
-                    ? tvaRateResolver.resoudreParRegle(entreprise.getId(), tauxTvaId, montantHt, RoleCompteSysteme.TVA_DEDUCTIBLE)
-                    : tvaRateResolver.resoudre(entreprise.getId(), entreprise.getPays(), date, montantHt, RoleCompteSysteme.TVA_DEDUCTIBLE);
+                    ? tvaRateResolver.resoudreParRegle(tauxTvaId, montantHt)
+                    : tvaRateResolver.resoudre(entreprise.getPays(), date, montantHt);
             if (tva.nonSupporte()) {
                 explications.add("TVA deductible non calculee : " + tva.motif());
             } else {
@@ -143,7 +178,12 @@ public class AchatRule {
                     warnings.add("Taux TVA issu d'une regle de demonstration non verifiee reglementairement.");
                 }
                 if (montantTva.signum() > 0) {
-                    lignes.add(AccountingOperationProposalLigne.debit(tva.compte(), montantTva, "TVA deductible - " + libelle));
+                    AccountingAccountResolver.CompteResolu compteTva = resoudreCompteTva(entreprise);
+                    if (compteTva.estResolu()) {
+                        lignes.add(AccountingOperationProposalLigne.debit(compteTva.compte(), montantTva, "TVA deductible - " + libelle));
+                    } else {
+                        explications.compte(compteTva, "de TVA recuperable");
+                    }
                 }
             }
         }
@@ -167,7 +207,7 @@ public class AchatRule {
      * s'agregent naturellement dans la meme ligne de compte.
      */
     public ResultatRegle construireMultiLigne(Entreprise entreprise, Tiers fournisseur, AchatMultiLigneOperationRequest request) {
-        List<String> explications = new ArrayList<>();
+        Blocages explications = new Blocages();
         List<String> warnings = new ArrayList<>();
         Map<CompteComptable, BigDecimal> montantHtParCompte = new LinkedHashMap<>();
         BigDecimal montantTvaTotal = BigDecimal.ZERO;
@@ -182,14 +222,14 @@ public class AchatRule {
             if (compteIdLigne == null) {
                 AccountPurpose purpose = purposeDepuisNature(ligne.nature());
                 if (purpose == null) {
-                    explications.add("Compte non determine pour la ligne '" + ligne.designation()
+                    explications.ajouter(com.example.comptable.comptabilite.parametrage.AccountResolutionCode.ACCOUNT_NOT_CONFIGURED, "Compte non determine pour la ligne '" + ligne.designation()
                             + "' (nature " + ligne.nature() + ") - aucun compte fourni et aucune correspondance possible");
                     continue;
                 }
                 ResolvedAccount resolu = accountingAccountResolver.resolve(entreprise.getId(), purpose,
                         new AccountContext(null, ligne.nature().name(), null, null, entreprise.getPays(), null, Map.of()), null);
                 if (!resolu.isResolved()) {
-                    explications.add("Compte non determine pour la ligne '" + ligne.designation()
+                    explications.ajouter(resolu.code(), "Compte non determine pour la ligne '" + ligne.designation()
                             + "' (nature " + ligne.nature() + ") - " + resolu.explication());
                     continue;
                 }
@@ -201,7 +241,7 @@ public class AchatRule {
                 compte = compteComptableValidationService.chargerCompteUtilisable(entreprise.getId(), compteIdLigne, true);
                 verifierCoherenceNatureClasse(ligne.nature(), compte);
             } catch (ResponseStatusException e) {
-                explications.add("Ligne '" + ligne.designation() + "' : " + e.getReason());
+                explications.ajouter(com.example.comptable.comptabilite.parametrage.CompteNonUtilisableException.codeDe(e), "Ligne '" + ligne.designation() + "' : " + e.getReason());
                 continue;
             }
 
@@ -224,7 +264,7 @@ public class AchatRule {
             ResolvedAccount resoluTva = accountingAccountResolver.resolve(entreprise.getId(), AccountPurpose.TVA_RECUPERABLE,
                     new AccountContext(null, null, null, null, entreprise.getPays(), null, Map.of()), null);
             if (!resoluTva.isResolved()) {
-                explications.add("Compte TVA deductible non configure pour cette entreprise");
+                explications.ajouter(resoluTva.code(), "Compte TVA deductible non configure pour cette entreprise");
             } else {
                 CompteComptable compteTva = compteComptableValidationService
                         .chargerCompteUtilisable(entreprise.getId(), resoluTva.compteId(), true);

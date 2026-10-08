@@ -1,5 +1,7 @@
 package com.example.comptable.comptabilite.operation.reglement;
 
+import com.example.comptable.comptabilite.operation.common.Blocages;
+
 import com.example.comptable.comptabilite.domain.CompteComptable;
 import com.example.comptable.comptabilite.domain.Tiers;
 import com.example.comptable.comptabilite.domain.TypeJournal;
@@ -53,7 +55,7 @@ public class ReglementRule {
                 ? TypeJournal.CAISSE
                 : TypeJournal.BANQUE;
 
-        List<String> explications = new ArrayList<>();
+        Blocages explications = new Blocages();
         List<String> warnings = new ArrayList<>();
         List<AccountingOperationProposalLigne> lignes = new ArrayList<>();
 
@@ -61,7 +63,7 @@ public class ReglementRule {
                 request.moyenPaiement().name(), Map.of());
         ResolvedAccount resoluTresorerie = accountingAccountResolver.resolve(entreprise.getId(), purposeTresorerie, context, null);
         if (!resoluTresorerie.isResolved()) {
-            explications.add("Compte de tresorerie (" + purposeTresorerie + ") non configure pour cette entreprise : "
+            explications.ajouter(resoluTresorerie.code(), "Compte de tresorerie (" + purposeTresorerie + ") non configure pour cette entreprise : "
                     + resoluTresorerie.explication());
         } else {
             CompteComptable tresorerie = compteComptableValidationService

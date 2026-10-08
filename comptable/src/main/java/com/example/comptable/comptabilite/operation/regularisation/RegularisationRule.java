@@ -1,5 +1,7 @@
 package com.example.comptable.comptabilite.operation.regularisation;
 
+import com.example.comptable.comptabilite.operation.common.Blocages;
+
 import com.example.comptable.comptabilite.domain.CompteComptable;
 import com.example.comptable.comptabilite.domain.TypeJournal;
 import com.example.comptable.comptabilite.operation.common.ResultatRegle;
@@ -40,7 +42,7 @@ public class RegularisationRule {
     }
 
     private ResultatRegle construireLignes(Entreprise entreprise, Regularisation regularisation, boolean reprise) {
-        List<String> explications = new ArrayList<>();
+        Blocages explications = new Blocages();
         List<String> warnings = new ArrayList<>();
         List<AccountingOperationProposalLigne> lignes = new ArrayList<>();
 
@@ -52,7 +54,7 @@ public class RegularisationRule {
             compteContrepartie = compteComptableValidationService.chargerCompteUtilisable(
                     entreprise.getId(), regularisation.getCompteContrepartie().getId(), true);
         } catch (ResponseStatusException e) {
-            explications.add("Compte d'origine ou de contrepartie non configure ou inactif - regularisation impossible");
+            explications.ajouter(com.example.comptable.comptabilite.parametrage.CompteNonUtilisableException.codeDe(e), "Compte d'origine ou de contrepartie non configure ou inactif - regularisation impossible");
             return new ResultatRegle(TypeJournal.OPERATIONS_DIVERSES, lignes, explications, warnings);
         }
 

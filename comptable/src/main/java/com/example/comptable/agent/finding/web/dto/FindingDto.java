@@ -23,7 +23,13 @@ public record FindingDto(
         OffsetDateTime resolvedAt,
         UUID assignedToId,
         String assignedToNom,
-        LocalDate dueDate
+        LocalDate dueDate,
+        String controlCode,
+        String category,
+        String controlSeverity,
+        String resolutionType,
+        String resolutionComment,
+        OffsetDateTime lastDetectedAt
 ) {
     public static FindingDto from(Finding f) {
         return new FindingDto(
@@ -42,7 +48,13 @@ public record FindingDto(
                 f.getResolvedAt(),
                 f.getAssignedTo() != null ? f.getAssignedTo().getId() : null,
                 f.getAssignedTo() != null ? f.getAssignedTo().getNom() + " " + f.getAssignedTo().getPrenom() : null,
-                f.getDueDate()
+                f.getDueDate(),
+                f.getControlCode(),
+                f.getCategory().name(),
+                f.getControlSeverity().name(),
+                f.getResolutionType() != null ? f.getResolutionType().name() : null,
+                f.getResolutionComment(),
+                f.getLastDetectedAt()
         );
     }
 }

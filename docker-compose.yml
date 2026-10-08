@@ -76,7 +76,16 @@ services:
       postgres:
         condition: service_healthy
     environment:
+      # Profil de production : le démarrage est REFUSÉ si un secret est faible ou absent (voir ProductionStartupValidator). staging = mêmes contrôles + envois restreints à COLLECTE_SANDBOX_ALLOWLIST.
+      SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-prod}
       SPRING_DOCKER_COMPOSE_ENABLED: "false"
+      # Création de cabinet réservée à l'opérateur (script scripts/provision-cabinet.sh) : jamais d'inscription publique.
+      COMPTABLE_REGISTRATION_MODE: ${COMPTABLE_REGISTRATION_MODE:-PROVISIONING}
+      COMPTABLE_PROVISIONING_TOKEN: ${COMPTABLE_PROVISIONING_TOKEN:?COMPTABLE_PROVISIONING_TOKEN doit etre defini dans .env (24+ caracteres aleatoires)}
+      COLLECTE_LIEN_DEPOT_BASE_URL: ${COLLECTE_LIEN_DEPOT_BASE_URL:?COLLECTE_LIEN_DEPOT_BASE_URL doit etre defini dans .env (URL publique des liens de depot, ex. https://comptable.example.org/depot)}
+      COLLECTE_SANDBOX_ALLOWLIST: ${COLLECTE_SANDBOX_ALLOWLIST:-}
+      COLLECTE_ENVOI_ACTIF: ${COLLECTE_ENVOI_ACTIF:-false}
+      COLLECTE_RELANCE_ACTIF: ${COLLECTE_RELANCE_ACTIF:-false}
       SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/${POSTGRES_DB:-comptable}
       SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER:-comptable}
       SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD:?}
@@ -100,7 +109,8 @@ services:
     volumes:
       - documents_data:/app/data/documents
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8081/actuator/health"]
+      # Sonde de disponibilité : base de données, stockage des pièces et migrations (aucun détail interne n'est exposé).
+      test: ["CMD", "curl", "-f", "http://localhost:8081/actuator/health/readiness"]
       interval: 10s
       timeout: 5s
       retries: 15

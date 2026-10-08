@@ -6,7 +6,7 @@ import com.example.comptable.comptabilite.parametrage.domain.AccountPurpose;
 import com.example.comptable.comptabilite.parametrage.domain.AccountingAccountMapping;
 import com.example.comptable.comptabilite.parametrage.repository.AccountingAccountMappingRepository;
 import com.example.comptable.comptabilite.service.CompteComptableValidationService;
-import com.example.comptable.comptabilite.service.CompteSystemeResolver;
+import com.example.comptable.comptabilite.repository.CompteComptableRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -38,7 +38,7 @@ class AccountingAccountResolverTest {
     @Mock
     private AccountingAccountMappingRepository mappingRepository;
     @Mock
-    private CompteSystemeResolver compteSystemeResolver;
+    private CompteComptableRepository compteComptableRepository;
     @Mock
     private CompteComptableValidationService compteComptableValidationService;
 
@@ -119,7 +119,7 @@ class AccountingAccountResolverTest {
         CompteComptable compteRole = compte("4456");
         when(mappingRepository.findByEntrepriseIdAndPurposeAndContextKeyIsNullAndActifTrue(entrepriseId, AccountPurpose.TVA_RECUPERABLE))
                 .thenReturn(List.of());
-        when(compteSystemeResolver.resoudre(entrepriseId, RoleCompteSysteme.TVA_DEDUCTIBLE)).thenReturn(Optional.of(compteRole));
+        when(compteComptableRepository.findByEntrepriseIdAndReferenceRoleSysteme(entrepriseId, RoleCompteSysteme.TVA_DEDUCTIBLE)).thenReturn(Optional.of(compteRole));
         when(compteComptableValidationService.chargerCompteUtilisable(entrepriseId, compteRole.getId(), true)).thenReturn(compteRole);
 
         ResolvedAccount resultat = resolver.resolve(entrepriseId, AccountPurpose.TVA_RECUPERABLE, AccountContext.vide(), null);

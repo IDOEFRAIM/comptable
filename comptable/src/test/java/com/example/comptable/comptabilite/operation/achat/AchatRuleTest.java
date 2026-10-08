@@ -1,7 +1,8 @@
 package com.example.comptable.comptabilite.operation.achat;
 
+import com.example.comptable.comptabilite.operation.common.AccountingSource;
+
 import com.example.comptable.comptabilite.domain.CompteComptable;
-import com.example.comptable.comptabilite.domain.RoleCompteSysteme;
 import com.example.comptable.comptabilite.domain.Tiers;
 import com.example.comptable.comptabilite.domain.TypeJournal;
 import com.example.comptable.comptabilite.operation.common.FraisAccessoireRequest;
@@ -37,6 +38,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.isNull;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -71,6 +73,19 @@ class AchatRuleTest {
         fournisseur.setCompteComptable(compteFournisseur);
     }
 
+    private void stubCompteTva(CompteComptable compteTva) {
+        lenient().when(accountingAccountResolver.resoudreCompte(eq(entrepriseId),
+                        eq(com.example.comptable.comptabilite.parametrage.domain.AccountPurpose.TVA_RECUPERABLE), any(), isNull()))
+                .thenReturn(new com.example.comptable.comptabilite.parametrage.AccountingAccountResolver.CompteResolu(compteTva, null));
+    }
+
+    private void stubCompteTvaNonConfigure() {
+        lenient().when(accountingAccountResolver.resoudreCompte(eq(entrepriseId),
+                        eq(com.example.comptable.comptabilite.parametrage.domain.AccountPurpose.TVA_RECUPERABLE), any(), isNull()))
+                .thenReturn(new com.example.comptable.comptabilite.parametrage.AccountingAccountResolver.CompteResolu(null,
+                        com.example.comptable.comptabilite.parametrage.ResolvedAccount.nonConfigure("Aucun mapping ni role systeme pour la TVA")));
+    }
+
     private CompteComptable compte(String numero) {
         CompteComptable c = new CompteComptable();
         c.setId(UUID.randomUUID());
@@ -89,13 +104,30 @@ class AchatRuleTest {
     }
 
     @Test
+    void taux_connu_mais_compte_de_tva_recuperable_non_configure_donne_une_explication_et_aucune_ligne_devinee() {
+        CompteComptable compteCharge = compte("601");
+        when(compteComptableValidationService.chargerCompteUtilisable(entrepriseId, compteCharge.getId(), true))
+                .thenReturn(compteCharge);
+        when(tvaRateResolver.resoudre(eq("CI"), any(), eq(new BigDecimal("100000"))))
+                .thenReturn(new TvaResultat(new BigDecimal("18"), new BigDecimal("18000"), UUID.randomUUID(), false, null, false));
+        stubCompteTvaNonConfigure();
+
+        ResultatRegle resultat = achatRule.construire(entreprise, fournisseur,
+                request(NatureAchat.MARCHANDISE, new BigDecimal("100000"), compteCharge.getId(), null, null, null, null));
+
+        assertThat(resultat.explications()).anySatisfy(e -> assertThat(e).contains("TVA recuperable").contains("NOT_CONFIGURED"));
+        assertThat(resultat.lignes()).noneMatch(l -> l.getDebit().compareTo(new BigDecimal("18000")) == 0);
+    }
+
+    @Test
     void achat_marchandise_avec_tva_produit_charge_tva_et_fournisseur() {
         CompteComptable compteCharge = compte("601");
         CompteComptable compteTva = compte("445");
         when(compteComptableValidationService.chargerCompteUtilisable(entrepriseId, compteCharge.getId(), true))
                 .thenReturn(compteCharge);
-        when(tvaRateResolver.resoudre(eq(entrepriseId), eq("CI"), any(), eq(new BigDecimal("100000")), eq(RoleCompteSysteme.TVA_DEDUCTIBLE)))
-                .thenReturn(new TvaResultat(new BigDecimal("18"), new BigDecimal("18000"), compteTva, UUID.randomUUID(), false, null, false));
+        when(tvaRateResolver.resoudre(eq("CI"), any(), eq(new BigDecimal("100000"))))
+                .thenReturn(new TvaResultat(new BigDecimal("18"), new BigDecimal("18000"), UUID.randomUUID(), false, null, false));
+        stubCompteTva(compteTva);
 
         ResultatRegle resultat = achatRule.construire(entreprise, fournisseur,
                 request(NatureAchat.MARCHANDISE, new BigDecimal("100000"), compteCharge.getId(), null, null, null, null));
@@ -123,7 +155,7 @@ class AchatRuleTest {
         CompteComptable compteCharge = compte("622");
         when(compteComptableValidationService.chargerCompteUtilisable(entrepriseId, compteCharge.getId(), true))
                 .thenReturn(compteCharge);
-        when(tvaRateResolver.resoudre(eq(entrepriseId), eq("CI"), any(), eq(new BigDecimal("50000")), eq(RoleCompteSysteme.TVA_DEDUCTIBLE)))
+        when(tvaRateResolver.resoudre(eq("CI"), any(), eq(new BigDecimal("50000"))))
                 .thenReturn(TvaResultat.nonSupporte("Aucune regle TVA applicable pour le pays CI a la date 2026-03-01"));
 
         ResultatRegle resultat = achatRule.construire(entreprise, fournisseur,
@@ -139,7 +171,7 @@ class AchatRuleTest {
         CompteComptable compteImmo = compte("2411");
         when(compteComptableValidationService.chargerCompteUtilisable(entrepriseId, compteImmo.getId(), true))
                 .thenReturn(compteImmo);
-        when(tvaRateResolver.resoudre(eq(entrepriseId), eq("CI"), any(), eq(new BigDecimal("500000")), eq(RoleCompteSysteme.TVA_DEDUCTIBLE)))
+        when(tvaRateResolver.resoudre(eq("CI"), any(), eq(new BigDecimal("500000"))))
                 .thenReturn(TvaResultat.nonSupporte("non calcule pour ce test"));
 
         ResultatRegle resultat = achatRule.construire(entreprise, fournisseur,
@@ -189,8 +221,9 @@ class AchatRuleTest {
                 .thenReturn(compteCharge);
         when(compteComptableValidationService.chargerCompteUtilisable(entrepriseId, compteFrais.getId(), true))
                 .thenReturn(compteFrais);
-        when(tvaRateResolver.resoudre(eq(entrepriseId), eq("CI"), any(), eq(new BigDecimal("110000")), eq(RoleCompteSysteme.TVA_DEDUCTIBLE)))
-                .thenReturn(new TvaResultat(new BigDecimal("18"), new BigDecimal("19800"), compteTva, UUID.randomUUID(), false, null, false));
+        when(tvaRateResolver.resoudre(eq("CI"), any(), eq(new BigDecimal("110000"))))
+                .thenReturn(new TvaResultat(new BigDecimal("18"), new BigDecimal("19800"), UUID.randomUUID(), false, null, false));
+        stubCompteTva(compteTva);
 
         FraisAccessoireRequest frais = new FraisAccessoireRequest("Transport", new BigDecimal("10000"), null, compteFrais.getId(), true);
         ResultatRegle resultat = achatRule.construire(entreprise, fournisseur,
@@ -214,8 +247,9 @@ class AchatRuleTest {
         CompteComptable compteTva = compte("445");
         when(compteComptableValidationService.chargerCompteUtilisable(entrepriseId, compteCharge.getId(), true))
                 .thenReturn(compteCharge);
-        when(tvaRateResolver.resoudre(eq(entrepriseId), eq("CI"), any(), eq(new BigDecimal("90000")), eq(RoleCompteSysteme.TVA_DEDUCTIBLE)))
-                .thenReturn(new TvaResultat(new BigDecimal("18"), new BigDecimal("16200"), compteTva, UUID.randomUUID(), false, null, false));
+        when(tvaRateResolver.resoudre(eq("CI"), any(), eq(new BigDecimal("90000"))))
+                .thenReturn(new TvaResultat(new BigDecimal("18"), new BigDecimal("16200"), UUID.randomUUID(), false, null, false));
+        stubCompteTva(compteTva);
 
         ReductionRequest remise = new ReductionRequest(TypeReduction.REMISE, new BigDecimal("10000"), null, null);
         ResultatRegle resultat = achatRule.construire(entreprise, fournisseur,
@@ -232,7 +266,7 @@ class AchatRuleTest {
         CompteComptable compteCharge = compte("601");
         when(compteComptableValidationService.chargerCompteUtilisable(entrepriseId, compteCharge.getId(), true))
                 .thenReturn(compteCharge);
-        when(tvaRateResolver.resoudre(eq(entrepriseId), eq("CI"), any(), eq(new BigDecimal("100000")), eq(RoleCompteSysteme.TVA_DEDUCTIBLE)))
+        when(tvaRateResolver.resoudre(eq("CI"), any(), eq(new BigDecimal("100000"))))
                 .thenReturn(TvaResultat.nonSupporte("non teste"));
 
         ReductionRequest escompte = new ReductionRequest(TypeReduction.ESCOMPTE, null, new BigDecimal("2"), "paiement sous 8 jours");
@@ -252,8 +286,9 @@ class AchatRuleTest {
         CompteComptable compteTva = compte("445");
         when(compteComptableValidationService.chargerCompteUtilisable(entrepriseId, compteCharge.getId(), true))
                 .thenReturn(compteCharge);
-        when(tvaRateResolver.resoudre(eq(entrepriseId), eq("CI"), any(), eq(new BigDecimal("100000")), eq(RoleCompteSysteme.TVA_DEDUCTIBLE)))
-                .thenReturn(new TvaResultat(new BigDecimal("18"), new BigDecimal("18000"), compteTva, UUID.randomUUID(), false, null, false));
+        when(tvaRateResolver.resoudre(eq("CI"), any(), eq(new BigDecimal("100000"))))
+                .thenReturn(new TvaResultat(new BigDecimal("18"), new BigDecimal("18000"), UUID.randomUUID(), false, null, false));
+        stubCompteTva(compteTva);
 
         ResultatRegle resultat = achatRule.construire(entreprise, fournisseur,
                 request(NatureAchat.MARCHANDISE, new BigDecimal("100000"), compteCharge.getId(), null,
@@ -269,8 +304,7 @@ class AchatRuleTest {
     }
 
     private AchatMultiLigneOperationRequest requeteMultiLigne(List<LigneAchatOperationRequest> lignes) {
-        return new AchatMultiLigneOperationRequest(fournisseur.getId(), LocalDate.of(2026, 3, 1), "REF-1",
-                "Facture fournisseur test", lignes, null, "FACTURE_FOURNISSEUR", UUID.randomUUID());
+        return new AchatMultiLigneOperationRequest(fournisseur.getId(), LocalDate.of(2026, 3, 1), "REF-1", "Facture fournisseur test", lignes, null, AccountingSource.de("FACTURE_FOURNISSEUR", UUID.randomUUID(), "VALIDATION"));
     }
 
     @Test

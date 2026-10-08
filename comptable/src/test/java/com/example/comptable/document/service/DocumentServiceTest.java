@@ -1,6 +1,6 @@
 package com.example.comptable.document.service;
 
-import com.example.comptable.agent.comptabilisation.AccountingProposalBuilder;
+import com.example.comptable.agent.imputation.ImputationSuggestionBuilder;
 import com.example.comptable.agent.fraude.AlerteFraude;
 import com.example.comptable.agent.fraude.AnalyseFraudeService;
 import com.example.comptable.agent.fraude.NiveauRisqueFraude;
@@ -47,6 +47,9 @@ import static org.mockito.Mockito.when;
  */
 @ExtendWith(MockitoExtension.class)
 class DocumentServiceTest {
+    /** Octets de tête d'un vrai JPEG : le service refuse tout contenu qui ne correspond pas au type annoncé. */
+    private static final byte[] JPEG_VALIDE = {(byte) 0xFF, (byte) 0xD8, (byte) 0xFF, (byte) 0xE0, 0, 0x10, 'J', 'F', 'I', 'F', 0};
+
 
     @Mock
     private EntrepriseAccessService entrepriseAccessService;
@@ -63,7 +66,9 @@ class DocumentServiceTest {
     @Mock
     private AnalyseFraudeService analyseFraudeService;
     @Mock
-    private AccountingProposalBuilder accountingProposalBuilder;
+    private ImputationSuggestionBuilder imputationSuggestionBuilder;
+    @Mock
+    private DocumentPipeline documentPipeline;
 
     private DocumentService documentService;
     private Entreprise entreprise;
@@ -74,7 +79,7 @@ class DocumentServiceTest {
         ObjectMapper objectMapper = new ObjectMapper().registerModule(new JavaTimeModule());
         documentService = new DocumentService(entrepriseAccessService, entrepriseRepository, documentRepository,
                 utilisateurRepository, storageService, ocrExtractionService, analyseFraudeService,
-                accountingProposalBuilder, objectMapper);
+                imputationSuggestionBuilder, objectMapper, documentPipeline);
 
         entrepriseId = UUID.randomUUID();
         Tenant tenant = new Tenant();
@@ -101,7 +106,7 @@ class DocumentServiceTest {
         when(analyseFraudeService.analyser(any(), any(), any(), any())).thenReturn(rapportCritique);
 
         DocumentDto resultat = documentService.ingererDepuisCanalExterne(entrepriseId, TypeDocument.RECU,
-                CanalSource.WHATSAPP, new byte[]{1, 2, 3}, "recu.jpg", "image/jpeg");
+                CanalSource.WHATSAPP, JPEG_VALIDE, "recu.jpg", "image/jpeg");
 
         assertThat(resultat.statut()).isEqualTo("EN_ATTENTE_VALIDATION_HUMAINE");
         assertThat(resultat.scoreRisqueFraude()).isEqualTo("CRITIQUE");
@@ -117,7 +122,7 @@ class DocumentServiceTest {
                 .thenReturn(RapportFraude.depuisAlertes(List.of()));
 
         DocumentDto resultat = documentService.ingererDepuisCanalExterne(entrepriseId, TypeDocument.RECU,
-                CanalSource.WHATSAPP, new byte[]{1, 2, 3}, "recu.jpg", "image/jpeg");
+                CanalSource.WHATSAPP, JPEG_VALIDE, "recu.jpg", "image/jpeg");
 
         assertThat(resultat.statut()).isEqualTo("TRAITE");
         assertThat(resultat.scoreRisqueFraude()).isEqualTo("FAIBLE");
@@ -128,7 +133,7 @@ class DocumentServiceTest {
         when(ocrExtractionService.extraire(any(), any())).thenReturn(OcrResult.echec("Piece illisible"));
 
         DocumentDto resultat = documentService.ingererDepuisCanalExterne(entrepriseId, TypeDocument.RECU,
-                CanalSource.WHATSAPP, new byte[]{1, 2, 3}, "recu.jpg", "image/jpeg");
+                CanalSource.WHATSAPP, JPEG_VALIDE, "recu.jpg", "image/jpeg");
 
         assertThat(resultat.statut()).isEqualTo("ERREUR");
         assertThat(analyseFraudeService).satisfies(m -> org.mockito.Mockito.verifyNoInteractions(m));
@@ -141,7 +146,7 @@ class DocumentServiceTest {
                         LocalDate.of(2027, 1, 5), true, "ok", 0.9, null));
         when(analyseFraudeService.analyser(any(), any(), any(), any()))
                 .thenReturn(RapportFraude.depuisAlertes(List.of()));
-        byte[] contenu = {1, 2, 3};
+        byte[] contenu = JPEG_VALIDE;
 
         documentService.ingererDepuisCanalExterne(entrepriseId, TypeDocument.RECU, CanalSource.WHATSAPP, contenu,
                 "recu.jpg", "image/jpeg");

@@ -6,11 +6,9 @@ import {
   ArticleDto,
   BalanceAgeeDto,
   BalanceDto,
-  BilanDto,
   CommandeAchatDto,
   CompteComptableDto,
   ComptabiliserDocumentRequest,
-  CompteResultatDto,
   CreerArticleRequest,
   CreerCommandeAchatRequest,
   CreerDepotRequest,
@@ -21,7 +19,11 @@ import {
   DepotDto,
   EcritureComptableDto,
   CreerFactureRequest,
+  ComptabiliserAcquisitionRequest,
+  LierAcquisitionRequest,
+  CandidatAcquisitionDto,
   CreerImmobilisationRequest,
+  SortirImmobilisationRequest,
   ExerciceComptableDto,
   FactureAvoirDto,
   FactureDto,
@@ -195,18 +197,12 @@ export class ComptabiliteService {
     );
   }
 
-  bilan(entrepriseId: string, exerciceId: string): Observable<BilanDto> {
-    const params = new HttpParams().set('exerciceId', exerciceId);
-    return this.http.get<BilanDto>(`${BASE_URL}/${entrepriseId}/etats-financiers/bilan`, { params });
-  }
-
-  compteResultat(entrepriseId: string, exerciceId: string): Observable<CompteResultatDto> {
-    const params = new HttpParams().set('exerciceId', exerciceId);
-    return this.http.get<CompteResultatDto>(`${BASE_URL}/${entrepriseId}/etats-financiers/compte-resultat`, { params });
-  }
-
-  cloturerExercice(entrepriseId: string, exerciceId: string): Observable<ExerciceComptableDto> {
-    return this.http.post<ExerciceComptableDto>(`${BASE_URL}/${entrepriseId}/exercices/${exerciceId}/cloturer`, {});
+  cloturerExercice(
+    entrepriseId: string,
+    exerciceId: string,
+    confirmation?: { avertissementsConfirmes: boolean; motif: string },
+  ): Observable<ExerciceComptableDto> {
+    return this.http.post<ExerciceComptableDto>(`${BASE_URL}/${entrepriseId}/exercices/${exerciceId}/cloturer`, confirmation ?? {});
   }
 
   lettrer(entrepriseId: string, request: LettrerLignesRequest): Observable<LettrageResultDto> {
@@ -281,6 +277,56 @@ export class ComptabiliteService {
     return this.http.post<ImmobilisationDto>(`${BASE_URL}/${entrepriseId}/immobilisations`, request);
   }
 
+  comptabiliserAcquisition(
+    entrepriseId: string,
+    immobilisationId: string,
+    request: ComptabiliserAcquisitionRequest,
+  ): Observable<ImmobilisationDto> {
+    return this.http.post<ImmobilisationDto>(
+      `${BASE_URL}/${entrepriseId}/immobilisations/${immobilisationId}/comptabiliser-acquisition`,
+      request,
+    );
+  }
+
+  candidatsAcquisition(entrepriseId: string, immobilisationId: string): Observable<CandidatAcquisitionDto[]> {
+    return this.http.get<CandidatAcquisitionDto[]>(
+      `${BASE_URL}/${entrepriseId}/immobilisations/${immobilisationId}/candidats-acquisition`,
+    );
+  }
+
+  lierAcquisition(
+    entrepriseId: string,
+    immobilisationId: string,
+    request: LierAcquisitionRequest,
+  ): Observable<ImmobilisationDto> {
+    return this.http.post<ImmobilisationDto>(
+      `${BASE_URL}/${entrepriseId}/immobilisations/${immobilisationId}/lier-acquisition`,
+      request,
+    );
+  }
+
+  mettreImmobilisationEnService(
+    entrepriseId: string,
+    immobilisationId: string,
+    dateMiseEnService: string,
+  ): Observable<ImmobilisationDto> {
+    return this.http.post<ImmobilisationDto>(
+      `${BASE_URL}/${entrepriseId}/immobilisations/${immobilisationId}/mise-en-service`,
+      { dateMiseEnService },
+    );
+  }
+
+  sortirImmobilisation(
+    entrepriseId: string,
+    immobilisationId: string,
+    request: SortirImmobilisationRequest,
+  ): Observable<ImmobilisationDto> {
+    return this.http.post<ImmobilisationDto>(
+      `${BASE_URL}/${entrepriseId}/immobilisations/${immobilisationId}/sortie`,
+      request,
+    );
+  }
+
   genererDotations(entrepriseId: string, annee: number): Observable<GenererDotationsResultDto> {
     const params = new HttpParams().set('annee', annee);
     return this.http.post<GenererDotationsResultDto>(
@@ -319,10 +365,6 @@ export class ComptabiliteService {
   validerFacture(entrepriseId: string, factureId: string, compteProduitId: string): Observable<FactureDto> {
     const params = new HttpParams().set('compteProduitId', compteProduitId);
     return this.http.post<FactureDto>(`${BASE_URL}/${entrepriseId}/factures/${factureId}/valider`, {}, { params });
-  }
-
-  marquerFacturePayee(entrepriseId: string, factureId: string): Observable<FactureDto> {
-    return this.http.post<FactureDto>(`${BASE_URL}/${entrepriseId}/factures/${factureId}/marquer-payee`, {});
   }
 
   annulerFacture(entrepriseId: string, factureId: string): Observable<FactureDto> {

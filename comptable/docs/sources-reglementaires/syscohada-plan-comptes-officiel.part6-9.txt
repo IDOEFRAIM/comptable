@@ -1,0 +1,469 @@
+# Transcription visuelle primaire - PDF officiel OHADA
+# Source: AUDCIF + SYSCOHADA, Journal Officiel OHADA, 15 février 2017
+# Pages imprimées 252 à 269
+# Format: code|intitulé|page imprimée
+# IMPORTANT: les anomalies typographiques de la source sont conservées telles quelles.
+
+61|TRANSPORTS|252
+612|TRANSPORTS SUR VENTES|252
+613|TRANSPORTS POUR LE COMPTE DE TIERS|252
+614|TRANSPORTS DU PERSONNEL|252
+616|TRANSPORTS DE PLIS|252
+618|AUTRES FRAIS DE TRANSPORT|252
+6181|Voyages et déplacements|252
+6182|Transports entre établissements ou chantiers|252
+6183|Transports administratifs|252
+62|SERVICES EXTÉRIEURS|252
+621|SOUS-TRAITANCE GÉNÉRALE|252
+622|LOCATIONS, CHARGES LOCATIVES|252
+6221|Locations de terrains|252
+6222|Locations de bâtiments|252
+6223|Locations de matériels et outillages|252
+6224|Malis sur emballages|252
+6225|Locations d'emballages|252
+6226|Fermages et loyers du foncier|252
+6228|Locations et charges locatives diverses|252
+623|REDEVANCES DE LOCATION ACQUISITION|252
+6232|Crédit-bail immobilier|252
+6233|Crédit-bail mobilier|252
+6234|Location vente|252
+6238|Autres contrats de location acquisition|252
+624|ENTRETIEN, RÉPARATIONS, REMISE EN ÉTAT ET MAINTENANCE|252
+6241|Entretien et réparations des biens immobiliers|252
+6242|Entretien et réparations des biens mobiliers|252
+6243|Maintenance|252
+6244|Charges de démantèlement et remise en état|252
+6248|Autres entretiens et réparations|252
+625|PRIMES D'ASSURANCE|253
+6251|Assurances multirisques|253
+6252|Assurances matériel de transport|253
+6253|Assurances risques d'exploitation|253
+6254|Assurances responsabilité du producteur|253
+6255|Assurances insolvabilité clients|253
+6257|Assurances transport sur ventes|253
+6258|Autres primes d'assurances|253
+626|ÉTUDES, RECHERCHES ET DOCUMENTATION|253
+6261|Études et recherches|253
+6265|Documentation générale|253
+6266|Documentation technique|253
+627|PUBLICITÉ, PUBLICATIONS, RELATIONS PUBLIQUES|253
+6271|Annonces, insertions|253
+6272|Catalogues, imprimés publicitaires|253
+6273|Échantillons|253
+6274|Foires et expositions|253
+6275|Publications|253
+6276|Cadeaux à la clientèle|253
+6277|Frais de colloques, séminaires, conférences|253
+6278|Autres charges de publicité et relations publiques|253
+628|FRAIS DE TÉLÉCOMMUNICATIONS|253
+6281|Frais de téléphone|253
+6282|Frais de télex|253
+6283|Frais de télécopie|253
+6288|Autres frais de télécommunications|253
+63|AUTRES SERVICES EXTÉRIEURS|253
+631|FRAIS BANCAIRES|253
+6311|Frais sur titres (vente, garde)|253
+6312|Frais sur effets|253
+6313|Location de coffres|253
+6314|Commissions d'affacturage|253
+6315|Commissions sur cartes de crédit|253
+6316|Frais d'émission d'emprunts|253
+6317|Frais sur instruments monnaie électronique|253
+6318|Autres frais bancaires|253
+632|RÉMUNÉRATIONS D'INTERMÉDIAIRES ET DE CONSEILS|254
+6322|Commissions et courtages sur ventes|254
+6324|Honoraires des professions réglementées|254
+6325|Frais d'actes et de contentieux|254
+6326|Rémunérations d'affacturage|254
+6327|Rémunérations des autres prestataires de services|254
+6328|Divers frais|254
+633|FRAIS DE FORMATION DU PERSONNEL|254
+634|REDEVANCES POUR BREVETS, LICENCES, LOGICIELS, CONCESSIONS ET DROITS ET VALEURS SIMILAIRES|254
+6342|Redevances pour brevets, licences|254
+6343|Redevances pour logiciels|254
+6344|Redevances pour marques|254
+6345|Redevances pour sites internet|254
+6346|Redevances pour concessions, droits et valeurs similaires|254
+635|COTISATIONS|254
+6351|Cotisations|254
+6358|Concours divers|254
+637|RÉMUNÉRATIONS DE PERSONNEL EXTÉRIEUR À L'ENTITÉ|254
+6371|Personnel intérimaire|254
+6372|Personnel détaché ou prêté à l'entité|254
+638|AUTRES CHARGES EXTERNES|254
+6381|Frais de recrutement du personnel|254
+6382|Frais de déménagement|254
+6383|Réceptions|254
+6384|Missions|254
+6385|Charges de copropriété|254
+64|IMPÔTS ET TAXES|254
+641|IMPÔTS ET TAXES DIRECTS|254
+6411|Impôts fonciers et taxes annexes|254
+6412|Patentes, licences et taxes annexes|254
+6413|Taxes sur appointements et salaires|254
+6414|Taxes d'apprentissage|254
+6415|Formation professionnelle continue|254
+6418|Autres impôts et taxes directs|254
+645|IMPÔTS ET TAXES INDIRECTS|255
+646|DROITS D'ENREGISTREMENT|255
+6461|Droits de mutation|255
+6462|Droits de timbre|255
+6463|Taxes sur les véhicules de société|255
+6464|Vignettes|255
+6468|Autres droits|255
+647|PÉNALITÉS, AMENDES FISCALES|255
+6471|Pénalités d'assiette, impôts directs|255
+6472|Pénalités d'assiette, impôts indirects|255
+6473|Pénalités de recouvrement, impôts directs|255
+6474|Pénalités de recouvrement, impôts indirects|255
+6478|Autres pénalités et amendes fiscales|255
+648|AUTRES IMPÔTS ET TAXES|255
+65|AUTRES CHARGES|255
+651|PERTES SUR CRÉANCES CLIENTS ET AUTRES DÉBITEURS|255
+6511|Clients|255
+6515|Autres débiteurs|255
+652|QUOTE-PART DE RÉSULTAT SUR OPÉRATIONS FAITES EN COMMUN|255
+6521|Quote-part transférée de bénéfices (comptabilité du gérant)|255
+6525|Pertes imputées par transfert (comptabilité des associés non gérants)|255
+654|VALEURS COMPTABLES DES CESSIONS COURANTES D'IMMOBILISATIONS|255
+6541|Immobilisations incorporelles|255
+6542|Immobilisations corporelles|255
+656|PERTE DE CHANGE SUR CRÉANCES ET DETTES COMMERCIALE|255
+657|PÉNALITÉS ET AMENDES PÉNALES|255
+658|CHARGES DIVERSES|255
+6581|Indemnités de fonction et autres rémunérations d'administrateurs|255
+6582|Dons|255
+6583|Mécénat|255
+6588|Autres charges diverses|255
+659|CHARGES POUR DÉPRÉCIATIONS ET PROVISIONS POUR RISQUES À COURT TERME D'EXPLOITATION|256
+6591|sur risques à court terme|256
+6593|sur stocks|256
+6594|sur créances|256
+6598|Autres charges pour dépréciations et provisions pour risques à court terme|256
+66|CHARGES DE PERSONNEL|256
+661|RÉMUNÉRATIONS DIRECTES VERSÉES AU PERSONNEL NATIONAL|256
+6611|Appointements salaires et commissions|256
+6612|Primes et gratifications|256
+6613|Congés payés|256
+6614|Indemnités de préavis, de licenciement et de recherche d'embauche|256
+6615|Indemnités de maladie versées aux travailleurs|256
+6616|Supplément familial|256
+6617|Avantages en nature|256
+6618|Autres rémunérations directes|256
+662|RÉMUNÉRATIONS DIRECTES VERSÉES AU PERSONNEL NON NATIONAL|256
+6621|Appointements salaires et commissions|256
+6622|Primes et gratifications|256
+6623|Congés payés|256
+6624|Indemnités de préavis, de licenciement et de recherche d'embauche|256
+6625|Indemnités de maladie versées aux travailleurs|256
+6626|Supplément familial|256
+6627|Avantages en nature|256
+6628|Autres rémunérations directes|256
+663|INDEMNITÉS FORFAITAIRES VERSÉES AU PERSONNEL|256
+6631|Indemnités de logement|256
+6632|Indemnités de représentation|256
+6633|Indemnités d'expatriation|256
+6634|Indemnités de transport|256
+6638|Autres indemnités et avantages divers|256
+664|CHARGES SOCIALES|256
+6641|Charges sociales sur rémunération du personnel national|256
+6642|Charges sociales sur rémunération du personnel non national|256
+666|RÉMUNÉRATIONS ET CHARGES SOCIALES DE L'EXPLOITANT INDIVIDUEL|256
+6661|Rémunération du travail de l'exploitant|256
+6662|Charges sociales|257
+667|RÉMUNÉRATION TRANSFÉRÉE DE PERSONNEL EXTÉRIEUR|257
+6671|Personnel intérimaire|257
+6672|Personnel détaché ou prêté à l'entité|257
+668|AUTRES CHARGES SOCIALES|257
+6681|Versements aux Syndicats et Comités d'entreprise, d'établissement|257
+6682|Versements aux Comités d'hygiène et de sécurité|257
+6683|Versements et contributions aux autres œuvres sociales|257
+6684|Médecine du travail et pharmacie|257
+6685|Assurances et organismes de santé|257
+6686|Assurances retraite et fonds de pension|257
+6687|Majorations et pénalités sociales|257
+6688|Charges sociales diverses|257
+67|FRAIS FINANCIERS ET CHARGES ASSIMILÉES|257
+671|INTÉRÊTS DES EMPRUNTS|257
+6711|Emprunts obligataires|257
+6712|Emprunts auprès des établissements de crédit|257
+6713|Dettes liées à des participations|257
+6714|Primes de remboursement des obligations|257
+672|INTÉRÊTS DANS LOYERS DE LOCATION ACQUISITION|257
+6722|Intérêts dans loyers de location acquisition/crédit-bail immobilier|257
+6723|Intérêts dans loyers de location acquisition/crédit-bail mobilier|257
+6724|Intérêts dans loyers de location acquisition/location-vente|257
+6728|Intérêts dans loyers des autres locations acquisition|257
+673|ESCOMPTES ACCORDÉS|257
+674|AUTRES INTÉRÊTS|257
+6741|Avances reçues et dépôts créditeurs|257
+6742|Comptes courants bloqués|257
+6743|Intérêts sur obligations cautionnées|257
+6744|Intérêts sur dettes commerciales|257
+6745|Intérêts bancaires et sur opérations de financement (escompte...)|257
+6748|Intérêts sur dettes diverses|257
+675|ESCOMPTES DES EFFETS DE COMMERCE|257
+676|PERTES DE CHANGE FINANCIÈRES|257
+677|PERTES SUR TITRES DE PLACEMENT|258
+6771|Pertes sur cessions de titres de placement|258
+6772|Malis provenant d'attribution gratuite d'actions au personnel salarié et aux dirigeants|258
+678|PERTES ET CHARGES SUR RISQUES FINANCIERS|258
+6781|sur rentes viagères|258
+6782|sur opérations financières|258
+6784|sur instruments de trésorerie|258
+679|CHARGES POUR DÉPRÉCIATIONS ET PROVISIONS POUR RISQUES À COURT TERME FINANCIERS|258
+6791|sur risques financiers|258
+6795|sur titres de placement|258
+6798|Autres charges pour dépréciations et provisions pour risques à court terme financières|258
+68|DOTATIONS AUX AMORTISSEMENTS|258
+681|DOTATIONS AUX AMORTISSEMENTS D'EXPLOITATION|258
+6812|Dotations aux amortissements des immobilisations incorporelles|258
+6813|Dotations aux amortissements des immobilisations corporelles|258
+69|DOTATIONS AUX PROVISIONS ET AUX DÉPRÉCIATIONS|258
+691|DOTATIONS AUX PROVISIONS ET AUX DÉPRÉCIATIONS D'EXPLOITATION|258
+6911|Dotations aux provisions pour risques et charges|258
+6913|Dotations aux dépréciations des immobilisations incorporelles|258
+6914|Dotations aux dépréciations des immobilisations corporelles|258
+697|DOTATIONS AUX PROVISIONS ET AUX DÉPRÉCIATIONS FINANCIÈRES|258
+6971|Dotations aux provisions pour risques et charges|258
+6972|Dotations aux dépréciations des immobilisations financières|258
+70|VENTES|259
+701|VENTES DE MARCHANDISES|259
+7011|dans la Région|259
+7012|hors Région|259
+7013|aux entités du groupe dans la Région|259
+7014|aux entités du groupe hors Région|259
+7015|sur internet|259
+7019|Rabais, remises, ristournes accordés (non ventilés)|259
+702|VENTES DE PRODUITS FINIS|259
+7021|dans la Région|259
+7022|hors Région|259
+7023|aux entités du groupe dans la Région|259
+7024|aux entités du groupe hors Région|259
+7025|sur internet|259
+7029|Rabais, remises, ristournes accordés (non ventilés)|259
+703|VENTES DE PRODUITS INTERMÉDIAIRES|259
+7031|dans la Région|259
+7032|hors Région|259
+7033|aux entités du groupe dans la Région|259
+7034|aux entités du groupe hors Région|259
+7035|sur internet|259
+7039|Rabais, remises, ristournes accordés (non ventilés)|259
+704|VENTES DE PRODUITS RÉSIDUELS|260
+7041|dans la Région|260
+7042|hors Région|260
+7043|aux entités du groupe dans la Région|260
+7044|aux entités du groupe hors Région|260
+7045|sur internet|260
+7049|Rabais, remises, ristournes accordés (non ventilés)|260
+705|TRAVAUX FACTURÉS|260
+7051|dans la Région|260
+7052|hors Région|260
+7053|aux entités du groupe dans la Région|260
+7054|aux entités du groupe hors Région|260
+7055|sur internet|260
+7059|Rabais, remises, ristournes accordés (non ventilés)|260
+706|SERVICES VENDUS|260
+7061|dans la Région|260
+7062|hors Région|260
+7063|aux entités du groupe dans la Région|260
+7064|aux entités du groupe hors Région|260
+7065|sur internet|260
+7069|Rabais, remises, ristournes accordés (non ventilés)|260
+707|PRODUITS ACCESSOIRES|260
+7071|Ports, emballages perdus et autres frais facturés|260
+7072|Commissions et courtages|260
+7073|Locations|260
+7074|Bonis sur reprises et cessions d'emballages|260
+7075|Mise à disposition de personnel|260
+7076|Redevances pour brevets, logiciels, marques et droits similaires|260
+7077|Services exploités dans l'intérêt du personnel|260
+7078|Autres produits accessoires|260
+71|SUBVENTIONS D'EXPLOITATION|261
+711|SUR PRODUITS À L'EXPORTATION|261
+712|SUR PRODUITS À L'IMPORTATION|261
+713|SUR PRODUITS DE PÉRÉQUATION|261
+714|INDEMNITÉS ET SUBVENTIONS D'EXPLOITATION (entité agricole)|261
+718|AUTRES SUBVENTIONS D'EXPLOITATION|261
+7181|Versées par l'État et les collectivités publiques|261
+7182|Versées par les organismes internationaux|261
+7183|Versées par des tiers|261
+72|PRODUCTION IMMOBILISÉE|261
+721|IMMOBILISATIONS INCORPORELLES|261
+722|IMMOBILISATIONS CORPORELLES|261
+7221|immobilisations corporelles (hors actifs biologiques)|261
+7222|immobilisations corporelles (actifs biologiques)|261
+724|PRODUCTION AUTO-CONSOMMÉE|261
+726|IMMOBILISATIONS FINANCIÈRES|261
+73|VARIATIONS DES STOCKS DE BIENS ET DE SERVICES PRODUITS|261
+734|VARIATIONS DES STOCKS DE PRODUITS EN COURS|261
+7341|Produits en cours|261
+7342|Travaux en cours|261
+735|VARIATIONS DES EN-COURS DE SERVICES|261
+7351|Études en cours|261
+7352|Prestations de services en cours|261
+736|VARIATIONS DES STOCKS DE PRODUITS FINIS|261
+737|VARIATIONS DES STOCKS DE PRODUITS INTERMÉDIAIRES ET RÉSIDUELS|261
+7371|Produits intermédiaires|261
+7372|Produits résiduels|261
+75|AUTRES PRODUITS|262
+751|PROFITS SUR CRÉANCES CLIENTS ET AUTRES DÉBITEURS|262
+752|QUOTE-PART DE RÉSULTAT SUR OPÉRATIONS FAITES EN COMMUN|262
+7521|Quote-part transférée de pertes (comptabilité du gérant)|262
+7525|Bénéfices attribués par transfert (comptabilité des associés non gérants)|262
+754|PRODUITS DES CESSIONS COURANTES D'IMMOBILISATIONS|262
+7541|Immobilisations incorporelles|262
+7542|Immobilisations corporelles|262
+756|GAINS DE CHANGE SUR CRÉANCES ET DETTES COMMERCIALES|262
+758|PRODUITS DIVERS|262
+7581|Indemnités de fonction et autres rémunérations d'administrateurs|262
+7582|Indemnités d'assurances reçues|262
+7588|Autres produits divers|262
+759|REPRISES DE CHARGES POUR DÉPRÉCIATIONS ET PROVISIONS POUR RISQUES À COURT TERME D'EXPLOITATION|262
+7591|sur risques à court terme|262
+7593|sur stocks|262
+7594|sur créances|262
+7598|sur autres charges pour dépréciations et provisions pour risques à court terme d'exploitation|262
+77|REVENUS FINANCIERS ET PRODUITS ASSIMILÉS|262
+771|INTÉRÊTS DE PRÊTS ET CRÉANCES DIVERSES|262
+7712|Intérêts de prêts|262
+7713|Intérêts sur créances diverses|262
+772|REVENUS DE PARTICIPATIONS ET AUTRES TITRES IMMOBILISÉS|262
+7721|Revenus des titres de participation|262
+7722|Revenus autres titres immobilisés|262
+773|ESCOMPTES OBTENUS|262
+774|REVENUS DE PLACEMENT|262
+7745|Revenus des obligations|262
+7746|Revenus des titres de placement|262
+775|INTÉRÊTS DANS LOYERS DE LOCATION ACQUISITION|262
+776|GAINS DE CHANGE FINANCIERS|263
+777|GAINS SUR CESSIONS DE TITRES DE PLACEMENT|263
+778|GAINS SUR RISQUES FINANCIERS|263
+7781|sur rentes viagères|263
+7782|sur opérations financières|263
+7784|sur instruments de trésorerie|263
+779|REPRISES DE CHARGES POUR DÉPRÉCIATIONS ET PROVISIONS À COURT TERME FINANCIÈRES|263
+7791|sur risques financiers|263
+7795|sur titres de placement|263
+7798|sur autres charges pour dépréciations et provisions pour risques à court terme financières|263
+78|TRANSFERTS DE CHARGES|263
+781|TRANSFERTS DE CHARGES D'EXPLOITATION|263
+787|TRANSFERTS DE CHARGES FINANCIÈRES|263
+79|REPRISES DE PROVISIONS, DE DÉPRÉCIATIONS ET AUTRES|263
+791|REPRISES DE PROVISIONS ET DÉPRÉCIATIONS D'EXPLOITATION|263
+7911|pour risques et charges|263
+7913|des immobilisations incorporelles|263
+7914|des immobilisations corporelles|263
+797|REPRISES DE PROVISIONS ET DÉPRÉCIATIONS FINANCIÈRES|263
+7971|pour risques et charges|263
+7972|des immobilisations financières|263
+798|REPRISES D'AMORTISSEMENTS|263
+799|REPRISES DE SUBVENTIONS D'INVESTISSEMENT|263
+81|VALEURS COMPTABLES DES CESSIONS D'IMMOBILISATIONS|264
+811|IMMOBILISATIONS INCORPORELLES|264
+812|IMMOBILISATIONS CORPORELLES|264
+816|IMMOBILISATIONS FINANCIÈRES|264
+82|PRODUITS DES CESSIONS D'IMMOBILISATIONS|264
+821|IMMOBILISATIONS INCORPORELLES|264
+822|IMMOBILISATIONS CORPORELLES|264
+826|IMMOBILISATIONS FINANCIÈRES|264
+83|CHARGES HORS ACTIVITÉS ORDINAIRES|264
+831|CHARGES H.A.O. CONSTATÉES|264
+834|PERTES SUR CRÉANCES H.A.O.|264
+833|CHARGES LIÉES AUX OPÉRATIONS DE RESTRUCTURATION|264
+835|DONS ET LIBÉRALITÉS ACCORDÉS|264
+836|ABANDONS DE CRÉANCES CONSENTIS|264
+837|CHARGES LIÉES AUX OPÉRATIONS DE LIQUIDATION|264
+839|CHARGES POUR DÉPRÉCIATIONS ET PROVISIONS POUR RISQUES À COURT TERME H.A.O.|265
+84|PRODUITS HORS ACTIVITÉS ORDINAIRES|265
+841|PRODUITS H.A.O CONSTATÉS|265
+844|INDEMNITÉS ET SUBVENTIONS H.A.O. (entité agricole)|265
+843|PRODUITS LIÉS AUX OPÉRATIONS DE RESTRUCTURATION|265
+845|DONS ET LIBÉRALITÉS OBTENUS|265
+846|ABANDONS DE CRÉANCES OBTENUS|265
+847|PRODUITS LIÉS AUX OPÉRATIONS DE LIQUIDATION|265
+848|TRANSFERTS DE CHARGES H.A.O|265
+849|REPRISES DE CHARGES POUR DÉPRÉCIATIONS ET PROVISIONS POUR RISQUES À COURT TERME H.A.O.|265
+85|DOTATIONS HORS ACTIVITÉS ORDINAIRES|265
+851|DOTATIONS AUX PROVISIONS RÉGLEMENTÉES|265
+852|DOTATIONS AUX AMORTISSEMENTS H.A.O.|265
+853|DOTATIONS AUX DÉPRÉCIATIONS H.A.O.|265
+854|DOTATIONS AUX PROVISIONS POUR RISQUES ET CHARGES H.A.O.|265
+858|AUTRES DOTATIONS H.A.O.|265
+86|REPRISES DE CHARGES, PROVISIONS ET DÉPRÉCIATIONS HAO.|265
+861|REPRISES DE PROVISIONS RÉGLEMENTÉES|265
+862|REPRISES D'AMORTISSEMENTS HAO|265
+863|REPRISES DE DÉPRÉCIATIONS H.A.O.|265
+864|REPRISES DE PROVISIONS POUR RISQUES ET CHARGES H.A.O.|265
+868|AUTRES REPRISES H.A.O.|265
+87|PARTICIPATION DES TRAVAILLEURS|266
+871|PARTICIPATION LÉGALE AUX BÉNÉFICES|266
+874|PARTICIPATION CONTRACTUELLE AUX BÉNÉFICES|266
+878|AUTRES PARTICIPATIONS|266
+88|SUBVENTIONS D'ÉQUILIBRE|266
+881|ÉTAT|266
+884|COLLECTIVITÉS PUBLIQUES|266
+886|GROUPE|266
+888|AUTRES|266
+89|IMPÔTS SUR LE RÉSULTAT|266
+891|IMPÔTS SUR LES BÉNÉFICES DE L'EXERCICE|266
+8911|Activités exercées dans l'État|266
+8912|Activités exercées dans les autres États de la Région|266
+8913|Activités exercées hors Région|266
+892|RAPPEL D'IMPÔTS SUR RÉSULTATS ANTÉRIEURS|266
+895|IMPÔT MINIMUM FORFAITAIRE (I.M.F.)|266
+899|DÉGRÈVEMENTS ET ANNULATIONS D'IMPÔTS SUR RÉSULTATS ANTÉRIEURS|266
+8991|Dégrèvements|266
+8994|Annulations pour pertes rétroactives|266
+90|ENGAGEMENTS OBTENUS ET ENGAGEMENTS ACCORDÉS|267
+901|ENGAGEMENTS DE FINANCEMENT OBTENUS|267
+9011|Crédits confirmés obtenus|267
+9012|Emprunts restant à encaisser|267
+9013|Facilités de financement renouvelables|267
+9014|Facilités d'émission|267
+9018|Autres engagements de financement obtenus|267
+902|ENGAGEMENTS DE GARANTIE OBTENUS|267
+9021|Avals obtenus|267
+9022|Cautions, garanties obtenues|267
+9023|Hypothèques obtenues|267
+9024|Effets endossés par des tiers|267
+9028|Autres garanties obtenues|267
+903|ENGAGEMENTS RÉCIPROQUES|267
+9031|Achats de marchandises à terme|267
+9032|Achats à terme de devises|267
+9033|Commandes fermes des clients|267
+9038|Autres engagements réciproques|267
+904|AUTRES ENGAGEMENTS OBTENUS|267
+9041|Abandons de créances conditionnels|267
+9043|Ventes avec clause de réserve de propriété|267
+9048|Divers engagements obtenus|267
+905|ENGAGEMENTS DE FINANCEMENT ACCORDÉS|267
+9051|Crédits accordés non décaissés|267
+9058|Autres engagements de financement accordés|267
+906|ENGAGEMENTS DE GARANTIE ACCORDÉS|268
+9061|Avals accordés|268
+9062|Cautions, garanties accordées|268
+9063|Hypothèques accordées|268
+9064|Effets endossés par l'entité|268
+9068|Autres garanties accordées|268
+907|ENGAGEMENTS RÉCIPROQUES|268
+9071|Ventes de marchandises à terme|268
+9072|Ventes à terme de devises|268
+9073|Commandes fermes aux fournisseurs|268
+9078|Autres engagements réciproques|268
+907|AUTRES ENGAGEMENTS ACCORDÉS|268|ANOMALIE_SOURCE: heading imprimé « 907 » (deuxième occurrence) alors que ses sous-comptes sont 9081, 9082, 9083, 9088 ; texte officiel conservé
+9081|Annulations conditionnelles de dettes|268
+9082|Engagements de retraite|268
+9083|Achats avec clause de réserve de propriété|268
+9088|Divers engagements accordés|268
+91|CONTREPARTIES DES ENGAGEMENTS|268
+911-914|CONTREPARTIE DES ENGAGEMENTS OBTENUS, 901 à 904|268
+915-918|CONTREPARTIE DES ENGAGEMENTS ACCORDÉS, 905 à 908|268
+92|COMPTES RÉFLÉCHIS|269
+93|COMPTES DE RECLASSEMENTS|269
+94|COMPTES DE COÛTS|269
+95|COMPTES DE STOCKS|269
+96|COMPTES D'ÉCARTS SUR COÛTS PRÉÉTABLIS|269
+97|COMPTES DE DIFFÉRENCES DE TRAITEMENT COMPTABLE|269
+98|COMPTES DE RÉSULTATS|269
+99|COMPTES DE LIAISONS INTERNES|269

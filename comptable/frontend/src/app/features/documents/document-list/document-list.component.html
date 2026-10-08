@@ -43,7 +43,7 @@
                 <span class="info-bulle" [title]="document.messageOcr">ⓘ</span>
               }
             </td>
-            <td>{{ document.montantTtc ?? '—' }}</td>
+            <td>{{ document.montantTtc !== null && document.montantTtc !== undefined ? (document.montantTtc | number: '1.0-0') : '—' }}</td>
             <td>{{ document.datePiece ?? '—' }}</td>
             <td>{{ document.createdAt | date: 'dd/MM/yyyy HH:mm' }}</td>
             <td>

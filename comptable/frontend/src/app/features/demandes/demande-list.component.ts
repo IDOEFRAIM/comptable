@@ -6,7 +6,39 @@ import { finalize, map } from 'rxjs/operators';
 import { TokenStorageService } from '../../core/auth/token-storage.service';
 import { LIBELLES_TYPE_DOCUMENT, TypeDocument } from '../documents/models/document.model';
 import { DemandeService } from './demande.service';
-import { DemandePieceDto, LIBELLES_STATUT_DEMANDE } from './models/demande.model';
+import { DemandePieceClientDto, DemandePieceDto, LIBELLES_STATUT_DEMANDE } from './models/demande.model';
+
+/** Le CLIENT ne reçoit qu'une projection simplifiée : on la présente avec la même carte que le cabinet. */
+function vueClient(c: DemandePieceClientDto): DemandePieceDto {
+  return {
+    id: c.id,
+    libelle: c.description ?? 'Pièce demandée',
+    description: null,
+    dateLimite: c.dateLimite,
+    statut: c.etat === 'A_FOURNIR' ? 'EN_ATTENTE' : c.etat === 'RECUE' ? 'RECU' : 'RAPPROCHEE',
+    documentId: null,
+    findingId: null,
+    demandeeParNom: null,
+    createdAt: c.demandeeLe,
+    resolueAt: null,
+    ecritureId: null,
+    motif: null,
+    canal: null,
+    montant: c.montant,
+    dateOperation: c.date,
+    tiersNom: null,
+    periode: null,
+    descriptionOperation: c.description,
+    sentAt: null,
+    derniereRelanceAt: null,
+    nbRelances: 0,
+    prochaineRelanceAt: null,
+    receivedAt: null,
+    motifBlocage: null,
+    resoluPar: null,
+    dernierMessage: null,
+  };
+}
 
 @Component({
   selector: 'app-demande-list',
@@ -59,7 +91,8 @@ export class DemandeListComponent implements OnInit {
       .lister(this.entrepriseId())
       .pipe(finalize(() => this.chargement.set(false)))
       .subscribe({
-        next: (demandes) => this.demandes.set(demandes),
+        next: (demandes) =>
+          this.demandes.set(this.peutGerer ? demandes : (demandes as unknown as DemandePieceClientDto[]).map(vueClient)),
         error: () => this.erreur.set('Impossible de charger les demandes.'),
       });
   }
@@ -116,7 +149,7 @@ export class DemandeListComponent implements OnInit {
       .pipe(finalize(() => this.envoiEnCours.set(false)))
       .subscribe({
         next: (maj) => {
-          this.remplacer(maj);
+          this.remplacer(this.peutGerer ? maj : vueClient(maj as unknown as DemandePieceClientDto));
           this.demandeEnReponse.set(null);
         },
         error: (err) => this.erreur.set(err.error?.message ?? 'Dépôt impossible.'),
@@ -130,9 +163,13 @@ export class DemandeListComponent implements OnInit {
   classeStatut(demande: DemandePieceDto): string {
     switch (demande.statut) {
       case 'RECU':
+      case 'RAPPROCHEE':
         return 'badge badge-recu';
       case 'ANNULEE':
+      case 'EXPIREE':
         return 'badge badge-annulee';
+      case 'ECHEC_ENVOI':
+        return 'badge badge-erreur';
       default:
         return 'badge badge-attente';
     }

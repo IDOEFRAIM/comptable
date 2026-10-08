@@ -6,6 +6,8 @@ import { TokenStorageService } from '../../core/auth/token-storage.service';
 import { CopilotDirigeantWidgetComponent } from '../copilot/copilot-dirigeant-widget.component';
 import { DocumentUploadComponent } from './document-upload/document-upload.component';
 import { DocumentListComponent } from './document-list/document-list.component';
+import { DocumentHubComponent } from './document-hub/document-hub.component';
+import { CollecteHubComponent } from '../demandes/collecte/collecte-hub.component';
 
 /** Page "tableau de bord documents" d'une entreprise : depot + liste filtrable par statut. Pour
  * le role CLIENT (le dirigeant), c'est aussi la page d'atterrissage par defaut (voir
@@ -15,15 +17,21 @@ import { DocumentListComponent } from './document-list/document-list.component';
 @Component({
   selector: 'app-documents-page',
   standalone: true,
-  imports: [DocumentUploadComponent, DocumentListComponent, CopilotDirigeantWidgetComponent],
+  imports: [DocumentUploadComponent, DocumentListComponent, DocumentHubComponent, CollecteHubComponent, CopilotDirigeantWidgetComponent],
   template: `
     @if (entrepriseId(); as entrepriseId) {
       <div class="page-documents">
         @if (!estMembreCabinet) {
           <app-copilot-dirigeant-widget [entrepriseId]="entrepriseId" />
         }
-        <app-document-upload [entrepriseId]="entrepriseId" (documentDepose)="liste.rafraichir()" />
-        <app-document-list #liste [entrepriseId]="entrepriseId" />
+        <app-document-upload [entrepriseId]="entrepriseId" (documentDepose)="rafraichirListe()" />
+        @if (estMembreCabinet) {
+          <app-collecte-hub #collecte [entrepriseId]="entrepriseId" (modifie)="rafraichirListe()" (associer)="voirPieces()" />
+          <app-document-hub #hub [entrepriseId]="entrepriseId" (modifie)="collecte?.rafraichir()" />
+        } @else {
+          <!-- Le dirigeant voit ses pieces ; rapprochement, doublons et validation sont le travail du cabinet. -->
+          <app-document-list #liste [entrepriseId]="entrepriseId" />
+        }
       </div>
     }
   `,
@@ -38,7 +46,19 @@ import { DocumentListComponent } from './document-list/document-list.component';
   ],
 })
 export class DocumentsPageComponent {
-  @ViewChild('liste') liste!: DocumentListComponent;
+  @ViewChild('liste') liste?: DocumentListComponent;
+  @ViewChild('hub') hub?: DocumentHubComponent;
+  @ViewChild('collecte') collecte?: CollecteHubComponent;
+
+  /** Une demande a reçu une pièce : le Hub documents est juste dessous, on y amène le comptable. */
+  voirPieces(): void {
+    document.querySelector('app-document-hub')?.scrollIntoView({ behavior: 'smooth' });
+  }
+
+  rafraichirListe(): void {
+    this.liste?.rafraichir();
+    this.hub?.rafraichir();
+  }
 
   private readonly route = inject(ActivatedRoute);
   private readonly tokenStorage = inject(TokenStorageService);

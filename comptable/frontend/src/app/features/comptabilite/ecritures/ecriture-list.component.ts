@@ -1,3 +1,4 @@
+import { DatePipe, DecimalPipe } from '@angular/common';
 import { Component, inject, OnInit, signal } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, RouterLink } from '@angular/router';
@@ -8,7 +9,7 @@ import { EcritureComptableDto } from '../models/comptabilite.model';
 @Component({
   selector: 'app-ecriture-list',
   standalone: true,
-  imports: [RouterLink],
+  imports: [RouterLink, DatePipe, DecimalPipe],
   templateUrl: './ecriture-list.component.html',
   styleUrl: './ecriture-list.component.scss',
 })

@@ -20,6 +20,8 @@ import com.example.comptable.entreprise.domain.Entreprise;
 import com.example.comptable.entreprise.service.EntrepriseAccessService;
 import com.example.comptable.identite.repository.UtilisateurRepository;
 import com.example.comptable.security.UtilisateurPrincipal;
+import com.example.comptable.comptabilite.operation.common.repository.AccountingOperationProposalRepository;
+import com.example.comptable.audit.AuditTrailService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -49,6 +51,8 @@ public class EcritureComptableService {
     private final ExerciceComptableRepository exerciceComptableRepository;
     private final TiersRepository tiersRepository;
     private final UtilisateurRepository utilisateurRepository;
+    private final AccountingOperationProposalRepository accountingOperationProposalRepository;
+    private final AuditTrailService auditTrailService;
 
     @Transactional(readOnly = true)
     public EcritureComptableDto obtenir(UUID entrepriseId, UUID ecritureId, UtilisateurPrincipal principal) {
@@ -87,6 +91,7 @@ public class EcritureComptableService {
         ecriture.setJournal(journal);
         ecriture.setDateEcriture(request.dateEcriture());
         ecriture.setLibelle(request.libelle());
+        ecriture.setCashFlowEvent(request.cashFlowEvent());
         ecriture.setCreatedBy(utilisateurRepository.getReferenceById(principal.getId()));
         ecriture.setStatut(StatutEcriture.BROUILLON);
         ecriture.setNumeroPiece(request.numeroPiece() != null && !request.numeroPiece().isBlank()
@@ -104,7 +109,9 @@ public class EcritureComptableService {
                             .formatted(ecriture.totalDebit(), ecriture.totalCredit()));
         }
 
-        return EcritureComptableDto.from(ecritureComptableRepository.save(ecriture));
+        EcritureComptable sauvegardee = ecritureComptableRepository.save(ecriture);
+        auditer(principal, "ECRITURE_MANUELLE_CREEE", sauvegardee);
+        return EcritureComptableDto.from(sauvegardee);
     }
 
     private LigneEcriture construireLigne(UUID entrepriseId, LigneEcritureRequest ligneRequest, int numeroLigne) {
@@ -146,13 +153,7 @@ public class EcritureComptableService {
     }
 
     private ExerciceComptable chargerExerciceOuvert(UUID entrepriseId, LocalDate date) {
-        ExerciceComptable exercice = exerciceComptableRepository.findByEntrepriseIdAndDate(entrepriseId, date)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNPROCESSABLE_ENTITY,
-                        "Aucun exercice comptable ne couvre la date " + date));
-        if (exercice.getStatut() != StatutExercice.OUVERT) {
-            throw new ResponseStatusException(HttpStatus.UNPROCESSABLE_ENTITY, "L'exercice couvrant cette date est cloture");
-        }
-        return exercice;
+        return ExerciceOuvertGuard.exigerOuvert(exerciceComptableRepository, entrepriseId, date);
     }
 
     private String genererNumeroPiece(Journal journal) {
@@ -174,7 +175,9 @@ public class EcritureComptableService {
         }
 
         ecriture.setStatut(StatutEcriture.VALIDEE);
-        return EcritureComptableDto.from(ecritureComptableRepository.save(ecriture));
+        EcritureComptable validee = ecritureComptableRepository.save(ecriture);
+        auditer(principal, "ECRITURE_VALIDEE", validee);
+        return EcritureComptableDto.from(validee);
     }
 
     @Transactional
@@ -192,7 +195,20 @@ public class EcritureComptableService {
             documentRepository.save(document);
         });
 
+        // Un brouillon issu du moteur (flux Documents) est reference par sa proposition : la
+        // supprimer avec l'ecriture garde le lien coherent et permet de comptabiliser a nouveau la
+        // meme piece (idempotence par source), sans laisser de FK pendante.
+        accountingOperationProposalRepository.deleteAll(accountingOperationProposalRepository.findByEcritureId(ecriture.getId()));
+        accountingOperationProposalRepository.flush();
+
+        auditer(principal, "ECRITURE_SUPPRIMEE", ecriture);
         ecritureComptableRepository.delete(ecriture);
+    }
+
+    private void auditer(UtilisateurPrincipal principal, String action, EcritureComptable ecriture) {
+        auditTrailService.enregistrerActionHumaine(principal.getTenantId(), principal.getId(), action, "EcritureComptable",
+                String.valueOf(ecriture.getId()), java.util.Map.of("numeroPiece", String.valueOf(ecriture.getNumeroPiece()),
+                        "journal", ecriture.getJournal().getCode(), "statut", ecriture.getStatut().name()));
     }
 
     private EcritureComptable chargerEcriture(UUID entrepriseId, UUID ecritureId) {

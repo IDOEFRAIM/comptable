@@ -22,6 +22,9 @@ public record InboxItemDto(
         LocalDate dueDate,
         UUID assignedToId,
         String assignedToNom,
-        OffsetDateTime createdAt
+        OffsetDateTime createdAt,
+        String code,
+        String categorie,
+        String gravite
 ) {
 }

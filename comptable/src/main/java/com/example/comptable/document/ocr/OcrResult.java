@@ -30,12 +30,21 @@ public record OcrResult(
         boolean reussite,
         String message,
         double confiance,
-        /** Ajoute par la mission P0 (AccountingProposalBuilder) : jusque-la silencieusement
+        /** Ajoute par la mission P0 (ImputationSuggestionBuilder) : jusque-la silencieusement
          * ignore par ce record (ignoreUnknown=true) meme quand ai-service le renvoyait deja pour
          * l'upload web - null pour {@link com.example.comptable.document.ocr.HeuristiqueOcrExtractionService},
          * qui ne peut pas le detecter. */
-        String fournisseur
+        String fournisseur,
+        /** Numero de la facture tel qu'imprime par le fournisseur (Phase C) ; null si le moteur ne sait pas le lire. */
+        String numeroFacture,
+        String devise
 ) {
+    /** Forme historique, sans numero de facture ni devise. */
+    public OcrResult(BigDecimal montantHt, BigDecimal montantTva, BigDecimal montantTtc, LocalDate datePiece, boolean reussite,
+                     String message, double confiance, String fournisseur) {
+        this(montantHt, montantTva, montantTtc, datePiece, reussite, message, confiance, fournisseur, null, null);
+    }
+
     public static OcrResult echec(String message) {
         return new OcrResult(null, null, null, null, false, message, 0.0, null);
     }

@@ -9,8 +9,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Calcul pur du plan d'amortissement d'une immobilisation, sans dependance Spring/DB (comme
- * {@link EcheancierTvaGenerator}). Le lineaire applique le prorata temporis SYSCOHADA sur l'annee
+ * Calcul pur du plan d'amortissement d'une immobilisation, sans dependance Spring/DB. Le lineaire applique le prorata temporis SYSCOHADA sur l'annee
  * d'acquisition (mois d'acquisition compte comme mois entier) : quand l'annee 1 n'est que
  * partielle, l'echeancier compte dureeAnnees+1 lignes, la derniere absorbant le reliquat non
  * consomme en annee 1 - jamais de dotation manquante, le bien reste amorti a 100%. Le degressif

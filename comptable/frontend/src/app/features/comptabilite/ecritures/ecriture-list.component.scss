@@ -21,18 +21,22 @@
   gap: 1rem;
 }
 
-.bouton-rafraichir {
-  border: none;
-  background: none;
-  color: var(--color-primary);
-  cursor: pointer;
+.actions-entete a.bouton-principal {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.5rem 0.95rem;
+  border: 1px solid var(--color-primary);
+  border-radius: var(--radius-md);
+  background: var(--color-primary);
+  color: var(--text-on-primary);
   font-size: 0.8125rem;
-}
-
-.actions-entete .bouton-principal {
-  display: inline-block;
+  font-weight: 600;
   text-decoration: none;
-  font-size: 0.8125rem;
+  box-shadow: var(--shadow-xs);
+
+  &:hover {
+    background: var(--color-primary-hover);
+  }
 }
 
 .carte {
@@ -48,8 +52,8 @@
   gap: 0.75rem;
 }
 
+.ligne-titres,
 .ligne-entete {
-  display: grid;
   grid-template-columns: 110px 60px 1fr 110px 110px 90px;
   align-items: center;
   gap: 0.75rem;
@@ -81,7 +85,32 @@
   .montant {
     color: var(--text-tertiary);
     text-align: right;
+    font-variant-numeric: tabular-nums;
   }
+
+  .montant {
+    color: var(--text-primary);
+    font-weight: 600;
+  }
+
+  &:hover {
+    background: var(--bg-subtle);
+  }
+}
+
+.ligne-titres {
+  grid-template-columns: 110px 60px 1fr 110px 110px 90px;
+  gap: 0.75rem;
+  padding: 0 1.1rem;
+  font-size: 0.6875rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--text-placeholder);
+}
+
+.droite {
+  text-align: right;
 }
 
 .badge {

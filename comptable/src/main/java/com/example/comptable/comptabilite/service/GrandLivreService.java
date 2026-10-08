@@ -1,5 +1,8 @@
 package com.example.comptable.comptabilite.service;
 
+import com.example.comptable.comptabilite.balance.AccountBalance;
+import com.example.comptable.comptabilite.balance.AccountingBalanceEngine;
+import com.example.comptable.comptabilite.balance.ReportingView;
 import com.example.comptable.comptabilite.domain.CompteComptable;
 import com.example.comptable.comptabilite.domain.LigneEcriture;
 import com.example.comptable.comptabilite.repository.CompteComptableRepository;
@@ -22,10 +25,9 @@ import java.util.List;
 import java.util.UUID;
 
 /**
- * Grand Livre d'un compte sur une periode : solde d'ouverture (mouvements valides
- * anterieurs a la periode), mouvements de la periode avec solde progressif, solde
- * de cloture. Seules les ecritures VALIDEE entrent dans ces calculs : un brouillon
- * n'est pas encore une ecriture officielle.
+ * Grand Livre OFFICIEL d'un compte sur une periode (vue {@link ReportingView#LEGAL_LEDGER} : ecritures validees, toutes natures, y compris l'ecriture de
+ * cloture) : solde d'ouverture et solde de cloture viennent de {@link AccountingBalanceEngine} (jamais recalcules ici), les ecritures de la periode sont
+ * listees avec leur solde progressif. Le solde progressif de la derniere ligne egale le solde de cloture du moteur (invariant teste).
  */
 @Service
 @RequiredArgsConstructor
@@ -34,6 +36,7 @@ public class GrandLivreService {
     private final EntrepriseAccessService entrepriseAccessService;
     private final CompteComptableRepository compteComptableRepository;
     private final LigneEcritureRepository ligneEcritureRepository;
+    private final AccountingBalanceEngine accountingBalanceEngine;
 
     @Transactional(readOnly = true)
     public GrandLivreDto generer(UUID entrepriseId, UUID compteId, LocalDate dateDebut, LocalDate dateFin,
@@ -44,9 +47,11 @@ public class GrandLivreService {
                 .filter(c -> c.getEntreprise().getId().equals(entrepriseId))
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Compte introuvable"));
 
-        BigDecimal netOuverture = ligneEcritureRepository.soldeNetAvant(compteId, dateDebut);
-        List<LigneEcriture> mouvements = ligneEcritureRepository.rechercherMouvementsValides(compteId, dateDebut, dateFin);
+        AccountBalance solde = accountingBalanceEngine.balance(entrepriseId, compteId, dateDebut, dateFin, ReportingView.LEGAL_LEDGER).orElse(null);
+        BigDecimal netOuverture = solde == null ? BigDecimal.ZERO : solde.openingNet();
+        BigDecimal netCloture = solde == null ? BigDecimal.ZERO : solde.netBalance();
 
+        List<LigneEcriture> mouvements = ligneEcritureRepository.rechercherMouvementsValides(compteId, dateDebut, dateFin);
         List<GrandLivreLigneDto> lignes = new ArrayList<>();
         BigDecimal soldeProgressif = netOuverture;
         for (LigneEcriture ligne : mouvements) {
@@ -69,7 +74,7 @@ public class GrandLivreService {
                 dateDebut, dateFin,
                 SoldeDto.depuisNet(netOuverture),
                 lignes,
-                SoldeDto.depuisNet(soldeProgressif)
+                SoldeDto.depuisNet(netCloture)
         );
     }
 }

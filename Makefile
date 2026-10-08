@@ -9,7 +9,7 @@ COMPOSE      := docker compose
 COMPOSE_PROD := docker compose -f docker-compose.yml -f docker-compose.prod.yml
 
 .DEFAULT_GOAL := help
-.PHONY: help env up deploy update update-prod down stop restart ps logs backup restore test config pull
+.PHONY: help env up deploy update update-prod down stop restart ps logs backup restore test config pull smoke
 
 help: ## Affiche cette aide
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN{FS=":.*?## "}{printf "  \033[36m%-14s\033[0m %s\n", $$1, $$2}'
@@ -57,6 +57,15 @@ backup: ## Sauvegarde base + documents dans ./backups
 restore: ## Restaure une sauvegarde :  make restore SRC=backups/comptable-XXXX
 	@test -n "$(SRC)" || { echo "Usage: make restore SRC=backups/comptable-YYYYmmdd-HHMMSS"; exit 1; }
 	@./scripts/restore.sh "$(SRC)"
+
+restore-drill: ## Exercice de restauration : dump -> base jetable -> contrôles d'intégrité (voir docs/operations/pilot-runbook.md)
+	./scripts/restore-drill.sh
+
+provision: ## Cree un cabinet + son premier expert-comptable (operateur) :  make provision CABINET="Cabinet X" EMAIL=expert@x.org NOM=Dupont PRENOM=Awa PAYS=BF
+	./scripts/provision-cabinet.sh "$(CABINET)" "$(EMAIL)" "$(NOM)" "$(PRENOM)" "$(PAYS)"
+
+smoke: ## Smoke test pilote sur l'instance demarree (cabinet jetable cree via l'API) :  make smoke URL=http://localhost:8081
+	./scripts/smoke-pilot.sh
 
 test: ## Lance les tests backend (Maven) dans un conteneur jetable
 	docker run --rm -v "$$PWD/comptable":/app -w /app eclipse-temurin:21-jdk ./mvnw -B test

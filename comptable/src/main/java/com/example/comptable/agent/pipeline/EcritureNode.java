@@ -1,7 +1,7 @@
 package com.example.comptable.agent.pipeline;
 
-import com.example.comptable.agent.comptabilisation.AccountingProposalBuilder;
-import com.example.comptable.agent.comptabilisation.domain.AccountingProposal;
+import com.example.comptable.agent.imputation.ImputationSuggestionBuilder;
+import com.example.comptable.agent.imputation.domain.ImputationSuggestion;
 import com.example.comptable.comptabilite.service.ComptabilisationAutomatiqueIndisponibleException;
 import com.example.comptable.comptabilite.service.ComptabilisationService;
 import com.example.comptable.document.domain.Document;
@@ -18,10 +18,10 @@ import java.util.Optional;
 
 /**
  * Dernier noeud du graphe : tente de comptabiliser definitivement la piece via
- * {@link ComptabilisationService}. Construit d'abord une {@link AccountingProposal} (mission P0,
- * section 14) via {@link AccountingProposalBuilder} ; seul le "Niveau 3" (tiers ET compte ET
+ * {@link ComptabilisationService}. Construit d'abord une {@link ImputationSuggestion} (mission P0,
+ * section 14) via {@link ImputationSuggestionBuilder} ; seul le "Niveau 3" (tiers ET compte ET
  * journal resolus sans ambiguite par un historique coherent, cf.
- * {@link AccountingProposalBuilder#eligibleNiveau3}) declenche une comptabilisation reelle et
+ * {@link ImputationSuggestionBuilder#eligibleNiveau3}) declenche une comptabilisation reelle et
  * automatique. Dans tous les autres cas (Niveau 0/1/2), la proposition reste visible/validable a
  * la main (ecran Documents ou future Inbox), et le document reste simplement au statut TRAITE -
  * ce n'est jamais traite comme une erreur de pipeline.
@@ -32,16 +32,16 @@ public class EcritureNode implements NodeAction<PieceJustificativeState> {
     private static final Logger log = LoggerFactory.getLogger(EcritureNode.class);
 
     private final ComptabilisationService comptabilisationService;
-    private final AccountingProposalBuilder accountingProposalBuilder;
+    private final ImputationSuggestionBuilder imputationSuggestionBuilder;
     private final DocumentRepository documentRepository;
     private final EntrepriseRepository entrepriseRepository;
 
     public EcritureNode(ComptabilisationService comptabilisationService,
-                         AccountingProposalBuilder accountingProposalBuilder,
+                         ImputationSuggestionBuilder imputationSuggestionBuilder,
                          DocumentRepository documentRepository,
                          EntrepriseRepository entrepriseRepository) {
         this.comptabilisationService = comptabilisationService;
-        this.accountingProposalBuilder = accountingProposalBuilder;
+        this.imputationSuggestionBuilder = imputationSuggestionBuilder;
         this.documentRepository = documentRepository;
         this.entrepriseRepository = entrepriseRepository;
     }
@@ -56,8 +56,8 @@ public class EcritureNode implements NodeAction<PieceJustificativeState> {
             return Map.of();
         }
 
-        Optional<AccountingProposal> proposition = accountingProposalBuilder.proposer(entreprise.get(), document.get());
-        if (proposition.isEmpty() || !accountingProposalBuilder.eligibleNiveau3(proposition.get())) {
+        Optional<ImputationSuggestion> proposition = imputationSuggestionBuilder.suggerer(entreprise.get(), document.get());
+        if (proposition.isEmpty() || !imputationSuggestionBuilder.eligibleNiveau3(proposition.get())) {
             log.info("Document {} : proposition de comptabilisation non eligible au Niveau 3, "
                             + "comptabilisation manuelle requise", state.documentId());
             return Map.of();
@@ -66,7 +66,7 @@ public class EcritureNode implements NodeAction<PieceJustificativeState> {
         try {
             comptabilisationService.comptabiliserAutomatiquement(state.entrepriseId(), state.documentId(),
                     proposition.get().getTiers().getId(), proposition.get().getCompteChargeProduit().getId());
-            accountingProposalBuilder.marquerAppliquee(proposition.get());
+            imputationSuggestionBuilder.marquerAppliquee(proposition.get());
             log.info("Document {} comptabilise automatiquement (Niveau 3, entreprise {})",
                     state.documentId(), state.entrepriseId());
         } catch (ComptabilisationAutomatiqueIndisponibleException e) {

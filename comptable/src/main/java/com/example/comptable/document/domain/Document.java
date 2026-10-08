@@ -99,6 +99,79 @@ public class Document extends UuidEntity {
     @Column(name = "ecriture_id")
     private UUID ecritureId;
 
+    /** SHA-256 du contenu reel du fichier (calcule cote backend) : identite technique, base de la detection de doublon exact. */
+    @Column(name = "content_hash")
+    private String contentHash;
+
+    /** Numero de facture du FOURNISSEUR tel qu'extrait (valeur d'origine) ; {@link #numeroFactureNormalise} sert a comparer. */
+    @Column(name = "numero_facture")
+    private String numeroFacture;
+
+    @Column(name = "numero_facture_normalise")
+    private String numeroFactureNormalise;
+
+    private String devise;
+
+    /** Conserve la valeur d'origine ET derive la valeur normalisee : les deux restent toujours coherentes. */
+    public void setNumeroFacture(String numeroFacture) {
+        this.numeroFacture = numeroFacture;
+        this.numeroFactureNormalise = com.example.comptable.document.service.NumeroFactureNormalizer.normaliser(numeroFacture);
+    }
+
+    /** Tiers identifie (fournisseur pour un achat, client pour une vente) ; simple UUID comme {@link #ecritureId}. */
+    @Column(name = "tiers_id")
+    private UUID tiersId;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "statut_classification")
+    private QualiteClassification statutClassification;
+
+    @Column(name = "confiance_tiers")
+    private Double confianceTiers;
+
+    /** Facture a laquelle la piece est rapprochee : {@code FACTURE_FOURNISSEUR} ou {@code FACTURE}. */
+    @Column(name = "cible_type")
+    private String cibleType;
+
+    @Column(name = "cible_id")
+    private UUID cibleId;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "statut_rapprochement", nullable = false)
+    private StatutRapprochementDocument statutRapprochement = StatutRapprochementDocument.NON_RAPPROCHE;
+
+    @Column(name = "confiance_rapprochement")
+    private Double confianceRapprochement;
+
+    @Column(name = "rapproche_at")
+    private OffsetDateTime rapprocheAt;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "rapproche_par")
+    private OrigineRapprochement rapprochePar;
+
+    /** Candidate que l'utilisateur a refusee : elle n'est plus jamais reproposee pour cette piece. */
+    @Column(name = "cible_rejetee_id")
+    private UUID cibleRejeteeId;
+
+    /** Renseigne quand un humain a CONFIRME que cette piece est un doublon de l'autre : elle sort du travail a faire. */
+    @Column(name = "doublon_de_id")
+    private UUID doublonDeId;
+
+    /** Demande de piece que cette piece repond (liee) ou pourrait repondre (a confirmer / ambigu). */
+    @Column(name = "demande_id")
+    private UUID demandeId;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "statut_demande", nullable = false)
+    private StatutDemandeDocument statutDemande = StatutDemandeDocument.AUCUNE;
+
+    @Column(name = "valide_at")
+    private OffsetDateTime valideAt;
+
+    @Column(name = "valide_par_id")
+    private UUID validePar;
+
     @Column(name = "created_at", nullable = false)
     private OffsetDateTime createdAt;
 
@@ -125,5 +198,17 @@ public class Document extends UuidEntity {
      * lecture booleenne. */
     public boolean fraudeCritique() {
         return rapportFraude != null && "CRITIQUE".equals(rapportFraude.get("scoreRisque"));
+    }
+
+    /**
+     * Vrai quand le rapport de fraude ne contient QUE des alertes de doublon strict : ce sujet est traite par les constats
+     * documentaires gradues (fichier identique, meme facture, doublon possible), qui ne doivent pas etre doubles par un
+     * constat « document a risque » sur les memes pieces.
+     */
+    public boolean fraudeNeConcerneQueLesDoublons() {
+        if (rapportFraude == null || !(rapportFraude.get("alertes") instanceof java.util.List<?> alertes) || alertes.isEmpty()) {
+            return false;
+        }
+        return alertes.stream().allMatch(a -> a instanceof Map<?, ?> m && "DOUBLON_POTENTIEL".equals(m.get("code")));
     }
 }

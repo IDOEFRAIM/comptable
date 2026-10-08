@@ -4,6 +4,9 @@ import com.example.comptable.agent.finding.domain.Finding;
 import com.example.comptable.agent.finding.domain.SeveriteFinding;
 import com.example.comptable.agent.finding.domain.StatutFinding;
 import com.example.comptable.agent.finding.domain.TypeFinding;
+import com.example.comptable.agent.finding.domain.TypeResolution;
+import com.example.comptable.controle.ControlResult;
+import com.example.comptable.controle.ControlResultAdapters;
 import com.example.comptable.agent.finding.repository.FindingRepository;
 import com.example.comptable.agent.finding.web.dto.FindingDto;
 import com.example.comptable.audit.AuditTrailService;
@@ -22,8 +25,11 @@ import org.springframework.web.server.ResponseStatusException;
 
 import java.time.LocalDate;
 import java.time.OffsetDateTime;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
 import java.util.UUID;
 
 /**
@@ -43,45 +49,140 @@ public class FindingService {
     private final AuditTrailService auditTrailService;
     private final NotificationService notificationService;
 
-    /** Cree un Finding, sauf si un Finding OPEN existe deja pour exactement cette source (evite
-     * qu'un moteur relance a chaque cycle duplique le meme constat) - retourne alors l'existant
-     * tel quel, sans le modifier (une nouvelle execution du moteur ne doit pas effacer une
-     * resolution/rejet humain en cours, ni re-notifier pour rien). */
-    @Transactional
-    public Finding signaler(Entreprise entreprise, TypeFinding type, SeveriteFinding severity,
-                             String sourceType, String sourceId, String title, String description,
-                             Double confidence, Map<String, Object> evidence, String recommendedAction) {
-        return findingRepository
-                .findByEntrepriseIdAndSourceTypeAndSourceIdAndStatus(
-                        entreprise.getId(), sourceType, sourceId, StatutFinding.OPEN)
-                .orElseGet(() -> {
-                    Finding finding = new Finding();
-                    finding.setEntreprise(entreprise);
-                    finding.setType(type);
-                    finding.setSeverity(severity);
-                    finding.setSourceType(sourceType);
-                    finding.setSourceId(sourceId);
-                    finding.setTitle(title);
-                    finding.setDescription(description);
-                    finding.setConfidence(confidence);
-                    finding.setEvidenceJson(evidence);
-                    finding.setRecommendedAction(recommendedAction);
-                    return findingRepository.save(finding);
-                });
+    /** Ce qu'a produit une declaration de constat (voir {@link #declarer}). */
+    public enum Effet { CREE, MIS_A_JOUR, INCHANGE, ECARTE_CONSERVE }
+
+    public record Declaration(Finding finding, Effet effet) {
     }
 
-    /** Ferme automatiquement le Finding OPEN attache a cette source, si un moteur constate que le
-     * probleme sous-jacent a disparu (ex: une ligne NO_MATCH finit par etre rapprochee). Silencieux
-     * si aucun Finding ouvert n'existe pour cette source - appele preventivement par les moteurs. */
+    /** Fenetre en dessous de laquelle une simple re-detection n'ecrit pas {@code lastDetectedAt} (evite une ecriture par constat et par passage). */
+    private static final long RAFRAICHISSEMENT_DETECTION_MINUTES = 60;
+
+    /**
+     * Declare un constat de controle. Cle de deduplication metier : (entreprise, code de controle,
+     * type d'objet, id d'objet). Un constat actif existant est MIS A JOUR (jamais duplique) ; un
+     * constat ECARTE par un humain n'est pas recree tant que la cause persiste ; sinon un Finding
+     * est cree. Un constat qui n'est pas OPEN n'a pas a etre declare.
+     */
+    @Transactional
+    public Declaration declarer(Entreprise entreprise, ControlResult resultat, TypeFinding type) {
+        UUID entrepriseId = entreprise.getId();
+        Map<String, Object> evidence = new HashMap<>(resultat.metadata());
+        if (!resultat.relatedEntityIds().isEmpty()) {
+            evidence.put(ControlResultAdapters.META_RELATED, resultat.relatedEntityIds());
+        }
+        evidence = EvidenceJson.normaliser(evidence);
+        SeveriteFinding severite = ControlResultAdapters.versSeveriteFinding(resultat.severity());
+        OffsetDateTime maintenant = OffsetDateTime.now();
+
+        Optional<Finding> actif = findingRepository.findActif(entrepriseId, resultat.code(), resultat.entityType(), resultat.entityId());
+        if (actif.isPresent()) {
+            Finding finding = actif.get();
+            boolean change = finding.getControlSeverity() != resultat.severity()
+                    || !Objects.equals(finding.getTitle(), resultat.message())
+                    || !Objects.equals(finding.getDescription(), resultat.explanation())
+                    || !Objects.equals(finding.getRecommendedAction(), resultat.suggestedAction())
+                    || !Objects.equals(finding.getEvidenceJson(), evidence);
+            String domaine = domaineDe(resultat);
+            if (!Objects.equals(finding.getDomaine(), domaine)) {
+                finding.setDomaine(domaine);
+                change = true;
+            }
+            if (change) {
+                finding.setControlSeverity(resultat.severity());
+                finding.setSeverity(severite);
+                finding.setTitle(resultat.message());
+                finding.setDescription(resultat.explanation());
+                finding.setRecommendedAction(resultat.suggestedAction());
+                finding.setEvidenceJson(evidence);
+                finding.setLastDetectedAt(maintenant);
+                findingRepository.save(finding);
+                auditTrailService.enregistrerEvenementSysteme(tenantDe(entreprise), "FINDING_MIS_A_JOUR", "FINDING",
+                        String.valueOf(finding.getId()), Map.of("code", resultat.code(), "severite", resultat.severity().name()));
+                return new Declaration(finding, Effet.MIS_A_JOUR);
+            }
+            if (finding.getLastDetectedAt() == null
+                    || finding.getLastDetectedAt().isBefore(maintenant.minusMinutes(RAFRAICHISSEMENT_DETECTION_MINUTES))) {
+                finding.setLastDetectedAt(maintenant);
+                findingRepository.save(finding);
+            }
+            return new Declaration(finding, Effet.INCHANGE);
+        }
+
+        if (findingRepository.existsByEntrepriseIdAndControlCodeAndSourceTypeAndSourceIdAndStatus(
+                entrepriseId, resultat.code(), resultat.entityType(), resultat.entityId(), StatutFinding.DISMISSED)) {
+            return new Declaration(null, Effet.ECARTE_CONSERVE);
+        }
+
+        Finding finding = new Finding();
+        finding.setDomaine(domaineDe(resultat));
+        finding.setEntreprise(entreprise);
+        finding.setType(type);
+        finding.setControlCode(resultat.code());
+        finding.setCategory(resultat.category());
+        finding.setControlSeverity(resultat.severity());
+        finding.setSeverity(severite);
+        finding.setSourceType(resultat.entityType());
+        finding.setSourceId(resultat.entityId());
+        finding.setTitle(resultat.message());
+        finding.setDescription(resultat.explanation());
+        finding.setEvidenceJson(evidence);
+        finding.setRecommendedAction(resultat.suggestedAction());
+        finding.setLastDetectedAt(maintenant);
+        Finding cree = findingRepository.save(finding);
+        auditTrailService.enregistrerEvenementSysteme(tenantDe(entreprise), "FINDING_CREE", "FINDING",
+                String.valueOf(cree.getId()), Map.of("code", resultat.code(), "type", type.name(),
+                        "severite", resultat.severity().name(), "entityType", resultat.entityType(), "entityId", resultat.entityId()));
+        return new Declaration(cree, Effet.CREE);
+    }
+
+    private static String domaineDe(ControlResult resultat) {
+        Object typeTiers = resultat.metadata().get("typeTiers");
+        return com.example.comptable.controle.ControlDomain.de(resultat.code(), typeTiers == null ? null : typeTiers.toString()).name();
+    }
+
+    /** Ferme (resolution SYSTEM) un constat actif dont la cause a disparu. Le constat reste en base et dans l'audit. */
+    @Transactional
+    public void resoudreAutomatiquement(Finding finding) {
+        finding.setStatus(StatutFinding.RESOLVED);
+        finding.setResolutionType(TypeResolution.SYSTEM);
+        finding.setResolvedAt(OffsetDateTime.now());
+        findingRepository.save(finding);
+        Entreprise entreprise = finding.getEntreprise();
+        auditTrailService.enregistrerEvenementSysteme(tenantDe(entreprise), "FINDING_RESOLU_AUTO", "FINDING",
+                String.valueOf(finding.getId()), Map.of("code", finding.getControlCode()));
+    }
+
+    /** Ferme le constat actif d'un controle precis sur un objet (silencieux s'il n'y en a pas). */
+    @Transactional
+    public void resoudreParControle(UUID entrepriseId, String controlCode, String entityType, String entityId) {
+        findingRepository.findActif(entrepriseId, controlCode, entityType, entityId).ifPresent(this::resoudreAutomatiquement);
+    }
+
+    /** Resolution par un HUMAIN (resolutionType MANUAL, resolvedBy) : la trace distingue toujours une decision humaine d'une resolution automatique. */
+    @Transactional
+    public void resoudreParControleManuellement(UUID entrepriseId, String controlCode, String entityType, String entityId,
+                                                 UUID utilisateurId, String commentaire) {
+        findingRepository.findActif(entrepriseId, controlCode, entityType, entityId).ifPresent(finding -> {
+            finding.setStatus(StatutFinding.RESOLVED);
+            finding.setResolutionType(TypeResolution.MANUAL);
+            finding.setResolvedAt(OffsetDateTime.now());
+            finding.setResolvedBy(utilisateurRepository.getReferenceById(utilisateurId));
+            finding.setResolutionComment(commentaire);
+            findingRepository.save(finding);
+            auditTrailService.enregistrerActionHumaine(finding.getEntreprise().getTenant() != null ? finding.getEntreprise().getTenant().getId() : null,
+                    utilisateurId, "FINDING_RESOLU", "FINDING", String.valueOf(finding.getId()), Map.of("code", finding.getControlCode()));
+        });
+    }
+
+    /** Ferme les constats actifs de TOUS les controles sur un objet (ex. une ligne de releve devenue rapprochee). */
     @Transactional
     public void resoudreParSource(UUID entrepriseId, String sourceType, String sourceId) {
-        findingRepository.findByEntrepriseIdAndSourceTypeAndSourceIdAndStatus(
-                        entrepriseId, sourceType, sourceId, StatutFinding.OPEN)
-                .ifPresent(finding -> {
-                    finding.setStatus(StatutFinding.RESOLVED);
-                    finding.setResolvedAt(OffsetDateTime.now());
-                    findingRepository.save(finding);
-                });
+        findingRepository.findActifsParObjet(entrepriseId, sourceType, sourceId).forEach(this::resoudreAutomatiquement);
+    }
+
+    private UUID tenantDe(Entreprise entreprise) {
+        return entreprise.getTenant() != null ? entreprise.getTenant().getId() : null;
     }
 
     @Transactional(readOnly = true)
@@ -98,6 +199,7 @@ public class FindingService {
         entrepriseAccessService.verifierAcces(entrepriseId, principal);
         Finding finding = charger(entrepriseId, findingId);
         finding.setStatus(StatutFinding.RESOLVED);
+        finding.setResolutionType(TypeResolution.MANUAL);
         finding.setResolvedAt(OffsetDateTime.now());
         finding.setResolvedBy(utilisateurRepository.getReferenceById(principal.getId()));
         FindingDto dto = FindingDto.from(findingRepository.save(finding));
@@ -109,11 +211,17 @@ public class FindingService {
     @Transactional
     public FindingDto rejeter(UUID entrepriseId, UUID findingId, String motif, UtilisateurPrincipal principal) {
         entrepriseAccessService.verifierAcces(entrepriseId, principal);
+        if (motif == null || motif.isBlank()) {
+            // Ecarter n'est pas supprimer : le constat reste auditable, donc on exige de savoir pourquoi.
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Un motif est obligatoire pour ecarter un constat");
+        }
         Finding finding = charger(entrepriseId, findingId);
         finding.setStatus(StatutFinding.DISMISSED);
         finding.setResolvedAt(OffsetDateTime.now());
         finding.setResolvedBy(utilisateurRepository.getReferenceById(principal.getId()));
         finding.setRejectionReason(motif);
+        finding.setResolutionType(TypeResolution.DISMISSED);
+        finding.setResolutionComment(motif);
         FindingDto dto = FindingDto.from(findingRepository.save(finding));
         auditTrailService.enregistrerActionHumaine(principal.getTenantId(), principal.getId(),
                 "FINDING_REJETE", "FINDING", findingId.toString(), Map.of("type", dto.type()));

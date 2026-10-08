@@ -74,6 +74,7 @@ public class CopilotService {
     private final DeclarationFiscaleRepository declarationFiscaleRepository;
     private final CopilotExplainer copilotExplainer;
     private final CopilotTelemetryRecorder telemetryRecorder;
+    private final com.example.comptable.comptabilite.allocation.StatutPaiementFactureService statutPaiementFactureService;
 
     public CopilotService(EntrepriseAccessService entrepriseAccessService,
                            DossierComptableService dossierComptableService,
@@ -83,7 +84,8 @@ public class CopilotService {
                            FactureRepository factureRepository,
                            DeclarationFiscaleRepository declarationFiscaleRepository,
                            CopilotExplainer copilotExplainer,
-                           CopilotTelemetryRecorder telemetryRecorder) {
+                           CopilotTelemetryRecorder telemetryRecorder,
+                           com.example.comptable.comptabilite.allocation.StatutPaiementFactureService statutPaiementFactureService) {
         this.entrepriseAccessService = entrepriseAccessService;
         this.dossierComptableService = dossierComptableService;
         this.clotureReadinessService = clotureReadinessService;
@@ -93,6 +95,7 @@ public class CopilotService {
         this.declarationFiscaleRepository = declarationFiscaleRepository;
         this.copilotExplainer = copilotExplainer;
         this.telemetryRecorder = telemetryRecorder;
+        this.statutPaiementFactureService = statutPaiementFactureService;
     }
 
     @Transactional(readOnly = true)
@@ -210,10 +213,11 @@ public class CopilotService {
     }
 
     private FactsEtPreuves collecterRetardsClients(UUID entrepriseId) {
-        List<Facture> facturesEnRetard = factureRepository
-                .findByEntrepriseIdAndTypeAndStatutAndDateEcheanceBeforeOrderByDateEcheanceAsc(
-                        entrepriseId, TypeFacture.FACTURE, StatutFacture.VALIDEE, LocalDate.now())
+        List<Facture> facturesEnRetard = statutPaiementFactureService.ouvertes(entrepriseId, factureRepository
+                        .findByEntrepriseIdAndTypeAndStatutAndDateEcheanceBeforeOrderByDateEcheanceAsc(
+                                entrepriseId, TypeFacture.FACTURE, StatutFacture.VALIDEE, LocalDate.now()))
                 .stream()
+                .map(com.example.comptable.comptabilite.allocation.StatutPaiementFactureService.FactureOuverte::facture)
                 .limit(MAX_ITEMS_PREUVE)
                 .toList();
 

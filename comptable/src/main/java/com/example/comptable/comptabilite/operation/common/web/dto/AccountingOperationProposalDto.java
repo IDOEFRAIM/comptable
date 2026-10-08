@@ -31,7 +31,8 @@ public record AccountingOperationProposalDto(
         String rejectionReason,
         UUID ecritureId,
         String sourceType,
-        UUID sourceId
+        UUID sourceId,
+        String sourceEvent
 ) {
     public static AccountingOperationProposalDto from(AccountingOperationProposal proposal) {
         return new AccountingOperationProposalDto(
@@ -59,7 +60,8 @@ public record AccountingOperationProposalDto(
                 proposal.getRejectionReason(),
                 proposal.getEcriture() != null ? proposal.getEcriture().getId() : null,
                 proposal.getSourceType(),
-                proposal.getSourceId()
+                proposal.getSourceId(),
+                proposal.getSourceEvent()
         );
     }
 }

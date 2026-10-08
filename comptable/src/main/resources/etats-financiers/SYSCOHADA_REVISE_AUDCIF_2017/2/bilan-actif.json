@@ -1,0 +1,943 @@
+{
+ "framework": "SYSCOHADA_REVISE_AUDCIF_2017",
+ "version": "2",
+ "statementType": "BILAN_ACTIF",
+ "presentationSystem": "NORMAL",
+ "effectiveFrom": "2018-01-01",
+ "source": {
+  "document": "AUDCIF + Système comptable OHADA (SYSCOHADA), Journal officiel de l'OHADA, numéro spécial du 15 février 2017",
+  "sha256": "d5ecb380984b792c4d586b0efa77931249a4c0c25daf39d3c50b27648dd05300",
+  "pages": "999 ; correspondance 1068",
+  "matrix": "docs/syscohada-official-matrix.md",
+  "note": "SYSCOHADA_REVISE_AUDCIF_2017 est un identifiant applicatif, pas un identifiant officiel OHADA."
+ },
+ "scope": {
+  "accountClasses": [
+   1,
+   2,
+   3,
+   4,
+   5
+  ],
+  "excludedPrefixes": [
+   "13"
+  ]
+ },
+ "lines": [
+  {
+   "code": "AD",
+   "label": "Immobilisations incorporelles",
+   "order": 1,
+   "section": null,
+   "parentCode": null,
+   "calculationType": "FORMULA",
+   "signConvention": "ASSET_DEBIT",
+   "mappingRules": [],
+   "formula": "AE + AF + AG + AH",
+   "noteReference": "3",
+   "verificationStatus": "VERIFIED",
+   "provenanceType": "DERIVED_FROM_PRIMARY",
+   "officialSourceReference": "ch.3 Bilan : modèle p.999, correspondance Postes/Comptes p.1068 ; hiérarchie du modèle (formule non imprimée)",
+   "remark": null,
+   "calculationBlockedReason": null
+  },
+  {
+   "code": "AE",
+   "label": "Frais de développement et de prospection",
+   "order": 2,
+   "section": null,
+   "parentCode": "AD",
+   "calculationType": "MAPPED",
+   "signConvention": "ASSET_DEBIT",
+   "mappingRules": [
+    {
+     "role": "GROSS",
+     "includePrefixes": [
+      "211",
+      "2181",
+      "2191"
+     ],
+     "excludePrefixes": [],
+     "side": "ANY",
+     "polarity": "EITHER",
+     "verificationStatus": "VERIFIED",
+     "provenanceType": "DIRECT_PRIMARY"
+    }
+   ],
+   "formula": null,
+   "noteReference": "3",
+   "verificationStatus": "PARTIAL",
+   "provenanceType": "DIRECT_PRIMARY",
+   "officialSourceReference": "ch.3 Bilan : modèle p.999, correspondance Postes/Comptes p.1068",
+   "remark": "Brut vérifié ; amortissements/dépréciations non codés (suffixe « p » non défini : 2918p, 2919p) : ligne incomplète.",
+   "calculationBlockedReason": null
+  },
+  {
+   "code": "AF",
+   "label": "Brevets, licences, logiciels et droits similaires",
+   "order": 3,
+   "section": null,
+   "parentCode": "AD",
+   "calculationType": "MAPPED",
+   "signConvention": "ASSET_DEBIT",
+   "mappingRules": [
+    {
+     "role": "GROSS",
+     "includePrefixes": [
+      "212",
+      "213",
+      "214",
+      "2193"
+     ],
+     "excludePrefixes": [],
+     "side": "ANY",
+     "polarity": "EITHER",
+     "verificationStatus": "VERIFIED",
+     "provenanceType": "DIRECT_PRIMARY"
+    }
+   ],
+   "formula": null,
+   "noteReference": "3",
+   "verificationStatus": "PARTIAL",
+   "provenanceType": "DIRECT_PRIMARY",
+   "officialSourceReference": "ch.3 Bilan : modèle p.999, correspondance Postes/Comptes p.1068",
+   "remark": "Brut vérifié ; dépréciations non codées (« 2919p »).",
+   "calculationBlockedReason": null
+  },
+  {
+   "code": "AG",
+   "label": "Fonds commercial et droit au bail",
+   "order": 4,
+   "section": null,
+   "parentCode": "AD",
+   "calculationType": "MAPPED",
+   "signConvention": "ASSET_DEBIT",
+   "mappingRules": [
+    {
+     "role": "GROSS",
+     "includePrefixes": [
+      "215",
+      "216"
+     ],
+     "excludePrefixes": [],
+     "side": "ANY",
+     "polarity": "EITHER",
+     "verificationStatus": "VERIFIED",
+     "provenanceType": "DIRECT_PRIMARY"
+    },
+    {
+     "role": "DEPRECIATION",
+     "includePrefixes": [
+      "2815",
+      "2816",
+      "2915",
+      "2916"
+     ],
+     "excludePrefixes": [],
+     "side": "ANY",
+     "polarity": "EITHER",
+     "verificationStatus": "VERIFIED",
+     "provenanceType": "DIRECT_PRIMARY"
+    }
+   ],
+   "formula": null,
+   "noteReference": "3",
+   "verificationStatus": "VERIFIED",
+   "provenanceType": "DIRECT_PRIMARY",
+   "officialSourceReference": "ch.3 Bilan : modèle p.999, correspondance Postes/Comptes p.1068",
+   "remark": null,
+   "calculationBlockedReason": null
+  },
+  {
+   "code": "AH",
+   "label": "Autres immobilisations incorporelles",
+   "order": 5,
+   "section": null,
+   "parentCode": "AD",
+   "calculationType": "MAPPED",
+   "signConvention": "ASSET_DEBIT",
+   "mappingRules": [
+    {
+     "role": "GROSS",
+     "includePrefixes": [
+      "217",
+      "218",
+      "2198"
+     ],
+     "excludePrefixes": [
+      "2181"
+     ],
+     "side": "ANY",
+     "polarity": "EITHER",
+     "verificationStatus": "VERIFIED",
+     "provenanceType": "DIRECT_PRIMARY"
+    }
+   ],
+   "formula": null,
+   "noteReference": "3",
+   "verificationStatus": "PARTIAL",
+   "provenanceType": "DIRECT_PRIMARY",
+   "officialSourceReference": "ch.3 Bilan : modèle p.999, correspondance Postes/Comptes p.1068",
+   "remark": "Brut vérifié ; dépréciations non codées (« p »).",
+   "calculationBlockedReason": null
+  },
+  {
+   "code": "AI",
+   "label": "Immobilisations corporelles",
+   "order": 6,
+   "section": null,
+   "parentCode": null,
+   "calculationType": "FORMULA",
+   "signConvention": "ASSET_DEBIT",
+   "mappingRules": [],
+   "formula": "AJ + AK + AL + AM + AN",
+   "noteReference": "3",
+   "verificationStatus": "VERIFIED",
+   "provenanceType": "DERIVED_FROM_PRIMARY",
+   "officialSourceReference": "ch.3 Bilan : modèle p.999, correspondance Postes/Comptes p.1068 ; hiérarchie du modèle (formule non imprimée)",
+   "remark": null,
+   "calculationBlockedReason": null
+  },
+  {
+   "code": "AJ",
+   "label": "Terrains",
+   "order": 7,
+   "section": null,
+   "parentCode": "AI",
+   "calculationType": "MAPPED",
+   "signConvention": "ASSET_DEBIT",
+   "mappingRules": [
+    {
+     "role": "GROSS",
+     "includePrefixes": [
+      "22"
+     ],
+     "excludePrefixes": [],
+     "side": "ANY",
+     "polarity": "EITHER",
+     "verificationStatus": "VERIFIED",
+     "provenanceType": "DIRECT_PRIMARY"
+    },
+    {
+     "role": "DEPRECIATION",
+     "includePrefixes": [
+      "282",
+      "292"
+     ],
+     "excludePrefixes": [],
+     "side": "ANY",
+     "polarity": "EITHER",
+     "verificationStatus": "VERIFIED",
+     "provenanceType": "DIRECT_PRIMARY"
+    }
+   ],
+   "formula": null,
+   "noteReference": "3",
+   "verificationStatus": "VERIFIED",
+   "provenanceType": "DIRECT_PRIMARY",
+   "officialSourceReference": "ch.3 Bilan : modèle p.999, correspondance Postes/Comptes p.1068",
+   "remark": null,
+   "calculationBlockedReason": null
+  },
+  {
+   "code": "AK",
+   "label": "Bâtiments",
+   "order": 8,
+   "section": null,
+   "parentCode": "AI",
+   "calculationType": "STRUCTURE_ONLY",
+   "signConvention": "ASSET_DEBIT",
+   "mappingRules": [],
+   "formula": null,
+   "noteReference": "3",
+   "verificationStatus": "PARTIAL",
+   "provenanceType": "DIRECT_PRIMARY",
+   "officialSourceReference": "ch.3 Bilan : modèle p.999, correspondance Postes/Comptes p.1068",
+   "remark": null,
+   "calculationBlockedReason": "Correspondance non codée : chiffres de la page 1068 indistincts (comptes 239x et dépréciations « p »). Les soldes de cette ligne ressortent en compte non mappé."
+  },
+  {
+   "code": "AL",
+   "label": "Aménagements, agencements et installations",
+   "order": 9,
+   "section": null,
+   "parentCode": "AI",
+   "calculationType": "STRUCTURE_ONLY",
+   "signConvention": "ASSET_DEBIT",
+   "mappingRules": [],
+   "formula": null,
+   "noteReference": "3",
+   "verificationStatus": "PARTIAL",
+   "provenanceType": "DIRECT_PRIMARY",
+   "officialSourceReference": "ch.3 Bilan : modèle p.999, correspondance Postes/Comptes p.1068",
+   "remark": null,
+   "calculationBlockedReason": "Correspondance non codée : chiffres de la page 1068 indistincts (comptes 239x et dépréciations « p »). Les soldes de cette ligne ressortent en compte non mappé."
+  },
+  {
+   "code": "AM",
+   "label": "Matériel, mobilier et actifs biologiques",
+   "order": 10,
+   "section": null,
+   "parentCode": "AI",
+   "calculationType": "MAPPED",
+   "signConvention": "ASSET_DEBIT",
+   "mappingRules": [
+    {
+     "role": "GROSS",
+     "includePrefixes": [
+      "24"
+     ],
+     "excludePrefixes": [
+      "245",
+      "2495"
+     ],
+     "side": "ANY",
+     "polarity": "EITHER",
+     "verificationStatus": "VERIFIED",
+     "provenanceType": "DIRECT_PRIMARY"
+    }
+   ],
+   "formula": null,
+   "noteReference": "3",
+   "verificationStatus": "PARTIAL",
+   "provenanceType": "DIRECT_PRIMARY",
+   "officialSourceReference": "ch.3 Bilan : modèle p.999, correspondance Postes/Comptes p.1068",
+   "remark": "Brut vérifié ; amortissements non codés (parenthèse d'exclusion de 294 et « p » ambigus).",
+   "calculationBlockedReason": null
+  },
+  {
+   "code": "AN",
+   "label": "Matériel de transport",
+   "order": 11,
+   "section": null,
+   "parentCode": "AI",
+   "calculationType": "MAPPED",
+   "signConvention": "ASSET_DEBIT",
+   "mappingRules": [
+    {
+     "role": "GROSS",
+     "includePrefixes": [
+      "245",
+      "2495"
+     ],
+     "excludePrefixes": [],
+     "side": "ANY",
+     "polarity": "EITHER",
+     "verificationStatus": "VERIFIED",
+     "provenanceType": "DIRECT_PRIMARY"
+    }
+   ],
+   "formula": null,
+   "noteReference": "3",
+   "verificationStatus": "PARTIAL",
+   "provenanceType": "DIRECT_PRIMARY",
+   "officialSourceReference": "ch.3 Bilan : modèle p.999, correspondance Postes/Comptes p.1068",
+   "remark": "Brut vérifié ; amortissements non codés (« 2949p »).",
+   "calculationBlockedReason": null
+  },
+  {
+   "code": "AP",
+   "label": "Avances et acomptes versés sur immobilisations",
+   "order": 12,
+   "section": null,
+   "parentCode": null,
+   "calculationType": "MAPPED",
+   "signConvention": "ASSET_DEBIT",
+   "mappingRules": [
+    {
+     "role": "GROSS",
+     "includePrefixes": [
+      "251",
+      "252"
+     ],
+     "excludePrefixes": [],
+     "side": "ANY",
+     "polarity": "EITHER",
+     "verificationStatus": "VERIFIED",
+     "provenanceType": "DIRECT_PRIMARY"
+    },
+    {
+     "role": "DEPRECIATION",
+     "includePrefixes": [
+      "2951",
+      "2952"
+     ],
+     "excludePrefixes": [],
+     "side": "ANY",
+     "polarity": "EITHER",
+     "verificationStatus": "VERIFIED",
+     "provenanceType": "DIRECT_PRIMARY"
+    }
+   ],
+   "formula": null,
+   "noteReference": "3",
+   "verificationStatus": "VERIFIED",
+   "provenanceType": "DIRECT_PRIMARY",
+   "officialSourceReference": "ch.3 Bilan : modèle p.999, correspondance Postes/Comptes p.1068",
+   "remark": null,
+   "calculationBlockedReason": null
+  },
+  {
+   "code": "AQ",
+   "label": "Immobilisations financières",
+   "order": 13,
+   "section": null,
+   "parentCode": null,
+   "calculationType": "FORMULA",
+   "signConvention": "ASSET_DEBIT",
+   "mappingRules": [],
+   "formula": "AR + AS",
+   "noteReference": "4",
+   "verificationStatus": "VERIFIED",
+   "provenanceType": "DERIVED_FROM_PRIMARY",
+   "officialSourceReference": "ch.3 Bilan : modèle p.999, correspondance Postes/Comptes p.1068 ; hiérarchie du modèle (formule non imprimée)",
+   "remark": null,
+   "calculationBlockedReason": null
+  },
+  {
+   "code": "AR",
+   "label": "Titres de participation",
+   "order": 14,
+   "section": null,
+   "parentCode": "AQ",
+   "calculationType": "MAPPED",
+   "signConvention": "ASSET_DEBIT",
+   "mappingRules": [
+    {
+     "role": "GROSS",
+     "includePrefixes": [
+      "26"
+     ],
+     "excludePrefixes": [],
+     "side": "ANY",
+     "polarity": "EITHER",
+     "verificationStatus": "VERIFIED",
+     "provenanceType": "DIRECT_PRIMARY"
+    },
+    {
+     "role": "DEPRECIATION",
+     "includePrefixes": [
+      "296"
+     ],
+     "excludePrefixes": [],
+     "side": "ANY",
+     "polarity": "EITHER",
+     "verificationStatus": "VERIFIED",
+     "provenanceType": "DIRECT_PRIMARY"
+    }
+   ],
+   "formula": null,
+   "noteReference": "4",
+   "verificationStatus": "VERIFIED",
+   "provenanceType": "DIRECT_PRIMARY",
+   "officialSourceReference": "ch.3 Bilan : modèle p.999, correspondance Postes/Comptes p.1068",
+   "remark": null,
+   "calculationBlockedReason": null
+  },
+  {
+   "code": "AS",
+   "label": "Autres immobilisations financières",
+   "order": 15,
+   "section": null,
+   "parentCode": "AQ",
+   "calculationType": "MAPPED",
+   "signConvention": "ASSET_DEBIT",
+   "mappingRules": [
+    {
+     "role": "GROSS",
+     "includePrefixes": [
+      "27"
+     ],
+     "excludePrefixes": [],
+     "side": "ANY",
+     "polarity": "EITHER",
+     "verificationStatus": "VERIFIED",
+     "provenanceType": "DIRECT_PRIMARY"
+    },
+    {
+     "role": "DEPRECIATION",
+     "includePrefixes": [
+      "297"
+     ],
+     "excludePrefixes": [],
+     "side": "ANY",
+     "polarity": "EITHER",
+     "verificationStatus": "VERIFIED",
+     "provenanceType": "DIRECT_PRIMARY"
+    }
+   ],
+   "formula": null,
+   "noteReference": "4",
+   "verificationStatus": "VERIFIED",
+   "provenanceType": "DIRECT_PRIMARY",
+   "officialSourceReference": "ch.3 Bilan : modèle p.999, correspondance Postes/Comptes p.1068",
+   "remark": null,
+   "calculationBlockedReason": null
+  },
+  {
+   "code": "AZ",
+   "label": "Total actif immobilisé",
+   "order": 16,
+   "section": null,
+   "parentCode": null,
+   "calculationType": "FORMULA",
+   "signConvention": "ASSET_DEBIT",
+   "mappingRules": [],
+   "formula": "AD + AI + AP + AQ",
+   "noteReference": null,
+   "verificationStatus": "VERIFIED",
+   "provenanceType": "DERIVED_FROM_PRIMARY",
+   "officialSourceReference": "ch.3 Bilan : modèle p.999, correspondance Postes/Comptes p.1068 ; hiérarchie du modèle (formule non imprimée)",
+   "remark": null,
+   "calculationBlockedReason": null
+  },
+  {
+   "code": "BA",
+   "label": "Actif circulant HAO",
+   "order": 17,
+   "section": null,
+   "parentCode": null,
+   "calculationType": "MAPPED",
+   "signConvention": "ASSET_DEBIT",
+   "mappingRules": [
+    {
+     "role": "GROSS",
+     "includePrefixes": [
+      "485",
+      "488"
+     ],
+     "excludePrefixes": [],
+     "side": "ANY",
+     "polarity": "EITHER",
+     "verificationStatus": "VERIFIED",
+     "provenanceType": "DIRECT_PRIMARY"
+    },
+    {
+     "role": "DEPRECIATION",
+     "includePrefixes": [
+      "498"
+     ],
+     "excludePrefixes": [],
+     "side": "ANY",
+     "polarity": "EITHER",
+     "verificationStatus": "VERIFIED",
+     "provenanceType": "DIRECT_PRIMARY"
+    }
+   ],
+   "formula": null,
+   "noteReference": "5",
+   "verificationStatus": "VERIFIED",
+   "provenanceType": "DIRECT_PRIMARY",
+   "officialSourceReference": "ch.3 Bilan : modèle p.999, correspondance Postes/Comptes p.1068",
+   "remark": null,
+   "calculationBlockedReason": null
+  },
+  {
+   "code": "BB",
+   "label": "Stocks et encours",
+   "order": 18,
+   "section": null,
+   "parentCode": null,
+   "calculationType": "MAPPED",
+   "signConvention": "ASSET_DEBIT",
+   "mappingRules": [
+    {
+     "role": "GROSS",
+     "includePrefixes": [
+      "31",
+      "32",
+      "33",
+      "34",
+      "35",
+      "36",
+      "37",
+      "38"
+     ],
+     "excludePrefixes": [],
+     "side": "ANY",
+     "polarity": "EITHER",
+     "verificationStatus": "VERIFIED",
+     "provenanceType": "DIRECT_PRIMARY"
+    },
+    {
+     "role": "DEPRECIATION",
+     "includePrefixes": [
+      "39"
+     ],
+     "excludePrefixes": [],
+     "side": "ANY",
+     "polarity": "EITHER",
+     "verificationStatus": "VERIFIED",
+     "provenanceType": "DIRECT_PRIMARY"
+    }
+   ],
+   "formula": null,
+   "noteReference": "6",
+   "verificationStatus": "VERIFIED",
+   "provenanceType": "DIRECT_PRIMARY",
+   "officialSourceReference": "ch.3 Bilan : modèle p.999, correspondance Postes/Comptes p.1068",
+   "remark": null,
+   "calculationBlockedReason": null
+  },
+  {
+   "code": "BG",
+   "label": "Créances et emplois assimilés",
+   "order": 19,
+   "section": null,
+   "parentCode": null,
+   "calculationType": "FORMULA",
+   "signConvention": "ASSET_DEBIT",
+   "mappingRules": [],
+   "formula": "BH + BI + BJ",
+   "noteReference": null,
+   "verificationStatus": "VERIFIED",
+   "provenanceType": "DERIVED_FROM_PRIMARY",
+   "officialSourceReference": "ch.3 Bilan : modèle p.999, correspondance Postes/Comptes p.1068 ; hiérarchie du modèle (formule non imprimée)",
+   "remark": null,
+   "calculationBlockedReason": null
+  },
+  {
+   "code": "BH",
+   "label": "Fournisseurs, avances versées",
+   "order": 20,
+   "section": null,
+   "parentCode": "BG",
+   "calculationType": "MAPPED",
+   "signConvention": "ASSET_DEBIT",
+   "mappingRules": [
+    {
+     "role": "GROSS",
+     "includePrefixes": [
+      "409"
+     ],
+     "excludePrefixes": [],
+     "side": "ANY",
+     "polarity": "EITHER",
+     "verificationStatus": "VERIFIED",
+     "provenanceType": "DIRECT_PRIMARY"
+    },
+    {
+     "role": "DEPRECIATION",
+     "includePrefixes": [
+      "490"
+     ],
+     "excludePrefixes": [],
+     "side": "ANY",
+     "polarity": "EITHER",
+     "verificationStatus": "VERIFIED",
+     "provenanceType": "DIRECT_PRIMARY"
+    }
+   ],
+   "formula": null,
+   "noteReference": "17",
+   "verificationStatus": "VERIFIED",
+   "provenanceType": "DIRECT_PRIMARY",
+   "officialSourceReference": "ch.3 Bilan : modèle p.999, correspondance Postes/Comptes p.1068",
+   "remark": "Dépréciation 490 (imprimée p.1068) ; 499 n'est PAS rattaché à BH.",
+   "calculationBlockedReason": null
+  },
+  {
+   "code": "BI",
+   "label": "Clients",
+   "order": 21,
+   "section": null,
+   "parentCode": "BG",
+   "calculationType": "MAPPED",
+   "signConvention": "ASSET_DEBIT",
+   "mappingRules": [
+    {
+     "role": "GROSS",
+     "includePrefixes": [
+      "41"
+     ],
+     "excludePrefixes": [
+      "419"
+     ],
+     "side": "ANY",
+     "polarity": "EITHER",
+     "verificationStatus": "VERIFIED",
+     "provenanceType": "DIRECT_PRIMARY"
+    },
+    {
+     "role": "DEPRECIATION",
+     "includePrefixes": [
+      "491"
+     ],
+     "excludePrefixes": [],
+     "side": "ANY",
+     "polarity": "EITHER",
+     "verificationStatus": "VERIFIED",
+     "provenanceType": "DIRECT_PRIMARY"
+    }
+   ],
+   "formula": null,
+   "noteReference": "7",
+   "verificationStatus": "VERIFIED",
+   "provenanceType": "DIRECT_PRIMARY",
+   "officialSourceReference": "ch.3 Bilan : modèle p.999, correspondance Postes/Comptes p.1068",
+   "remark": null,
+   "calculationBlockedReason": null
+  },
+  {
+   "code": "BJ",
+   "label": "Autres créances",
+   "order": 22,
+   "section": null,
+   "parentCode": "BG",
+   "calculationType": "MAPPED",
+   "signConvention": "ASSET_DEBIT",
+   "mappingRules": [
+    {
+     "role": "GROSS",
+     "includePrefixes": [
+      "185",
+      "42",
+      "43",
+      "44",
+      "45",
+      "46",
+      "47"
+     ],
+     "excludePrefixes": [
+      "478"
+     ],
+     "side": "DEBIT",
+     "polarity": "EITHER",
+     "verificationStatus": "VERIFIED",
+     "provenanceType": "DIRECT_PRIMARY"
+    },
+    {
+     "role": "DEPRECIATION",
+     "includePrefixes": [
+      "492",
+      "493",
+      "494",
+      "495",
+      "496",
+      "497"
+     ],
+     "excludePrefixes": [],
+     "side": "ANY",
+     "polarity": "EITHER",
+     "verificationStatus": "VERIFIED",
+     "provenanceType": "DIRECT_PRIMARY"
+    }
+   ],
+   "formula": null,
+   "noteReference": "8",
+   "verificationStatus": "VERIFIED",
+   "provenanceType": "DIRECT_PRIMARY",
+   "officialSourceReference": "ch.3 Bilan : modèle p.999, correspondance Postes/Comptes p.1068",
+   "remark": "Soldes débiteurs ; 478 exclu (rattaché à BU).",
+   "calculationBlockedReason": null
+  },
+  {
+   "code": "BK",
+   "label": "Total actif circulant",
+   "order": 23,
+   "section": null,
+   "parentCode": null,
+   "calculationType": "FORMULA",
+   "signConvention": "ASSET_DEBIT",
+   "mappingRules": [],
+   "formula": "BA + BB + BG",
+   "noteReference": null,
+   "verificationStatus": "VERIFIED",
+   "provenanceType": "DERIVED_FROM_PRIMARY",
+   "officialSourceReference": "ch.3 Bilan : modèle p.999, correspondance Postes/Comptes p.1068 ; hiérarchie du modèle (formule non imprimée)",
+   "remark": null,
+   "calculationBlockedReason": null
+  },
+  {
+   "code": "BQ",
+   "label": "Titres de placement",
+   "order": 24,
+   "section": null,
+   "parentCode": null,
+   "calculationType": "MAPPED",
+   "signConvention": "ASSET_DEBIT",
+   "mappingRules": [
+    {
+     "role": "GROSS",
+     "includePrefixes": [
+      "50"
+     ],
+     "excludePrefixes": [],
+     "side": "ANY",
+     "polarity": "EITHER",
+     "verificationStatus": "VERIFIED",
+     "provenanceType": "DIRECT_PRIMARY"
+    },
+    {
+     "role": "DEPRECIATION",
+     "includePrefixes": [
+      "590"
+     ],
+     "excludePrefixes": [],
+     "side": "ANY",
+     "polarity": "EITHER",
+     "verificationStatus": "VERIFIED",
+     "provenanceType": "DIRECT_PRIMARY"
+    }
+   ],
+   "formula": null,
+   "noteReference": "9",
+   "verificationStatus": "VERIFIED",
+   "provenanceType": "DIRECT_PRIMARY",
+   "officialSourceReference": "ch.3 Bilan : modèle p.999, correspondance Postes/Comptes p.1068",
+   "remark": null,
+   "calculationBlockedReason": null
+  },
+  {
+   "code": "BR",
+   "label": "Valeurs à encaisser",
+   "order": 25,
+   "section": null,
+   "parentCode": null,
+   "calculationType": "MAPPED",
+   "signConvention": "ASSET_DEBIT",
+   "mappingRules": [
+    {
+     "role": "GROSS",
+     "includePrefixes": [
+      "51"
+     ],
+     "excludePrefixes": [],
+     "side": "ANY",
+     "polarity": "EITHER",
+     "verificationStatus": "VERIFIED",
+     "provenanceType": "DIRECT_PRIMARY"
+    },
+    {
+     "role": "DEPRECIATION",
+     "includePrefixes": [
+      "591"
+     ],
+     "excludePrefixes": [],
+     "side": "ANY",
+     "polarity": "EITHER",
+     "verificationStatus": "VERIFIED",
+     "provenanceType": "DIRECT_PRIMARY"
+    }
+   ],
+   "formula": null,
+   "noteReference": "10",
+   "verificationStatus": "VERIFIED",
+   "provenanceType": "DIRECT_PRIMARY",
+   "officialSourceReference": "ch.3 Bilan : modèle p.999, correspondance Postes/Comptes p.1068",
+   "remark": null,
+   "calculationBlockedReason": null
+  },
+  {
+   "code": "BS",
+   "label": "Banques, chèques postaux, caisse et assimilés",
+   "order": 26,
+   "section": null,
+   "parentCode": null,
+   "calculationType": "MAPPED",
+   "signConvention": "ASSET_DEBIT",
+   "mappingRules": [
+    {
+     "role": "GROSS",
+     "includePrefixes": [
+      "52",
+      "53",
+      "54",
+      "55",
+      "57",
+      "581",
+      "582"
+     ],
+     "excludePrefixes": [],
+     "side": "DEBIT",
+     "polarity": "EITHER",
+     "verificationStatus": "VERIFIED",
+     "provenanceType": "DIRECT_PRIMARY"
+    },
+    {
+     "role": "DEPRECIATION",
+     "includePrefixes": [
+      "592",
+      "593",
+      "594"
+     ],
+     "excludePrefixes": [],
+     "side": "ANY",
+     "polarity": "EITHER",
+     "verificationStatus": "VERIFIED",
+     "provenanceType": "DIRECT_PRIMARY"
+    }
+   ],
+   "formula": null,
+   "noteReference": "11",
+   "verificationStatus": "VERIFIED",
+   "provenanceType": "DIRECT_PRIMARY",
+   "officialSourceReference": "ch.3 Bilan : modèle p.999, correspondance Postes/Comptes p.1068",
+   "remark": "Soldes débiteurs ; les soldes créditeurs vont en trésorerie-passif (DR).",
+   "calculationBlockedReason": null
+  },
+  {
+   "code": "BT",
+   "label": "Total trésorerie-actif",
+   "order": 27,
+   "section": null,
+   "parentCode": null,
+   "calculationType": "FORMULA",
+   "signConvention": "ASSET_DEBIT",
+   "mappingRules": [],
+   "formula": "BQ + BR + BS",
+   "noteReference": null,
+   "verificationStatus": "VERIFIED",
+   "provenanceType": "DERIVED_FROM_PRIMARY",
+   "officialSourceReference": "ch.3 Bilan : modèle p.999, correspondance Postes/Comptes p.1068 ; hiérarchie du modèle (formule non imprimée)",
+   "remark": null,
+   "calculationBlockedReason": null
+  },
+  {
+   "code": "BU",
+   "label": "Écart de conversion-Actif",
+   "order": 28,
+   "section": null,
+   "parentCode": null,
+   "calculationType": "MAPPED",
+   "signConvention": "ASSET_DEBIT",
+   "mappingRules": [
+    {
+     "role": "GROSS",
+     "includePrefixes": [
+      "478"
+     ],
+     "excludePrefixes": [],
+     "side": "ANY",
+     "polarity": "EITHER",
+     "verificationStatus": "VERIFIED",
+     "provenanceType": "DIRECT_PRIMARY"
+    }
+   ],
+   "formula": null,
+   "noteReference": "12",
+   "verificationStatus": "VERIFIED",
+   "provenanceType": "DIRECT_PRIMARY",
+   "officialSourceReference": "ch.3 Bilan : modèle p.999, correspondance Postes/Comptes p.1068",
+   "remark": null,
+   "calculationBlockedReason": null
+  },
+  {
+   "code": "BZ",
+   "label": "Total général",
+   "order": 29,
+   "section": null,
+   "parentCode": null,
+   "calculationType": "FORMULA",
+   "signConvention": "ASSET_DEBIT",
+   "mappingRules": [],
+   "formula": "AZ + BK + BT + BU",
+   "noteReference": null,
+   "verificationStatus": "VERIFIED",
+   "provenanceType": "DERIVED_FROM_PRIMARY",
+   "officialSourceReference": "ch.3 Bilan : modèle p.999, correspondance Postes/Comptes p.1068 ; hiérarchie du modèle (formule non imprimée)",
+   "remark": null,
+   "calculationBlockedReason": null
+  }
+ ]
+}

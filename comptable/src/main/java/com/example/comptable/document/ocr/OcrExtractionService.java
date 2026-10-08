@@ -8,4 +8,9 @@ package com.example.comptable.document.ocr;
 public interface OcrExtractionService {
 
     OcrResult extraire(byte[] contenu, String contentType);
+
+    /** Nom du moteur, conserve comme source de chaque champ extrait. */
+    default String nomMoteur() {
+        return getClass().getSimpleName();
+    }
 }

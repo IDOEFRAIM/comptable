@@ -18,6 +18,8 @@ public class UtilisateurPrincipal implements UserDetails {
     private final String email;
     private final String motDePasse;
     private final boolean actif;
+    private final boolean mustChangePassword;
+    private final int credentialsVersion;
     private final Set<GrantedAuthority> authorities;
 
     public UtilisateurPrincipal(Utilisateur utilisateur) {
@@ -26,6 +28,8 @@ public class UtilisateurPrincipal implements UserDetails {
         this.email = utilisateur.getEmail();
         this.motDePasse = utilisateur.getMotDePasse();
         this.actif = "ACTIF".equals(utilisateur.getStatut());
+        this.mustChangePassword = utilisateur.isMustChangePassword();
+        this.credentialsVersion = utilisateur.getCredentialsVersion();
         this.authorities = utilisateur.getRoles().stream()
                 .map(Role::getCode)
                 .map(code -> "ROLE_" + code)
@@ -39,6 +43,14 @@ public class UtilisateurPrincipal implements UserDetails {
 
     public UUID getTenantId() {
         return tenantId;
+    }
+
+    public boolean isMustChangePassword() {
+        return mustChangePassword;
+    }
+
+    public int getCredentialsVersion() {
+        return credentialsVersion;
     }
 
     @Override

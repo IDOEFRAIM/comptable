@@ -1,14 +1,12 @@
 package com.example.comptable.stock.service;
 
-import com.example.comptable.comptabilite.domain.EcritureComptable;
-import com.example.comptable.comptabilite.domain.ExerciceComptable;
-import com.example.comptable.comptabilite.domain.Journal;
-import com.example.comptable.comptabilite.domain.LigneEcriture;
 import com.example.comptable.comptabilite.domain.StatutEcriture;
-import com.example.comptable.comptabilite.domain.StatutExercice;
-import com.example.comptable.comptabilite.repository.EcritureComptableRepository;
-import com.example.comptable.comptabilite.repository.ExerciceComptableRepository;
-import com.example.comptable.comptabilite.repository.JournalRepository;
+import com.example.comptable.comptabilite.operation.common.AccountingOperationEngine;
+import com.example.comptable.comptabilite.operation.common.AccountingSource;
+import com.example.comptable.comptabilite.operation.common.AccountingOperationType;
+import com.example.comptable.comptabilite.operation.common.ResultatRegle;
+import com.example.comptable.comptabilite.operation.common.web.dto.AccountingOperationProposalDto;
+import com.example.comptable.comptabilite.operation.stock.StockMouvementRule;
 import com.example.comptable.entreprise.service.EntrepriseAccessService;
 import com.example.comptable.identite.domain.Utilisateur;
 import com.example.comptable.identite.repository.UtilisateurRepository;
@@ -41,9 +39,10 @@ import java.util.UUID;
 /**
  * Enregistre les mouvements d'inventaire permanent d'un {@link Article} et maintient son etat de
  * valorisation (delegue a {@link StockValuationService}) : ce service applique le calcul,
- * journalise le mouvement et genere l'ecriture comptable de contrepartie (compte de stock / compte
- * de variation de stock), sur le journal OD puisque ces mouvements ne sont pas eux-memes une piece
- * d'achat ou de vente (celle-ci reste a comptabiliser separement via
+ * journalise le mouvement et confie sa contrepartie comptable (compte de stock / compte de
+ * variation de stock) a AccountingOperationEngine via StockMouvementRule - jamais d'ecriture
+ * construite ici, journal et comptes resolus par le moteur. Ces mouvements ne sont pas eux-memes une
+ * piece d'achat ou de vente (celle-ci reste a comptabiliser separement via
  * FacturationService/ComptabilisationService). La regularisation d'un ecart d'inventaire physique
  * est une exception notable : voir {@link #enregistrerRegularisationInventaire} - elle ne genere
  * jamais d'ecriture elle-meme, laissant AccountingOperationEngine porter la proposition et la
@@ -53,7 +52,8 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class MouvementStockService {
 
-    private static final String JOURNAL_MOUVEMENTS_STOCK = "OD";
+    /** Valeur de {@code sourceType} des propositions du moteur issues d'un mouvement de stock. */
+    public static final String SOURCE_TYPE_MOUVEMENT = "MOUVEMENT_STOCK";
 
     /** Types que le formulaire generique (POST /mouvements-stock) peut creer directement. Les
      * autres portent leur propre tracabilite et ne sont crees que par l'orchestrateur interne
@@ -66,11 +66,10 @@ public class MouvementStockService {
     private final ArticleRepository articleRepository;
     private final DepotRepository depotRepository;
     private final MouvementStockRepository mouvementStockRepository;
-    private final ExerciceComptableRepository exerciceComptableRepository;
-    private final JournalRepository journalRepository;
-    private final EcritureComptableRepository ecritureComptableRepository;
     private final UtilisateurRepository utilisateurRepository;
     private final StockValuationService stockValuationService;
+    private final AccountingOperationEngine accountingOperationEngine;
+    private final StockMouvementRule stockMouvementRule;
 
     private record ResultatApplication(MouvementStock mouvement, String avertissement) {
     }
@@ -119,11 +118,11 @@ public class MouvementStockService {
         mouvement.setSourceId(sourceId);
         mouvement.setCreatedBy(utilisateurRepository.getReferenceById(principal.getId()));
 
-        EcritureComptable ecriture = genererEcriture(article, mouvement, dateMouvement, principal);
-        mouvement.setEcritureId(ecriture.getId());
-
         articleRepository.save(article);
         mouvement = mouvementStockRepository.save(mouvement);
+        // Meme transaction que la valorisation : si la comptabilisation est refusee (compte non
+        // configure, exercice cloture...), le mouvement physique et le CUMP ne sont pas enregistres.
+        comptabiliser(article, mouvement, dateMouvement, categorieDe(request.type()), principal);
 
         return MouvementStockDto.from(mouvement, resultat.avertissement());
     }
@@ -349,58 +348,40 @@ public class MouvementStockService {
     }
 
     /**
-     * Entree/ajustement-surplus : Debit compte de stock / Credit compte de variation.
-     * Sortie/ajustement-perte : Debit compte de variation / Credit compte de stock.
-     * Determine par la categorie du type deja construit (ENTREE pour entree/ajustement-surplus,
-     * SORTIE ou ajustement-perte sinon).
+     * Le module Stock a deja calcule l'evenement economique (quantite, valeur au CUMP) ; il ne produit
+     * ici qu'une COMMANDE comptable confiee au moteur (regle {@link StockMouvementRule}) : aucune
+     * ecriture n'est construite dans ce service. Entree/ajustement-surplus : Debit stock / Credit
+     * variation ; sortie/ajustement-perte : l'inverse. Un mouvement de valeur nulle n'a rien a
+     * comptabiliser (pas d'ecriture a zero). Idempotent par mouvement (sourceType/sourceId).
      */
-    private EcritureComptable genererEcriture(Article article, MouvementStock mouvement, LocalDate dateMouvement,
-                                               UtilisateurPrincipal principal) {
-        ExerciceComptable exercice = exerciceComptableRepository.findByEntrepriseIdAndDate(article.getEntreprise().getId(), dateMouvement)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNPROCESSABLE_ENTITY,
-                        "Aucun exercice comptable ne couvre la date " + dateMouvement));
-        if (exercice.getStatut() != StatutExercice.OUVERT) {
-            throw new ResponseStatusException(HttpStatus.UNPROCESSABLE_ENTITY, "L'exercice couvrant cette date est cloture");
+    private void comptabiliser(Article article, MouvementStock mouvement, LocalDate dateMouvement,
+                               Categorie categorie, UtilisateurPrincipal principal) {
+        if (mouvement.getValeurMouvement().signum() == 0) {
+            return;
         }
-
-        Journal journal = journalRepository.findByEntrepriseIdAndCode(article.getEntreprise().getId(), JOURNAL_MOUVEMENTS_STOCK)
-                .orElseThrow(() -> new IllegalStateException("Journal OD introuvable, l'entreprise n'a pas ete initialisee correctement"));
-        Utilisateur utilisateur = utilisateurRepository.getReferenceById(principal.getId());
-
         boolean entreeEnStock = mouvement.getType() == TypeMouvementStock.AJUSTEMENT
                 ? mouvement.getQuantite().signum() > 0
-                : categorieDe(mouvement.getType()) == Categorie.ENTREE;
-
+                : categorie == Categorie.ENTREE;
+        AccountingOperationType operation = switch (categorie) {
+            case ENTREE -> AccountingOperationType.STOCK_ENTREE;
+            case SORTIE -> AccountingOperationType.STOCK_SORTIE;
+            case AJUSTEMENT -> AccountingOperationType.STOCK_AJUSTEMENT;
+        };
+        String evenement = switch (categorie) {
+            case ENTREE -> "ENTREE";
+            case SORTIE -> "SORTIE";
+            case AJUSTEMENT -> "AJUSTEMENT";
+        };
         String libelle = (mouvement.getLibelle() != null ? mouvement.getLibelle() : mouvement.getType() + " stock")
                 + " - " + article.getDesignation();
 
-        EcritureComptable ecriture = new EcritureComptable();
-        ecriture.setEntreprise(article.getEntreprise());
-        ecriture.setExercice(exercice);
-        ecriture.setJournal(journal);
-        ecriture.setDateEcriture(dateMouvement);
-        ecriture.setLibelle(libelle);
-        ecriture.setCreatedBy(utilisateur);
-        ecriture.setStatut(StatutEcriture.VALIDEE);
-        ecriture.setNumeroPiece(genererNumeroPiece(journal));
-
-        if (entreeEnStock) {
-            ecriture.ajouterLigne(LigneEcriture.debit(article.getCompteStock(), mouvement.getValeurMouvement(), libelle));
-            ecriture.ajouterLigne(LigneEcriture.credit(article.getCompteVariation(), mouvement.getValeurMouvement(), libelle));
-        } else {
-            ecriture.ajouterLigne(LigneEcriture.debit(article.getCompteVariation(), mouvement.getValeurMouvement(), libelle));
-            ecriture.ajouterLigne(LigneEcriture.credit(article.getCompteStock(), mouvement.getValeurMouvement(), libelle));
-        }
-
-        if (!ecriture.estEquilibree()) {
-            throw new IllegalStateException("Ecriture de mouvement de stock desequilibree, enregistrement annule");
-        }
-        return ecritureComptableRepository.save(ecriture);
-    }
-
-    private String genererNumeroPiece(Journal journal) {
-        long sequence = ecritureComptableRepository.countByJournalId(journal.getId()) + 1;
-        return "%s-%d-%04d".formatted(journal.getCode(), LocalDate.now().getYear(), sequence);
+        ResultatRegle resultat = stockMouvementRule.construire(article.getEntreprise(), article, operation,
+                entreeEnStock, mouvement.getValeurMouvement(), libelle);
+        AccountingOperationProposalDto proposition = accountingOperationEngine.proposerEtValider(
+                article.getEntreprise().getId(), operation, null, dateMouvement, libelle, null, resultat,
+                AccountingSource.de(SOURCE_TYPE_MOUVEMENT, mouvement.getId(), evenement), StatutEcriture.VALIDEE, principal);
+        mouvement.setEcritureId(proposition.ecritureId());
+        mouvementStockRepository.save(mouvement);
     }
 
     private Article chargerArticle(UUID entrepriseId, UUID articleId) {

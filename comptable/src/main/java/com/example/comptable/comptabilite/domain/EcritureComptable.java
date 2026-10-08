@@ -26,6 +26,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Entity
+@jakarta.persistence.EntityListeners({com.example.comptable.etatsfinanciers.sync.EcritureControlListener.class, com.example.comptable.fiscalite.vat.VatEcritureListener.class})
 @Table(name = "ecriture_comptable")
 @Getter
 @Setter
@@ -55,6 +56,16 @@ public class EcritureComptable extends UuidEntity {
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private StatutEcriture statut = StatutEcriture.BROUILLON;
+
+    /** Nature comptable (V61) : activite courante, inventaire, cloture... determine la vue de reporting dans laquelle l'ecriture entre. */
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private NatureEcriture nature = NatureEcriture.BUSINESS;
+
+    /** Evenement de tresorerie declare a la saisie (V63) ; null si non qualifie. */
+    @Enumerated(EnumType.STRING)
+    @Column(name = "cash_flow_event")
+    private CashFlowEvent cashFlowEvent;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "created_by")

@@ -62,14 +62,4 @@ class JournalResolverTest {
 
         assertThat(resultat).isEmpty();
     }
-
-    @Test
-    void resoudreparcode_reste_un_passthrough_de_compatibilite() {
-        Journal ventes = journal("VTE", TypeJournal.VENTES);
-        when(journalRepository.findByEntrepriseIdAndCode(entrepriseId, "VTE")).thenReturn(Optional.of(ventes));
-
-        Optional<Journal> resultat = journalResolver.resoudreParCode(entrepriseId, "VTE");
-
-        assertThat(resultat).contains(ventes);
-    }
 }

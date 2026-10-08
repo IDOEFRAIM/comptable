@@ -5,6 +5,7 @@ const CLE_TOKEN = 'comptable.jwt';
 interface PayloadJwt {
   email?: string;
   roles?: string[];
+  mcp?: boolean;
 }
 
 /** Stockage du JWT. localStorage pour le MVP ; a durcir (cookie httpOnly) avant la mise en prod. */
@@ -24,6 +25,11 @@ export class TokenStorageService {
 
   getEmail(): string | null {
     return this.decoderPayload()?.email ?? null;
+  }
+
+  /** Le jeton porte l'obligation de choisir un nouveau mot de passe (mot de passe temporaire ou réinitialisé). */
+  doitChangerMotDePasse(): boolean {
+    return this.decoderPayload()?.mcp === true;
   }
 
   getRoles(): string[] {

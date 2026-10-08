@@ -1,14 +1,12 @@
 package com.example.comptable.stock.service;
 
+import com.example.comptable.comptabilite.operation.common.AccountingSource;
+
 import com.example.comptable.comptabilite.domain.CompteComptable;
-import com.example.comptable.comptabilite.domain.EcritureComptable;
 import com.example.comptable.comptabilite.domain.ExerciceComptable;
 import com.example.comptable.comptabilite.domain.Journal;
 import com.example.comptable.comptabilite.domain.StatutExercice;
 import com.example.comptable.comptabilite.domain.TypeJournal;
-import com.example.comptable.comptabilite.repository.EcritureComptableRepository;
-import com.example.comptable.comptabilite.repository.ExerciceComptableRepository;
-import com.example.comptable.comptabilite.repository.JournalRepository;
 import com.example.comptable.entreprise.domain.Entreprise;
 import com.example.comptable.entreprise.service.EntrepriseAccessService;
 import com.example.comptable.identite.domain.Role;
@@ -29,6 +27,14 @@ import org.mockito.Mock;
 import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import com.example.comptable.comptabilite.domain.StatutEcriture;
+import com.example.comptable.comptabilite.operation.common.AccountingOperationType;
+import com.example.comptable.comptabilite.operation.common.ResultatRegle;
+import com.example.comptable.comptabilite.operation.common.web.dto.AccountingOperationProposalDto;
+import com.example.comptable.stock.domain.MouvementStock;
+import org.springframework.http.HttpStatus;
+import org.springframework.web.server.ResponseStatusException;
+import java.util.List;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.Optional;
@@ -38,6 +44,11 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyBoolean;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.argThat;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -52,11 +63,9 @@ class MouvementStockServiceTest {
     @Mock
     private MouvementStockRepository mouvementStockRepository;
     @Mock
-    private ExerciceComptableRepository exerciceComptableRepository;
+    private com.example.comptable.comptabilite.operation.common.AccountingOperationEngine accountingOperationEngine;
     @Mock
-    private JournalRepository journalRepository;
-    @Mock
-    private EcritureComptableRepository ecritureComptableRepository;
+    private com.example.comptable.comptabilite.operation.stock.StockMouvementRule stockMouvementRule;
     @Mock
     private UtilisateurRepository utilisateurRepository;
     /** Instance reelle (pas un mock) : le calcul CUMP doit rester exactement celui deja teste par
@@ -141,17 +150,22 @@ class MouvementStockServiceTest {
         return compte;
     }
 
+    /** Le contexte comptable (exercice, journal, comptes) est resolu par le moteur : il suffit de simuler sa reponse. */
     private void mockerContexteComptable() {
-        when(exerciceComptableRepository.findByEntrepriseIdAndDate(any(), any())).thenReturn(Optional.of(exercice));
-        when(journalRepository.findByEntrepriseIdAndCode(entrepriseId, "OD")).thenReturn(Optional.of(journalOd));
         when(utilisateurRepository.getReferenceById(principal.getId())).thenReturn(utilisateurCourant);
-        when(ecritureComptableRepository.countByJournalId(journalOd.getId())).thenReturn(0L);
-        when(ecritureComptableRepository.save(any())).thenAnswer(inv -> {
-            EcritureComptable ecriture = inv.getArgument(0);
-            ecriture.setId(UUID.randomUUID());
-            return ecriture;
+        when(mouvementStockRepository.save(any())).thenAnswer(inv -> {
+            MouvementStock mouvement = inv.getArgument(0);
+            if (mouvement.getId() == null) {
+                mouvement.setId(UUID.randomUUID());
+            }
+            return mouvement;
         });
-        when(mouvementStockRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
+        lenient().when(stockMouvementRule.construire(any(), any(), any(), anyBoolean(), any(), anyString()))
+                .thenReturn(new ResultatRegle(TypeJournal.OPERATIONS_DIVERSES, List.of(), List.of(), List.of()));
+        AccountingOperationProposalDto proposition = org.mockito.Mockito.mock(AccountingOperationProposalDto.class);
+        lenient().when(proposition.ecritureId()).thenReturn(UUID.randomUUID());
+        lenient().when(accountingOperationEngine.proposerEtValider(any(), any(), any(), any(), anyString(), any(), any(), any(), any(), any()))
+                .thenReturn(proposition);
     }
 
     @Test
@@ -277,14 +291,61 @@ class MouvementStockServiceTest {
     }
 
     @Test
-    void refuse_lenregistrement_hors_dun_exercice_ouvert() {
-        when(exerciceComptableRepository.findByEntrepriseIdAndDate(any(), any())).thenReturn(Optional.empty());
+    void un_refus_du_moteur_comptable_remonte_et_annule_le_mouvement() {
+        mockerContexteComptable();
+        when(accountingOperationEngine.proposerEtValider(any(), any(), any(), any(), anyString(), any(), any(), any(), any(), any()))
+                .thenThrow(new ResponseStatusException(HttpStatus.UNPROCESSABLE_ENTITY, "Aucun exercice comptable ne couvre la date 2026-03-01"));
 
         assertThatThrownBy(() -> mouvementStockService.enregistrer(entrepriseId,
                 new CreerMouvementStockRequest(article.getId(), TypeMouvementStock.ENTREE,
                         new BigDecimal("10"), new BigDecimal("1000"), LocalDate.of(2026, 3, 1), "Achat"),
                 principal))
-                .hasMessageContaining("Aucun exercice");
+                .isInstanceOfSatisfying(ResponseStatusException.class, e -> {
+                    assertThat(e.getStatusCode().value()).isEqualTo(422);
+                    assertThat(e.getReason()).contains("Aucun exercice");
+                });
+    }
+
+    @Test
+    void une_entree_est_confiee_au_moteur_comme_STOCK_ENTREE_avec_le_mouvement_comme_source() {
+        mockerContexteComptable();
+        MouvementStockDto resultat = mouvementStockService.enregistrer(entrepriseId,
+                new CreerMouvementStockRequest(article.getId(), TypeMouvementStock.ENTREE,
+                        new BigDecimal("10"), new BigDecimal("1000"), LocalDate.of(2026, 3, 1), "Achat 1"),
+                principal);
+
+        verify(stockMouvementRule).construire(eq(entreprise), eq(article), eq(AccountingOperationType.STOCK_ENTREE),
+                eq(true), argThat(v -> v.compareTo(new BigDecimal("10000")) == 0), anyString());
+        verify(accountingOperationEngine).proposerEtValider(eq(entrepriseId), eq(AccountingOperationType.STOCK_ENTREE), eq(null), eq(LocalDate.of(2026, 3, 1)), anyString(), eq(null), any(), argThat(src -> src.type().equals(MouvementStockService.SOURCE_TYPE_MOUVEMENT) && src.event().equals("ENTREE")), eq(StatutEcriture.VALIDEE), eq(principal));
+        assertThat(resultat.ecritureId()).isNotNull();
+    }
+
+    @Test
+    void une_sortie_est_STOCK_SORTIE_a_la_valeur_CUMP_et_un_ajustement_negatif_est_STOCK_AJUSTEMENT_en_sortie() {
+        mockerContexteComptable();
+        article.setQuantiteEnStock(new BigDecimal("20"));
+        article.setValeurStockTotale(new BigDecimal("24000"));
+        article.setPump(new BigDecimal("1200"));
+
+        mouvementStockService.enregistrer(entrepriseId, new CreerMouvementStockRequest(article.getId(), TypeMouvementStock.SORTIE,
+                new BigDecimal("5"), null, LocalDate.of(2026, 3, 10), "Vente"), principal);
+        verify(stockMouvementRule).construire(eq(entreprise), eq(article), eq(AccountingOperationType.STOCK_SORTIE),
+                eq(false), argThat(v -> v.compareTo(new BigDecimal("6000")) == 0), anyString());
+
+        mouvementStockService.enregistrer(entrepriseId, new CreerMouvementStockRequest(article.getId(), TypeMouvementStock.AJUSTEMENT,
+                new BigDecimal("-2"), null, LocalDate.of(2026, 3, 11), "Casse"), principal);
+        verify(stockMouvementRule).construire(eq(entreprise), eq(article), eq(AccountingOperationType.STOCK_AJUSTEMENT),
+                eq(false), any(), anyString());
+    }
+
+    @Test
+    void un_mouvement_de_valeur_nulle_ne_produit_aucune_commande_comptable() {
+        mockerContexteComptable();
+        mouvementStockService.enregistrer(entrepriseId, new CreerMouvementStockRequest(article.getId(), TypeMouvementStock.ENTREE,
+                new BigDecimal("10"), BigDecimal.ZERO, LocalDate.of(2026, 3, 1), "Echantillon gratuit"), principal);
+
+        verify(accountingOperationEngine, never()).proposerEtValider(any(), any(), any(), any(), anyString(), any(), any(), any(), any(), any());
+        verify(mouvementStockRepository).save(any());
     }
 
     @Test
@@ -298,6 +359,6 @@ class MouvementStockServiceTest {
 
         assertThat(resultat).isNull();
         verify(mouvementStockRepository, never()).save(any());
-        verify(ecritureComptableRepository, never()).save(any());
+        verify(accountingOperationEngine, never()).proposerEtValider(any(), any(), any(), any(), anyString(), any(), any(), any(), any(), any());
     }
 }

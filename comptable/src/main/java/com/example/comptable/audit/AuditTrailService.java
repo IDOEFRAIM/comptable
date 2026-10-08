@@ -4,6 +4,7 @@ import com.example.comptable.audit.domain.AuditEvent;
 import com.example.comptable.audit.repository.AuditEventRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.HashMap;
@@ -43,6 +44,30 @@ public class AuditTrailService {
         details.put("decision", decision);
         details.put("userValidation", userValidation);
         enregistrer(tenantId, null, action, entite, entiteId, details);
+    }
+
+    /** Evenement produit par le systeme lui-meme (moteur deterministe, pipeline), ni humain ni IA :
+     * {@code source=SYSTEME}. Jamais utilise pour une decision humaine ou une suggestion IA. */
+    @Transactional
+    public void enregistrerEvenementSysteme(UUID tenantId, String action, String entite, String entiteId,
+                                             Map<String, Object> details) {
+        Map<String, Object> enrichis = new HashMap<>(details != null ? details : Map.of());
+        enrichis.put("source", "SYSTEME");
+        enregistrer(tenantId, null, action, entite, entiteId, enrichis);
+    }
+
+    /**
+     * Echec ou refus metier a tracer meme quand la transaction appelante est annulee (une
+     * {@code ResponseStatusException} 422 fait un rollback) : transaction INDEPENDANTE. A reserver aux
+     * refus qui racontent une decision (compte non resolu, cloture refusee), jamais aux erreurs techniques.
+     */
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    public void enregistrerRefus(UUID tenantId, UUID utilisateurId, String action, String entite, String entiteId,
+                                  Map<String, Object> details) {
+        Map<String, Object> enrichis = new HashMap<>(details != null ? details : Map.of());
+        enrichis.put("source", utilisateurId != null ? "HUMAIN" : "SYSTEME");
+        enrichis.put("resultat", "REFUSE");
+        enregistrer(tenantId, utilisateurId, action, entite, entiteId, enrichis);
     }
 
     private void enregistrer(UUID tenantId, UUID utilisateurId, String action, String entite,

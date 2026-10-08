@@ -96,6 +96,10 @@ INPUT_SCHEMA = {
             "type": ["string", "null"],
             "description": "Nom du commerce, fournisseur ou operateur Mobile Money lisible sur la piece, null si illisible",
         },
+        "numero_facture": {
+            "type": ["string", "null"],
+            "description": "Numero de la facture tel qu'imprime par le fournisseur (ex. FAC-2026-0042), null si absent ou illisible. Ne jamais inventer ni confondre avec un numero de commande, de client ou de telephone",
+        },
         "nif_rccm": {
             "type": ["string", "null"],
             "description": "Numero d'Identification Fiscale ou RCCM du fournisseur, null si absent ou illisible",
@@ -167,6 +171,7 @@ def extraire(contenu: bytes, content_type: str) -> OcrResult:
         message=raw.get("motif") or "Extraction par IA ; a verifier avant validation.",
         confiance=confiance,
         fournisseur=raw.get("fournisseur"),
+        numero_facture=raw.get("numero_facture"),
         devise=raw.get("devise") or "XOF",
         mode_paiement=raw.get("mode_paiement"),
         type_document=raw.get("type_document"),

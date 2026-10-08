@@ -14,4 +14,6 @@ public interface TiersRepository extends JpaRepository<Tiers, UUID> {
     List<Tiers> findByEntrepriseIdAndType(UUID entrepriseId, TypeTiers type);
 
     long countByEntrepriseIdAndType(UUID entrepriseId, TypeTiers type);
+
+    java.util.Optional<Tiers> findFirstByEntrepriseIdAndCompteComptableId(UUID entrepriseId, UUID compteComptableId);
 }

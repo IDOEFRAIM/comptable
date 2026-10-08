@@ -227,10 +227,7 @@ class CommandeAchatServiceTest {
         when(commandeAchatRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
 
         UUID ecritureId = UUID.randomUUID();
-        AccountingOperationProposalDto proposition = new AccountingOperationProposalDto(UUID.randomUUID(), entrepriseId,
-                "ACHAT", "APPROVED", null, null, fournisseur.getId(), LocalDate.now(), "libelle", null, List.of(),
-                new BigDecimal("11800"), new BigDecimal("11800"), true, List.of(), List.of(), null, null, null, null,
-                ecritureId, "FACTURE_FOURNISSEUR", null);
+        AccountingOperationProposalDto proposition = new AccountingOperationProposalDto(UUID.randomUUID(), entrepriseId, "ACHAT", "APPROVED", null, null, fournisseur.getId(), LocalDate.now(), "libelle", null, List.of(), new BigDecimal("11800"), new BigDecimal("11800"), true, List.of(), List.of(), null, null, null, null, ecritureId, "FACTURE_FOURNISSEUR", null, "VALIDATION");
         when(accountingOperationEngine.proposerAchatEtValiderImmediatement(eq(entrepriseId), any(), eq(principal)))
                 .thenReturn(proposition);
 
@@ -248,7 +245,8 @@ class CommandeAchatServiceTest {
         verify(accountingOperationEngine).proposerAchatEtValiderImmediatement(eq(entrepriseId), captor.capture(), eq(principal));
         AchatMultiLigneOperationRequest request = captor.getValue();
         assertThat(request.fournisseurId()).isEqualTo(fournisseur.getId());
-        assertThat(request.sourceType()).isEqualTo("FACTURE_FOURNISSEUR");
+        assertThat(request.source().type()).isEqualTo("FACTURE_FOURNISSEUR");
+        assertThat(request.source().event()).isEqualTo("VALIDATION");
         assertThat(request.lignes()).hasSize(1);
         LigneAchatOperationRequest ligne = request.lignes().get(0);
         assertThat(ligne.nature()).isEqualTo(NatureAchat.MARCHANDISE);

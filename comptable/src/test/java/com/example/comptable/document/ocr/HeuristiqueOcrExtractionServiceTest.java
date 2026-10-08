@@ -53,6 +53,18 @@ class HeuristiqueOcrExtractionServiceTest {
     }
 
     @Test
+    void ignore_len_tete_de_tableau_et_retient_le_bloc_de_totaux_en_bas_de_facture() {
+        // Regression : "Total HT" en en-tete de tableau, suivi de "Q-001", faisait lire 1.
+        String texte = "Ref. Designation Qte Prix unitaire HT Remise Total HT\n"
+                + "Q-001 Ciment Portland 42.5 20 6 500 FCFA 0% 130 000 FCFA\n"
+                + "Sous-total HT : 540 050 FCFA\nTVA (18%) : 97 209 FCFA\nTOTAL TTC : 637 259 FCFA";
+
+        assertThat(service.extraireMontant(texte, HeuristiqueOcrExtractionService.MONTANT_HT)).isEqualByComparingTo("540050");
+        assertThat(service.extraireMontant(texte, HeuristiqueOcrExtractionService.MONTANT_TVA)).isEqualByComparingTo("97209");
+        assertThat(service.extraireMontant(texte, HeuristiqueOcrExtractionService.MONTANT_TTC)).isEqualByComparingTo("637259");
+    }
+
+    @Test
     void naurait_pas_capture_le_montant_sans_la_normalisation_prealable() {
         // Preuve que la regression existait bien avant le correctif : sans normaliserEspaces,
         // le caractere [0-9 .,] ne reconnait pas l'espace insecable et rate le montant.

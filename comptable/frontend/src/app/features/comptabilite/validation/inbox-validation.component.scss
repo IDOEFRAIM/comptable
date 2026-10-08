@@ -92,24 +92,10 @@
   cursor: pointer;
 }
 
-.bouton-lien {
-  border: none;
-  background: none;
-  color: var(--color-primary);
-  cursor: pointer;
-  font-size: 0.8125rem;
-  font-weight: 600;
-
-  &:disabled {
-    color: var(--text-placeholder);
-    cursor: not-allowed;
-  }
-}
-
 // --- Layout split-screen : liste des pieces a gauche, detail (apercu + formulaire) a droite ---
 .colonnes-validation {
   display: grid;
-  grid-template-columns: 320px 1fr;
+  grid-template-columns: 380px 1fr;
   gap: 1.25rem;
   align-items: start;
 
@@ -128,13 +114,19 @@
 
 .item-document {
   display: flex;
-  align-items: center;
-  gap: 0.6rem;
-  padding: 0.6rem 0.75rem;
+  align-items: flex-start;
+  gap: 0.75rem;
+  padding: 0.85rem 0.9rem;
   border: 1px solid var(--border-subtle);
   border-radius: var(--radius-md);
   cursor: pointer;
   font-size: 0.8125rem;
+  transition: border-color 0.15s, background 0.15s, box-shadow 0.15s;
+
+  input[type='checkbox'] {
+    margin-top: 0.2rem;
+    flex-shrink: 0;
+  }
 
   &:hover {
     border-color: var(--border-default);
@@ -144,24 +136,40 @@
   &.actif {
     border-color: var(--color-primary);
     background: var(--color-primary-light);
+    box-shadow: 0 0 0 1px var(--color-primary);
   }
 }
 
 .infos-document {
   display: flex;
   flex-direction: column;
-  gap: 0.15rem;
+  gap: 0.4rem;
   flex: 1;
   min-width: 0;
 
   .nom-fichier {
     font-weight: 600;
+    font-size: 0.875rem;
+    color: var(--text-primary);
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
   }
 
-  .meta {
+  .ligne-montant {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 0.5rem;
+  }
+
+  .montant {
+    font-weight: 700;
+    font-size: 0.9375rem;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .date {
     color: var(--text-tertiary);
     font-size: 0.75rem;
   }
@@ -170,9 +178,31 @@
 // --- Badges explicatifs (Sprint 8) : confiance vert >= 95%, orange sinon ; fraude rouge vif ---
 .badges-document {
   display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-  gap: 0.3rem;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+}
+
+.alerte-fraude-carte {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.4rem;
+  margin: 0.1rem 0 0;
+  padding: 0.45rem 0.6rem;
+  border-radius: var(--radius-md);
+  background: var(--color-danger-bg);
+  border: 1px solid var(--color-danger-border);
+  color: var(--color-danger);
+  font-size: 0.75rem;
+  font-weight: 600;
+  line-height: 1.35;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+
+  .icone-alerte {
+    margin-right: 0.3rem;
+  }
 }
 
 .badge-confiance {

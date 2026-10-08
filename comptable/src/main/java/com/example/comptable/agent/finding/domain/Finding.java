@@ -1,6 +1,8 @@
 package com.example.comptable.agent.finding.domain;
 
 import com.example.comptable.common.domain.UuidEntity;
+import com.example.comptable.controle.ControlCategory;
+import com.example.comptable.controle.ControlSeverity;
 import com.example.comptable.entreprise.domain.Entreprise;
 import com.example.comptable.identite.domain.Utilisateur;
 import jakarta.persistence.Column;
@@ -111,8 +113,39 @@ public class Finding extends UuidEntity {
     @Column(name = "rejection_reason")
     private String rejectionReason;
 
+    /** Code stable du controle a l'origine du constat (ex. MISSING_DOCUMENT) ; avec (sourceType, sourceId)
+     * il forme la cle de deduplication metier : un constat actif par (controle, objet). */
+    @Column(name = "control_code", nullable = false)
+    private String controlCode;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private ControlCategory category;
+
+    /** Domaine de revision (ControlDomain), derive du code du controle a la declaration : filtre et comptes cote base. */
+    @Column(name = "domaine")
+    private String domaine;
+
+    /** Gravite exprimee par le controle (INFO/WARNING/ERROR/BLOCKING) ; {@code severity} n'en est que la projection d'affichage. */
+    @Enumerated(EnumType.STRING)
+    @Column(name = "control_severity", nullable = false)
+    private ControlSeverity controlSeverity;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "resolution_type")
+    private TypeResolution resolutionType;
+
+    @Column(name = "resolution_comment")
+    private String resolutionComment;
+
+    @Column(name = "last_detected_at", nullable = false)
+    private OffsetDateTime lastDetectedAt;
+
     @PrePersist
     private void onCreate() {
+        if (lastDetectedAt == null) {
+            lastDetectedAt = OffsetDateTime.now();
+        }
         if (createdAt == null) {
             createdAt = OffsetDateTime.now();
         }

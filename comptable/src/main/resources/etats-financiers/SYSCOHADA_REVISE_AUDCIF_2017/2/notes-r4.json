@@ -1,0 +1,3359 @@
+{
+  "framework": "SYSCOHADA_REVISE_AUDCIF_2017",
+  "version": "2",
+  "statementType": "NOTES_R4",
+  "presentationSystem": "NORMAL",
+  "effectiveFrom": "2018-01-01",
+  "source": {
+    "document": "AUDCIF + Système comptable OHADA (SYSCOHADA), Journal officiel de l'OHADA, numéro spécial du 15 février 2017",
+    "sha256": "d5ecb380984b792c4d586b0efa77931249a4c0c25daf39d3c50b27648dd05300",
+    "pages": "989",
+    "matrix": "docs/syscohada-official-matrix.md",
+    "note": "SYSCOHADA_REVISE_AUDCIF_2017 est un identifiant applicatif, pas un identifiant officiel OHADA."
+  },
+  "rule": "Une note reellement non applicable n'est pas jointe (Fiche R4).",
+  "notes": [
+    {
+      "code": "1",
+      "title": "Dettes garanties par des sûretés réelles",
+      "order": 1,
+      "applicability": "TO_DETERMINE",
+      "automationType": "MANUAL_REQUIRED",
+      "verificationStatus": "VERIFIED",
+      "provenanceType": "DIRECT_PRIMARY",
+      "officialSourceReference": "Fiche R4, p.989",
+      "detailedSchema": "COMPLETE",
+      "applicabilityRule": null,
+      "automationTypeBasis": "PRODUCT_PROPOSAL",
+      "readiness": "CATALOGUE_ONLY",
+      "manualRequiredSections": [
+        "sûretés réelles par dette",
+        "engagements financiers donnés et reçus"
+      ],
+      "autoCalculatedSections": [],
+      "remark": null,
+      "table": null,
+      "sections": [
+        {
+          "code": "suretes_reelles_par_dette",
+          "label": "sûretés réelles par dette",
+          "sourceType": "MANUAL",
+          "required": true,
+          "fields": [
+            {
+              "code": "contenu",
+              "label": "sûretés réelles par dette",
+              "type": "TEXT",
+              "required": true,
+              "options": [],
+              "sourceType": "MANUAL"
+            }
+          ]
+        },
+        {
+          "code": "engagements_financiers_donnes_et_recus",
+          "label": "engagements financiers donnés et reçus",
+          "sourceType": "MANUAL",
+          "required": true,
+          "fields": [
+            {
+              "code": "contenu",
+              "label": "engagements financiers donnés et reçus",
+              "type": "TEXT",
+              "required": true,
+              "options": [],
+              "sourceType": "MANUAL"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "code": "2",
+      "title": "Informations obligatoires",
+      "order": 2,
+      "applicability": "TO_DETERMINE",
+      "automationType": "MANUAL_REQUIRED",
+      "verificationStatus": "VERIFIED",
+      "provenanceType": "DIRECT_PRIMARY",
+      "officialSourceReference": "Fiche R4, p.989",
+      "detailedSchema": "COMPLETE",
+      "applicabilityRule": null,
+      "automationTypeBasis": "PRODUCT_PROPOSAL",
+      "readiness": "CATALOGUE_ONLY",
+      "manualRequiredSections": [
+        "déclaration de conformité",
+        "règles et méthodes comptables",
+        "dérogations",
+        "informations complémentaires"
+      ],
+      "autoCalculatedSections": [],
+      "remark": null,
+      "table": null,
+      "sections": [
+        {
+          "code": "declaration_de_conformite",
+          "label": "déclaration de conformité",
+          "sourceType": "MANUAL",
+          "required": true,
+          "fields": [
+            {
+              "code": "contenu",
+              "label": "déclaration de conformité",
+              "type": "TEXT",
+              "required": true,
+              "options": [],
+              "sourceType": "MANUAL"
+            }
+          ]
+        },
+        {
+          "code": "regles_et_methodes_comptables",
+          "label": "règles et méthodes comptables",
+          "sourceType": "MANUAL",
+          "required": true,
+          "fields": [
+            {
+              "code": "contenu",
+              "label": "règles et méthodes comptables",
+              "type": "TEXT",
+              "required": true,
+              "options": [],
+              "sourceType": "MANUAL"
+            }
+          ]
+        },
+        {
+          "code": "derogations",
+          "label": "dérogations",
+          "sourceType": "MANUAL",
+          "required": true,
+          "fields": [
+            {
+              "code": "contenu",
+              "label": "dérogations",
+              "type": "TEXT",
+              "required": true,
+              "options": [],
+              "sourceType": "MANUAL"
+            }
+          ]
+        },
+        {
+          "code": "informations_complementaires",
+          "label": "informations complémentaires",
+          "sourceType": "MANUAL",
+          "required": true,
+          "fields": [
+            {
+              "code": "contenu",
+              "label": "informations complémentaires",
+              "type": "TEXT",
+              "required": true,
+              "options": [],
+              "sourceType": "MANUAL"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "code": "3A",
+      "title": "Immobilisation brute",
+      "order": 3,
+      "applicability": "TO_DETERMINE",
+      "automationType": "MIXED",
+      "verificationStatus": "VERIFIED",
+      "provenanceType": "DIRECT_PRIMARY",
+      "officialSourceReference": "Fiche R4, p.989",
+      "detailedSchema": "PARTIAL_COLUMNS_CROPPED",
+      "applicabilityRule": null,
+      "automationTypeBasis": "PRODUCT_PROPOSAL",
+      "readiness": "PARTIAL_SCHEMA",
+      "manualRequiredSections": [
+        "mouvements hors registre",
+        "commentaires de variation"
+      ],
+      "autoCalculatedSections": [],
+      "remark": null,
+      "table": null,
+      "sections": [
+        {
+          "code": "mouvements_hors_registre",
+          "label": "mouvements hors registre",
+          "sourceType": "MANUAL",
+          "required": true,
+          "fields": [
+            {
+              "code": "contenu",
+              "label": "mouvements hors registre",
+              "type": "TEXT",
+              "required": true,
+              "options": [],
+              "sourceType": "MANUAL"
+            }
+          ]
+        },
+        {
+          "code": "commentaires_de_variation",
+          "label": "commentaires de variation",
+          "sourceType": "MANUAL",
+          "required": true,
+          "fields": [
+            {
+              "code": "contenu",
+              "label": "commentaires de variation",
+              "type": "TEXT",
+              "required": true,
+              "options": [],
+              "sourceType": "MANUAL"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "code": "3B",
+      "title": "Biens pris en location acquisition",
+      "order": 4,
+      "applicability": "TO_DETERMINE",
+      "automationType": "MIXED",
+      "verificationStatus": "VERIFIED",
+      "provenanceType": "DIRECT_PRIMARY",
+      "officialSourceReference": "Fiche R4, p.989",
+      "detailedSchema": "PARTIAL_COLUMNS_CROPPED",
+      "applicabilityRule": null,
+      "automationTypeBasis": "PRODUCT_PROPOSAL",
+      "readiness": "PARTIAL_SCHEMA",
+      "manualRequiredSections": [
+        "nature du contrat",
+        "bailleur et durée du bail"
+      ],
+      "autoCalculatedSections": [],
+      "remark": null,
+      "table": null,
+      "sections": [
+        {
+          "code": "nature_du_contrat",
+          "label": "nature du contrat",
+          "sourceType": "MANUAL",
+          "required": true,
+          "fields": [
+            {
+              "code": "contenu",
+              "label": "nature du contrat",
+              "type": "TEXT",
+              "required": true,
+              "options": [],
+              "sourceType": "MANUAL"
+            }
+          ]
+        },
+        {
+          "code": "bailleur_et_duree_du_bail",
+          "label": "bailleur et durée du bail",
+          "sourceType": "MANUAL",
+          "required": true,
+          "fields": [
+            {
+              "code": "contenu",
+              "label": "bailleur et durée du bail",
+              "type": "TEXT",
+              "required": true,
+              "options": [],
+              "sourceType": "MANUAL"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "code": "3C",
+      "title": "Immobilisations : amortissements",
+      "order": 5,
+      "applicability": "TO_DETERMINE",
+      "automationType": "MIXED",
+      "verificationStatus": "VERIFIED",
+      "provenanceType": "DIRECT_PRIMARY",
+      "officialSourceReference": "Fiche R4, p.989",
+      "detailedSchema": "PARTIAL_COLUMNS_CROPPED",
+      "applicabilityRule": null,
+      "automationTypeBasis": "PRODUCT_PROPOSAL",
+      "readiness": "PARTIAL_SCHEMA",
+      "manualRequiredSections": [
+        "modes et taux d'amortissement"
+      ],
+      "autoCalculatedSections": [],
+      "remark": null,
+      "table": null,
+      "sections": [
+        {
+          "code": "modes_et_taux_d_amortissement",
+          "label": "modes et taux d'amortissement",
+          "sourceType": "MANUAL",
+          "required": true,
+          "fields": [
+            {
+              "code": "contenu",
+              "label": "modes et taux d'amortissement",
+              "type": "TEXT",
+              "required": true,
+              "options": [],
+              "sourceType": "MANUAL"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "code": "3D",
+      "title": "Immobilisations : plus-values et moins value de cession",
+      "order": 6,
+      "applicability": "TO_DETERMINE",
+      "automationType": "MIXED",
+      "verificationStatus": "VERIFIED",
+      "provenanceType": "DIRECT_PRIMARY",
+      "officialSourceReference": "Fiche R4, p.989",
+      "detailedSchema": "COMPLETE",
+      "applicabilityRule": null,
+      "automationTypeBasis": "PRODUCT_PROPOSAL",
+      "readiness": "CATALOGUE_ONLY",
+      "manualRequiredSections": [
+        "justification de la cession",
+        "dates d'acquisition et de sortie"
+      ],
+      "autoCalculatedSections": [],
+      "remark": null,
+      "table": null,
+      "sections": [
+        {
+          "code": "justification_de_la_cession",
+          "label": "justification de la cession",
+          "sourceType": "MANUAL",
+          "required": true,
+          "fields": [
+            {
+              "code": "contenu",
+              "label": "justification de la cession",
+              "type": "TEXT",
+              "required": true,
+              "options": [],
+              "sourceType": "MANUAL"
+            }
+          ]
+        },
+        {
+          "code": "dates_d_acquisition_et_de_sortie",
+          "label": "dates d'acquisition et de sortie",
+          "sourceType": "MANUAL",
+          "required": true,
+          "fields": [
+            {
+              "code": "contenu",
+              "label": "dates d'acquisition et de sortie",
+              "type": "TEXT",
+              "required": true,
+              "options": [],
+              "sourceType": "MANUAL"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "code": "3E",
+      "title": "Informations sur les réévaluations effectuées par l'entite",
+      "order": 7,
+      "applicability": "TO_DETERMINE",
+      "automationType": "MANUAL_REQUIRED",
+      "verificationStatus": "VERIFIED",
+      "provenanceType": "DIRECT_PRIMARY",
+      "officialSourceReference": "Fiche R4, p.989",
+      "detailedSchema": "COMPLETE",
+      "applicabilityRule": null,
+      "automationTypeBasis": "PRODUCT_PROPOSAL",
+      "readiness": "CATALOGUE_ONLY",
+      "manualRequiredSections": [
+        "nature et date",
+        "méthode",
+        "traitement fiscal"
+      ],
+      "autoCalculatedSections": [],
+      "remark": null,
+      "table": null,
+      "sections": [
+        {
+          "code": "nature_et_date",
+          "label": "nature et date",
+          "sourceType": "MANUAL",
+          "required": true,
+          "fields": [
+            {
+              "code": "contenu",
+              "label": "nature et date",
+              "type": "TEXT",
+              "required": true,
+              "options": [],
+              "sourceType": "MANUAL"
+            }
+          ]
+        },
+        {
+          "code": "methode",
+          "label": "méthode",
+          "sourceType": "MANUAL",
+          "required": true,
+          "fields": [
+            {
+              "code": "contenu",
+              "label": "méthode",
+              "type": "TEXT",
+              "required": true,
+              "options": [],
+              "sourceType": "MANUAL"
+            }
+          ]
+        },
+        {
+          "code": "traitement_fiscal",
+          "label": "traitement fiscal",
+          "sourceType": "MANUAL",
+          "required": true,
+          "fields": [
+            {
+              "code": "contenu",
+              "label": "traitement fiscal",
+              "type": "TEXT",
+              "required": true,
+              "options": [],
+              "sourceType": "MANUAL"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "code": "3F",
+      "title": "Tableau d'étalement des charges immobilisées",
+      "order": 8,
+      "applicability": "TO_DETERMINE",
+      "automationType": "MANUAL_REQUIRED",
+      "verificationStatus": "VERIFIED",
+      "provenanceType": "DIRECT_PRIMARY",
+      "officialSourceReference": "Fiche R4, p.989",
+      "detailedSchema": "COMPLETE",
+      "applicabilityRule": null,
+      "automationTypeBasis": "PRODUCT_PROPOSAL",
+      "readiness": "CATALOGUE_ONLY",
+      "manualRequiredSections": [
+        "montants à étaler et durées"
+      ],
+      "autoCalculatedSections": [],
+      "remark": null,
+      "table": null,
+      "sections": [
+        {
+          "code": "montants_a_etaler_et_durees",
+          "label": "montants à étaler et durées",
+          "sourceType": "MANUAL",
+          "required": true,
+          "fields": [
+            {
+              "code": "contenu",
+              "label": "montants à étaler et durées",
+              "type": "TEXT",
+              "required": true,
+              "options": [],
+              "sourceType": "MANUAL"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "code": "4",
+      "title": "Immobilisations financières",
+      "order": 9,
+      "applicability": "TO_DETERMINE",
+      "automationType": "MIXED",
+      "verificationStatus": "VERIFIED",
+      "provenanceType": "DIRECT_PRIMARY",
+      "officialSourceReference": "Fiche R4, p.989",
+      "detailedSchema": "COMPLETE",
+      "applicabilityRule": null,
+      "automationTypeBasis": "PRODUCT_PROPOSAL",
+      "readiness": "CATALOGUE_ONLY",
+      "manualRequiredSections": [
+        "échéances",
+        "liste des filiales et participations"
+      ],
+      "autoCalculatedSections": [],
+      "remark": null,
+      "table": null,
+      "sections": [
+        {
+          "code": "echeances",
+          "label": "échéances",
+          "sourceType": "MANUAL",
+          "required": true,
+          "fields": [
+            {
+              "code": "contenu",
+              "label": "échéances",
+              "type": "TEXT",
+              "required": true,
+              "options": [],
+              "sourceType": "MANUAL"
+            }
+          ]
+        },
+        {
+          "code": "liste_des_filiales_et_participations",
+          "label": "liste des filiales et participations",
+          "sourceType": "MANUAL",
+          "required": true,
+          "fields": [
+            {
+              "code": "contenu",
+              "label": "liste des filiales et participations",
+              "type": "TEXT",
+              "required": true,
+              "options": [],
+              "sourceType": "MANUAL"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "code": "5",
+      "title": "Actif circulant HAO",
+      "order": 10,
+      "applicability": "TO_DETERMINE",
+      "automationType": "AUTOMATIC",
+      "verificationStatus": "VERIFIED",
+      "provenanceType": "DIRECT_PRIMARY",
+      "officialSourceReference": "Fiche R4, p.989",
+      "detailedSchema": "COMPLETE",
+      "applicabilityRule": null,
+      "automationTypeBasis": "PRODUCT_PROPOSAL",
+      "readiness": "IMPLEMENTED",
+      "manualRequiredSections": [
+        "commentaire de variation significative (conditionnel)"
+      ],
+      "autoCalculatedSections": [
+        "tableau chiffré (comptes du plan)"
+      ],
+      "remark": null,
+      "table": {
+        "basis": "BALANCE",
+        "page": "1028",
+        "domainPrefixes": [
+          "481",
+          "482",
+          "484",
+          "485",
+          "488",
+          "498"
+        ],
+        "excludedFromDomain": [],
+        "lines": [
+          {
+            "kind": "LINE",
+            "code": "a1",
+            "label": "Créances sur cessions d'immobilisations",
+            "includePrefixes": [
+              "485"
+            ],
+            "excludePrefixes": [],
+            "sign": "DEBIT_POSITIVE",
+            "formula": null
+          },
+          {
+            "kind": "LINE",
+            "code": "a2",
+            "label": "Autres créances hors activités ordinaires",
+            "includePrefixes": [
+              "488"
+            ],
+            "excludePrefixes": [],
+            "sign": "DEBIT_POSITIVE",
+            "formula": null
+          },
+          {
+            "kind": "TOTAL",
+            "code": "a3",
+            "label": "TOTAL BRUT",
+            "includePrefixes": [],
+            "excludePrefixes": [],
+            "sign": null,
+            "formula": "a1 + a2"
+          },
+          {
+            "kind": "LINE",
+            "code": "a4",
+            "label": "Dépréciations des créances HAO",
+            "includePrefixes": [
+              "498"
+            ],
+            "excludePrefixes": [],
+            "sign": "CREDIT_POSITIVE",
+            "formula": null
+          },
+          {
+            "kind": "TOTAL",
+            "code": "a5",
+            "label": "TOTAL NET DE DÉPRÉCIATION",
+            "includePrefixes": [],
+            "excludePrefixes": [],
+            "sign": null,
+            "formula": "a3 - a4"
+          },
+          {
+            "kind": "LINE",
+            "code": "d1",
+            "label": "Fournisseurs d'investissements",
+            "includePrefixes": [
+              "481"
+            ],
+            "excludePrefixes": [
+              "4813"
+            ],
+            "sign": "CREDIT_POSITIVE",
+            "formula": null
+          },
+          {
+            "kind": "LINE",
+            "code": "d2",
+            "label": "Fournisseurs d'investissements effets à payer",
+            "includePrefixes": [
+              "482"
+            ],
+            "excludePrefixes": [],
+            "sign": "CREDIT_POSITIVE",
+            "formula": null
+          },
+          {
+            "kind": "LINE",
+            "code": "d3",
+            "label": "Versements restant à effectuer sur titres de participation et titres immobilisés non libérés",
+            "includePrefixes": [
+              "4813"
+            ],
+            "excludePrefixes": [],
+            "sign": "CREDIT_POSITIVE",
+            "formula": null
+          },
+          {
+            "kind": "LINE",
+            "code": "d4",
+            "label": "Autres dettes hors activités ordinaires",
+            "includePrefixes": [
+              "484"
+            ],
+            "excludePrefixes": [],
+            "sign": "CREDIT_POSITIVE",
+            "formula": null
+          },
+          {
+            "kind": "TOTAL",
+            "code": "d5",
+            "label": "TOTAL DES DETTES CIRCULANTES HAO",
+            "includePrefixes": [],
+            "excludePrefixes": [],
+            "sign": null,
+            "formula": "d1 + d2 + d3 + d4"
+          }
+        ]
+      },
+      "sections": [
+        {
+          "code": "tableau_chiffre_comptes_du_plan",
+          "label": "tableau chiffré (comptes du plan)",
+          "sourceType": "GENERATED",
+          "required": false,
+          "fields": []
+        },
+        {
+          "code": "commentaire_de_variation_significative_conditionnel",
+          "label": "commentaire de variation significative (conditionnel)",
+          "sourceType": "MANUAL",
+          "required": false,
+          "fields": [
+            {
+              "code": "contenu",
+              "label": "commentaire de variation significative (conditionnel)",
+              "type": "TEXT",
+              "required": false,
+              "options": [],
+              "sourceType": "MANUAL"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "code": "6",
+      "title": "Stocks et en-cours",
+      "order": 11,
+      "applicability": "TO_DETERMINE",
+      "automationType": "MIXED",
+      "verificationStatus": "VERIFIED",
+      "provenanceType": "DIRECT_PRIMARY",
+      "officialSourceReference": "Fiche R4, p.989",
+      "detailedSchema": "COMPLETE",
+      "applicabilityRule": null,
+      "automationTypeBasis": "PRODUCT_PROPOSAL",
+      "readiness": "CATALOGUE_ONLY",
+      "manualRequiredSections": [
+        "date et procédure d'inventaire",
+        "méthodes d'évaluation"
+      ],
+      "autoCalculatedSections": [],
+      "remark": null,
+      "table": null,
+      "sections": [
+        {
+          "code": "date_et_procedure_d_inventaire",
+          "label": "date et procédure d'inventaire",
+          "sourceType": "MANUAL",
+          "required": true,
+          "fields": [
+            {
+              "code": "contenu",
+              "label": "date et procédure d'inventaire",
+              "type": "TEXT",
+              "required": true,
+              "options": [],
+              "sourceType": "MANUAL"
+            }
+          ]
+        },
+        {
+          "code": "methodes_d_evaluation",
+          "label": "méthodes d'évaluation",
+          "sourceType": "MANUAL",
+          "required": true,
+          "fields": [
+            {
+              "code": "contenu",
+              "label": "méthodes d'évaluation",
+              "type": "TEXT",
+              "required": true,
+              "options": [],
+              "sourceType": "MANUAL"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "code": "7",
+      "title": "Clients produits à recevoir",
+      "order": 12,
+      "applicability": "TO_DETERMINE",
+      "automationType": "MIXED",
+      "verificationStatus": "VERIFIED",
+      "provenanceType": "DIRECT_PRIMARY",
+      "officialSourceReference": "Fiche R4, p.989",
+      "detailedSchema": "COMPLETE",
+      "applicabilityRule": null,
+      "automationTypeBasis": "PRODUCT_PROPOSAL",
+      "readiness": "CATALOGUE_ONLY",
+      "manualRequiredSections": [
+        "créances du groupe",
+        "échéances"
+      ],
+      "autoCalculatedSections": [],
+      "remark": null,
+      "table": null,
+      "sections": [
+        {
+          "code": "creances_du_groupe",
+          "label": "créances du groupe",
+          "sourceType": "MANUAL",
+          "required": true,
+          "fields": [
+            {
+              "code": "contenu",
+              "label": "créances du groupe",
+              "type": "TEXT",
+              "required": true,
+              "options": [],
+              "sourceType": "MANUAL"
+            }
+          ]
+        },
+        {
+          "code": "echeances",
+          "label": "échéances",
+          "sourceType": "MANUAL",
+          "required": true,
+          "fields": [
+            {
+              "code": "contenu",
+              "label": "échéances",
+              "type": "TEXT",
+              "required": true,
+              "options": [],
+              "sourceType": "MANUAL"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "code": "8",
+      "title": "Autres créances",
+      "order": 13,
+      "applicability": "TO_DETERMINE",
+      "automationType": "MIXED",
+      "verificationStatus": "VERIFIED",
+      "provenanceType": "DIRECT_PRIMARY",
+      "officialSourceReference": "Fiche R4, p.989",
+      "detailedSchema": "COMPLETE",
+      "applicabilityRule": null,
+      "automationTypeBasis": "PRODUCT_PROPOSAL",
+      "readiness": "CATALOGUE_ONLY",
+      "manualRequiredSections": [
+        "échéances",
+        "compte transitoire d'ajustement spécial"
+      ],
+      "autoCalculatedSections": [],
+      "remark": null,
+      "table": null,
+      "sections": [
+        {
+          "code": "echeances",
+          "label": "échéances",
+          "sourceType": "MANUAL",
+          "required": true,
+          "fields": [
+            {
+              "code": "contenu",
+              "label": "échéances",
+              "type": "TEXT",
+              "required": true,
+              "options": [],
+              "sourceType": "MANUAL"
+            }
+          ]
+        },
+        {
+          "code": "compte_transitoire_d_ajustement_special",
+          "label": "compte transitoire d'ajustement spécial",
+          "sourceType": "MANUAL",
+          "required": true,
+          "fields": [
+            {
+              "code": "contenu",
+              "label": "compte transitoire d'ajustement spécial",
+              "type": "TEXT",
+              "required": true,
+              "options": [],
+              "sourceType": "MANUAL"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "code": "9",
+      "title": "Titres de placement",
+      "order": 14,
+      "applicability": "TO_DETERMINE",
+      "automationType": "MIXED",
+      "verificationStatus": "VERIFIED",
+      "provenanceType": "DIRECT_PRIMARY",
+      "officialSourceReference": "Fiche R4, p.989",
+      "detailedSchema": "COMPLETE",
+      "applicabilityRule": null,
+      "automationTypeBasis": "PRODUCT_PROPOSAL",
+      "readiness": "CATALOGUE_ONLY",
+      "manualRequiredSections": [
+        "cours de bourse",
+        "actions propres"
+      ],
+      "autoCalculatedSections": [],
+      "remark": null,
+      "table": null,
+      "sections": [
+        {
+          "code": "cours_de_bourse",
+          "label": "cours de bourse",
+          "sourceType": "MANUAL",
+          "required": true,
+          "fields": [
+            {
+              "code": "contenu",
+              "label": "cours de bourse",
+              "type": "TEXT",
+              "required": true,
+              "options": [],
+              "sourceType": "MANUAL"
+            }
+          ]
+        },
+        {
+          "code": "actions_propres",
+          "label": "actions propres",
+          "sourceType": "MANUAL",
+          "required": true,
+          "fields": [
+            {
+              "code": "contenu",
+              "label": "actions propres",
+              "type": "TEXT",
+              "required": true,
+              "options": [],
+              "sourceType": "MANUAL"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "code": "10",
+      "title": "Valeurs à encaisser",
+      "order": 15,
+      "applicability": "TO_DETERMINE",
+      "automationType": "AUTOMATIC",
+      "verificationStatus": "VERIFIED",
+      "provenanceType": "DIRECT_PRIMARY",
+      "officialSourceReference": "Fiche R4, p.989",
+      "detailedSchema": "COMPLETE",
+      "applicabilityRule": null,
+      "automationTypeBasis": "PRODUCT_PROPOSAL",
+      "readiness": "IMPLEMENTED",
+      "manualRequiredSections": [
+        "commentaire de variation significative (conditionnel)"
+      ],
+      "autoCalculatedSections": [
+        "tableau chiffré (comptes du plan)"
+      ],
+      "remark": null,
+      "table": {
+        "basis": "BALANCE",
+        "page": "1034",
+        "domainPrefixes": [
+          "51",
+          "591"
+        ],
+        "excludedFromDomain": [],
+        "lines": [
+          {
+            "kind": "LINE",
+            "code": "l1",
+            "label": "Effets à encaisser",
+            "includePrefixes": [
+              "511"
+            ],
+            "excludePrefixes": [],
+            "sign": "DEBIT_POSITIVE",
+            "formula": null
+          },
+          {
+            "kind": "LINE",
+            "code": "l2",
+            "label": "Effets à l'encaissement",
+            "includePrefixes": [
+              "512"
+            ],
+            "excludePrefixes": [],
+            "sign": "DEBIT_POSITIVE",
+            "formula": null
+          },
+          {
+            "kind": "LINE",
+            "code": "l3",
+            "label": "Chèques à encaisser",
+            "includePrefixes": [
+              "513"
+            ],
+            "excludePrefixes": [],
+            "sign": "DEBIT_POSITIVE",
+            "formula": null
+          },
+          {
+            "kind": "LINE",
+            "code": "l4",
+            "label": "Chèques à l'encaissement",
+            "includePrefixes": [
+              "514"
+            ],
+            "excludePrefixes": [],
+            "sign": "DEBIT_POSITIVE",
+            "formula": null
+          },
+          {
+            "kind": "LINE",
+            "code": "l5",
+            "label": "Cartes de crédit à encaisser",
+            "includePrefixes": [
+              "515"
+            ],
+            "excludePrefixes": [],
+            "sign": "DEBIT_POSITIVE",
+            "formula": null
+          },
+          {
+            "kind": "LINE",
+            "code": "l6",
+            "label": "Autres valeurs à encaisser",
+            "includePrefixes": [
+              "518"
+            ],
+            "excludePrefixes": [],
+            "sign": "DEBIT_POSITIVE",
+            "formula": null
+          },
+          {
+            "kind": "TOTAL",
+            "code": "l7",
+            "label": "TOTAL BRUT VALEURS À ENCAISSER",
+            "includePrefixes": [],
+            "excludePrefixes": [],
+            "sign": null,
+            "formula": "l1 + l2 + l3 + l4 + l5 + l6"
+          },
+          {
+            "kind": "LINE",
+            "code": "l8",
+            "label": "Dépréciations des valeurs à encaisser",
+            "includePrefixes": [
+              "591"
+            ],
+            "excludePrefixes": [],
+            "sign": "CREDIT_POSITIVE",
+            "formula": null
+          },
+          {
+            "kind": "TOTAL",
+            "code": "l9",
+            "label": "TOTAL NET DE DÉPRÉCIATION",
+            "includePrefixes": [],
+            "excludePrefixes": [],
+            "sign": null,
+            "formula": "l7 - l8"
+          }
+        ]
+      },
+      "sections": [
+        {
+          "code": "tableau_chiffre_comptes_du_plan",
+          "label": "tableau chiffré (comptes du plan)",
+          "sourceType": "GENERATED",
+          "required": false,
+          "fields": []
+        },
+        {
+          "code": "commentaire_de_variation_significative_conditionnel",
+          "label": "commentaire de variation significative (conditionnel)",
+          "sourceType": "MANUAL",
+          "required": false,
+          "fields": [
+            {
+              "code": "contenu",
+              "label": "commentaire de variation significative (conditionnel)",
+              "type": "TEXT",
+              "required": false,
+              "options": [],
+              "sourceType": "MANUAL"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "code": "11",
+      "title": "Disponibilites",
+      "order": 16,
+      "applicability": "TO_DETERMINE",
+      "automationType": "MIXED",
+      "verificationStatus": "VERIFIED",
+      "provenanceType": "DIRECT_PRIMARY",
+      "officialSourceReference": "Fiche R4, p.989",
+      "detailedSchema": "COMPLETE",
+      "applicabilityRule": null,
+      "automationTypeBasis": "PRODUCT_PROPOSAL",
+      "readiness": "CATALOGUE_ONLY",
+      "manualRequiredSections": [
+        "date de rapprochement",
+        "date d'inventaire de caisse"
+      ],
+      "autoCalculatedSections": [],
+      "remark": null,
+      "table": null,
+      "sections": [
+        {
+          "code": "date_de_rapprochement",
+          "label": "date de rapprochement",
+          "sourceType": "MANUAL",
+          "required": true,
+          "fields": [
+            {
+              "code": "contenu",
+              "label": "date de rapprochement",
+              "type": "TEXT",
+              "required": true,
+              "options": [],
+              "sourceType": "MANUAL"
+            }
+          ]
+        },
+        {
+          "code": "date_d_inventaire_de_caisse",
+          "label": "date d'inventaire de caisse",
+          "sourceType": "MANUAL",
+          "required": true,
+          "fields": [
+            {
+              "code": "contenu",
+              "label": "date d'inventaire de caisse",
+              "type": "TEXT",
+              "required": true,
+              "options": [],
+              "sourceType": "MANUAL"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "code": "12",
+      "title": "Écarts de conversion",
+      "order": 17,
+      "applicability": "TO_DETERMINE",
+      "automationType": "MIXED",
+      "verificationStatus": "VERIFIED",
+      "provenanceType": "DIRECT_PRIMARY",
+      "officialSourceReference": "Fiche R4, p.989",
+      "detailedSchema": "COMPLETE",
+      "applicabilityRule": null,
+      "automationTypeBasis": "PRODUCT_PROPOSAL",
+      "readiness": "CATALOGUE_ONLY",
+      "manualRequiredSections": [
+        "devises et cours"
+      ],
+      "autoCalculatedSections": [],
+      "remark": null,
+      "table": null,
+      "sections": [
+        {
+          "code": "devises_et_cours",
+          "label": "devises et cours",
+          "sourceType": "MANUAL",
+          "required": true,
+          "fields": [
+            {
+              "code": "contenu",
+              "label": "devises et cours",
+              "type": "TEXT",
+              "required": true,
+              "options": [],
+              "sourceType": "MANUAL"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "code": "13",
+      "title": "Capital : valeur nominale des actions ou parts",
+      "order": 18,
+      "applicability": "TO_DETERMINE",
+      "automationType": "MIXED",
+      "verificationStatus": "VERIFIED",
+      "provenanceType": "DIRECT_PRIMARY",
+      "officialSourceReference": "Fiche R4, p.989",
+      "detailedSchema": "COMPLETE",
+      "applicabilityRule": null,
+      "automationTypeBasis": "PRODUCT_PROPOSAL",
+      "readiness": "CATALOGUE_ONLY",
+      "manualRequiredSections": [
+        "identité des associés",
+        "nombre de titres"
+      ],
+      "autoCalculatedSections": [],
+      "remark": null,
+      "table": null,
+      "sections": [
+        {
+          "code": "identite_des_associes",
+          "label": "identité des associés",
+          "sourceType": "MANUAL",
+          "required": true,
+          "fields": [
+            {
+              "code": "contenu",
+              "label": "identité des associés",
+              "type": "TEXT",
+              "required": true,
+              "options": [],
+              "sourceType": "MANUAL"
+            }
+          ]
+        },
+        {
+          "code": "nombre_de_titres",
+          "label": "nombre de titres",
+          "sourceType": "MANUAL",
+          "required": true,
+          "fields": [
+            {
+              "code": "contenu",
+              "label": "nombre de titres",
+              "type": "TEXT",
+              "required": true,
+              "options": [],
+              "sourceType": "MANUAL"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "code": "14",
+      "title": "Primes et réserves",
+      "order": 19,
+      "applicability": "TO_DETERMINE",
+      "automationType": "MIXED",
+      "verificationStatus": "VERIFIED",
+      "provenanceType": "DIRECT_PRIMARY",
+      "officialSourceReference": "Fiche R4, p.989",
+      "detailedSchema": "COMPLETE",
+      "applicabilityRule": null,
+      "automationTypeBasis": "PRODUCT_PROPOSAL",
+      "readiness": "CATALOGUE_ONLY",
+      "manualRequiredSections": [
+        "dates des assemblées"
+      ],
+      "autoCalculatedSections": [],
+      "remark": null,
+      "table": null,
+      "sections": [
+        {
+          "code": "dates_des_assemblees",
+          "label": "dates des assemblées",
+          "sourceType": "MANUAL",
+          "required": true,
+          "fields": [
+            {
+              "code": "contenu",
+              "label": "dates des assemblées",
+              "type": "TEXT",
+              "required": true,
+              "options": [],
+              "sourceType": "MANUAL"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "code": "15A",
+      "title": "Subventions et provisions réglementées",
+      "order": 20,
+      "applicability": "TO_DETERMINE",
+      "automationType": "MIXED",
+      "verificationStatus": "VERIFIED",
+      "provenanceType": "DIRECT_PRIMARY",
+      "officialSourceReference": "Fiche R4, p.989",
+      "detailedSchema": "COMPLETE",
+      "applicabilityRule": null,
+      "automationTypeBasis": "PRODUCT_PROPOSAL",
+      "readiness": "CATALOGUE_ONLY",
+      "manualRequiredSections": [
+        "régime fiscal",
+        "échéances"
+      ],
+      "autoCalculatedSections": [],
+      "remark": null,
+      "table": null,
+      "sections": [
+        {
+          "code": "regime_fiscal",
+          "label": "régime fiscal",
+          "sourceType": "MANUAL",
+          "required": true,
+          "fields": [
+            {
+              "code": "contenu",
+              "label": "régime fiscal",
+              "type": "TEXT",
+              "required": true,
+              "options": [],
+              "sourceType": "MANUAL"
+            }
+          ]
+        },
+        {
+          "code": "echeances",
+          "label": "échéances",
+          "sourceType": "MANUAL",
+          "required": true,
+          "fields": [
+            {
+              "code": "contenu",
+              "label": "échéances",
+              "type": "TEXT",
+              "required": true,
+              "options": [],
+              "sourceType": "MANUAL"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "code": "15B",
+      "title": "Autres fonds propres",
+      "order": 21,
+      "applicability": "TO_DETERMINE",
+      "automationType": "MIXED",
+      "verificationStatus": "VERIFIED",
+      "provenanceType": "DIRECT_PRIMARY",
+      "officialSourceReference": "Fiche R4, p.989",
+      "detailedSchema": "COMPLETE",
+      "applicabilityRule": null,
+      "automationTypeBasis": "PRODUCT_PROPOSAL",
+      "readiness": "CATALOGUE_ONLY",
+      "manualRequiredSections": [
+        "justification de la rubrique"
+      ],
+      "autoCalculatedSections": [],
+      "remark": null,
+      "table": null,
+      "sections": [
+        {
+          "code": "justification_de_la_rubrique",
+          "label": "justification de la rubrique",
+          "sourceType": "MANUAL",
+          "required": true,
+          "fields": [
+            {
+              "code": "contenu",
+              "label": "justification de la rubrique",
+              "type": "TEXT",
+              "required": true,
+              "options": [],
+              "sourceType": "MANUAL"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "code": "16A",
+      "title": "Dettes financières et ressources assimilées",
+      "order": 22,
+      "applicability": "TO_DETERMINE",
+      "automationType": "MIXED",
+      "verificationStatus": "VERIFIED",
+      "provenanceType": "DIRECT_PRIMARY",
+      "officialSourceReference": "Fiche R4, p.989",
+      "detailedSchema": "COMPLETE",
+      "applicabilityRule": null,
+      "automationTypeBasis": "PRODUCT_PROPOSAL",
+      "readiness": "CATALOGUE_ONLY",
+      "manualRequiredSections": [
+        "conditions d'emprunt",
+        "échéances"
+      ],
+      "autoCalculatedSections": [],
+      "remark": null,
+      "table": null,
+      "sections": [
+        {
+          "code": "conditions_d_emprunt",
+          "label": "conditions d'emprunt",
+          "sourceType": "MANUAL",
+          "required": true,
+          "fields": [
+            {
+              "code": "contenu",
+              "label": "conditions d'emprunt",
+              "type": "TEXT",
+              "required": true,
+              "options": [],
+              "sourceType": "MANUAL"
+            }
+          ]
+        },
+        {
+          "code": "echeances",
+          "label": "échéances",
+          "sourceType": "MANUAL",
+          "required": true,
+          "fields": [
+            {
+              "code": "contenu",
+              "label": "échéances",
+              "type": "TEXT",
+              "required": true,
+              "options": [],
+              "sourceType": "MANUAL"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "code": "16B",
+      "title": "Engagements de retraite et avantages assimilés (methode actuarielle)",
+      "order": 23,
+      "applicability": "TO_DETERMINE",
+      "automationType": "MANUAL_REQUIRED",
+      "verificationStatus": "VERIFIED",
+      "provenanceType": "DIRECT_PRIMARY",
+      "officialSourceReference": "Fiche R4, p.989",
+      "detailedSchema": "COMPLETE",
+      "applicabilityRule": null,
+      "automationTypeBasis": "PRODUCT_PROPOSAL",
+      "readiness": "CATALOGUE_ONLY",
+      "manualRequiredSections": [
+        "hypothèses actuarielles"
+      ],
+      "autoCalculatedSections": [],
+      "remark": null,
+      "table": null,
+      "sections": [
+        {
+          "code": "hypotheses_actuarielles",
+          "label": "hypothèses actuarielles",
+          "sourceType": "MANUAL",
+          "required": true,
+          "fields": [
+            {
+              "code": "contenu",
+              "label": "hypothèses actuarielles",
+              "type": "TEXT",
+              "required": true,
+              "options": [],
+              "sourceType": "MANUAL"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "code": "16B bis",
+      "title": "Engagements de retraite et avantages assimilés (source a detailler lors de l'implementation de la note)",
+      "order": 24,
+      "applicability": "TO_DETERMINE",
+      "automationType": "MANUAL_REQUIRED",
+      "verificationStatus": "VERIFIED",
+      "provenanceType": "DIRECT_PRIMARY",
+      "officialSourceReference": "Fiche R4, p.989",
+      "detailedSchema": "COMPLETE",
+      "applicabilityRule": null,
+      "automationTypeBasis": "PRODUCT_PROPOSAL",
+      "readiness": "CATALOGUE_ONLY",
+      "manualRequiredSections": [
+        "régimes financés"
+      ],
+      "autoCalculatedSections": [],
+      "remark": null,
+      "table": null,
+      "sections": [
+        {
+          "code": "regimes_finances",
+          "label": "régimes financés",
+          "sourceType": "MANUAL",
+          "required": true,
+          "fields": [
+            {
+              "code": "contenu",
+              "label": "régimes financés",
+              "type": "TEXT",
+              "required": true,
+              "options": [],
+              "sourceType": "MANUAL"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "code": "16C",
+      "title": "Actifs et passifs éventuels",
+      "order": 25,
+      "applicability": "TO_DETERMINE",
+      "automationType": "MANUAL_REQUIRED",
+      "verificationStatus": "VERIFIED",
+      "provenanceType": "DIRECT_PRIMARY",
+      "officialSourceReference": "Fiche R4, p.989",
+      "detailedSchema": "COMPLETE",
+      "applicabilityRule": null,
+      "automationTypeBasis": "PRODUCT_PROPOSAL",
+      "readiness": "CATALOGUE_ONLY",
+      "manualRequiredSections": [
+        "actifs et passifs éventuels"
+      ],
+      "autoCalculatedSections": [],
+      "remark": null,
+      "table": null,
+      "sections": [
+        {
+          "code": "actifs_et_passifs_eventuels",
+          "label": "actifs et passifs éventuels",
+          "sourceType": "MANUAL",
+          "required": true,
+          "fields": [
+            {
+              "code": "contenu",
+              "label": "actifs et passifs éventuels",
+              "type": "TEXT",
+              "required": true,
+              "options": [],
+              "sourceType": "MANUAL"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "code": "17",
+      "title": "Fournisseurs d'exploitation",
+      "order": 26,
+      "applicability": "TO_DETERMINE",
+      "automationType": "MIXED",
+      "verificationStatus": "VERIFIED",
+      "provenanceType": "DIRECT_PRIMARY",
+      "officialSourceReference": "Fiche R4, p.989",
+      "detailedSchema": "COMPLETE",
+      "applicabilityRule": null,
+      "automationTypeBasis": "PRODUCT_PROPOSAL",
+      "readiness": "IMPLEMENTED",
+      "manualRequiredSections": [
+        "groupe",
+        "échéances"
+      ],
+      "autoCalculatedSections": [
+        "dettes fournisseurs d'exploitation (comptes 401, 402, 408 : lignes de la Note 17 derivees du Passif)"
+      ],
+      "remark": "Les trois lignes reprennent le rattachement DERIVED_FROM_PRIMARY de DJ (Note 17 = 401, 402, 408). Les dettes du groupe et les echeances ne sont pas deductibles du plan : sections manuelles.",
+      "table": {
+        "basis": "BALANCE",
+        "page": "1045",
+        "domainPrefixes": [
+          "401",
+          "402",
+          "408"
+        ],
+        "excludedFromDomain": [],
+        "lines": [
+          {
+            "kind": "LINE",
+            "code": "a1",
+            "label": "Fournisseurs, dettes en compte",
+            "includePrefixes": [
+              "401"
+            ],
+            "excludePrefixes": [],
+            "sign": "CREDIT_POSITIVE",
+            "formula": null
+          },
+          {
+            "kind": "LINE",
+            "code": "a2",
+            "label": "Fournisseurs, effets a payer",
+            "includePrefixes": [
+              "402"
+            ],
+            "excludePrefixes": [],
+            "sign": "CREDIT_POSITIVE",
+            "formula": null
+          },
+          {
+            "kind": "LINE",
+            "code": "a3",
+            "label": "Fournisseurs, factures non parvenues",
+            "includePrefixes": [
+              "408"
+            ],
+            "excludePrefixes": [],
+            "sign": "CREDIT_POSITIVE",
+            "formula": null
+          },
+          {
+            "kind": "TOTAL",
+            "code": "a4",
+            "label": "TOTAL DES DETTES FOURNISSEURS D'EXPLOITATION",
+            "includePrefixes": [],
+            "excludePrefixes": [],
+            "sign": null,
+            "formula": "a1 + a2 + a3"
+          }
+        ]
+      },
+      "sections": [
+        {
+          "code": "dettes_fournisseurs_d_exploitation_comptes_401_402_408_ligne",
+          "label": "dettes fournisseurs d'exploitation (comptes 401, 402, 408 : lignes de la Note 17 derivees du Passif)",
+          "sourceType": "GENERATED",
+          "required": false,
+          "fields": []
+        },
+        {
+          "code": "groupe",
+          "label": "groupe",
+          "sourceType": "MANUAL",
+          "required": true,
+          "fields": [
+            {
+              "code": "contenu",
+              "label": "groupe",
+              "type": "TEXT",
+              "required": true,
+              "options": [],
+              "sourceType": "MANUAL"
+            }
+          ]
+        },
+        {
+          "code": "echeances",
+          "label": "échéances",
+          "sourceType": "MANUAL",
+          "required": true,
+          "fields": [
+            {
+              "code": "contenu",
+              "label": "échéances",
+              "type": "TEXT",
+              "required": true,
+              "options": [],
+              "sourceType": "MANUAL"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "code": "18",
+      "title": "Dettes fiscales et sociales",
+      "order": 27,
+      "applicability": "TO_DETERMINE",
+      "automationType": "MIXED",
+      "verificationStatus": "VERIFIED",
+      "provenanceType": "DIRECT_PRIMARY",
+      "officialSourceReference": "Fiche R4, p.989",
+      "detailedSchema": "COMPLETE",
+      "applicabilityRule": null,
+      "automationTypeBasis": "PRODUCT_PROPOSAL",
+      "readiness": "CATALOGUE_ONLY",
+      "manualRequiredSections": [
+        "échéances"
+      ],
+      "autoCalculatedSections": [],
+      "remark": null,
+      "table": null,
+      "sections": [
+        {
+          "code": "echeances",
+          "label": "échéances",
+          "sourceType": "MANUAL",
+          "required": true,
+          "fields": [
+            {
+              "code": "contenu",
+              "label": "échéances",
+              "type": "TEXT",
+              "required": true,
+              "options": [],
+              "sourceType": "MANUAL"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "code": "19",
+      "title": "Autres dettes et provisions pour risques à court terme",
+      "order": 28,
+      "applicability": "TO_DETERMINE",
+      "automationType": "MIXED",
+      "verificationStatus": "VERIFIED",
+      "provenanceType": "DIRECT_PRIMARY",
+      "officialSourceReference": "Fiche R4, p.989",
+      "detailedSchema": "COMPLETE",
+      "applicabilityRule": null,
+      "automationTypeBasis": "PRODUCT_PROPOSAL",
+      "readiness": "CATALOGUE_ONLY",
+      "manualRequiredSections": [
+        "échéances",
+        "taux de rémunération"
+      ],
+      "autoCalculatedSections": [],
+      "remark": null,
+      "table": null,
+      "sections": [
+        {
+          "code": "echeances",
+          "label": "échéances",
+          "sourceType": "MANUAL",
+          "required": true,
+          "fields": [
+            {
+              "code": "contenu",
+              "label": "échéances",
+              "type": "TEXT",
+              "required": true,
+              "options": [],
+              "sourceType": "MANUAL"
+            }
+          ]
+        },
+        {
+          "code": "taux_de_remuneration",
+          "label": "taux de rémunération",
+          "sourceType": "MANUAL",
+          "required": true,
+          "fields": [
+            {
+              "code": "contenu",
+              "label": "taux de rémunération",
+              "type": "TEXT",
+              "required": true,
+              "options": [],
+              "sourceType": "MANUAL"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "code": "20",
+      "title": "Banques, crédit d'escompte et de trésorerie",
+      "order": 29,
+      "applicability": "TO_DETERMINE",
+      "automationType": "MIXED",
+      "verificationStatus": "VERIFIED",
+      "provenanceType": "DIRECT_PRIMARY",
+      "officialSourceReference": "Fiche R4, p.989",
+      "detailedSchema": "COMPLETE",
+      "applicabilityRule": null,
+      "automationTypeBasis": "PRODUCT_PROPOSAL",
+      "readiness": "CATALOGUE_ONLY",
+      "manualRequiredSections": [
+        "organisme, conditions, taux, durée"
+      ],
+      "autoCalculatedSections": [],
+      "remark": null,
+      "table": null,
+      "sections": [
+        {
+          "code": "organisme_conditions_taux_duree",
+          "label": "organisme, conditions, taux, durée",
+          "sourceType": "MANUAL",
+          "required": true,
+          "fields": [
+            {
+              "code": "contenu",
+              "label": "organisme, conditions, taux, durée",
+              "type": "TEXT",
+              "required": true,
+              "options": [],
+              "sourceType": "MANUAL"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "code": "21",
+      "title": "Chiffre d'affaires et autres produits",
+      "order": 30,
+      "applicability": "TO_DETERMINE",
+      "automationType": "MIXED",
+      "verificationStatus": "VERIFIED",
+      "provenanceType": "DIRECT_PRIMARY",
+      "officialSourceReference": "Fiche R4, p.989",
+      "detailedSchema": "COMPLETE",
+      "applicabilityRule": null,
+      "automationTypeBasis": "PRODUCT_PROPOSAL",
+      "readiness": "IMPLEMENTED",
+      "manualRequiredSections": [
+        "ventilation region / hors region / groupe / internet (sous-comptes regionaux absents du plan de comptes)"
+      ],
+      "autoCalculatedSections": [
+        "totaux par famille de produits (lignes verifiees du Compte de resultat)"
+      ],
+      "remark": "Les totaux par famille proviennent des lignes VERIFIED du Compte de resultat (TA, TB, TC, TD, TF, TG, TH). La ventilation par zone n'est calculee que si le plan de comptes comporte des sous-comptes regionaux ET si leur rattachement est defini par la source : ce n'est pas le cas, la section reste manuelle.",
+      "table": {
+        "basis": "STATEMENT_LINES",
+        "page": "1049",
+        "domainPrefixes": [],
+        "excludedFromDomain": [],
+        "lines": [
+          {
+            "kind": "STATEMENT_LINE",
+            "code": "TA",
+            "label": "Ventes de marchandises",
+            "includePrefixes": [],
+            "excludePrefixes": [],
+            "sign": "CREDIT_POSITIVE",
+            "formula": "COMPTE_RESULTAT:TA"
+          },
+          {
+            "kind": "STATEMENT_LINE",
+            "code": "TB",
+            "label": "Ventes de produits fabriques",
+            "includePrefixes": [],
+            "excludePrefixes": [],
+            "sign": "CREDIT_POSITIVE",
+            "formula": "COMPTE_RESULTAT:TB"
+          },
+          {
+            "kind": "STATEMENT_LINE",
+            "code": "TC",
+            "label": "Travaux, services vendus",
+            "includePrefixes": [],
+            "excludePrefixes": [],
+            "sign": "CREDIT_POSITIVE",
+            "formula": "COMPTE_RESULTAT:TC"
+          },
+          {
+            "kind": "STATEMENT_LINE",
+            "code": "TD",
+            "label": "Produits accessoires",
+            "includePrefixes": [],
+            "excludePrefixes": [],
+            "sign": "CREDIT_POSITIVE",
+            "formula": "COMPTE_RESULTAT:TD"
+          },
+          {
+            "kind": "STATEMENT_LINE",
+            "code": "TF",
+            "label": "Production immobilisee",
+            "includePrefixes": [],
+            "excludePrefixes": [],
+            "sign": "CREDIT_POSITIVE",
+            "formula": "COMPTE_RESULTAT:TF"
+          },
+          {
+            "kind": "STATEMENT_LINE",
+            "code": "TG",
+            "label": "Subventions d'exploitation",
+            "includePrefixes": [],
+            "excludePrefixes": [],
+            "sign": "CREDIT_POSITIVE",
+            "formula": "COMPTE_RESULTAT:TG"
+          },
+          {
+            "kind": "STATEMENT_LINE",
+            "code": "TH",
+            "label": "Autres produits",
+            "includePrefixes": [],
+            "excludePrefixes": [],
+            "sign": "CREDIT_POSITIVE",
+            "formula": "COMPTE_RESULTAT:TH"
+          }
+        ]
+      },
+      "sections": [
+        {
+          "code": "totaux_par_famille_de_produits_lignes_verifiees_du_compte_de",
+          "label": "totaux par famille de produits (lignes verifiees du Compte de resultat)",
+          "sourceType": "GENERATED",
+          "required": false,
+          "fields": []
+        },
+        {
+          "code": "ventilation_region_hors_region_groupe_internet_sous_comptes_",
+          "label": "ventilation region / hors region / groupe / internet (sous-comptes regionaux absents du plan de comptes)",
+          "sourceType": "MANUAL",
+          "required": true,
+          "fields": [
+            {
+              "code": "contenu",
+              "label": "ventilation region / hors region / groupe / internet (sous-comptes regionaux absents du plan de comptes)",
+              "type": "TEXT",
+              "required": true,
+              "options": [],
+              "sourceType": "MANUAL"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "code": "22",
+      "title": "Achats",
+      "order": 31,
+      "applicability": "TO_DETERMINE",
+      "automationType": "MIXED",
+      "verificationStatus": "VERIFIED",
+      "provenanceType": "DIRECT_PRIMARY",
+      "officialSourceReference": "Fiche R4, p.989",
+      "detailedSchema": "COMPLETE",
+      "applicabilityRule": null,
+      "automationTypeBasis": "PRODUCT_PROPOSAL",
+      "readiness": "IMPLEMENTED",
+      "manualRequiredSections": [
+        "ventilation region / hors region / groupe",
+        "sous-rubriques fournitures, frais sur achats, remises (sous-comptes ambigus 6045, 6047, 6049...)"
+      ],
+      "autoCalculatedSections": [
+        "totaux des achats par famille (lignes verifiees du Compte de resultat)"
+      ],
+      "remark": "Totaux par famille : lignes VERIFIED du Compte de resultat (RA, RC, RE). Les sous-rubriques imprimees recouvrent des sous-comptes ambigus et les zones geographiques ne sont pas dans le plan : sections manuelles, aucune agregation inventee.",
+      "table": {
+        "basis": "STATEMENT_LINES",
+        "page": "1050",
+        "domainPrefixes": [],
+        "excludedFromDomain": [],
+        "lines": [
+          {
+            "kind": "STATEMENT_LINE",
+            "code": "RA",
+            "label": "Achats de marchandises",
+            "includePrefixes": [],
+            "excludePrefixes": [],
+            "sign": "DEBIT_POSITIVE",
+            "formula": "COMPTE_RESULTAT:RA"
+          },
+          {
+            "kind": "STATEMENT_LINE",
+            "code": "RC",
+            "label": "Achats de matieres premieres et fournitures liees",
+            "includePrefixes": [],
+            "excludePrefixes": [],
+            "sign": "DEBIT_POSITIVE",
+            "formula": "COMPTE_RESULTAT:RC"
+          },
+          {
+            "kind": "STATEMENT_LINE",
+            "code": "RE",
+            "label": "Autres achats",
+            "includePrefixes": [],
+            "excludePrefixes": [],
+            "sign": "DEBIT_POSITIVE",
+            "formula": "COMPTE_RESULTAT:RE"
+          }
+        ]
+      },
+      "sections": [
+        {
+          "code": "totaux_des_achats_par_famille_lignes_verifiees_du_compte_de_",
+          "label": "totaux des achats par famille (lignes verifiees du Compte de resultat)",
+          "sourceType": "GENERATED",
+          "required": false,
+          "fields": []
+        },
+        {
+          "code": "ventilation_region_hors_region_groupe",
+          "label": "ventilation region / hors region / groupe",
+          "sourceType": "MANUAL",
+          "required": true,
+          "fields": [
+            {
+              "code": "contenu",
+              "label": "ventilation region / hors region / groupe",
+              "type": "TEXT",
+              "required": true,
+              "options": [],
+              "sourceType": "MANUAL"
+            }
+          ]
+        },
+        {
+          "code": "sous_rubriques_fournitures_frais_sur_achats_remises_sous_com",
+          "label": "sous-rubriques fournitures, frais sur achats, remises (sous-comptes ambigus 6045, 6047, 6049...)",
+          "sourceType": "MANUAL",
+          "required": true,
+          "fields": [
+            {
+              "code": "contenu",
+              "label": "sous-rubriques fournitures, frais sur achats, remises (sous-comptes ambigus 6045, 6047, 6049...)",
+              "type": "TEXT",
+              "required": true,
+              "options": [],
+              "sourceType": "MANUAL"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "code": "23",
+      "title": "Transports",
+      "order": 32,
+      "applicability": "TO_DETERMINE",
+      "automationType": "AUTOMATIC",
+      "verificationStatus": "VERIFIED",
+      "provenanceType": "DIRECT_PRIMARY",
+      "officialSourceReference": "Fiche R4, p.989",
+      "detailedSchema": "COMPLETE",
+      "applicabilityRule": null,
+      "automationTypeBasis": "PRODUCT_PROPOSAL",
+      "readiness": "IMPLEMENTED",
+      "manualRequiredSections": [
+        "commentaire de variation significative (conditionnel)"
+      ],
+      "autoCalculatedSections": [
+        "tableau chiffré (comptes du plan)"
+      ],
+      "remark": null,
+      "table": {
+        "basis": "PERIOD_ACTIVITY",
+        "page": "1051",
+        "domainPrefixes": [
+          "61"
+        ],
+        "excludedFromDomain": [],
+        "lines": [
+          {
+            "kind": "LINE",
+            "code": "l1",
+            "label": "Transports sur ventes",
+            "includePrefixes": [
+              "612"
+            ],
+            "excludePrefixes": [],
+            "sign": "DEBIT_POSITIVE",
+            "formula": null
+          },
+          {
+            "kind": "LINE",
+            "code": "l2",
+            "label": "Transports pour le compte de tiers",
+            "includePrefixes": [
+              "613"
+            ],
+            "excludePrefixes": [],
+            "sign": "DEBIT_POSITIVE",
+            "formula": null
+          },
+          {
+            "kind": "LINE",
+            "code": "l3",
+            "label": "Transport du personnel",
+            "includePrefixes": [
+              "614"
+            ],
+            "excludePrefixes": [],
+            "sign": "DEBIT_POSITIVE",
+            "formula": null
+          },
+          {
+            "kind": "LINE",
+            "code": "l4",
+            "label": "Transports de plis",
+            "includePrefixes": [
+              "616"
+            ],
+            "excludePrefixes": [],
+            "sign": "DEBIT_POSITIVE",
+            "formula": null
+          },
+          {
+            "kind": "LINE",
+            "code": "l5",
+            "label": "Autres transports",
+            "includePrefixes": [
+              "618"
+            ],
+            "excludePrefixes": [],
+            "sign": "DEBIT_POSITIVE",
+            "formula": null
+          },
+          {
+            "kind": "TOTAL",
+            "code": "l6",
+            "label": "TOTAL",
+            "includePrefixes": [],
+            "excludePrefixes": [],
+            "sign": null,
+            "formula": "l1 + l2 + l3 + l4 + l5"
+          }
+        ]
+      },
+      "sections": [
+        {
+          "code": "tableau_chiffre_comptes_du_plan",
+          "label": "tableau chiffré (comptes du plan)",
+          "sourceType": "GENERATED",
+          "required": false,
+          "fields": []
+        },
+        {
+          "code": "commentaire_de_variation_significative_conditionnel",
+          "label": "commentaire de variation significative (conditionnel)",
+          "sourceType": "MANUAL",
+          "required": false,
+          "fields": [
+            {
+              "code": "contenu",
+              "label": "commentaire de variation significative (conditionnel)",
+              "type": "TEXT",
+              "required": false,
+              "options": [],
+              "sourceType": "MANUAL"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "code": "24",
+      "title": "Services extérieurs",
+      "order": 33,
+      "applicability": "TO_DETERMINE",
+      "automationType": "AUTOMATIC",
+      "verificationStatus": "VERIFIED",
+      "provenanceType": "DIRECT_PRIMARY",
+      "officialSourceReference": "Fiche R4, p.989",
+      "detailedSchema": "COMPLETE",
+      "applicabilityRule": null,
+      "automationTypeBasis": "PRODUCT_PROPOSAL",
+      "readiness": "IMPLEMENTED",
+      "manualRequiredSections": [
+        "commentaire de variation significative (conditionnel)"
+      ],
+      "autoCalculatedSections": [
+        "tableau chiffré (comptes du plan)"
+      ],
+      "remark": "Le compte 637 (rémunérations de personnel extérieur) n'a pas de ligne dans cette note : hors périmètre de la note 24.",
+      "table": {
+        "basis": "PERIOD_ACTIVITY",
+        "page": "1052",
+        "domainPrefixes": [
+          "62",
+          "63"
+        ],
+        "excludedFromDomain": [
+          "637"
+        ],
+        "lines": [
+          {
+            "kind": "LINE",
+            "code": "l1",
+            "label": "Sous-traitance générale",
+            "includePrefixes": [
+              "621"
+            ],
+            "excludePrefixes": [],
+            "sign": "DEBIT_POSITIVE",
+            "formula": null
+          },
+          {
+            "kind": "LINE",
+            "code": "l2",
+            "label": "Locations et charges locatives",
+            "includePrefixes": [
+              "622"
+            ],
+            "excludePrefixes": [],
+            "sign": "DEBIT_POSITIVE",
+            "formula": null
+          },
+          {
+            "kind": "LINE",
+            "code": "l3",
+            "label": "Redevances de location acquisition",
+            "includePrefixes": [
+              "623"
+            ],
+            "excludePrefixes": [],
+            "sign": "DEBIT_POSITIVE",
+            "formula": null
+          },
+          {
+            "kind": "LINE",
+            "code": "l4",
+            "label": "Entretien, réparations et maintenance",
+            "includePrefixes": [
+              "624"
+            ],
+            "excludePrefixes": [],
+            "sign": "DEBIT_POSITIVE",
+            "formula": null
+          },
+          {
+            "kind": "LINE",
+            "code": "l5",
+            "label": "Primes d'assurance",
+            "includePrefixes": [
+              "625"
+            ],
+            "excludePrefixes": [],
+            "sign": "DEBIT_POSITIVE",
+            "formula": null
+          },
+          {
+            "kind": "LINE",
+            "code": "l6",
+            "label": "Études, recherches et documentation",
+            "includePrefixes": [
+              "626"
+            ],
+            "excludePrefixes": [],
+            "sign": "DEBIT_POSITIVE",
+            "formula": null
+          },
+          {
+            "kind": "LINE",
+            "code": "l7",
+            "label": "Publicité, publications, relations publiques",
+            "includePrefixes": [
+              "627"
+            ],
+            "excludePrefixes": [],
+            "sign": "DEBIT_POSITIVE",
+            "formula": null
+          },
+          {
+            "kind": "LINE",
+            "code": "l8",
+            "label": "Frais de télécommunications",
+            "includePrefixes": [
+              "628"
+            ],
+            "excludePrefixes": [],
+            "sign": "DEBIT_POSITIVE",
+            "formula": null
+          },
+          {
+            "kind": "LINE",
+            "code": "l9",
+            "label": "Frais bancaires",
+            "includePrefixes": [
+              "631"
+            ],
+            "excludePrefixes": [],
+            "sign": "DEBIT_POSITIVE",
+            "formula": null
+          },
+          {
+            "kind": "LINE",
+            "code": "l10",
+            "label": "Rémunérations d'intermédiaires et de conseils",
+            "includePrefixes": [
+              "632"
+            ],
+            "excludePrefixes": [],
+            "sign": "DEBIT_POSITIVE",
+            "formula": null
+          },
+          {
+            "kind": "LINE",
+            "code": "l11",
+            "label": "Frais de formation du personnel",
+            "includePrefixes": [
+              "633"
+            ],
+            "excludePrefixes": [],
+            "sign": "DEBIT_POSITIVE",
+            "formula": null
+          },
+          {
+            "kind": "LINE",
+            "code": "l12",
+            "label": "Redevances pour brevets, licences, logiciels, concession et droits similaires",
+            "includePrefixes": [
+              "634"
+            ],
+            "excludePrefixes": [],
+            "sign": "DEBIT_POSITIVE",
+            "formula": null
+          },
+          {
+            "kind": "LINE",
+            "code": "l13",
+            "label": "Cotisations",
+            "includePrefixes": [
+              "635"
+            ],
+            "excludePrefixes": [],
+            "sign": "DEBIT_POSITIVE",
+            "formula": null
+          },
+          {
+            "kind": "LINE",
+            "code": "l14",
+            "label": "Autres charges externes",
+            "includePrefixes": [
+              "638"
+            ],
+            "excludePrefixes": [],
+            "sign": "DEBIT_POSITIVE",
+            "formula": null
+          },
+          {
+            "kind": "TOTAL",
+            "code": "l15",
+            "label": "TOTAL",
+            "includePrefixes": [],
+            "excludePrefixes": [],
+            "sign": null,
+            "formula": "l1 + l2 + l3 + l4 + l5 + l6 + l7 + l8 + l9 + l10 + l11 + l12 + l13 + l14"
+          }
+        ]
+      },
+      "sections": [
+        {
+          "code": "tableau_chiffre_comptes_du_plan",
+          "label": "tableau chiffré (comptes du plan)",
+          "sourceType": "GENERATED",
+          "required": false,
+          "fields": []
+        },
+        {
+          "code": "commentaire_de_variation_significative_conditionnel",
+          "label": "commentaire de variation significative (conditionnel)",
+          "sourceType": "MANUAL",
+          "required": false,
+          "fields": [
+            {
+              "code": "contenu",
+              "label": "commentaire de variation significative (conditionnel)",
+              "type": "TEXT",
+              "required": false,
+              "options": [],
+              "sourceType": "MANUAL"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "code": "25",
+      "title": "Impôts et taxes",
+      "order": 34,
+      "applicability": "TO_DETERMINE",
+      "automationType": "MIXED",
+      "verificationStatus": "VERIFIED",
+      "provenanceType": "DIRECT_PRIMARY",
+      "officialSourceReference": "Fiche R4, p.989",
+      "detailedSchema": "COMPLETE",
+      "applicabilityRule": null,
+      "automationTypeBasis": "PRODUCT_PROPOSAL",
+      "readiness": "CATALOGUE_ONLY",
+      "manualRequiredSections": [
+        "cause des pénalités"
+      ],
+      "autoCalculatedSections": [],
+      "remark": null,
+      "table": null,
+      "sections": [
+        {
+          "code": "cause_des_penalites",
+          "label": "cause des pénalités",
+          "sourceType": "MANUAL",
+          "required": true,
+          "fields": [
+            {
+              "code": "contenu",
+              "label": "cause des pénalités",
+              "type": "TEXT",
+              "required": true,
+              "options": [],
+              "sourceType": "MANUAL"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "code": "26",
+      "title": "Autres charges",
+      "order": 35,
+      "applicability": "TO_DETERMINE",
+      "automationType": "MIXED",
+      "verificationStatus": "VERIFIED",
+      "provenanceType": "DIRECT_PRIMARY",
+      "officialSourceReference": "Fiche R4, p.989",
+      "detailedSchema": "COMPLETE",
+      "applicabilityRule": null,
+      "automationTypeBasis": "PRODUCT_PROPOSAL",
+      "readiness": "CATALOGUE_ONLY",
+      "manualRequiredSections": [
+        "date de PV",
+        "organismes bénéficiaires des dons"
+      ],
+      "autoCalculatedSections": [],
+      "remark": null,
+      "table": null,
+      "sections": [
+        {
+          "code": "date_de_pv",
+          "label": "date de PV",
+          "sourceType": "MANUAL",
+          "required": true,
+          "fields": [
+            {
+              "code": "contenu",
+              "label": "date de PV",
+              "type": "TEXT",
+              "required": true,
+              "options": [],
+              "sourceType": "MANUAL"
+            }
+          ]
+        },
+        {
+          "code": "organismes_beneficiaires_des_dons",
+          "label": "organismes bénéficiaires des dons",
+          "sourceType": "MANUAL",
+          "required": true,
+          "fields": [
+            {
+              "code": "contenu",
+              "label": "organismes bénéficiaires des dons",
+              "type": "TEXT",
+              "required": true,
+              "options": [],
+              "sourceType": "MANUAL"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "code": "27A",
+      "title": "Charges de personnel",
+      "order": 36,
+      "applicability": "TO_DETERMINE",
+      "automationType": "MIXED",
+      "verificationStatus": "VERIFIED",
+      "provenanceType": "DIRECT_PRIMARY",
+      "officialSourceReference": "Fiche R4, p.989",
+      "detailedSchema": "COMPLETE",
+      "applicabilityRule": null,
+      "automationTypeBasis": "PRODUCT_PROPOSAL",
+      "readiness": "CATALOGUE_ONLY",
+      "manualRequiredSections": [
+        "nature et durée du contrat du personnel extérieur"
+      ],
+      "autoCalculatedSections": [],
+      "remark": null,
+      "table": null,
+      "sections": [
+        {
+          "code": "nature_et_duree_du_contrat_du_personnel_exterieur",
+          "label": "nature et durée du contrat du personnel extérieur",
+          "sourceType": "MANUAL",
+          "required": true,
+          "fields": [
+            {
+              "code": "contenu",
+              "label": "nature et durée du contrat du personnel extérieur",
+              "type": "TEXT",
+              "required": true,
+              "options": [],
+              "sourceType": "MANUAL"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "code": "27B",
+      "title": "Effectifs, masse salariale et personnel exterieur",
+      "order": 37,
+      "applicability": "TO_DETERMINE",
+      "automationType": "MANUAL_REQUIRED",
+      "verificationStatus": "VERIFIED",
+      "provenanceType": "DIRECT_PRIMARY",
+      "officialSourceReference": "Fiche R4, p.989",
+      "detailedSchema": "PARTIAL_COLUMNS_CROPPED",
+      "applicabilityRule": null,
+      "automationTypeBasis": "PRODUCT_PROPOSAL",
+      "readiness": "PARTIAL_SCHEMA",
+      "manualRequiredSections": [
+        "effectifs"
+      ],
+      "autoCalculatedSections": [],
+      "remark": null,
+      "table": null,
+      "sections": [
+        {
+          "code": "effectifs",
+          "label": "effectifs",
+          "sourceType": "MANUAL",
+          "required": true,
+          "fields": [
+            {
+              "code": "contenu",
+              "label": "effectifs",
+              "type": "TEXT",
+              "required": true,
+              "options": [],
+              "sourceType": "MANUAL"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "code": "28",
+      "title": "Provisions et dépréciations inscrites au bilan",
+      "order": 38,
+      "applicability": "TO_DETERMINE",
+      "automationType": "MIXED",
+      "verificationStatus": "VERIFIED",
+      "provenanceType": "DIRECT_PRIMARY",
+      "officialSourceReference": "Fiche R4, p.989",
+      "detailedSchema": "PARTIAL_COLUMNS_CROPPED",
+      "applicabilityRule": null,
+      "automationTypeBasis": "PRODUCT_PROPOSAL",
+      "readiness": "PARTIAL_SCHEMA",
+      "manualRequiredSections": [
+        "circonstances des constitutions et reprises"
+      ],
+      "autoCalculatedSections": [],
+      "remark": null,
+      "table": null,
+      "sections": [
+        {
+          "code": "circonstances_des_constitutions_et_reprises",
+          "label": "circonstances des constitutions et reprises",
+          "sourceType": "MANUAL",
+          "required": true,
+          "fields": [
+            {
+              "code": "contenu",
+              "label": "circonstances des constitutions et reprises",
+              "type": "TEXT",
+              "required": true,
+              "options": [],
+              "sourceType": "MANUAL"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "code": "29",
+      "title": "Charges et revenus financiers",
+      "order": 39,
+      "applicability": "TO_DETERMINE",
+      "automationType": "AUTOMATIC",
+      "verificationStatus": "VERIFIED",
+      "provenanceType": "DIRECT_PRIMARY",
+      "officialSourceReference": "Fiche R4, p.989",
+      "detailedSchema": "COMPLETE",
+      "applicabilityRule": null,
+      "automationTypeBasis": "PRODUCT_PROPOSAL",
+      "readiness": "IMPLEMENTED",
+      "manualRequiredSections": [
+        "intérêts non comptabilisés (paiement à terme)"
+      ],
+      "autoCalculatedSections": [
+        "tableau chiffré (comptes du plan)"
+      ],
+      "remark": "Le « TOTAL » imprimé en bas de page n'a pas de signe explicite : non calculé. Le compte 775 (intérêts dans loyers de location acquisition, produit) n'est repris par aucune ligne de la note : s'il est mouvementé, la note est incomplète.",
+      "table": {
+        "basis": "PERIOD_ACTIVITY",
+        "page": "1058",
+        "domainPrefixes": [
+          "67",
+          "77"
+        ],
+        "excludedFromDomain": [],
+        "lines": [
+          {
+            "kind": "LINE",
+            "code": "f1",
+            "label": "Intérêts des emprunts",
+            "includePrefixes": [
+              "671"
+            ],
+            "excludePrefixes": [],
+            "sign": "DEBIT_POSITIVE",
+            "formula": null
+          },
+          {
+            "kind": "LINE",
+            "code": "f2",
+            "label": "Intérêts dans loyers de locations acquisition",
+            "includePrefixes": [
+              "672"
+            ],
+            "excludePrefixes": [],
+            "sign": "DEBIT_POSITIVE",
+            "formula": null
+          },
+          {
+            "kind": "LINE",
+            "code": "f3",
+            "label": "Escomptes accordés",
+            "includePrefixes": [
+              "673"
+            ],
+            "excludePrefixes": [],
+            "sign": "DEBIT_POSITIVE",
+            "formula": null
+          },
+          {
+            "kind": "LINE",
+            "code": "f4",
+            "label": "Autres intérêts",
+            "includePrefixes": [
+              "674"
+            ],
+            "excludePrefixes": [],
+            "sign": "DEBIT_POSITIVE",
+            "formula": null
+          },
+          {
+            "kind": "LINE",
+            "code": "f5",
+            "label": "Escomptes des effets de commerce",
+            "includePrefixes": [
+              "675"
+            ],
+            "excludePrefixes": [],
+            "sign": "DEBIT_POSITIVE",
+            "formula": null
+          },
+          {
+            "kind": "LINE",
+            "code": "f6",
+            "label": "Pertes de change",
+            "includePrefixes": [
+              "676"
+            ],
+            "excludePrefixes": [],
+            "sign": "DEBIT_POSITIVE",
+            "formula": null
+          },
+          {
+            "kind": "LINE",
+            "code": "f7",
+            "label": "Pertes sur cessions de titres de placement",
+            "includePrefixes": [
+              "6771"
+            ],
+            "excludePrefixes": [],
+            "sign": "DEBIT_POSITIVE",
+            "formula": null
+          },
+          {
+            "kind": "LINE",
+            "code": "f8",
+            "label": "Malis provenant d'attribution gratuite d'actions au personnel salarié et aux dirigeants",
+            "includePrefixes": [
+              "6772"
+            ],
+            "excludePrefixes": [],
+            "sign": "DEBIT_POSITIVE",
+            "formula": null
+          },
+          {
+            "kind": "LINE",
+            "code": "f9",
+            "label": "Pertes sur risques financiers",
+            "includePrefixes": [
+              "678"
+            ],
+            "excludePrefixes": [],
+            "sign": "DEBIT_POSITIVE",
+            "formula": null
+          },
+          {
+            "kind": "LINE",
+            "code": "f10",
+            "label": "Charges pour dépréciation et provisions à court terme à caractère financier (voir note 28)",
+            "includePrefixes": [
+              "679"
+            ],
+            "excludePrefixes": [],
+            "sign": "DEBIT_POSITIVE",
+            "formula": null
+          },
+          {
+            "kind": "TOTAL",
+            "code": "f11",
+            "label": "SOUS TOTAL : FRAIS FINANCIERS",
+            "includePrefixes": [],
+            "excludePrefixes": [],
+            "sign": null,
+            "formula": "f1 + f2 + f3 + f4 + f5 + f6 + f7 + f8 + f9 + f10"
+          },
+          {
+            "kind": "LINE",
+            "code": "r1",
+            "label": "Intérêts de prêts et créances diverses",
+            "includePrefixes": [
+              "771"
+            ],
+            "excludePrefixes": [],
+            "sign": "CREDIT_POSITIVE",
+            "formula": null
+          },
+          {
+            "kind": "LINE",
+            "code": "r2",
+            "label": "Revenus de participations",
+            "includePrefixes": [
+              "772"
+            ],
+            "excludePrefixes": [],
+            "sign": "CREDIT_POSITIVE",
+            "formula": null
+          },
+          {
+            "kind": "LINE",
+            "code": "r3",
+            "label": "Escomptes obtenus",
+            "includePrefixes": [
+              "773"
+            ],
+            "excludePrefixes": [],
+            "sign": "CREDIT_POSITIVE",
+            "formula": null
+          },
+          {
+            "kind": "LINE",
+            "code": "r4",
+            "label": "Revenus de placement",
+            "includePrefixes": [
+              "774"
+            ],
+            "excludePrefixes": [],
+            "sign": "CREDIT_POSITIVE",
+            "formula": null
+          },
+          {
+            "kind": "LINE",
+            "code": "r5",
+            "label": "Gains de change",
+            "includePrefixes": [
+              "776"
+            ],
+            "excludePrefixes": [],
+            "sign": "CREDIT_POSITIVE",
+            "formula": null
+          },
+          {
+            "kind": "LINE",
+            "code": "r6",
+            "label": "Gains sur cessions de titres de placement",
+            "includePrefixes": [
+              "777"
+            ],
+            "excludePrefixes": [],
+            "sign": "CREDIT_POSITIVE",
+            "formula": null
+          },
+          {
+            "kind": "LINE",
+            "code": "r7",
+            "label": "Gains sur risques financiers",
+            "includePrefixes": [
+              "778"
+            ],
+            "excludePrefixes": [],
+            "sign": "CREDIT_POSITIVE",
+            "formula": null
+          },
+          {
+            "kind": "LINE",
+            "code": "r8",
+            "label": "Reprises de charges pour dépréciation et provisions à court terme à caractère financier (voir note 28)",
+            "includePrefixes": [
+              "779"
+            ],
+            "excludePrefixes": [],
+            "sign": "CREDIT_POSITIVE",
+            "formula": null
+          },
+          {
+            "kind": "TOTAL",
+            "code": "r9",
+            "label": "SOUS TOTAL : REVENUS FINANCIERS",
+            "includePrefixes": [],
+            "excludePrefixes": [],
+            "sign": null,
+            "formula": "r1 + r2 + r3 + r4 + r5 + r6 + r7 + r8"
+          }
+        ]
+      },
+      "sections": [
+        {
+          "code": "tableau_chiffre_comptes_du_plan",
+          "label": "tableau chiffré (comptes du plan)",
+          "sourceType": "GENERATED",
+          "required": false,
+          "fields": []
+        },
+        {
+          "code": "interets_non_comptabilises_paiement_a_terme",
+          "label": "intérêts non comptabilisés (paiement à terme)",
+          "sourceType": "MANUAL",
+          "required": true,
+          "fields": [
+            {
+              "code": "contenu",
+              "label": "intérêts non comptabilisés (paiement à terme)",
+              "type": "TEXT",
+              "required": true,
+              "options": [],
+              "sourceType": "MANUAL"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "code": "30",
+      "title": "Autres charges et produits HAO",
+      "order": 40,
+      "applicability": "TO_DETERMINE",
+      "automationType": "AUTOMATIC",
+      "verificationStatus": "VERIFIED",
+      "provenanceType": "DIRECT_PRIMARY",
+      "officialSourceReference": "Fiche R4, p.989",
+      "detailedSchema": "COMPLETE",
+      "applicabilityRule": null,
+      "automationTypeBasis": "PRODUCT_PROPOSAL",
+      "readiness": "IMPLEMENTED",
+      "manualRequiredSections": [
+        "commentaire de variation significative (conditionnel)"
+      ],
+      "autoCalculatedSections": [
+        "tableau chiffré (comptes du plan)"
+      ],
+      "remark": "Les comptes 833, 837, 843, 844, 847 et 88 ne sont repris par aucune ligne imprimée (88, produit dans le compte de résultat, est imprimé parmi les charges) : s'ils sont mouvementés, la note est incomplète. Le « TOTAL » imprimé n'a pas de signe explicite : non calculé.",
+      "table": {
+        "basis": "PERIOD_ACTIVITY",
+        "page": "1059",
+        "domainPrefixes": [
+          "83",
+          "84",
+          "85",
+          "86",
+          "87",
+          "88"
+        ],
+        "excludedFromDomain": [],
+        "lines": [
+          {
+            "kind": "LINE",
+            "code": "c1",
+            "label": "Charges HAO constatées",
+            "includePrefixes": [
+              "831"
+            ],
+            "excludePrefixes": [],
+            "sign": "DEBIT_POSITIVE",
+            "formula": null
+          },
+          {
+            "kind": "LINE",
+            "code": "c2",
+            "label": "Pertes sur créances HAO",
+            "includePrefixes": [
+              "834"
+            ],
+            "excludePrefixes": [],
+            "sign": "DEBIT_POSITIVE",
+            "formula": null
+          },
+          {
+            "kind": "LINE",
+            "code": "c3",
+            "label": "Dons et libéralités accordés",
+            "includePrefixes": [
+              "835"
+            ],
+            "excludePrefixes": [],
+            "sign": "DEBIT_POSITIVE",
+            "formula": null
+          },
+          {
+            "kind": "LINE",
+            "code": "c4",
+            "label": "Abandons de créances consentis",
+            "includePrefixes": [
+              "836"
+            ],
+            "excludePrefixes": [],
+            "sign": "DEBIT_POSITIVE",
+            "formula": null
+          },
+          {
+            "kind": "LINE",
+            "code": "c5",
+            "label": "Charges provisionnées HAO",
+            "includePrefixes": [
+              "839"
+            ],
+            "excludePrefixes": [],
+            "sign": "DEBIT_POSITIVE",
+            "formula": null
+          },
+          {
+            "kind": "LINE",
+            "code": "c6",
+            "label": "Dotations hors activités ordinaires",
+            "includePrefixes": [
+              "85"
+            ],
+            "excludePrefixes": [],
+            "sign": "DEBIT_POSITIVE",
+            "formula": null
+          },
+          {
+            "kind": "LINE",
+            "code": "c7",
+            "label": "Participation des travailleurs",
+            "includePrefixes": [
+              "87"
+            ],
+            "excludePrefixes": [],
+            "sign": "DEBIT_POSITIVE",
+            "formula": null
+          },
+          {
+            "kind": "TOTAL",
+            "code": "c8",
+            "label": "SOUS TOTAL : AUTRES CHARGES HAO",
+            "includePrefixes": [],
+            "excludePrefixes": [],
+            "sign": null,
+            "formula": "c1 + c2 + c3 + c4 + c5 + c6 + c7"
+          },
+          {
+            "kind": "LINE",
+            "code": "p1",
+            "label": "Produits HAO constatés",
+            "includePrefixes": [
+              "841"
+            ],
+            "excludePrefixes": [],
+            "sign": "CREDIT_POSITIVE",
+            "formula": null
+          },
+          {
+            "kind": "LINE",
+            "code": "p2",
+            "label": "Dons et libéralités obtenus",
+            "includePrefixes": [
+              "845"
+            ],
+            "excludePrefixes": [],
+            "sign": "CREDIT_POSITIVE",
+            "formula": null
+          },
+          {
+            "kind": "LINE",
+            "code": "p3",
+            "label": "Abandons de créances obtenus",
+            "includePrefixes": [
+              "846"
+            ],
+            "excludePrefixes": [],
+            "sign": "CREDIT_POSITIVE",
+            "formula": null
+          },
+          {
+            "kind": "LINE",
+            "code": "p4",
+            "label": "Transferts de charges HAO",
+            "includePrefixes": [
+              "848"
+            ],
+            "excludePrefixes": [],
+            "sign": "CREDIT_POSITIVE",
+            "formula": null
+          },
+          {
+            "kind": "LINE",
+            "code": "p5",
+            "label": "Reprises des charges pour dépréciations et provisions à court terme HAO",
+            "includePrefixes": [
+              "849"
+            ],
+            "excludePrefixes": [],
+            "sign": "CREDIT_POSITIVE",
+            "formula": null
+          },
+          {
+            "kind": "LINE",
+            "code": "p6",
+            "label": "Reprises hors activités ordinaires",
+            "includePrefixes": [
+              "86"
+            ],
+            "excludePrefixes": [],
+            "sign": "CREDIT_POSITIVE",
+            "formula": null
+          },
+          {
+            "kind": "TOTAL",
+            "code": "p7",
+            "label": "SOUS TOTAL : AUTRES PRODUITS HAO",
+            "includePrefixes": [],
+            "excludePrefixes": [],
+            "sign": null,
+            "formula": "p1 + p2 + p3 + p4 + p5 + p6"
+          }
+        ]
+      },
+      "sections": [
+        {
+          "code": "tableau_chiffre_comptes_du_plan",
+          "label": "tableau chiffré (comptes du plan)",
+          "sourceType": "GENERATED",
+          "required": false,
+          "fields": []
+        },
+        {
+          "code": "commentaire_de_variation_significative_conditionnel",
+          "label": "commentaire de variation significative (conditionnel)",
+          "sourceType": "MANUAL",
+          "required": false,
+          "fields": [
+            {
+              "code": "contenu",
+              "label": "commentaire de variation significative (conditionnel)",
+              "type": "TEXT",
+              "required": false,
+              "options": [],
+              "sourceType": "MANUAL"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "code": "31",
+      "title": "Répartition du résultat et autres éléments caractéristiques des cinq derniers exercices",
+      "order": 41,
+      "applicability": "TO_DETERMINE",
+      "automationType": "MIXED",
+      "verificationStatus": "VERIFIED",
+      "provenanceType": "DIRECT_PRIMARY",
+      "officialSourceReference": "Fiche R4, p.989",
+      "detailedSchema": "PARTIAL_COLUMNS_CROPPED",
+      "applicabilityRule": null,
+      "automationTypeBasis": "PRODUCT_PROPOSAL",
+      "readiness": "PARTIAL_SCHEMA",
+      "manualRequiredSections": [
+        "dividendes",
+        "effectifs"
+      ],
+      "autoCalculatedSections": [],
+      "remark": null,
+      "table": null,
+      "sections": [
+        {
+          "code": "dividendes",
+          "label": "dividendes",
+          "sourceType": "MANUAL",
+          "required": true,
+          "fields": [
+            {
+              "code": "contenu",
+              "label": "dividendes",
+              "type": "TEXT",
+              "required": true,
+              "options": [],
+              "sourceType": "MANUAL"
+            }
+          ]
+        },
+        {
+          "code": "effectifs",
+          "label": "effectifs",
+          "sourceType": "MANUAL",
+          "required": true,
+          "fields": [
+            {
+              "code": "contenu",
+              "label": "effectifs",
+              "type": "TEXT",
+              "required": true,
+              "options": [],
+              "sourceType": "MANUAL"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "code": "32",
+      "title": "Production de l'exercice",
+      "order": 42,
+      "applicability": "TO_DETERMINE",
+      "automationType": "MANUAL_REQUIRED",
+      "verificationStatus": "VERIFIED",
+      "provenanceType": "DIRECT_PRIMARY",
+      "officialSourceReference": "Fiche R4, p.989",
+      "detailedSchema": "COMPLETE",
+      "applicabilityRule": null,
+      "automationTypeBasis": "PRODUCT_PROPOSAL",
+      "readiness": "CATALOGUE_ONLY",
+      "manualRequiredSections": [
+        "production par produit"
+      ],
+      "autoCalculatedSections": [],
+      "remark": null,
+      "table": null,
+      "sections": [
+        {
+          "code": "production_par_produit",
+          "label": "production par produit",
+          "sourceType": "MANUAL",
+          "required": true,
+          "fields": [
+            {
+              "code": "contenu",
+              "label": "production par produit",
+              "type": "TEXT",
+              "required": true,
+              "options": [],
+              "sourceType": "MANUAL"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "code": "33",
+      "title": "Achats destinés a la production",
+      "order": 43,
+      "applicability": "TO_DETERMINE",
+      "automationType": "MANUAL_REQUIRED",
+      "verificationStatus": "VERIFIED",
+      "provenanceType": "DIRECT_PRIMARY",
+      "officialSourceReference": "Fiche R4, p.989",
+      "detailedSchema": "PARTIAL_COLUMNS_CROPPED",
+      "applicabilityRule": null,
+      "automationTypeBasis": "PRODUCT_PROPOSAL",
+      "readiness": "PARTIAL_SCHEMA",
+      "manualRequiredSections": [
+        "achats par matière"
+      ],
+      "autoCalculatedSections": [],
+      "remark": null,
+      "table": null,
+      "sections": [
+        {
+          "code": "achats_par_matiere",
+          "label": "achats par matière",
+          "sourceType": "MANUAL",
+          "required": true,
+          "fields": [
+            {
+              "code": "contenu",
+              "label": "achats par matière",
+              "type": "TEXT",
+              "required": true,
+              "options": [],
+              "sourceType": "MANUAL"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "code": "34",
+      "title": "Fiche de synthèse des principaux indicateurs financiers",
+      "order": 44,
+      "applicability": "TO_DETERMINE",
+      "automationType": "MIXED",
+      "verificationStatus": "VERIFIED",
+      "provenanceType": "DIRECT_PRIMARY",
+      "officialSourceReference": "Fiche R4, p.989",
+      "detailedSchema": "COMPLETE",
+      "applicabilityRule": null,
+      "automationTypeBasis": "PRODUCT_PROPOSAL",
+      "readiness": "IMPLEMENTED",
+      "manualRequiredSections": [
+        "indicateurs dont la formule n'est pas dans le paquet reglementaire (rentabilite, structure, FR, BFE, BF HAO, endettement net)"
+      ],
+      "autoCalculatedSections": [
+        "indicateurs lus dans les etats : EBE, resultat net, CAFG, total du bilan, tresorerie nette de cloture, variation de tresorerie"
+      ],
+      "remark": "Dependance explicite : la note n'est jamais READY si le Compte de resultat, le Bilan ou le TFT n'est pas READY. Meme avec des etats READY, les indicateurs dont la formule n'est pas verifiee dans la source restent a fournir : la note reste MANUAL_REQUIRED.",
+      "table": {
+        "basis": "STATEMENT_LINES",
+        "page": "1063",
+        "domainPrefixes": [],
+        "excludedFromDomain": [],
+        "lines": [
+          {
+            "kind": "STATEMENT_LINE",
+            "code": "EBE",
+            "label": "Excedent brut d'exploitation",
+            "includePrefixes": [],
+            "excludePrefixes": [],
+            "sign": "CREDIT_POSITIVE",
+            "formula": "COMPTE_RESULTAT:XD"
+          },
+          {
+            "kind": "STATEMENT_LINE",
+            "code": "RN",
+            "label": "Resultat net",
+            "includePrefixes": [],
+            "excludePrefixes": [],
+            "sign": "CREDIT_POSITIVE",
+            "formula": "COMPTE_RESULTAT:XI"
+          },
+          {
+            "kind": "STATEMENT_LINE",
+            "code": "CAFG",
+            "label": "Capacite d'autofinancement globale",
+            "includePrefixes": [],
+            "excludePrefixes": [],
+            "sign": "CREDIT_POSITIVE",
+            "formula": "TFT:FA"
+          },
+          {
+            "kind": "STATEMENT_LINE",
+            "code": "TB",
+            "label": "Total du bilan",
+            "includePrefixes": [],
+            "excludePrefixes": [],
+            "sign": "DEBIT_POSITIVE",
+            "formula": "BILAN_ACTIF:BZ"
+          },
+          {
+            "kind": "STATEMENT_LINE",
+            "code": "TN",
+            "label": "Tresorerie nette a la cloture",
+            "includePrefixes": [],
+            "excludePrefixes": [],
+            "sign": "CREDIT_POSITIVE",
+            "formula": "TFT:ZH"
+          },
+          {
+            "kind": "STATEMENT_LINE",
+            "code": "VT",
+            "label": "Variation de la tresorerie nette",
+            "includePrefixes": [],
+            "excludePrefixes": [],
+            "sign": "CREDIT_POSITIVE",
+            "formula": "TFT:ZG"
+          }
+        ]
+      },
+      "sections": [
+        {
+          "code": "indicateurs_lus_dans_les_etats_ebe_resultat_net_cafg_total_d",
+          "label": "indicateurs lus dans les etats : EBE, resultat net, CAFG, total du bilan, tresorerie nette de cloture, variation de tresorerie",
+          "sourceType": "GENERATED",
+          "required": false,
+          "fields": []
+        },
+        {
+          "code": "indicateurs_dont_la_formule_n_est_pas_dans_le_paquet_regleme",
+          "label": "indicateurs dont la formule n'est pas dans le paquet reglementaire (rentabilite, structure, FR, BFE, BF HAO, endettement net)",
+          "sourceType": "MANUAL",
+          "required": true,
+          "fields": [
+            {
+              "code": "contenu",
+              "label": "indicateurs dont la formule n'est pas dans le paquet reglementaire (rentabilite, structure, FR, BFE, BF HAO, endettement net)",
+              "type": "TEXT",
+              "required": true,
+              "options": [],
+              "sourceType": "MANUAL"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "code": "35",
+      "title": "Liste des informations sociales, environnementales et sociétales à fournir",
+      "order": 45,
+      "applicability": "TO_DETERMINE",
+      "automationType": "MANUAL_REQUIRED",
+      "verificationStatus": "VERIFIED",
+      "provenanceType": "DIRECT_PRIMARY",
+      "officialSourceReference": "Fiche R4, p.989",
+      "detailedSchema": "COMPLETE",
+      "applicabilityRule": {
+        "type": "MIN_HEADCOUNT_EXCLUSIVE",
+        "threshold": 250,
+        "page": "1064",
+        "basis": "Note obligatoire pour les entités ayant un effectif de plus de 250 salariés"
+      },
+      "automationTypeBasis": "PRODUCT_PROPOSAL",
+      "readiness": "CATALOGUE_ONLY",
+      "manualRequiredSections": [
+        "informations sociales, environnementales et sociétales"
+      ],
+      "autoCalculatedSections": [],
+      "remark": null,
+      "table": null,
+      "sections": [
+        {
+          "code": "effectif",
+          "label": "Effectif de l'entite (regle d'applicabilite : plus de 250 salaries)",
+          "sourceType": "MANUAL",
+          "required": true,
+          "fields": [
+            {
+              "code": "effectif",
+              "label": "Effectif",
+              "type": "INTEGER",
+              "required": true,
+              "options": [],
+              "sourceType": "MANUAL"
+            }
+          ]
+        },
+        {
+          "code": "informations_sociales_environnementales_et_societales",
+          "label": "informations sociales, environnementales et sociétales",
+          "sourceType": "MANUAL",
+          "required": true,
+          "fields": [
+            {
+              "code": "contenu",
+              "label": "informations sociales, environnementales et sociétales",
+              "type": "TEXT",
+              "required": true,
+              "options": [],
+              "sourceType": "MANUAL"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "code": "36",
+      "title": "Tables des codes",
+      "order": 46,
+      "applicability": "TO_DETERMINE",
+      "automationType": "MIXED",
+      "verificationStatus": "VERIFIED",
+      "provenanceType": "DIRECT_PRIMARY",
+      "officialSourceReference": "Fiche R4, p.989",
+      "detailedSchema": "COMPLETE",
+      "applicabilityRule": null,
+      "automationTypeBasis": "PRODUCT_PROPOSAL",
+      "readiness": "CATALOGUE_ONLY",
+      "manualRequiredSections": [
+        "codes de l'entité"
+      ],
+      "autoCalculatedSections": [],
+      "remark": null,
+      "table": null,
+      "sections": [
+        {
+          "code": "codes_de_l_entite",
+          "label": "codes de l'entité",
+          "sourceType": "MANUAL",
+          "required": true,
+          "fields": [
+            {
+              "code": "contenu",
+              "label": "codes de l'entité",
+              "type": "TEXT",
+              "required": true,
+              "options": [],
+              "sourceType": "MANUAL"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

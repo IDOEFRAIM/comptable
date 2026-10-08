@@ -70,7 +70,7 @@ public class InboxService {
                         f.getDueDate(),
                         f.getAssignedTo() != null ? f.getAssignedTo().getId() : null,
                         f.getAssignedTo() != null ? f.getAssignedTo().getNom() + " " + f.getAssignedTo().getPrenom() : null,
-                        f.getCreatedAt()));
+                        f.getCreatedAt(), f.getControlCode(), f.getCategory().name(), f.getControlSeverity().name()));
 
         // Les demandes n'ont pas d'assignation individuelle (voir InboxItemDto) : elles
         // n'apparaissent que dans la vue d'equipe, pas dans "mes taches assignees".
@@ -79,7 +79,7 @@ public class InboxService {
                         .stream()
                         .map(d -> new InboxItemDto(d.getId(), "DEMANDE_PIECE", d.getEntreprise().getId(),
                                 nomsEntreprises.get(d.getEntreprise().getId()), severiteDemande(d), d.getLibelle(),
-                                d.getDateLimite(), null, null, d.getCreatedAt()));
+                                d.getDateLimite(), null, null, d.getCreatedAt(), "DEMANDE_PIECE", "DOCUMENT", null));
 
         return Stream.concat(itemsFinding, itemsDemande)
                 .sorted(Comparator.comparing(InboxItemDto::severite)

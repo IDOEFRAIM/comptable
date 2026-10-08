@@ -7,6 +7,7 @@ import com.example.comptable.agent.accounting.web.dto.PostAiAccountingProposalRe
 import com.example.comptable.agent.accounting.web.dto.ValidateAiAccountingProposalRequest;
 import com.example.comptable.comptabilite.domain.CompteComptable;
 import com.example.comptable.comptabilite.operation.common.AccountingOperationEngine;
+import com.example.comptable.comptabilite.operation.common.AccountingSource;
 import com.example.comptable.comptabilite.operation.common.AccountingOperationType;
 import com.example.comptable.comptabilite.operation.common.ResultatRegle;
 import com.example.comptable.comptabilite.operation.common.domain.AccountingOperationProposalLigne;
@@ -50,7 +51,6 @@ import java.util.List;
 @RequiredArgsConstructor
 public class AiAccountingPostingService {
 
-    private static final String SOURCE_TYPE = "AI_ACCOUNTING_PROPOSAL";
     private static final BigDecimal TOLERANCE_MONTANT = new BigDecimal("1.00");
 
     private final AiAccountingProposalValidationService validationService;
@@ -121,7 +121,7 @@ public class AiAccountingPostingService {
 
         AccountingOperationProposalDto proposition = accountingOperationEngine.proposerEtValiderImmediatementSysteme(
                 request.companyId(), AccountingOperationType.ACHAT, null, request.datePiece(), request.libelle(),
-                request.documentId().toString(), resultat, SOURCE_TYPE, request.documentId());
+                request.documentId().toString(), resultat, AccountingSource.document(request.documentId()));
 
         String numeroPiece = proposition.ecritureId() != null
                 ? ecritureComptableRepository.findById(proposition.ecritureId()).map(EcritureComptable::getNumeroPiece).orElse(null)

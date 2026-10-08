@@ -1,7 +1,7 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { Observable } from 'rxjs';
-import { AccountingProposalDto } from './models/accounting-proposal.model';
+import { ImputationSuggestionDto } from './models/imputation-suggestion.model';
 import { ClotureReadinessDto, DossierComptableDto, FindingDto, TableauDeBordDto } from './models/dashboard.model';
 
 const BASE_URL = '/api/entreprises';
@@ -26,8 +26,8 @@ export class DashboardService {
     return this.http.post<FindingDto>(`${BASE_URL}/${entrepriseId}/findings/${findingId}/resoudre`, {});
   }
 
-  rejeterFinding(entrepriseId: string, findingId: string): Observable<FindingDto> {
-    return this.http.post<FindingDto>(`${BASE_URL}/${entrepriseId}/findings/${findingId}/rejeter`, {});
+  rejeterFinding(entrepriseId: string, findingId: string, motif: string): Observable<FindingDto> {
+    return this.http.post<FindingDto>(`${BASE_URL}/${entrepriseId}/findings/${findingId}/rejeter`, { motif });
   }
 
   assignerFinding(
@@ -46,22 +46,22 @@ export class DashboardService {
     return this.http.get<ClotureReadinessDto>(`${BASE_URL}/${entrepriseId}/cloture-readiness`);
   }
 
-  obtenirPropositionPourDocument(entrepriseId: string, documentId: string): Observable<AccountingProposalDto> {
-    return this.http.get<AccountingProposalDto>(
-      `${BASE_URL}/${entrepriseId}/comptabilisation/documents/${documentId}/proposition`,
+  obtenirSuggestionPourDocument(entrepriseId: string, documentId: string): Observable<ImputationSuggestionDto> {
+    return this.http.get<ImputationSuggestionDto>(
+      `${BASE_URL}/${entrepriseId}/imputation/documents/${documentId}/suggestion`,
     );
   }
 
-  accepterProposition(entrepriseId: string, propositionId: string): Observable<AccountingProposalDto> {
-    return this.http.post<AccountingProposalDto>(
-      `${BASE_URL}/${entrepriseId}/comptabilisation/propositions/${propositionId}/accepter`,
+  accepterSuggestion(entrepriseId: string, propositionId: string): Observable<ImputationSuggestionDto> {
+    return this.http.post<ImputationSuggestionDto>(
+      `${BASE_URL}/${entrepriseId}/imputation/suggestions/${propositionId}/accepter`,
       {},
     );
   }
 
-  rejeterProposition(entrepriseId: string, propositionId: string): Observable<AccountingProposalDto> {
-    return this.http.post<AccountingProposalDto>(
-      `${BASE_URL}/${entrepriseId}/comptabilisation/propositions/${propositionId}/rejeter`,
+  rejeterSuggestion(entrepriseId: string, propositionId: string): Observable<ImputationSuggestionDto> {
+    return this.http.post<ImputationSuggestionDto>(
+      `${BASE_URL}/${entrepriseId}/imputation/suggestions/${propositionId}/rejeter`,
       {},
     );
   }

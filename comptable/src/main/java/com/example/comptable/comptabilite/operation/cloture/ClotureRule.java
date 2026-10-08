@@ -1,5 +1,7 @@
 package com.example.comptable.comptabilite.operation.cloture;
 
+import com.example.comptable.comptabilite.operation.common.Blocages;
+
 import com.example.comptable.comptabilite.domain.CompteComptable;
 import com.example.comptable.comptabilite.domain.TypeJournal;
 import com.example.comptable.comptabilite.operation.common.ResultatRegle;
@@ -36,7 +38,7 @@ public class ClotureRule {
 
     public ResultatRegle construire(Entreprise entreprise, List<AccountingOperationProposalLigne> lignesASolder,
                                      BigDecimal resultatNet) {
-        List<String> explications = new ArrayList<>();
+        Blocages explications = new Blocages();
         List<String> warnings = new ArrayList<>();
         List<AccountingOperationProposalLigne> lignes = new ArrayList<>(lignesASolder);
 
@@ -44,7 +46,7 @@ public class ClotureRule {
         AccountPurpose purpose = benefice ? AccountPurpose.RESULTAT_BENEFICE : AccountPurpose.RESULTAT_PERTE;
         ResolvedAccount resoluResultat = accountingAccountResolver.resolve(entreprise.getId(), purpose, AccountContext.vide(), null);
         if (!resoluResultat.isResolved()) {
-            explications.add("Aucun compte de resultat (" + purpose + ") configure pour cette entreprise - cloture impossible : "
+            explications.ajouter(resoluResultat.code(), "Aucun compte de resultat (" + purpose + ") configure pour cette entreprise - cloture impossible : "
                     + resoluResultat.explication());
             return new ResultatRegle(TypeJournal.OPERATIONS_DIVERSES, List.of(), explications, warnings);
         }

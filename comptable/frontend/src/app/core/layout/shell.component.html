@@ -5,7 +5,10 @@
   </a>
   <nav class="nav-principale">
     @if (estMembreCabinet) {
-      <a routerLink="/cabinet" routerLinkActive="actif">Cabinet</a>
+      <a routerLink="/cabinet" routerLinkActive="actif" [routerLinkActiveOptions]="{ exact: true }">Cabinet</a>
+      <a routerLink="/cabinet/dossiers" routerLinkActive="actif">Dossiers</a>
+      <a routerLink="/cabinet/echeances" routerLinkActive="actif">Échéances</a>
+      <a routerLink="/cabinet/equipe" routerLinkActive="actif">Équipe</a>
       <a routerLink="/cabinet/indicateurs" routerLinkActive="actif">Indicateurs</a>
     }
   </nav>
@@ -45,7 +48,7 @@
     </div>
 
     @if (email) {
-      <span class="email">{{ email }}</span>
+      <span class="email" [title]="email">{{ email }}</span>
     }
     <button type="button" (click)="seDeconnecter()">Déconnexion</button>
   </div>

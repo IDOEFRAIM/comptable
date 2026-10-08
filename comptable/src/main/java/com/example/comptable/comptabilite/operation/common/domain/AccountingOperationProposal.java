@@ -34,7 +34,7 @@ import java.util.UUID;
 
 /**
  * Proposition d'ecriture multi-lignes pour une operation metier (achat/vente/reglement/avoir) -
- * distincte de {@code agent.comptabilisation.domain.AccountingProposal} (celle-ci reste liee 1:1 a
+ * distincte de {@code agent.comptabilisation.domain.ImputationSuggestion} (celle-ci reste liee 1:1 a
  * un Document et porte un seul compte scalaire, forme incompatible avec une operation
  * multi-lignes). Une ligne n'existe que si son compte a ete reellement resolu (jamais de compte
  * devine) : voir {@link AccountingOperationProposalLigne}.
@@ -112,15 +112,19 @@ public class AccountingOperationProposal extends UuidEntity {
     @Column(name = "rejection_reason")
     private String rejectionReason;
 
-    /** Identifie le document metier d'origine (ex: "FACTURE"/factureId, "EXERCICE"/exerciceId,
-     * "REGULARISATION"/regularisationId) - nullable car les operations achat/vente/reglement/avoir/
-     * inventaire deja en place n'en portent pas necessairement. Sert a la fois a la tracabilite
-     * (section 23) et a l'idempotence (section 24) : voir AccountingOperationEngine.assemblerEtSauvegarder. */
-    @Column(name = "source_type")
+    /**
+     * SOURCE METIER (Phase B, B0) : quelle operation a provoque cette proposition. Toujours renseignee. Le
+     * quadruplet (entreprise, sourceType, sourceId, sourceEvent) identifie une consequence comptable : la base
+     * refuse une seconde proposition active pour la meme cause (index unique partiel). Voir {@link AccountingSource}.
+     */
+    @Column(name = "source_type", nullable = false)
     private String sourceType;
 
-    @Column(name = "source_id")
+    @Column(name = "source_id", nullable = false)
     private UUID sourceId;
+
+    @Column(name = "source_event", nullable = false)
+    private String sourceEvent;
 
     @OneToMany(mappedBy = "proposal", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     @OrderBy("ordinal asc")

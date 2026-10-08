@@ -47,11 +47,16 @@ public class ReleveBancaire extends UuidEntity {
     @Column(name = "date_fin", nullable = false)
     private LocalDate dateFin;
 
-    @Column(name = "solde_debut", nullable = false)
+    /** Solde d'ouverture annonce par le releve, s'il est disponible (facultatif). */
+    @Column(name = "solde_debut")
     private BigDecimal soldeDebut;
 
-    @Column(name = "solde_fin", nullable = false)
+    /** Solde de cloture annonce par le releve, s'il est disponible (facultatif). */
+    @Column(name = "solde_fin")
     private BigDecimal soldeFin;
+
+    @Column(name = "import_batch_id")
+    private java.util.UUID importBatchId;
 
     @Column(name = "created_at", nullable = false)
     private OffsetDateTime createdAt;
@@ -69,6 +74,14 @@ public class ReleveBancaire extends UuidEntity {
 
     public void ajouterLigne(LigneReleve ligne) {
         ligne.setReleve(this);
+        // Identite denormalisee sur la transaction : l'unicite de l'empreinte se garantit par entreprise et par compte.
+        if (entreprise != null) {
+            ligne.setEntrepriseId(entreprise.getId());
+            ligne.setCurrency(entreprise.getDevise());
+        }
+        if (compte != null) {
+            ligne.setCompteId(compte.getId());
+        }
         lignes.add(ligne);
     }
 }

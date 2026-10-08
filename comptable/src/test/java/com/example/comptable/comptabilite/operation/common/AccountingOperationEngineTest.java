@@ -80,6 +80,12 @@ class AccountingOperationEngineTest {
     @Mock
     private AvoirRule avoirRule;
 
+    @Mock
+    private com.example.comptable.audit.AuditTrailService auditTrailService;
+
+    @Mock
+    private com.example.comptable.controle.RefusComptablePublisher refusComptablePublisher;
+
     @InjectMocks
     private AccountingOperationEngine engine;
 
@@ -366,12 +372,12 @@ class AccountingOperationEngineTest {
         existante.setSourceId(sourceId);
 
         when(entrepriseAccessService.verifierAcces(entrepriseId, principal)).thenReturn(entreprise);
-        when(accountingOperationProposalRepository.findByEntrepriseIdAndSourceTypeAndSourceIdAndType(
-                entrepriseId, "FACTURE", sourceId, AccountingOperationType.ACHAT))
+        when(accountingOperationProposalRepository.findFirstByEntrepriseIdAndSourceTypeAndSourceIdAndSourceEventAndStatutNot(
+                entrepriseId, "FACTURE", sourceId, "VALIDATION", StatutOperationProposal.REJECTED))
                 .thenReturn(Optional.of(existante));
 
         AccountingOperationProposalDto dto = engine.proposerEtValiderImmediatement(entrepriseId, AccountingOperationType.ACHAT,
-                fournisseur, LocalDate.of(2026, 3, 1), "libelle", null, resultatEquilibre(), "FACTURE", sourceId, principal);
+                fournisseur, LocalDate.of(2026, 3, 1), "libelle", null, resultatEquilibre(), AccountingSource.de("FACTURE", sourceId, "VALIDATION"), principal);
 
         assertThat(dto.id()).isEqualTo(existante.getId());
         assertThat(dto.statut()).isEqualTo("APPROVED");
@@ -386,9 +392,9 @@ class AccountingOperationEngineTest {
         rejetee.setSourceId(sourceId);
 
         when(entrepriseAccessService.verifierAcces(entrepriseId, principal)).thenReturn(entreprise);
-        when(accountingOperationProposalRepository.findByEntrepriseIdAndSourceTypeAndSourceIdAndType(
-                entrepriseId, "FACTURE", sourceId, AccountingOperationType.ACHAT))
-                .thenReturn(Optional.of(rejetee));
+        when(accountingOperationProposalRepository.findFirstByEntrepriseIdAndSourceTypeAndSourceIdAndSourceEventAndStatutNot(
+                entrepriseId, "FACTURE", sourceId, "VALIDATION", StatutOperationProposal.REJECTED))
+                .thenReturn(Optional.empty()); // une proposition rejetee libere la cause : la requete l'exclut
         when(journalResolver.resoudre(entrepriseId, TypeJournal.ACHATS)).thenReturn(Optional.of(journalAchats));
         java.util.concurrent.atomic.AtomicReference<AccountingOperationProposal> nouvelleProposition = new java.util.concurrent.atomic.AtomicReference<>();
         when(accountingOperationProposalRepository.save(any())).thenAnswer(inv -> {
@@ -417,7 +423,7 @@ class AccountingOperationEngineTest {
         });
 
         AccountingOperationProposalDto dto = engine.proposerEtValiderImmediatement(entrepriseId, AccountingOperationType.ACHAT,
-                fournisseur, LocalDate.of(2026, 3, 1), "libelle", null, resultatEquilibre(), "FACTURE", sourceId, principal);
+                fournisseur, LocalDate.of(2026, 3, 1), "libelle", null, resultatEquilibre(), AccountingSource.de("FACTURE", sourceId, "VALIDATION"), principal);
 
         assertThat(dto.id()).isNotEqualTo(rejetee.getId());
         assertThat(dto.statut()).isEqualTo("APPROVED");
@@ -426,14 +432,14 @@ class AccountingOperationEngineTest {
     @Test
     void proposerEtValiderImmediatement_avec_regle_incomplete_echoue_sans_valider() {
         when(entrepriseAccessService.verifierAcces(entrepriseId, principal)).thenReturn(entreprise);
-        when(accountingOperationProposalRepository.findByEntrepriseIdAndSourceTypeAndSourceIdAndType(any(), any(), any(), any()))
+        when(accountingOperationProposalRepository.findFirstByEntrepriseIdAndSourceTypeAndSourceIdAndSourceEventAndStatutNot(any(), any(), any(), any(), any()))
                 .thenReturn(Optional.empty());
         when(journalResolver.resoudre(entrepriseId, TypeJournal.ACHATS)).thenReturn(Optional.of(journalAchats));
         when(accountingOperationProposalRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
         ResultatRegle incomplet = new ResultatRegle(TypeJournal.ACHATS, List.of(), List.of("TVA non calculee"), List.of());
 
         assertThatThrownBy(() -> engine.proposerEtValiderImmediatement(entrepriseId, AccountingOperationType.ACHAT, fournisseur,
-                LocalDate.of(2026, 3, 1), "libelle", null, incomplet, "FACTURE", UUID.randomUUID(), principal))
+                LocalDate.of(2026, 3, 1), "libelle", null, incomplet, AccountingSource.de("FACTURE", UUID.randomUUID(), "VALIDATION"), principal))
                 .isInstanceOf(ResponseStatusException.class)
                 .hasMessageContaining("incomplete");
     }

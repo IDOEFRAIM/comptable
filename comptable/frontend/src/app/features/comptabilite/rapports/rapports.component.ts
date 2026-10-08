@@ -1,3 +1,4 @@
+import { DecimalPipe } from '@angular/common';
 import { Component, inject, OnInit, signal } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
@@ -27,7 +28,7 @@ function dernierJourAnnee(): string {
 @Component({
   selector: 'app-rapports',
   standalone: true,
-  imports: [FormsModule],
+  imports: [DecimalPipe, FormsModule],
   templateUrl: './rapports.component.html',
   styleUrl: './rapports.component.scss',
 })

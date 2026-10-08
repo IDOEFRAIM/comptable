@@ -5,6 +5,7 @@ import com.example.comptable.comptabilite.domain.TypeTiers;
 import com.example.comptable.comptabilite.operation.achat.AchatMultiLigneOperationRequest;
 import com.example.comptable.comptabilite.operation.achat.LigneAchatOperationRequest;
 import com.example.comptable.comptabilite.operation.common.AccountingOperationEngine;
+import com.example.comptable.comptabilite.operation.common.AccountingSource;
 import com.example.comptable.comptabilite.operation.common.web.dto.AccountingOperationProposalDto;
 import com.example.comptable.comptabilite.repository.TiersRepository;
 import com.example.comptable.entreprise.domain.Entreprise;
@@ -167,7 +168,7 @@ public class CommandeAchatService {
         String libelle = "Facture fournisseur " + commande.getNumero() + " - " + commande.getFournisseur().getNom();
         AchatMultiLigneOperationRequest request = new AchatMultiLigneOperationRequest(
                 commande.getFournisseur().getId(), dateFacture, facture.getNumero(), libelle,
-                lignesAchat, montantTtcTotal, "FACTURE_FOURNISSEUR", facture.getId());
+                lignesAchat, montantTtcTotal, AccountingSource.de("FACTURE_FOURNISSEUR", facture.getId(), "VALIDATION"));
         AccountingOperationProposalDto proposition =
                 accountingOperationEngine.proposerAchatEtValiderImmediatement(entrepriseId, request, principal);
 

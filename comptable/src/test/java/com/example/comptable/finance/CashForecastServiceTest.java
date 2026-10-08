@@ -58,6 +58,9 @@ class CashForecastServiceTest {
     @Mock
     private PaymentBehaviorService paymentBehaviorService;
 
+    @Mock
+    private com.example.comptable.comptabilite.allocation.StatutPaiementFactureService statutPaiementFactureService;
+
     @InjectMocks
     private CashForecastService cashForecastService;
 
@@ -66,6 +69,10 @@ class CashForecastServiceTest {
 
     @BeforeEach
     void setUp() {
+        lenient().when(statutPaiementFactureService.ouvertes(org.mockito.ArgumentMatchers.any(), org.mockito.ArgumentMatchers.anyCollection()))
+                .thenAnswer(inv -> ((java.util.Collection<com.example.comptable.comptabilite.domain.Facture>) inv.getArgument(1)).stream()
+                        .map(f -> new com.example.comptable.comptabilite.allocation.StatutPaiementFactureService.FactureOuverte(f, f.montantTtc(), java.math.BigDecimal.ZERO, f.montantTtc(),
+                                com.example.comptable.comptabilite.allocation.StatutPaiement.NON_PAYEE)).toList());
         entrepriseId = UUID.randomUUID();
         Entreprise entreprise = new Entreprise();
         entreprise.setId(entrepriseId);

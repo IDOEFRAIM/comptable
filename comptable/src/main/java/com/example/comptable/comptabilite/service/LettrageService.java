@@ -166,6 +166,53 @@ public class LettrageService {
         ligneEcritureRepository.saveAll(lignes);
     }
 
+    /**
+     * Lettrage d'un groupe deja verifie par l'appelant (allocation de paiement soldee) : meme sequence de codes que le lettrage manuel,
+     * mais sans controle d'acces (appel interne, deja controle) et sans ecart toleres : un groupe desequilibre ou deja lettre est refuse.
+     *
+     * @return le code cree, ou {@code null} si le groupe n'est pas lettrable (ligne deja lettree, non validee, desequilibre)
+     */
+    @Transactional
+    public String lettrerGroupeSolde(UUID entrepriseId, UUID compteId, List<UUID> ligneIds) {
+        List<LigneEcriture> lignes = ligneEcritureRepository.findAllById(ligneIds);
+        if (lignes.size() != ligneIds.size() || lignes.size() < 2) {
+            return null;
+        }
+        BigDecimal debit = BigDecimal.ZERO;
+        BigDecimal credit = BigDecimal.ZERO;
+        for (LigneEcriture l : lignes) {
+            if (!l.getCompte().getId().equals(compteId) || !l.getEcriture().getEntreprise().getId().equals(entrepriseId)
+                    || l.getEcriture().getStatut() != StatutEcriture.VALIDEE || l.getLettrage() != null) {
+                return null;
+            }
+            debit = debit.add(l.getDebit());
+            credit = credit.add(l.getCredit());
+        }
+        if (debit.compareTo(credit) != 0) {
+            return null;
+        }
+        String code = genererProchainCode(compteId);
+        LocalDate aujourdHui = LocalDate.now();
+        lignes.forEach(l -> {
+            l.setLettrage(code);
+            l.setDateLettrage(aujourdHui);
+        });
+        ligneEcritureRepository.saveAll(lignes);
+        return code;
+    }
+
+    /** Defait un lettrage deja identifie (annulation d'une allocation qui l'avait produit). */
+    @Transactional
+    public int delettrerGroupe(UUID compteId, String code) {
+        List<LigneEcriture> lignes = ligneEcritureRepository.findByCompteIdAndLettrage(compteId, code);
+        lignes.forEach(l -> {
+            l.setLettrage(null);
+            l.setDateLettrage(null);
+        });
+        ligneEcritureRepository.saveAll(lignes);
+        return lignes.size();
+    }
+
     private String genererProchainCode(UUID compteId) {
         long nombreCodesExistants = ligneEcritureRepository.countDistinctLettrageByCompteId(compteId);
         return genererCodeAlphabetique(nombreCodesExistants);

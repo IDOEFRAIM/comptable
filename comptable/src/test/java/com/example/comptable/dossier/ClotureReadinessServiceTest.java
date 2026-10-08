@@ -92,6 +92,10 @@ class ClotureReadinessServiceTest {
         f.setEntreprise(entreprise);
         f.setType(TypeFinding.DOCUMENT_REVIEW);
         f.setSeverity(severite);
+        f.setControlCode("DOCUMENT_AT_RISK");
+        f.setCategory(com.example.comptable.controle.ControlCategory.DOCUMENT);
+        f.setControlSeverity(severite == SeveriteFinding.CRITICAL ? com.example.comptable.controle.ControlSeverity.BLOCKING : severite == SeveriteFinding.IMPORTANT ? com.example.comptable.controle.ControlSeverity.WARNING : com.example.comptable.controle.ControlSeverity.INFO);
+        f.setLastDetectedAt(java.time.OffsetDateTime.now());
         f.setSourceType("DOCUMENT");
         f.setSourceId(UUID.randomUUID().toString());
         f.setTitle("Document a risque");
@@ -133,7 +137,7 @@ class ClotureReadinessServiceTest {
 
         ClotureReadinessDto resultat = service.evaluer(entrepriseId, principal);
 
-        assertThat(resultat.statut()).isEqualTo("READY_WITH_REVIEW");
+        assertThat(resultat.statut()).isEqualTo("READY_WITH_WARNINGS");
         assertThat(resultat.checklist()).anyMatch(item -> item.code().equals("regularisations") && item.statut().equals("WARNING"));
     }
 
@@ -159,7 +163,7 @@ class ClotureReadinessServiceTest {
 
         ClotureReadinessDto resultat = service.evaluer(entrepriseId, principal);
 
-        assertThat(resultat.statut()).isEqualTo("READY_WITH_REVIEW");
+        assertThat(resultat.statut()).isEqualTo("READY_WITH_WARNINGS");
         assertThat(resultat.blockingItems()).isEmpty();
         assertThat(resultat.warnings()).hasSize(1);
     }

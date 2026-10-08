@@ -6,6 +6,10 @@ Docker. Rien ici n'a été testé en conditions réelles de production (pas de c
 jour) : ce guide décrit le mécanisme de déploiement, pas un déploiement déjà validé sur un vrai
 serveur.
 
+> **Pilote (1 à 3 cabinets)** : l'exploitation courante (profils prod / staging, création d'un cabinet par l'opérateur, sauvegarde et exercice de restauration, supervision, incidents, mise à jour et retour arrière) est décrite dans
+> [`docs/operations/pilot-runbook.md`](docs/operations/pilot-runbook.md) ; l'accueil d'un cabinet dans [`docs/operations/cabinet-onboarding.md`](docs/operations/cabinet-onboarding.md) ;
+> l'état de préparation au pilote dans [`docs/operations/PILOT_READINESS.md`](docs/operations/PILOT_READINESS.md). Un démarrage « production » sur base vide a été vérifié par `scripts/smoke-prod-local.sh`.
+
 ## 0. Fichiers de déploiement (tous à la racine du dépôt)
 
 | Fichier | Rôle |

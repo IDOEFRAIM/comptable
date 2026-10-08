@@ -58,17 +58,20 @@ public class MatchDecisionEngine {
     private final DocumentRepository documentRepository;
     private final double seuilAutoMatch;
     private final double seuilReview;
+    private final com.example.comptable.banque.BankReconciliationService reconciliationService;
 
     public MatchDecisionEngine(AiMatchProposalRepository aiMatchProposalRepository,
                                 LigneEcritureRepository ligneEcritureRepository,
                                 FactureRepository factureRepository,
                                 DocumentRepository documentRepository,
+                                com.example.comptable.banque.BankReconciliationService reconciliationService,
                                 @Value("${agent.matching.auto-match-threshold:0.95}") double seuilAutoMatch,
                                 @Value("${agent.matching.review-threshold:0.70}") double seuilReview) {
         this.aiMatchProposalRepository = aiMatchProposalRepository;
         this.ligneEcritureRepository = ligneEcritureRepository;
         this.factureRepository = factureRepository;
         this.documentRepository = documentRepository;
+        this.reconciliationService = reconciliationService;
         this.seuilAutoMatch = seuilAutoMatch;
         this.seuilReview = seuilReview;
     }
@@ -156,7 +159,9 @@ public class MatchDecisionEngine {
         UUID ligneEcriturePointee = null;
         if (decision == DecisionRapprochementIA.MATCH_AUTO) {
             ligneEcriturePointee = UUID.fromString(meilleur.candidateId());
-            ligne.setLigneEcritureId(ligneEcriturePointee);
+            reconciliationService.confirmerParLeSysteme(ligne, ligneEcriturePointee, com.example.comptable.banque.SourceReconciliation.AI_PROPOSAL,
+                    com.example.comptable.banque.DecisionReconciliation.PROBABLE, java.math.BigDecimal.valueOf(reponse.confidence() * 100),
+                    "Proposition IA validee par les garde-fous Java");
             proposition.setStatus(StatutPropositionIA.ACCEPTED);
             proposition.setValidatedAt(OffsetDateTime.now());
             aiMatchProposalRepository.save(proposition);

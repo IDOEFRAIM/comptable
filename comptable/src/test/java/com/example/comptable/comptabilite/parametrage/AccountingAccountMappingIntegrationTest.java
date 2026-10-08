@@ -1,5 +1,7 @@
 package com.example.comptable.comptabilite.parametrage;
 
+import com.example.comptable.comptabilite.operation.common.AccountingSource;
+
 import com.example.comptable.audit.domain.AuditEvent;
 import com.example.comptable.audit.repository.AuditEventRepository;
 import com.example.comptable.comptabilite.domain.CompteComptable;
@@ -142,10 +144,8 @@ class AccountingAccountMappingIntegrationTest {
         // 9. Achat multi-ligne A, ligne SERVICE sans compte fourni -> resolu via le mapping (621).
         TiersDto fournisseurA = tiersService.creer(entrepriseA.id(), TypeTiers.FOURNISSEUR, "Prestataire A", null, principal);
         AccountingOperationProposalDto achatA = accountingOperationEngine.proposerAchatEtValiderImmediatement(entrepriseA.id(),
-                new AchatMultiLigneOperationRequest(fournisseurA.id(), LocalDate.now(), "FA-PARAM-A",
-                        "Prestation de conseil", List.of(new LigneAchatOperationRequest(
-                                "Conseil", NatureAchat.SERVICE, new BigDecimal("100000"), new BigDecimal("18"), null, null)),
-                        null, "TEST_PARAM", UUID.randomUUID()),
+                new AchatMultiLigneOperationRequest(fournisseurA.id(), LocalDate.now(), "FA-PARAM-A", "Prestation de conseil", List.of(new LigneAchatOperationRequest(
+                                "Conseil", NatureAchat.SERVICE, new BigDecimal("100000"), new BigDecimal("18"), null, null)), null, AccountingSource.de("TEST_PARAM", UUID.randomUUID(), "COMPTABILISATION")),
                 principal);
         assertThat(achatA.statut()).isEqualTo("APPROVED");
         assertThat(achatA.lignes()).anySatisfy(l -> assertThat(l.compteNumero()).isEqualTo("621"));
@@ -187,10 +187,8 @@ class AccountingAccountMappingIntegrationTest {
         // 14. Tant que le compte reste desactive, l'operation qui en depend est refusee (jamais
         // silencieusement acceptee avec un compte invalide, jamais un compte devine a la place).
         assertThatThrownBy(() -> accountingOperationEngine.proposerAchatEtValiderImmediatement(entrepriseA.id(),
-                new AchatMultiLigneOperationRequest(fournisseurA.id(), LocalDate.now(), "FA-PARAM-A-2",
-                        "Prestation de conseil (compte desactive)", List.of(new LigneAchatOperationRequest(
-                                "Conseil", NatureAchat.SERVICE, new BigDecimal("50000"), new BigDecimal("18"), null, null)),
-                        null, "TEST_PARAM", UUID.randomUUID()),
+                new AchatMultiLigneOperationRequest(fournisseurA.id(), LocalDate.now(), "FA-PARAM-A-2", "Prestation de conseil (compte desactive)", List.of(new LigneAchatOperationRequest(
+                                "Conseil", NatureAchat.SERVICE, new BigDecimal("50000"), new BigDecimal("18"), null, null)), null, AccountingSource.de("TEST_PARAM", UUID.randomUUID(), "COMPTABILISATION")),
                 principal))
                 .isInstanceOf(ResponseStatusException.class)
                 .hasMessageContaining("Proposition incomplete");
@@ -205,10 +203,8 @@ class AccountingAccountMappingIntegrationTest {
 
         // 16. Rejeu de la meme operation : elle reussit desormais.
         AccountingOperationProposalDto achatRejoue = accountingOperationEngine.proposerAchatEtValiderImmediatement(entrepriseA.id(),
-                new AchatMultiLigneOperationRequest(fournisseurA.id(), LocalDate.now(), "FA-PARAM-A-3",
-                        "Prestation de conseil (rejeu)", List.of(new LigneAchatOperationRequest(
-                                "Conseil", NatureAchat.SERVICE, new BigDecimal("50000"), new BigDecimal("18"), null, null)),
-                        null, "TEST_PARAM", UUID.randomUUID()),
+                new AchatMultiLigneOperationRequest(fournisseurA.id(), LocalDate.now(), "FA-PARAM-A-3", "Prestation de conseil (rejeu)", List.of(new LigneAchatOperationRequest(
+                                "Conseil", NatureAchat.SERVICE, new BigDecimal("50000"), new BigDecimal("18"), null, null)), null, AccountingSource.de("TEST_PARAM", UUID.randomUUID(), "COMPTABILISATION")),
                 principal);
         assertThat(achatRejoue.statut()).isEqualTo("APPROVED");
         assertThat(achatRejoue.lignes()).anySatisfy(l -> assertThat(l.compteNumero()).isEqualTo("621"));

@@ -1,7 +1,10 @@
-import { Routes } from '@angular/router';
+import { inject } from '@angular/core';
+import { Router, Routes } from '@angular/router';
+import { TokenStorageService } from './core/auth/token-storage.service';
 import { authGuard } from './core/auth/auth.guard';
 import { cabinetGuard } from './core/auth/cabinet.guard';
 import { defaultTabRedirectGuard } from './core/auth/default-tab.guard';
+import { modificationsNonEnregistreesGuard } from './core/forms/modifications-non-enregistrees.guard';
 
 export const routes: Routes = [
   {
@@ -9,9 +12,23 @@ export const routes: Routes = [
     loadComponent: () => import('./features/auth/login.component').then((m) => m.LoginComponent),
   },
   {
+    path: 'changer-mot-de-passe',
+    canActivate: [() => !!inject(TokenStorageService).getToken() || inject(Router).parseUrl('/login')],
+    loadComponent: () => import('./features/auth/changer-mot-de-passe.component').then((m) => m.ChangerMotDePasseComponent),
+  },
+  {
+    path: 'reinitialiser-mot-de-passe',
+    loadComponent: () => import('./features/auth/reinitialiser-mot-de-passe.component').then((m) => m.ReinitialiserMotDePasseComponent),
+  },
+  {
     path: 'register',
     loadComponent: () =>
       import('./features/auth/register-cabinet.component').then((m) => m.RegisterCabinetComponent),
+  },
+  {
+    // Depot d'une piece par le client, sans compte : le lien signe EST l'autorisation (voir DepotPublicController).
+    path: 'depot/:jeton',
+    loadComponent: () => import('./features/depot/depot-public.component').then((m) => m.DepotPublicComponent),
   },
   {
     path: '',
@@ -25,6 +42,27 @@ export const routes: Routes = [
       },
       {
         path: 'cabinet',
+        canActivate: [cabinetGuard],
+        loadComponent: () =>
+          import('./features/cabinet-workspace/cabinet-workspace.component').then((m) => m.CabinetWorkspaceComponent),
+      },
+      {
+        path: 'cabinet/dossiers',
+        canActivate: [cabinetGuard],
+        loadComponent: () => import('./features/cabinet-workspace/portfolio.component').then((m) => m.PortfolioComponent),
+      },
+      {
+        path: 'cabinet/equipe',
+        canActivate: [cabinetGuard],
+        loadComponent: () => import('./features/cabinet-workspace/equipe.component').then((m) => m.EquipeComponent),
+      },
+      {
+        path: 'cabinet/echeances',
+        canActivate: [cabinetGuard],
+        loadComponent: () => import('./features/cabinet-workspace/echeances.component').then((m) => m.EcheancesComponent),
+      },
+      {
+        path: 'cabinet/cockpit',
         canActivate: [cabinetGuard],
         loadComponent: () =>
           import('./features/cabinet/cockpit-cabinet.component').then((m) => m.CockpitCabinetComponent),
@@ -57,6 +95,11 @@ export const routes: Routes = [
             path: 'documents',
             loadComponent: () =>
               import('./features/documents/documents-page.component').then((m) => m.DocumentsPageComponent),
+          },
+          {
+            path: 'revision',
+            loadComponent: () =>
+              import('./features/revision/revision.component').then((m) => m.RevisionComponent),
           },
           {
             path: 'demandes-pieces',
@@ -105,6 +148,7 @@ export const routes: Routes = [
           },
           {
             path: 'ecritures/nouvelle',
+            canDeactivate: [modificationsNonEnregistreesGuard],
             loadComponent: () =>
               import('./features/comptabilite/ecritures/saisie-ecriture.component').then(
                 (m) => m.SaisieEcritureComponent,
@@ -118,8 +162,8 @@ export const routes: Routes = [
           {
             path: 'etats-financiers',
             loadComponent: () =>
-              import('./features/comptabilite/etats-financiers/etats-financiers.component').then(
-                (m) => m.EtatsFinanciersComponent,
+              import('./features/dossier-financier/dossier-financier.component').then(
+                (m) => m.DossierFinancierComponent,
               ),
           },
           {
@@ -133,7 +177,13 @@ export const routes: Routes = [
               import('./features/recouvrement/recouvrement.component').then((m) => m.RecouvrementComponent),
           },
           {
+            // Ecran Banque (Phase D) : transactions rapprochees, a confirmer, ambigues, sans correspondance ; affectation des reglements.
             path: 'rapprochement',
+            loadComponent: () => import('./features/banque/banque.component').then((m) => m.BanqueComponent),
+          },
+          {
+            // Ancien ecran releve par releve, conserve (propositions de l'IA, pointage ligne a ligne).
+            path: 'rapprochement/classique',
             loadComponent: () =>
               import('./features/comptabilite/rapprochement/rapprochement-bancaire.component').then(
                 (m) => m.RapprochementBancaireComponent,
@@ -169,6 +219,10 @@ export const routes: Routes = [
             path: 'achats',
             loadComponent: () =>
               import('./features/comptabilite/stock/achats.component').then((m) => m.AchatsComponent),
+          },
+          {
+            path: 'fiscalite/tva',
+            loadComponent: () => import('./features/fiscalite-tva/tva.component').then((m) => m.TvaComponent),
           },
           {
             path: 'fiscalite',

@@ -1,5 +1,7 @@
 package com.example.comptable.agent.accounting;
 
+import com.example.comptable.comptabilite.operation.common.AccountingSource;
+
 import com.example.comptable.agent.accounting.web.dto.AiAccountingPostingResponseDto;
 import com.example.comptable.agent.accounting.web.dto.AiAccountingProposalLineRequest;
 import com.example.comptable.agent.accounting.web.dto.AiAccountingValidationResponseDto;
@@ -90,8 +92,7 @@ class AiAccountingPostingServiceTest {
 
         assertThat(reponse.posted()).isFalse();
         assertThat(reponse.errors()).contains("Compte non configure");
-        verify(accountingOperationEngine, never()).proposerEtValiderImmediatementSysteme(
-                any(), any(), any(), any(), anyString(), any(), any(), anyString(), any());
+        verify(accountingOperationEngine, never()).proposerEtValiderImmediatementSysteme(any(), any(), any(), any(), anyString(), any(), any(), any());
     }
 
     @Test
@@ -110,15 +111,8 @@ class AiAccountingPostingServiceTest {
         UUID proposalId = UUID.randomUUID();
         UUID ecritureId = UUID.randomUUID();
         OffsetDateTime validatedAt = OffsetDateTime.now();
-        AccountingOperationProposalDto dto = new AccountingOperationProposalDto(
-                proposalId, entrepriseId, "ACHAT", "APPROVED", UUID.randomUUID(), "ACH", null,
-                LocalDate.of(2026, 8, 1), "Facture fournisseur", documentId.toString(), List.of(),
-                new BigDecimal("118000"), new BigDecimal("118000"), true, List.of(), List.of(),
-                OffsetDateTime.now(), validatedAt, null, null, ecritureId, "AI_ACCOUNTING_PROPOSAL", documentId);
-        when(accountingOperationEngine.proposerEtValiderImmediatementSysteme(
-                eq(entrepriseId), eq(AccountingOperationType.ACHAT), eq(null), eq(LocalDate.of(2026, 8, 1)),
-                eq("Facture fournisseur"), eq(documentId.toString()), any(ResultatRegle.class),
-                eq("AI_ACCOUNTING_PROPOSAL"), eq(documentId)))
+        AccountingOperationProposalDto dto = new AccountingOperationProposalDto(proposalId, entrepriseId, "ACHAT", "APPROVED", UUID.randomUUID(), "ACH", null, LocalDate.of(2026, 8, 1), "Facture fournisseur", documentId.toString(), List.of(), new BigDecimal("118000"), new BigDecimal("118000"), true, List.of(), List.of(), OffsetDateTime.now(), validatedAt, null, null, ecritureId, "DOCUMENT", documentId, "COMPTABILISATION");
+        when(accountingOperationEngine.proposerEtValiderImmediatementSysteme(eq(entrepriseId), eq(AccountingOperationType.ACHAT), eq(null), eq(LocalDate.of(2026, 8, 1)), eq("Facture fournisseur"), eq(documentId.toString()), any(ResultatRegle.class), eq(AccountingSource.document(documentId))))
                 .thenReturn(dto);
 
         EcritureComptable ecriture = new EcritureComptable();
@@ -152,7 +146,6 @@ class AiAccountingPostingServiceTest {
 
         assertThat(reponse.posted()).isFalse();
         assertThat(reponse.errors()).anySatisfy(e -> assertThat(e).contains("fournisseur"));
-        verify(accountingOperationEngine, never()).proposerEtValiderImmediatementSysteme(
-                any(), any(), any(), any(), anyString(), any(), any(), anyString(), any());
+        verify(accountingOperationEngine, never()).proposerEtValiderImmediatementSysteme(any(), any(), any(), any(), anyString(), any(), any(), any());
     }
 }

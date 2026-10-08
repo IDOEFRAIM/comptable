@@ -25,6 +25,13 @@
         <span>Libellé</span>
         <input type="text" formControlName="libelle" placeholder="Ex : Véhicule utilitaire" />
       </label>
+      <label class="champ champ-etroit">
+        <span>Nature</span>
+        <select formControlName="type">
+          <option value="CORPORELLE">Corporelle</option>
+          <option value="INCORPORELLE">Incorporelle</option>
+        </select>
+      </label>
       <label class="champ">
         <span>Compte d'actif</span>
         <select formControlName="compteId">
@@ -80,12 +87,113 @@
             <span class="libelle">{{ immo.libelle }}</span>
             <span class="compte">{{ immo.compteNumero }}</span>
             <span class="mode">{{ immo.mode === 'LINEAIRE' ? 'Linéaire' : 'Dégressif' }}</span>
+            <span class="badge" [class.badge-genere]="immo.statut === 'EN_SERVICE'">{{ libelleStatut(immo.statut) }}</span>
             <span class="valeur">{{ immo.valeurOrigine | number: '1.0-0' }}</span>
             <span class="vnc">VNC {{ immo.valeurNetteComptableActuelle | number: '1.0-0' }}</span>
           </button>
 
           @if (immobilisationOuverte() === immo.id) {
             <div class="details">
+              <p class="cycle-vie">
+                Acquise le {{ immo.dateAcquisition }}
+                @if (immo.acquisitionEcritureId) { · acquisition comptabilisée }
+                @if (immo.acquisitionSource) { · source : {{ immo.acquisitionSource }} }
+                @if (immo.dateMiseEnService) { · mise en service le {{ immo.dateMiseEnService }} }
+                @if (immo.dateSortie) {
+                  · sortie le {{ immo.dateSortie }} ({{ immo.motifSortie === 'CESSION' ? 'cession' : 'mise au rebut' }})
+                  — écritures de sortie à saisir manuellement
+                }
+              </p>
+
+              @if (immo.statut !== 'SORTIE') {
+                <div class="actions-cycle">
+                  @if (immo.statut === 'ACQUISE' && !immo.acquisitionEcritureId) {
+                    <button type="button" class="bouton-secondaire" (click)="ouvrirAction(immo, 'ACQUISITION')">Comptabiliser l'acquisition</button>
+                    <button type="button" class="bouton-secondaire" (click)="ouvrirAction(immo, 'LIER')">Lier à une facture déjà comptabilisée</button>
+                  }
+                  @if (immo.statut === 'ACQUISE') {
+                    <button type="button" class="bouton-secondaire" (click)="ouvrirAction(immo, 'MISE_EN_SERVICE')">Mettre en service</button>
+                  }
+                  <button type="button" class="bouton-secondaire" (click)="ouvrirAction(immo, 'SORTIE')">Sortir du patrimoine</button>
+                </div>
+              }
+
+              @if (action(); as a) {
+                @if (a.id === immo.id) {
+                  <div class="panneau-action">
+                    @if (a.type === 'ACQUISITION') {
+                      <label class="champ">
+                        <span>Fournisseur</span>
+                        <select [ngModel]="saisieFournisseurId()" (ngModelChange)="saisieFournisseurId.set($event)" [ngModelOptions]="{ standalone: true }">
+                          <option value="" disabled>Choisir…</option>
+                          @for (f of fournisseurs(); track f.id) {
+                            <option [value]="f.id">{{ f.nom }}</option>
+                          }
+                        </select>
+                      </label>
+                      <label class="champ champ-etroit">
+                        <span>TVA récupérable</span>
+                        <input type="number" [ngModel]="saisieMontantTva()" (ngModelChange)="saisieMontantTva.set($event)" [ngModelOptions]="{ standalone: true }" placeholder="0" />
+                      </label>
+                      <label class="champ champ-case">
+                        <input type="checkbox" [ngModel]="saisieSansFacture()" (ngModelChange)="saisieSansFacture.set($event)" [ngModelOptions]="{ standalone: true }" />
+                        <span>Aucune facture d'achat déjà comptabilisée ne porte cet achat (confirmation anti-double comptage)</span>
+                      </label>
+                    }
+                    @if (a.type === 'LIER') {
+                      <label class="champ">
+                        <span>Facture d'achat déjà comptabilisée</span>
+                        <select [ngModel]="saisieSource()" (ngModelChange)="saisieSource.set($event)" [ngModelOptions]="{ standalone: true }">
+                          <option value="" disabled>{{ chargementCandidats() ? 'Chargement…' : 'Choisir une facture…' }}</option>
+                          @for (c of candidatsAcquisition(); track c.sourceType + c.sourceId) {
+                            <option [value]="c.sourceType + '/' + c.sourceId" [disabled]="!c.suffisant">
+                              {{ c.libelle }} — {{ c.date }} — disponible {{ c.capaciteRestante | number: '1.0-0' }}{{ c.suffisant ? '' : ' (insuffisant)' }}
+                            </option>
+                          }
+                        </select>
+                        @if (!chargementCandidats() && candidatsAcquisition().length === 0) {
+                          <small>Aucune facture d'achat comptabilisée ne débite le compte de ce bien : utilisez « Comptabiliser l'acquisition ».</small>
+                        }
+                      </label>
+                    }
+                    @if (a.type === 'MISE_EN_SERVICE') {
+                      <label class="champ">
+                        <span>Date de mise en service</span>
+                        <input type="date" [ngModel]="saisieDate()" (ngModelChange)="saisieDate.set($event)" [ngModelOptions]="{ standalone: true }" />
+                      </label>
+                    }
+                    @if (a.type === 'SORTIE') {
+                      <label class="champ">
+                        <span>Date de sortie</span>
+                        <input type="date" [ngModel]="saisieDate()" (ngModelChange)="saisieDate.set($event)" [ngModelOptions]="{ standalone: true }" />
+                      </label>
+                      <label class="champ champ-etroit">
+                        <span>Motif</span>
+                        <select [ngModel]="saisieMotif()" (ngModelChange)="saisieMotif.set($event)" [ngModelOptions]="{ standalone: true }">
+                          <option value="CESSION">Cession</option>
+                          <option value="MISE_AU_REBUT">Mise au rebut</option>
+                        </select>
+                      </label>
+                      @if (saisieMotif() === 'CESSION') {
+                        <label class="champ champ-etroit">
+                          <span>Prix de cession</span>
+                          <input type="number" [ngModel]="saisieMontantCession()" (ngModelChange)="saisieMontantCession.set($event)" [ngModelOptions]="{ standalone: true }" />
+                        </label>
+                      }
+                    }
+                    <div class="actions-panneau">
+                      <button type="button" class="bouton-secondaire" (click)="annulerAction()">Annuler</button>
+                      <button type="button" class="bouton-principal" [disabled]="actionEnCours()" (click)="confirmerAction(immo)">
+                        {{ actionEnCours() ? 'Enregistrement…' : 'Confirmer' }}
+                      </button>
+                    </div>
+                  </div>
+                }
+              }
+
+              @if (immo.plan.length === 0 && immo.statut === 'ACQUISE') {
+                <p class="etat-vide">Le plan d'amortissement apparaît à la mise en service.</p>
+              }
               <table>
                 <thead>
                   <tr>

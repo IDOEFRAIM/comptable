@@ -5,16 +5,19 @@ import com.example.comptable.comptabilite.domain.Facture;
 import com.example.comptable.comptabilite.domain.FactureAvoir;
 import com.example.comptable.comptabilite.domain.LigneFacture;
 import com.example.comptable.comptabilite.domain.LigneFactureAvoir;
-import com.example.comptable.comptabilite.domain.RoleCompteSysteme;
 import com.example.comptable.comptabilite.domain.StatutFacture;
 import com.example.comptable.comptabilite.domain.StatutFactureAvoir;
 import com.example.comptable.comptabilite.domain.TypeFacture;
 import com.example.comptable.comptabilite.domain.TypeJournal;
 import com.example.comptable.comptabilite.operation.common.AccountingOperationEngine;
+import com.example.comptable.comptabilite.operation.common.AccountingSource;
 import com.example.comptable.comptabilite.operation.common.AccountingOperationType;
 import com.example.comptable.comptabilite.operation.common.ResultatRegle;
 import com.example.comptable.comptabilite.operation.common.domain.AccountingOperationProposalLigne;
 import com.example.comptable.comptabilite.operation.vente.VenteRule;
+import com.example.comptable.comptabilite.parametrage.AccountContext;
+import com.example.comptable.comptabilite.parametrage.AccountingAccountResolver;
+import com.example.comptable.comptabilite.parametrage.domain.AccountPurpose;
 import com.example.comptable.comptabilite.repository.FactureAvoirRepository;
 import com.example.comptable.comptabilite.repository.FactureRepository;
 import com.example.comptable.comptabilite.web.dto.CreerFactureAvoirRequest;
@@ -68,7 +71,7 @@ public class FactureAvoirService {
     private final FactureRepository factureRepository;
     private final FactureAvoirRepository factureAvoirRepository;
     private final CompteComptableValidationService compteComptableValidationService;
-    private final CompteSystemeResolver compteSystemeResolver;
+    private final AccountingAccountResolver accountingAccountResolver;
     private final VenteRule venteRule;
     private final AccountingOperationEngine accountingOperationEngine;
     private final MouvementStockService mouvementStockService;
@@ -167,9 +170,13 @@ public class FactureAvoirService {
 
         CompteComptable compteTva = null;
         if (montantTva.signum() > 0) {
-            compteTva = compteSystemeResolver.resoudre(entrepriseId, RoleCompteSysteme.TVA_COLLECTEE)
-                    .orElseThrow(() -> new IllegalStateException(
-                            "Compte TVA collectee introuvable, l'entreprise n'a pas ete initialisee correctement"));
+            AccountingAccountResolver.CompteResolu resolu = accountingAccountResolver.resoudreCompte(entrepriseId,
+                    AccountPurpose.TVA_COLLECTEE, AccountContext.vide(), null);
+            if (!resolu.estResolu()) {
+                throw new ResponseStatusException(HttpStatus.UNPROCESSABLE_ENTITY,
+                        "Compte TVA collectee non configure pour cette entreprise : " + resolu.resolution().explication());
+            }
+            compteTva = resolu.compte();
         }
 
         String libelle = "Avoir " + avoir.getNumero() + " - " + avoir.getTiers().getNom() + " (facture " + factureOrigine.getNumero() + ")";
@@ -181,7 +188,7 @@ public class FactureAvoirService {
         // humaine (mission cloture Etape 4, section 22/23/24 - meme mecanisme que la vente/cloture).
         var proposition = accountingOperationEngine.proposerEtValiderImmediatement(entrepriseId, AccountingOperationType.AVOIR_VENTE,
                 avoir.getTiers(), avoir.getDateEmission(), libelle, avoir.getNumero(), resultat,
-                "FACTURE_AVOIR", avoir.getId(), principal);
+                AccountingSource.de("FACTURE_AVOIR", avoir.getId(), "VALIDATION"), principal);
 
         if (avoir.isRetourStock()) {
             reintegrerStock(entrepriseId, avoir, principal);

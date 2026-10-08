@@ -34,3 +34,36 @@ export const LIBELLES_STATUT_DECLARATION: Record<StatutDeclaration, string> = {
   DEPOSEE: 'Déposée',
   PAYEE: 'Payée',
 };
+
+export type PaiementFournisseur = 'E_SYNTAXE' | 'FASO_ARZEKA';
+
+export type StatutPaiement = 'INITIE' | 'EN_ATTENTE_CONFIRMATION' | 'REUSSI' | 'ECHEC';
+
+export interface PaiementFiscalDto {
+  id: string;
+  fournisseur: PaiementFournisseur;
+  statut: StatutPaiement;
+  montant: number;
+  numeroTelephonePayeur: string | null;
+  referenceExterne: string | null;
+  messageStatut: string | null;
+  dateInitiation: string;
+  dateConfirmation: string | null;
+}
+
+export interface InitierPaiementRequest {
+  fournisseur: PaiementFournisseur;
+  numeroTelephonePayeur?: string;
+}
+
+export const LIBELLES_FOURNISSEUR: Record<PaiementFournisseur, string> = {
+  E_SYNTAXE: 'e-Syntaxe (DGI)',
+  FASO_ARZEKA: 'Faso Arzeka',
+};
+
+export const LIBELLES_STATUT_PAIEMENT: Record<StatutPaiement, string> = {
+  INITIE: 'Initié',
+  EN_ATTENTE_CONFIRMATION: 'En attente de confirmation',
+  REUSSI: 'Réussi',
+  ECHEC: 'Échec',
+};

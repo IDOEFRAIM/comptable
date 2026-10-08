@@ -3,6 +3,8 @@ package com.example.comptable.comptabilite.service;
 import com.example.comptable.comptabilite.domain.CompteComptable;
 import com.example.comptable.comptabilite.repository.CompteComptableRepository;
 import lombok.RequiredArgsConstructor;
+import com.example.comptable.comptabilite.parametrage.AccountResolutionCode;
+import com.example.comptable.comptabilite.parametrage.CompteNonUtilisableException;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
@@ -14,7 +16,7 @@ import java.util.UUID;
  * avoir, proposition IA...) : meme entreprise, actif, et utilisable comme compte de detail quand
  * l'operation l'exige. Avant cette fondation, cette logique etait re-implementee ad hoc dans
  * chaque service (voir l'audit) ; certains points d'appel (BalanceService.genererLigne,
- * FactureAvoirService.validerAvoir, AccountingProposalBuilder.resoudreCompte) n'appliquaient
+ * FactureAvoirService.validerAvoir, ImputationSuggestionBuilder.resoudreCompte) n'appliquaient
  * aucune verification explicite sur ce lookup precis, surs uniquement parce que l'id etait
  * deja filtre en amont par une requete separee.
  */
@@ -34,7 +36,7 @@ public class CompteComptableValidationService {
     public CompteComptable chargerCompteDeLEntreprise(UUID entrepriseId, UUID compteId) {
         return compteComptableRepository.findById(compteId)
                 .filter(c -> c.getEntreprise().getId().equals(entrepriseId))
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Compte introuvable"));
+                .orElseThrow(() -> new CompteNonUtilisableException(HttpStatus.NOT_FOUND, AccountResolutionCode.ACCOUNT_NOT_IN_PCE, "Compte introuvable"));
     }
 
     /**
@@ -47,11 +49,11 @@ public class CompteComptableValidationService {
         CompteComptable compte = chargerCompteDeLEntreprise(entrepriseId, compteId);
 
         if (!compte.isActif()) {
-            throw new ResponseStatusException(HttpStatus.UNPROCESSABLE_ENTITY,
+            throw new CompteNonUtilisableException(HttpStatus.UNPROCESSABLE_ENTITY, AccountResolutionCode.ACCOUNT_INACTIVE,
                     "Le compte " + compte.getNumero() + " est desactive");
         }
         if (exigerDetail && !isUsableCommeDetail(compte)) {
-            throw new ResponseStatusException(HttpStatus.UNPROCESSABLE_ENTITY,
+            throw new CompteNonUtilisableException(HttpStatus.UNPROCESSABLE_ENTITY, AccountResolutionCode.ACCOUNT_CONTEXT_INVALID,
                     "Le compte " + compte.getNumero() + " n'est pas utilisable comme compte de detail");
         }
         return compte;

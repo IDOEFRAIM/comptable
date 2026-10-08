@@ -1,0 +1,153 @@
+293|DÉPRÉCIATIONS DES BÂTIMENTS, INSTALLATIONS TECHNIQUES ET AGENCEMENTS|231
+2931|Dépréciations des bâtiments industriels, agricoles, administratifs et commerciaux sur sol propre|231
+2932|Dépréciations des bâtiments industriels, agricoles, administratifs et commerciaux sur sol d'autrui|231
+2933|Dépréciations des ouvrages d'infrastructures|231
+2934|Dépréciations des aménagements, agencements et installations techniques|231
+2935|Dépréciations des aménagements de bureaux|231
+2937|Dépréciations des bâtiments industriels, agricoles et commerciaux mis en concession|231
+2938|Dépréciations des autres installations et agencements|231
+2939|Dépréciations des bâtiments et installations en cours|231
+294|DÉPRÉCIATIONS DE MATÉRIEL, DU MOBILIER ET DE L'ACTIF BIOLOGIQUE|231
+2941|Dépréciations du matériel et outillage industriel et commercial|231
+2942|Dépréciations du matériel et outillage agricole|231
+2943|Dépréciations du matériel d'emballage récupérable et identifiable|231
+2944|Dépréciations du matériel et mobilier|231
+2945|Dépréciations du matériel de transport|231
+2946|Dépréciations des actifs biologiques|231
+2947|Dépréciations des agencements et aménagements du matériel et des actifs biologiques|231
+2948|Dépréciations des autres matériels|231
+2949|Dépréciations de matériel en cours|231
+295|DÉPRÉCIATIONS DES AVANCES ET ACOMPTES VERSÉS SUR IMMOBILISATIONS|231
+2951|Dépréciations des avances et acomptes versés sur immobilisations incorporelles|231
+2952|Dépréciations des avances et acomptes versés sur immobilisations corporelles|231
+296|DÉPRÉCIATIONS DES TITRES DE PARTICIPATION|231
+2961|Dépréciations des titres de participation dans des sociétés sous contrôle exclusif|231
+2962|Dépréciations des titres de participation dans les sociétés sous contrôle conjoint|231
+2963|Dépréciations des titres de participation dans les sociétés conférant une influence notable|231
+2965|Dépréciations des participations dans des organismes professionnels|231
+2966|Dépréciations des parts dans des GIE|232
+2968|Dépréciations des autres titres de participation|232
+297|DÉPRÉCIATIONS DES AUTRES IMMOBILISATIONS FINANCIÈRES|232
+2971|Dépréciations des prêts et créances|232
+2972|Dépréciations des prêts au personnel|232
+2973|Dépréciations des créances sur l'État|232
+2974|Dépréciations des titres immobilisés|232
+2975|Dépréciations des dépôts et cautionnements versés|232
+2977|Dépréciations des créances rattachées à des participations et avances à des GIE|232
+2978|Dépréciations des créances financières diverses|232
+31|MARCHANDISES|233
+32|MATIÈRES PREMIÈRES ET FOURNITURES LIÉES|233
+33|AUTRES APPROVISIONNEMENTS|233
+34|PRODUITS EN COURS|233
+35|SERVICES EN COURS|233
+36|PRODUITS FINIS|233
+37|PRODUITS INTERMÉDIAIRES ET RÉSIDUELS|233
+38|STOCKS EN COURS DE ROUTE, EN CONSIGNATION OU EN DÉPÔT|233
+39|DÉPRÉCIATIONS DES STOCKS ET ENCOURS DE PRODUCTION|233
+311|MARCHANDISES A|233
+3111|Marchandises A1|233
+3112|Marchandises A2|233
+312|MARCHANDISES B|233
+3121|Marchandises B1|233
+3122|Marchandises B2|233
+313|ACTIFS BIOLOGIQUES|233
+3131|Animaux|233
+3132|Végétaux|233
+318|MARCHANDISES HORS ACTIVITÉS ORDINAIRES (H.A.O.)|233
+321|MATIÈRES A|233
+322|MATIÈRES B|233
+323|FOURNITURES (A,B)|233
+331|MATIÈRES CONSOMMABLES|233
+332|FOURNITURES D'ATELIER ET D'USINE|233
+333|FOURNITURES DE MAGASIN|233
+334|FOURNITURES DE BUREAU|233
+335|EMBALLAGES|234
+3351|Emballages perdus|234
+3352|Emballages récupérables non identifiables|234
+3353|Emballages à usage mixte|234
+3358|Autres emballages|234
+338|AUTRES MATIÈRES|234
+341|PRODUITS EN COURS|234
+3411|Produits en cours P1|234
+3412|Produits en cours P2|234
+342|TRAVAUX EN COURS|234
+3421|Travaux en cours T1|234
+3422|Travaux en cours T2|234
+343|PRODUITS INTERMÉDIAIRES EN COURS|234
+3431|Produits intermédiaires A|234
+3432|Produits intermédiaires B|234
+344|PRODUITS RÉSIDUELS EN COURS|234
+3441|Produits résiduels A|234
+3442|Produits résiduels B|234
+345|ACTIFS BIOLOGIQUES EN COURS|234
+3451|Animaux|234
+3452|Végétaux|234
+351|ÉTUDES EN COURS|234
+3511|Études en cours E1|234
+3512|Études en cours E2|234
+352|PRESTATIONS DE SERVICES EN COURS|234
+3521|Prestations de services S1|234
+3522|Prestations de services S2|234
+361|PRODUITS FINIS A|234
+362|PRODUITS FINIS B|234
+363|ACTIFS BIOLOGIQUES|234
+3631|Animaux|234
+3632|Végétaux|234
+3638|Autres stocks (activités annexes)|234
+371|PRODUITS INTERMÉDIAIRES|235
+3711|Produits intermédiaires A|235
+3712|Produits intermédiaires B|235
+372|PRODUITS RÉSIDUELS|235
+3721|Déchets|235
+3722|Rebuts|235
+3723|Matières de récupération|235
+373|ACTIFS BIOLOGIQUES|235
+3731|Animaux|235
+3732|Végétaux|235
+3738|Autres stocks (activités annexes)|235
+381|MARCHANDISES EN COURS DE ROUTE|235
+382|MATIÈRES PREMIÈRES ET FOURNITURES LIÉES EN COURS DE ROUTE|235
+383|AUTRES APPROVISIONNEMENTS EN COURS DE ROUTE|235
+386|PRODUITS FINIS EN COURS DE ROUTE|235
+387|STOCK EN CONSIGNATION OU EN DÉPÔT|235
+3871|Stock en consignation|235
+3872|Stock en dépôt|235
+388|STOCK PROVENANT D'IMMOBILISATIONS MISES HORS SERVICE OU AU REBUT|235
+391|DÉPRÉCIATIONS DES STOCKS DE MARCHANDISES|235
+392|DÉPRÉCIATIONS DES STOCKS DE MATIÈRES PREMIÈRES ET FOURNITURES LIÉES|235
+393|DÉPRÉCIATIONS DES STOCKS D'AUTRES APPROVISIONNEMENTS|235
+394|DÉPRÉCIATIONS DES PRODUCTIONS EN COURS|235
+395|DÉPRÉCIATIONS DES SERVICES EN COURS|236
+396|DÉPRÉCIATIONS DES STOCKS DE PRODUITS FINIS|236
+397|DÉPRÉCIATIONS DES STOCKS DE PRODUITS INTERMÉDIAIRES ET RÉSIDUELS|236
+398|DÉPRÉCIATIONS DES STOCKS EN COURS DE ROUTE, EN CONSIGNATION OU EN DÉPÔT|236
+40|FOURNISSEURS ET COMPTES RATTACHÉS|237
+41|CLIENTS ET COMPTES RATTACHÉS|237
+42|PERSONNEL|237
+43|ORGANISMES SOCIAUX|237
+44|ÉTAT ET COLLECTIVITÉS PUBLIQUES|237
+45|ORGANISMES INTERNATIONAUX|237
+46|APPORTEURS, ASSOCIÉS ET GROUPE|237
+47|DÉBITEURS ET CRÉDITEURS DIVERS|237
+48|CRÉANCES ET DETTES HORS ACTIVITÉS ORDINAIRES (H.A.O.)|237
+49|DÉPRÉCIATIONS ET PROVISIONS POUR RISQUES À COURT TERME (Tiers)|237
+401|FOURNISSEURS, DETTES EN COMPTE|237
+4011|Fournisseurs|237
+4012|Fournisseurs Groupe|237
+4013|Fournisseurs sous-traitants|237
+4016|Fournisseurs, réserve de propriété|237
+4017|Fournisseurs, retenues de garantie|237
+402|FOURNISSEURS, EFFETS À PAYER|237
+4021|Fournisseurs, Effets à payer|237
+4022|Fournisseurs - Groupe, Effets à payer|237
+4023|Fournisseurs sous-traitants, Effets à payer|237
+404|FOURNISSEURS, ACQUISITIONS COURANTES D'IMMOBILISATIONS|237
+4041|Fournisseurs dettes en compte, immobilisations incorporelles|237
+4042|Fournisseurs dettes en compte, immobilisations corporelles|237
+4046|Fournisseurs effets à payer, immobilisations incorporelles|237
+4047|Fournisseurs effets à payer, immobilisations corporelles|237
+408|FOURNISSEURS, FACTURES NON PARVENUES|237
+4081|Fournisseurs|237
+4082|Fournisseurs - Groupe|237
+4083|Fournisseurs sous-traitants|237
+4086|Fournisseurs, intérêts courus|237

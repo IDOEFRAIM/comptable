@@ -1,0 +1,299 @@
+<div class="page-revision">
+  <div class="entete">
+    <div>
+      <h2>Révision du dossier</h2>
+      <p class="sous-titre">
+        Ce qui demande une décision humaine. Les opérations normales ne vous dérangent pas ; ce qui se résout tout seul disparaît d’ici.
+      </p>
+    </div>
+    <button type="button" class="bouton-principal" [disabled]="relance()" (click)="relancer()">
+      {{ relance() ? 'Contrôle en cours…' : 'Relancer les contrôles' }}
+    </button>
+  </div>
+
+  @if (erreur()) {
+    <p class="message-erreur">{{ erreur() }}</p>
+  }
+  @if (info()) {
+    <p class="message-info">{{ info() }}</p>
+  }
+
+  @if (espace(); as e) {
+    <section class="carte espace-cloture" data-zone="espace-cloture">
+      <div class="espace-entete">
+        <div>
+          <p class="titre-section">Clôture de l’exercice</p>
+          <p class="espace-verdict" [class.espace-pret]="e.pret" [class.espace-bloque]="!e.pret" data-champ="pret-cloture">
+            Prêt à clôturer : {{ e.pret ? 'OUI' : 'NON' }}
+          </p>
+        </div>
+        <button type="button" class="bouton-secondaire" (click)="allerALaCloture()" data-action="aller-cloture">Aller à la clôture</button>
+      </div>
+      <dl class="espace-kpis">
+        <div class="kpi" [class.kpi-alerte]="(preparation()?.resume?.bloquants ?? 0) > 0" data-champ="bilan-cloture">
+          <dt>Bloquants</dt>
+          <dd>{{ preparation()?.resume?.bloquants ?? '–' }}</dd>
+        </div>
+        <div class="kpi" [class.kpi-attention]="(preparation()?.resume?.avertissements ?? 0) > 0">
+          <dt>Avertissements</dt>
+          <dd>{{ preparation()?.resume?.avertissements ?? '–' }}</dd>
+        </div>
+        <div class="kpi" data-champ="bilan-constats">
+          <dt>Constats à traiter</dt>
+          <dd>{{ e.bloquants + e.avertissements + e.aExaminer }}</dd>
+        </div>
+        <div class="kpi kpi-succes">
+          <dt>Résolus aujourd’hui</dt>
+          <dd>{{ e.resolusAujourdhui }}</dd>
+        </div>
+      </dl>
+      @if (preparation(); as p) {
+        @if (p.resume) {
+          <p class="espace-resume" data-champ="resume-cloture">
+            {{ p.resume.enOrdre }} point(s) en ordre{{ p.resume.nonApplicables ? ', ' + p.resume.nonApplicables + ' sans objet pour ce dossier' : '' }}.
+          </p>
+        }
+        @for (point of p.checklist; track point.code) {
+          @if (point.statut === 'BLOCKING' || point.statut === 'WARNING') {
+            <p class="espace-point" [class.espace-point-bloquant]="point.statut === 'BLOCKING'">
+              <span class="badge" [class]="'badge ' + (point.statut === 'BLOCKING' ? 'sev-blocking' : 'sev-warning')">{{ point.statut === 'BLOCKING' ? 'Bloquant' : 'Avertissement' }}</span>
+              <strong>{{ point.libelle }}</strong>
+              <span class="espace-point-message">{{ point.message }}</span>
+            </p>
+          }
+        }
+      }
+    </section>
+    <p class="titre-section">Par domaine</p>
+    <section class="tuiles tuiles-domaines" aria-label="Domaines de révision" data-zone="domaines">
+      @for (d of e.domaines; track d.code) {
+        <button
+          type="button"
+          class="tuile"
+          [class.active]="domaine === d.code"
+          [class.tuile-alerte]="d.bloquants > 0"
+          (click)="choisirDomaine(d.code)"
+          [attr.data-domaine]="d.code"
+        >
+          <span class="tuile-nombre">{{ d.total }}</span>
+          <span class="tuile-libelle">{{ d.libelle }}</span>
+          <span class="tuile-detail">{{ d.bloquants }} bloquant(s) · {{ d.avertissements }} avert. · {{ d.aExaminer }} à examiner</span>
+        </button>
+      }
+    </section>
+  }
+
+  @if (synthese(); as s) {
+    <p class="titre-section">Par type de constat</p>
+    <section class="tuiles" aria-label="Catégories à traiter">
+      @for (t of s.tuiles; track t.code) {
+        <button
+          type="button"
+          class="tuile"
+          [class.active]="tuile === t.code"
+          [class.vide]="t.nombre === 0"
+          [class.tuile-alerte]="(t.code === 'BLOQUANTS' || t.code === 'ERREURS') && t.nombre > 0"
+          (click)="choisirTuile(t.code)"
+        >
+          <span class="tuile-nombre">{{ t.nombre }}</span>
+          <span class="tuile-libelle">{{ t.libelle }}</span>
+        </button>
+      }
+    </section>
+    @if (s.bloquantPourCloture) {
+      <p class="bandeau-bloquant">Des constats bloquants empêchent la clôture de l’exercice.</p>
+    }
+  }
+
+  <section class="filtres carte">
+    <label class="champ">
+      <span>Recherche</span>
+      <input type="search" [(ngModel)]="recherche" (ngModelChange)="rechercheChangee()" placeholder="Intitulé, objet, code…" />
+    </label>
+    <label class="champ">
+      <span>Gravité</span>
+      <select [(ngModel)]="severite" (ngModelChange)="filtresChanges()">
+        <option value="">Toutes</option>
+        @for (s of severites; track s) {
+          <option [value]="s">{{ libellesSeverite[s] }}</option>
+        }
+      </select>
+    </label>
+    <label class="champ">
+      <span>Catégorie</span>
+      <select [(ngModel)]="categorie" (ngModelChange)="filtresChanges()">
+        <option value="">Toutes</option>
+        @for (c of categories; track c) {
+          <option [value]="c">{{ libellesCategorie[c] }}</option>
+        }
+      </select>
+    </label>
+    <label class="champ">
+      <span>Objet</span>
+      <select [(ngModel)]="entityType" (ngModelChange)="filtresChanges()">
+        <option value="">Tous</option>
+        @for (t of typesObjet; track t) {
+          <option [value]="t">{{ libelleObjet(t) }}</option>
+        }
+      </select>
+    </label>
+    <label class="champ">
+      <span>Statut</span>
+      <select [(ngModel)]="statut" (ngModelChange)="filtresChanges()">
+        <option value="">À traiter</option>
+        <option value="RESOLVED">Résolus</option>
+        <option value="DISMISSED">Écartés</option>
+      </select>
+    </label>
+    <label class="champ champ-date">
+      <span>Détecté du</span>
+      <input type="date" [(ngModel)]="du" (ngModelChange)="filtresChanges()" />
+    </label>
+    <label class="champ champ-date">
+      <span>au</span>
+      <input type="date" [(ngModel)]="au" (ngModelChange)="filtresChanges()" />
+    </label>
+    <button type="button" class="bouton-lien" (click)="reinitialiser()">Réinitialiser</button>
+  </section>
+
+  @if (chargement()) {
+    <p class="etat-vide">Chargement…</p>
+  } @else if (constats().length === 0) {
+    <p class="etat-vide">Rien à traiter pour ces critères. Le dossier est à jour.</p>
+  } @else {
+    <p class="compteur">{{ total() }} constat(s)</p>
+    <div class="liste">
+      @for (c of constats(); track c.id) {
+        <article class="carte ligne" [class]="'ligne ' + classeSeverite(c.severity)">
+          <div class="ligne-tete">
+            <span class="badge" [class]="'badge ' + classeSeverite(c.severity)">{{ libellesSeverite[c.severity] }}</span>
+            <span class="badge badge-neutre">{{ libellesCategorie[c.category] }}</span>
+            <span class="badge badge-neutre" data-champ="domaine">{{ c.domaineLibelle }}</span>
+            <span class="objet">{{ libelleObjet(c.entityType) }}</span>
+            <span class="date">détecté le {{ c.detectedAt | date: 'dd/MM/yyyy HH:mm' }}</span>
+          </div>
+          <h3>{{ c.message }}</h3>
+          @if (c.explanation) {
+            <p class="explication">{{ c.explanation }}</p>
+          }
+          @if (c.suggestedAction) {
+            <p class="action"><strong>À faire :</strong> {{ c.suggestedAction }}</p>
+          }
+
+          @if (detailOuvert() === c.id) {
+            <dl class="valeurs">
+              @for (v of valeurs(c); track v[0]) {
+                <dt>{{ v[0] }}</dt>
+                <dd>{{ v[1] }}</dd>
+              }
+              <dt>code</dt>
+              <dd>{{ c.code }}</dd>
+              @if (c.relatedEntityIds.length) {
+                <dt>objets liés</dt>
+                <dd>{{ c.relatedEntityIds.length }} (premier : {{ c.relatedEntityIds[0] }})</dd>
+              }
+              @if (c.resolutionType) {
+                <dt>résolution</dt>
+                <dd>{{ c.resolutionType }}{{ c.resolutionComment ? ' — ' + c.resolutionComment : '' }}</dd>
+              }
+            </dl>
+          }
+
+          @if (investigationDe() === c.id) {
+            <section class="investigation" data-zone="investigation">
+              @if (investigationEnCours()) {
+                <p class="etat-vide">Reconstitution en cours…</p>
+              }
+              @if (investigation(); as inv) {
+                <p class="investigation-resume" data-champ="resume-investigation">{{ inv.summary }}</p>
+                @if (inv.comparison; as cmp) {
+                  <p class="investigation-ecart">
+                    {{ cmp.expectedLabel }} : <strong>{{ cmp.expected | number: '1.0-0' }}</strong> · {{ cmp.actualLabel }} : <strong>{{ cmp.actual | number: '1.0-0' }}</strong>
+                    @if (cmp.difference !== null) { · écart : <strong>{{ cmp.difference | number: '1.0-0' }}</strong> }
+                  </p>
+                }
+                <h4>Causes</h4>
+                @for (cause of inv.causes; track cause.code + cause.explanation) {
+                  <div class="cause" [class.cause-anomalie]="cause.nature === 'ANOMALY'" [attr.data-cause]="cause.code">
+                    <strong>{{ libelleCause(cause.code) }}</strong>
+                    @if (cause.amount !== null) { <span class="cause-montant">{{ cause.amount | number: '1.0-0' }}</span> }
+                    <span class="badge badge-neutre">{{ cause.nature === 'ANOMALY' ? 'À traiter' : cause.nature === 'EXPLANATION' ? 'Explication' : 'Information' }}</span>
+                    <p>{{ cause.explanation }}</p>
+                    @if (cause.evidence.length) {
+                      <ul class="preuves">
+                        @for (p of cause.evidence; track p.label + p.entityId) {
+                          <li>{{ p.label }}@if (p.amount !== null) { — {{ p.amount | number: '1.0-0' }} }@if (p.date) { ({{ p.date | date: 'dd/MM/yyyy' }}) }</li>
+                        }
+                      </ul>
+                    }
+                  </div>
+                }
+                @if (inv.timeline.length) {
+                  <h4>Chronologie</h4>
+                  <ol class="chronologie" data-zone="chronologie">
+                    @for (ev of inv.timeline; track ev.label + ev.date) {
+                      <li><span class="date">{{ ev.date | date: 'dd/MM/yyyy' }}</span> {{ ev.label }}@if (ev.amount !== null) { — {{ ev.amount | number: '1.0-0' }} }</li>
+                    }
+                  </ol>
+                }
+                @if (inv.relatedEntities.length) {
+                  <h4>Objets liés</h4>
+                  <div class="objets-lies">
+                    @for (o of inv.relatedEntities; track o.type + o.id) {
+                      @if (peutOuvrirObjet(o)) {
+                        <button type="button" class="bouton-lien" (click)="ouvrirObjet(o)" data-action="ouvrir-objet">{{ o.label }}</button>
+                      } @else {
+                        <span>{{ o.label }}</span>
+                      }
+                    }
+                  </div>
+                }
+                @if (inv.suggestedActions.length) {
+                  <h4>Actions possibles</h4>
+                  <ul class="actions-suggerees">
+                    @for (a of inv.suggestedActions; track a.code) {
+                      <li><strong>{{ a.label }}</strong> — <span class="operation">{{ a.operation }}</span></li>
+                    }
+                  </ul>
+                }
+              }
+            </section>
+          }
+
+          <div class="ligne-actions">
+            @if (peutOuvrir(c)) {
+              <button type="button" class="bouton-principal petit" (click)="ouvrir(c)">Traiter</button>
+            }
+            @if (peutDemanderPiece(c)) {
+              <button type="button" class="bouton-secondaire petit" (click)="demanderPiece(c)">Demander la pièce</button>
+            }
+            <button type="button" class="bouton-secondaire petit" (click)="pourquoi(c)" data-action="pourquoi">
+              {{ investigationDe() === c.id ? 'Masquer le pourquoi' : 'Pourquoi ?' }}
+            </button>
+            <button type="button" class="bouton-lien petit" (click)="basculerDetail(c.id)">
+              {{ detailOuvert() === c.id ? 'Masquer le détail' : 'Voir le détail' }}
+            </button>
+            @if (c.status === 'OPEN' || c.status === 'IN_PROGRESS') {
+              @if (ecartEnCours() === c.id) {
+                <input type="text" class="motif" [(ngModel)]="motifEcart" placeholder="Motif (obligatoire)" />
+                <button type="button" class="bouton-principal petit" [disabled]="!motifEcart.trim()" (click)="confirmerEcart(c)">Confirmer</button>
+                <button type="button" class="bouton-lien bouton-discret petit" (click)="annulerEcart()">Annuler</button>
+              } @else {
+                <span class="espaceur"></span>
+                <button type="button" class="bouton-lien bouton-discret petit" (click)="demanderEcart(c.id)">Écarter…</button>
+              }
+            }
+          </div>
+        </article>
+      }
+    </div>
+
+    @if (totalPages() > 1) {
+      <div class="pagination">
+        <button type="button" class="bouton-lien" [disabled]="page() === 0" (click)="changerPage(-1)">Précédent</button>
+        <span>Page {{ page() + 1 }} / {{ totalPages() }}</span>
+        <button type="button" class="bouton-lien" [disabled]="page() + 1 >= totalPages()" (click)="changerPage(1)">Suivant</button>
+      </div>
+    }
+  }
+</div>

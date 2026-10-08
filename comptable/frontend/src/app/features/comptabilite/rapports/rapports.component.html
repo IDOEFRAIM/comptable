@@ -131,12 +131,12 @@
         <tfoot>
           <tr>
             <td>Totaux</td>
-            <td>{{ balance.totalSoldeOuvertureDebit }}</td>
-            <td>{{ balance.totalSoldeOuvertureCredit }}</td>
-            <td>{{ balance.totalMouvementDebit }}</td>
-            <td>{{ balance.totalMouvementCredit }}</td>
-            <td>{{ balance.totalSoldeClotureDebit }}</td>
-            <td>{{ balance.totalSoldeClotureCredit }}</td>
+            <td>{{ balance.totalSoldeOuvertureDebit | number: '1.0-2' }}</td>
+            <td>{{ balance.totalSoldeOuvertureCredit | number: '1.0-2' }}</td>
+            <td>{{ balance.totalMouvementDebit | number: '1.0-2' }}</td>
+            <td>{{ balance.totalMouvementCredit | number: '1.0-2' }}</td>
+            <td>{{ balance.totalSoldeClotureDebit | number: '1.0-2' }}</td>
+            <td>{{ balance.totalSoldeClotureCredit | number: '1.0-2' }}</td>
           </tr>
         </tfoot>
       </table>
@@ -301,14 +301,14 @@
               <td>{{ ligne.tranche31a60 || '—' }}</td>
               <td>{{ ligne.tranche61a90 || '—' }}</td>
               <td>{{ ligne.tranchePlus90 || '—' }}</td>
-              <td>{{ ligne.total }}</td>
+              <td>{{ ligne.total | number: '1.0-2' }}</td>
             </tr>
           }
         </tbody>
         <tfoot>
           <tr>
             <td colspan="6">Total général</td>
-            <td>{{ ba.totalGeneral }}</td>
+            <td>{{ ba.totalGeneral | number: '1.0-2' }}</td>
           </tr>
         </tfoot>
       </table>

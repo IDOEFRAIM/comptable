@@ -1,7 +1,8 @@
 package com.example.comptable.comptabilite.operation.vente;
 
+import com.example.comptable.comptabilite.operation.common.Blocages;
+
 import com.example.comptable.comptabilite.domain.CompteComptable;
-import com.example.comptable.comptabilite.domain.RoleCompteSysteme;
 import com.example.comptable.comptabilite.domain.Tiers;
 import com.example.comptable.comptabilite.domain.TypeJournal;
 import com.example.comptable.comptabilite.operation.common.FraisAccessoireRequest;
@@ -9,6 +10,10 @@ import com.example.comptable.comptabilite.operation.common.ReductionRequest;
 import com.example.comptable.comptabilite.operation.common.ResultatRegle;
 import com.example.comptable.comptabilite.operation.common.TypeReduction;
 import com.example.comptable.comptabilite.operation.common.domain.AccountingOperationProposalLigne;
+import com.example.comptable.comptabilite.parametrage.AccountContext;
+import com.example.comptable.comptabilite.operation.common.AccountingOperationType;
+import com.example.comptable.comptabilite.parametrage.domain.AccountPurpose;
+import com.example.comptable.comptabilite.parametrage.AccountingAccountResolver;
 import com.example.comptable.comptabilite.operation.tva.TvaRateResolver;
 import com.example.comptable.comptabilite.operation.tva.TvaResultat;
 import com.example.comptable.comptabilite.service.CompteComptableValidationService;
@@ -36,6 +41,7 @@ public class VenteRule {
 
     private final CompteComptableValidationService compteComptableValidationService;
     private final TvaRateResolver tvaRateResolver;
+    private final AccountingAccountResolver accountingAccountResolver;
 
     public ResultatRegle construire(Entreprise entreprise, Tiers client, VenteOperationRequest request) {
         if (request.montantHt().signum() < 0) {
@@ -45,7 +51,7 @@ public class VenteRule {
         CompteComptable compteProduit = compteComptableValidationService
                 .chargerCompteUtilisable(entreprise.getId(), request.compteProduitId(), true);
 
-        List<String> explications = new ArrayList<>();
+        Blocages explications = new Blocages();
         List<String> warnings = new ArrayList<>();
 
         BigDecimal montantHtPrincipal = appliquerReductions(request.reductions(), request.montantHt(), explications);
@@ -70,8 +76,7 @@ public class VenteRule {
                 if (frais.inclusDansBaseTva()) {
                     montantHtBaseTva = montantHtBaseTva.add(frais.montantHt());
                 } else if (frais.tauxTvaId() != null) {
-                    TvaResultat tvaFrais = tvaRateResolver.resoudreParRegle(entreprise.getId(), frais.tauxTvaId(),
-                            frais.montantHt(), RoleCompteSysteme.TVA_COLLECTEE);
+                    TvaResultat tvaFrais = tvaRateResolver.resoudreParRegle(frais.tauxTvaId(), frais.montantHt());
                     if (!tvaFrais.nonSupporte()) {
                         montantTvaFraisHorsBase = montantTvaFraisHorsBase.add(tvaFrais.montantTva());
                     }
@@ -86,8 +91,8 @@ public class VenteRule {
         BigDecimal montantTvaTotal = BigDecimal.ZERO;
         if (montantHtBaseTva.signum() > 0 || montantTvaFraisHorsBase.signum() > 0) {
             TvaResultat tva = request.tauxTvaId() != null
-                    ? tvaRateResolver.resoudreParRegle(entreprise.getId(), request.tauxTvaId(), montantHtBaseTva, RoleCompteSysteme.TVA_COLLECTEE)
-                    : tvaRateResolver.resoudre(entreprise.getId(), entreprise.getPays(), request.date(), montantHtBaseTva, RoleCompteSysteme.TVA_COLLECTEE);
+                    ? tvaRateResolver.resoudreParRegle(request.tauxTvaId(), montantHtBaseTva)
+                    : tvaRateResolver.resoudre(entreprise.getPays(), request.date(), montantHtBaseTva);
 
             if (tva.nonSupporte()) {
                 explications.add("TVA collectee non calculee : " + tva.motif());
@@ -97,8 +102,13 @@ public class VenteRule {
                     warnings.add("Taux TVA issu d'une regle de demonstration non verifiee reglementairement.");
                 }
                 if (montantTvaTotal.signum() > 0) {
-                    lignes.add(AccountingOperationProposalLigne.credit(tva.compte(), montantTvaTotal,
-                            "TVA collectee - " + request.libelle()));
+                    AccountingAccountResolver.CompteResolu compteTva = resoudreCompteTva(entreprise);
+                    if (compteTva.estResolu()) {
+                        lignes.add(AccountingOperationProposalLigne.credit(compteTva.compte(), montantTvaTotal,
+                                "TVA collectee - " + request.libelle()));
+                    } else {
+                        explications.compte(compteTva, "de TVA collectee");
+                    }
                 }
             }
         }
@@ -111,22 +121,36 @@ public class VenteRule {
         return new ResultatRegle(TypeJournal.VENTES, lignes, explications, warnings);
     }
 
+    /** Compte de TVA collectee : toujours par le parametrage de l'entreprise (purpose TVA_COLLECTEE),
+     * jamais lie au calcul du taux (fiscalite). */
+    private AccountingAccountResolver.CompteResolu resoudreCompteTva(Entreprise entreprise) {
+        return accountingAccountResolver.resoudreCompte(entreprise.getId(), AccountPurpose.TVA_COLLECTEE,
+                new AccountContext(AccountingOperationType.VENTE, null, null, null, entreprise.getPays(), null, java.util.Map.of()), null);
+    }
+
     /** Reutilise par AvoirRule pour AVOIR_VENTE : lignes "core" (client + produit + TVA) sans
      * frais/reductions, avant inversion debit/credit par l'appelant. */
     public List<AccountingOperationProposalLigne> construireLignesCore(Entreprise entreprise, Tiers client,
             CompteComptable compteProduit, BigDecimal montantHt, UUID tauxTvaId, LocalDate date, String libelle,
-            List<String> explications, List<String> warnings) {
+            Blocages explications, List<String> warnings) {
         BigDecimal montantTva = BigDecimal.ZERO;
         CompteComptable compteTva = null;
         if (montantHt.signum() > 0) {
             TvaResultat tva = tauxTvaId != null
-                    ? tvaRateResolver.resoudreParRegle(entreprise.getId(), tauxTvaId, montantHt, RoleCompteSysteme.TVA_COLLECTEE)
-                    : tvaRateResolver.resoudre(entreprise.getId(), entreprise.getPays(), date, montantHt, RoleCompteSysteme.TVA_COLLECTEE);
+                    ? tvaRateResolver.resoudreParRegle(tauxTvaId, montantHt)
+                    : tvaRateResolver.resoudre(entreprise.getPays(), date, montantHt);
             if (tva.nonSupporte()) {
                 explications.add("TVA collectee non calculee : " + tva.motif());
             } else {
                 montantTva = tva.montantTva();
-                compteTva = tva.compte();
+                if (montantTva.signum() > 0) {
+                    AccountingAccountResolver.CompteResolu resolu = resoudreCompteTva(entreprise);
+                    if (resolu.estResolu()) {
+                        compteTva = resolu.compte();
+                    } else {
+                        explications.compte(resolu, "de TVA collectee");
+                    }
+                }
                 if (tva.sourceDemo()) {
                     warnings.add("Taux TVA issu d'une regle de demonstration non verifiee reglementairement.");
                 }

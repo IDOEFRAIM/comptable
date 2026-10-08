@@ -159,8 +159,14 @@ class P1CabinetOperatingSystemE2ETest {
     private Finding signalerFindingCritique(UUID entrepriseId, String titre) {
         Finding f = new Finding();
         f.setEntreprise(entrepriseRepository.getReferenceById(entrepriseId));
-        f.setType(TypeFinding.TAX_REVIEW);
+        // Code hors perimetre des detecteurs : le constat n'est pas ferme automatiquement par un passage de controles
+        // (un constat dont la cause "disparait" est resolu par le systeme, ce que ce test n'exerce pas).
+        f.setType(TypeFinding.CLOSING_BLOCKER);
         f.setSeverity(SeveriteFinding.CRITICAL);
+        f.setControlCode("CLOSING_BLOCKER");
+        f.setCategory(com.example.comptable.controle.ControlCategory.CLOSING);
+        f.setControlSeverity(com.example.comptable.controle.ControlSeverity.BLOCKING);
+        f.setLastDetectedAt(java.time.OffsetDateTime.now());
         f.setSourceType("DECLARATION_FISCALE");
         f.setSourceId("TVA-" + UUID.randomUUID());
         f.setTitle(titre);
@@ -364,6 +370,10 @@ class P1CabinetOperatingSystemE2ETest {
         f.setEntreprise(entrepriseRepository.getReferenceById(entrepriseId));
         f.setType(TypeFinding.TAX_REVIEW);
         f.setSeverity(SeveriteFinding.IMPORTANT);
+        f.setControlCode("TAX_DECLARATION_MISSING");
+        f.setCategory(com.example.comptable.controle.ControlCategory.TAX);
+        f.setControlSeverity(com.example.comptable.controle.ControlSeverity.WARNING);
+        f.setLastDetectedAt(java.time.OffsetDateTime.now());
         f.setSourceType("DECLARATION_FISCALE");
         f.setSourceId("TVA-" + UUID.randomUUID());
         f.setTitle(titre);

@@ -47,6 +47,19 @@ public class FactureFournisseur extends UuidEntity {
     @Column(nullable = false)
     private String numero;
 
+    /** Numero de la facture telle qu'emise par le FOURNISSEUR (le {@link #numero} ci-dessus est interne). Facultatif :
+     * renseigne quand la piece du fournisseur est rapprochee. */
+    @Column(name = "numero_fournisseur")
+    private String numeroFournisseur;
+
+    @Column(name = "numero_fournisseur_normalise")
+    private String numeroFournisseurNormalise;
+
+    public void setNumeroFournisseur(String numeroFournisseur) {
+        this.numeroFournisseur = numeroFournisseur;
+        this.numeroFournisseurNormalise = com.example.comptable.document.service.NumeroFactureNormalizer.normaliser(numeroFournisseur);
+    }
+
     @Column(name = "date_facture", nullable = false)
     private LocalDate dateFacture;
 

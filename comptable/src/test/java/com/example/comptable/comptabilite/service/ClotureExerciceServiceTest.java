@@ -1,5 +1,7 @@
 package com.example.comptable.comptabilite.service;
 
+import com.example.comptable.comptabilite.operation.common.AccountingSource;
+
 import com.example.comptable.comptabilite.domain.CompteComptable;
 import com.example.comptable.comptabilite.domain.ExerciceComptable;
 import com.example.comptable.comptabilite.domain.PlanComptableReference;
@@ -12,10 +14,8 @@ import com.example.comptable.comptabilite.operation.common.domain.AccountingOper
 import com.example.comptable.comptabilite.operation.common.web.dto.AccountingOperationProposalDto;
 import com.example.comptable.comptabilite.repository.CompteComptableRepository;
 import com.example.comptable.comptabilite.repository.ExerciceComptableRepository;
-import com.example.comptable.comptabilite.repository.LigneEcritureRepository;
-import com.example.comptable.comptabilite.web.dto.CompteResultatDto;
+import com.example.comptable.comptabilite.balance.AccountingBalanceEngine;
 import com.example.comptable.comptabilite.web.dto.ExerciceComptableDto;
-import com.example.comptable.comptabilite.web.dto.SectionFinanciereDto;
 import com.example.comptable.dossier.ClotureReadinessService;
 import com.example.comptable.dossier.web.dto.ClotureReadinessDto;
 import com.example.comptable.entreprise.domain.Entreprise;
@@ -65,15 +65,16 @@ class ClotureExerciceServiceTest {
     @Mock
     private CompteComptableRepository compteComptableRepository;
     @Mock
-    private LigneEcritureRepository ligneEcritureRepository;
-    @Mock
-    private EtatsFinanciersService etatsFinanciersService;
+    private AccountingBalanceEngine accountingBalanceEngine;
     @Mock
     private ClotureReadinessService clotureReadinessService;
     @Mock
     private ClotureRule clotureRule;
     @Mock
     private AccountingOperationEngine accountingOperationEngine;
+
+    @Mock
+    private com.example.comptable.audit.AuditTrailService auditTrailService;
 
     @InjectMocks
     private ClotureExerciceService clotureExerciceService;
@@ -88,6 +89,7 @@ class ClotureExerciceServiceTest {
 
     @BeforeEach
     void setUp() {
+        branchementMoteur();
         entrepriseId = UUID.randomUUID();
         exerciceId = UUID.randomUUID();
         entreprise = new Entreprise();
@@ -159,20 +161,14 @@ class ClotureExerciceServiceTest {
     void genere_lecriture_de_determination_du_resultat_benefice() {
         checklistPrete();
         when(compteComptableRepository.findByEntrepriseId(entrepriseId)).thenReturn(List.of(achats, ventes));
-        when(etatsFinanciersService.genererCompteResultatInterne(exercice)).thenReturn(compteResultat(new BigDecimal("10000")));
-        when(ligneEcritureRepository.mouvementNetPeriode(achats.getId(), exercice.getDateDebut(), exercice.getDateFin()))
-                .thenReturn(new BigDecimal("-30000"));
-        when(ligneEcritureRepository.mouvementNetPeriode(ventes.getId(), exercice.getDateDebut(), exercice.getDateFin()))
-                .thenReturn(new BigDecimal("40000"));
+        mouvementActivite(achats, "-30000");
+        mouvementActivite(ventes, "40000");
         when(clotureRule.construire(eq(entreprise), any(), eq(new BigDecimal("10000"))))
                 .thenReturn(new ResultatRegle(com.example.comptable.comptabilite.domain.TypeJournal.OPERATIONS_DIVERSES,
                         List.of(), List.of(), List.of()));
         when(accountingOperationEngine.proposerEtValiderImmediatement(eq(entrepriseId), eq(AccountingOperationType.CLOTURE_EXERCICE),
-                eq(null), eq(exercice.getDateFin()), any(), eq(null), any(), eq("EXERCICE"), eq(exerciceId), eq(principal)))
-                .thenReturn(new AccountingOperationProposalDto(UUID.randomUUID(), entrepriseId, "CLOTURE_EXERCICE", "APPROVED",
-                        null, null, null, exercice.getDateFin(), "Determination du resultat de l'exercice", null,
-                        List.of(), BigDecimal.ZERO, BigDecimal.ZERO, true, List.of(), List.of(), null, null, null, null,
-                        UUID.randomUUID(), "EXERCICE", exerciceId));
+                eq(null), eq(exercice.getDateFin()), any(), eq(null), any(), eq(AccountingSource.de("EXERCICE", exerciceId, "CLOTURE")), eq(principal)))
+                .thenReturn(new AccountingOperationProposalDto(UUID.randomUUID(), entrepriseId, "CLOTURE_EXERCICE", "APPROVED", null, null, null, exercice.getDateFin(), "Determination du resultat de l'exercice", null, List.of(), BigDecimal.ZERO, BigDecimal.ZERO, true, List.of(), List.of(), null, null, null, null, UUID.randomUUID(), "EXERCICE", exerciceId, "CLOTURE"));
         when(exerciceComptableRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
         when(exerciceComptableRepository.findByEntrepriseIdAndDate(entrepriseId, LocalDate.of(2027, 1, 1)))
                 .thenReturn(Optional.empty());
@@ -191,7 +187,7 @@ class ClotureExerciceServiceTest {
 
         org.mockito.Mockito.verify(accountingOperationEngine).proposerEtValiderImmediatement(eq(entrepriseId),
                 eq(AccountingOperationType.CLOTURE_EXERCICE), eq(null), eq(exercice.getDateFin()), any(), eq(null), any(),
-                eq("EXERCICE"), eq(exerciceId), eq(principal));
+                eq(AccountingSource.de("EXERCICE", exerciceId, "CLOTURE")), eq(principal));
 
         org.mockito.Mockito.verify(exerciceComptableRepository, org.mockito.Mockito.times(2)).save(any());
     }
@@ -200,20 +196,14 @@ class ClotureExerciceServiceTest {
     void genere_lecriture_de_determination_du_resultat_perte() {
         checklistPrete();
         when(compteComptableRepository.findByEntrepriseId(entrepriseId)).thenReturn(List.of(achats, ventes));
-        when(etatsFinanciersService.genererCompteResultatInterne(exercice)).thenReturn(compteResultat(new BigDecimal("-5000")));
-        when(ligneEcritureRepository.mouvementNetPeriode(achats.getId(), exercice.getDateDebut(), exercice.getDateFin()))
-                .thenReturn(new BigDecimal("-30000"));
-        when(ligneEcritureRepository.mouvementNetPeriode(ventes.getId(), exercice.getDateDebut(), exercice.getDateFin()))
-                .thenReturn(new BigDecimal("25000"));
+        mouvementActivite(achats, "-30000");
+        mouvementActivite(ventes, "25000");
         when(clotureRule.construire(eq(entreprise), any(), eq(new BigDecimal("-5000"))))
                 .thenReturn(new ResultatRegle(com.example.comptable.comptabilite.domain.TypeJournal.OPERATIONS_DIVERSES,
                         List.of(), List.of(), List.of()));
         when(accountingOperationEngine.proposerEtValiderImmediatement(eq(entrepriseId), eq(AccountingOperationType.CLOTURE_EXERCICE),
-                eq(null), eq(exercice.getDateFin()), any(), eq(null), any(), eq("EXERCICE"), eq(exerciceId), eq(principal)))
-                .thenReturn(new AccountingOperationProposalDto(UUID.randomUUID(), entrepriseId, "CLOTURE_EXERCICE", "APPROVED",
-                        null, null, null, exercice.getDateFin(), "Determination du resultat de l'exercice", null,
-                        List.of(), BigDecimal.ZERO, BigDecimal.ZERO, true, List.of(), List.of(), null, null, null, null,
-                        UUID.randomUUID(), "EXERCICE", exerciceId));
+                eq(null), eq(exercice.getDateFin()), any(), eq(null), any(), eq(AccountingSource.de("EXERCICE", exerciceId, "CLOTURE")), eq(principal)))
+                .thenReturn(new AccountingOperationProposalDto(UUID.randomUUID(), entrepriseId, "CLOTURE_EXERCICE", "APPROVED", null, null, null, exercice.getDateFin(), "Determination du resultat de l'exercice", null, List.of(), BigDecimal.ZERO, BigDecimal.ZERO, true, List.of(), List.of(), null, null, null, null, UUID.randomUUID(), "EXERCICE", exerciceId, "CLOTURE"));
         when(exerciceComptableRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
         when(exerciceComptableRepository.findByEntrepriseIdAndDate(entrepriseId, LocalDate.of(2027, 1, 1)))
                 .thenReturn(Optional.empty());
@@ -227,7 +217,6 @@ class ClotureExerciceServiceTest {
     void ne_genere_aucune_ecriture_si_aucun_mouvement_de_charge_ou_produit() {
         checklistPrete();
         when(compteComptableRepository.findByEntrepriseId(entrepriseId)).thenReturn(List.of());
-        when(etatsFinanciersService.genererCompteResultatInterne(exercice)).thenReturn(compteResultat(BigDecimal.ZERO));
         when(exerciceComptableRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
         when(exerciceComptableRepository.findByEntrepriseIdAndDate(entrepriseId, LocalDate.of(2027, 1, 1)))
                 .thenReturn(Optional.empty());
@@ -241,7 +230,6 @@ class ClotureExerciceServiceTest {
     void cree_lexercice_suivant_sil_nexiste_pas() {
         checklistPrete();
         when(compteComptableRepository.findByEntrepriseId(entrepriseId)).thenReturn(List.of());
-        when(etatsFinanciersService.genererCompteResultatInterne(exercice)).thenReturn(compteResultat(BigDecimal.ZERO));
         when(exerciceComptableRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
         when(exerciceComptableRepository.findByEntrepriseIdAndDate(entrepriseId, LocalDate.of(2027, 1, 1)))
                 .thenReturn(Optional.empty());
@@ -278,7 +266,6 @@ class ClotureExerciceServiceTest {
     void ne_recree_pas_lexercice_suivant_sil_existe_deja() {
         checklistPrete();
         when(compteComptableRepository.findByEntrepriseId(entrepriseId)).thenReturn(List.of());
-        when(etatsFinanciersService.genererCompteResultatInterne(exercice)).thenReturn(compteResultat(BigDecimal.ZERO));
         when(exerciceComptableRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
         ExerciceComptable exerciceSuivantExistant = new ExerciceComptable();
         exerciceSuivantExistant.setId(UUID.randomUUID());
@@ -290,9 +277,29 @@ class ClotureExerciceServiceTest {
         org.mockito.Mockito.verify(exerciceComptableRepository, org.mockito.Mockito.times(1)).save(any());
     }
 
-    private CompteResultatDto compteResultat(BigDecimal resultatNet) {
-        SectionFinanciereDto vide = new SectionFinanciereDto("x", List.of(), BigDecimal.ZERO);
-        return new CompteResultatDto(exercice.getDateDebut(), exercice.getDateFin(),
-                vide, vide, BigDecimal.ZERO, vide, vide, BigDecimal.ZERO, resultatNet);
+    // --- Moteur de balance (phase F1.5) : soldes alimentes par ces helpers, jamais par des mocks de requetes par compte ---
+    private final java.util.List<com.example.comptable.comptabilite.balance.AccountBalance> soldesLegaux = new java.util.ArrayList<>();
+    private final java.util.List<com.example.comptable.comptabilite.balance.AccountBalance> soldesActivite = new java.util.ArrayList<>();
+
+    private void branchementMoteur() {
+        org.mockito.Mockito.lenient().when(accountingBalanceEngine.balances(org.mockito.ArgumentMatchers.any(), org.mockito.ArgumentMatchers.any(),
+                org.mockito.ArgumentMatchers.any(), org.mockito.ArgumentMatchers.eq(com.example.comptable.comptabilite.balance.ReportingView.LEGAL_LEDGER)))
+                .thenAnswer(i -> java.util.List.copyOf(soldesLegaux));
+        org.mockito.Mockito.lenient().when(accountingBalanceEngine.balances(org.mockito.ArgumentMatchers.any(), org.mockito.ArgumentMatchers.any(),
+                org.mockito.ArgumentMatchers.any(), org.mockito.ArgumentMatchers.eq(com.example.comptable.comptabilite.balance.ReportingView.PERIOD_ACTIVITY)))
+                .thenAnswer(i -> java.util.List.copyOf(soldesActivite));
+    }
+
+    /** Solde net (debit - credit) d'un compte a la date d'arrete, vue legale. */
+    private void soldeLegal(CompteComptable compte, String net) {
+        soldesLegaux.add(com.example.comptable.comptabilite.balance.AccountBalance.of(compte.getId(), compte.getNumero(), compte.getIntitule(),
+                new BigDecimal(net), BigDecimal.ZERO, BigDecimal.ZERO));
+    }
+
+    /** Mouvement net CREDIT - DEBIT de l'activite de la periode (meme convention de signe que l'ancien mouvementNetPeriode). */
+    private void mouvementActivite(CompteComptable compte, String creditMoinsDebit) {
+        BigDecimal v = new BigDecimal(creditMoinsDebit);
+        soldesActivite.add(com.example.comptable.comptabilite.balance.AccountBalance.of(compte.getId(), compte.getNumero(), compte.getIntitule(),
+                BigDecimal.ZERO, v.signum() < 0 ? v.negate() : BigDecimal.ZERO, v.signum() > 0 ? v : BigDecimal.ZERO));
     }
 }

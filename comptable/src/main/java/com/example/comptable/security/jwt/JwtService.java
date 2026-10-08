@@ -39,10 +39,14 @@ public class JwtService {
                 .subject(principal.getId().toString())
                 .claim("email", principal.getUsername())
                 .claim("roles", roles)
+                .claim("cv", principal.getCredentialsVersion())
                 .issuedAt(new Date())
                 .expiration(Date.from(Instant.now().plus(expirationMinutes, ChronoUnit.MINUTES)))
                 .signWith(signingKey);
 
+        if (principal.isMustChangePassword()) {
+            builder.claim("mcp", true);
+        }
         if (principal.getTenantId() != null) {
             builder.claim("tenantId", principal.getTenantId().toString());
         }

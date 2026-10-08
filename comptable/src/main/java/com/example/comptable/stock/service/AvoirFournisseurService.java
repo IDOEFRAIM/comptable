@@ -5,6 +5,7 @@ import com.example.comptable.comptabilite.operation.achat.AchatRule;
 import com.example.comptable.comptabilite.operation.achat.LigneAchatOperationRequest;
 import com.example.comptable.comptabilite.operation.avoir.AvoirRule;
 import com.example.comptable.comptabilite.operation.common.AccountingOperationEngine;
+import com.example.comptable.comptabilite.operation.common.AccountingSource;
 import com.example.comptable.comptabilite.operation.common.AccountingOperationType;
 import com.example.comptable.comptabilite.operation.common.ResultatRegle;
 import com.example.comptable.comptabilite.operation.common.domain.AccountingOperationProposalLigne;
@@ -84,7 +85,7 @@ public class AvoirFournisseurService {
         avoir = avoirFournisseurRepository.save(avoir);
 
         AchatMultiLigneOperationRequest requeteOrigine = new AchatMultiLigneOperationRequest(
-                facture.getFournisseur().getId(), dateEmission, facture.getNumero(), libelle, lignesAchat, null, null, null);
+                facture.getFournisseur().getId(), dateEmission, facture.getNumero(), libelle, lignesAchat, null, null);
         ResultatRegle resultatOrigine = achatRule.construireMultiLigne(entreprise, facture.getFournisseur(), requeteOrigine);
         List<AccountingOperationProposalLigne> lignesInversees = avoirRule.inverserLignes(resultatOrigine.lignes());
         ResultatRegle resultatInverse = new ResultatRegle(resultatOrigine.typeJournalAttendu(), lignesInversees,
@@ -92,7 +93,7 @@ public class AvoirFournisseurService {
 
         AccountingOperationProposalDto proposition = accountingOperationEngine.proposerEtValiderImmediatement(
                 entrepriseId, AccountingOperationType.AVOIR_ACHAT, facture.getFournisseur(), dateEmission, libelle,
-                avoir.getNumero(), resultatInverse, "AVOIR_FACTURE_FOURNISSEUR", avoir.getId(), principal);
+                avoir.getNumero(), resultatInverse, AccountingSource.de("AVOIR_FACTURE_FOURNISSEUR", avoir.getId(), "VALIDATION"), principal);
 
         avoir.setEcritureId(proposition.ecritureId());
         avoir = avoirFournisseurRepository.save(avoir);

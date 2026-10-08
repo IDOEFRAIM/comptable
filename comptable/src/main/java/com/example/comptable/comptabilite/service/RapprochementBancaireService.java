@@ -1,6 +1,11 @@
 package com.example.comptable.comptabilite.service;
 
 import com.example.comptable.agent.client.AiServiceClient;
+import com.example.comptable.banque.BankReconciliationService;
+import com.example.comptable.banque.BankStatementImporter;
+import com.example.comptable.banque.DecisionReconciliation;
+import com.example.comptable.banque.SourceReconciliation;
+import com.example.comptable.comptabilite.service.RapprochementScorer.ClassementNote;
 import com.example.comptable.agent.finding.MissingEvidenceAnalyzer;
 import com.example.comptable.agent.finding.WhatsAppResolutionService;
 import com.example.comptable.agent.matching.MatchDecisionEngine;
@@ -85,6 +90,9 @@ public class RapprochementBancaireService {
     private final MissingEvidenceAnalyzer missingEvidenceAnalyzer;
     private final WhatsAppResolutionService whatsAppResolutionService;
     private final MeterRegistry meterRegistry;
+    private final BankStatementImporter bankStatementImporter;
+    private final BankReconciliationService reconciliationService;
+    private final com.example.comptable.banque.InternalTransferService internalTransferService;
     private final boolean matchingIaActif;
 
     public RapprochementBancaireService(EntrepriseAccessService entrepriseAccessService,
@@ -99,6 +107,9 @@ public class RapprochementBancaireService {
                                          MissingEvidenceAnalyzer missingEvidenceAnalyzer,
                                          WhatsAppResolutionService whatsAppResolutionService,
                                          MeterRegistry meterRegistry,
+                                         BankStatementImporter bankStatementImporter,
+                                         BankReconciliationService reconciliationService,
+                                         com.example.comptable.banque.InternalTransferService internalTransferService,
                                          @Value("${agent.matching-ia.enabled:false}") boolean matchingIaActif) {
         this.entrepriseAccessService = entrepriseAccessService;
         this.compteComptableRepository = compteComptableRepository;
@@ -112,34 +123,39 @@ public class RapprochementBancaireService {
         this.missingEvidenceAnalyzer = missingEvidenceAnalyzer;
         this.whatsAppResolutionService = whatsAppResolutionService;
         this.meterRegistry = meterRegistry;
+        this.bankStatementImporter = bankStatementImporter;
+        this.reconciliationService = reconciliationService;
+        this.internalTransferService = internalTransferService;
         this.matchingIaActif = matchingIaActif;
+    }
+
+    /** Resultat complet d'un import : le lot (toujours trace), l'apercu chiffre, et le releve cree (null si rien de nouveau). */
+    public record ResultatImport(com.example.comptable.banque.BankImportBatch lot, BankStatementImporter.Apercu apercu, ReleveBancaireDto releve) {
+    }
+
+    /** Importe, trace le lot, puis rapproche automatiquement les cas certains et propose les cas probables. */
+    @Transactional
+    public ResultatImport importerComplet(UUID entrepriseId, BankStatementImporter.DemandeImport demande, MultipartFile fichier,
+                                          UtilisateurPrincipal principal) {
+        BankStatementImporter.ImportEffectue effectue = bankStatementImporter.importer(entrepriseId, demande, fichier, principal);
+        ReleveBancaireDto dto = null;
+        if (effectue.releve() != null) {
+            rapprocherAutomatiquement(effectue.releve());
+            dto = toDto(effectue.releve());
+        }
+        return new ResultatImport(effectue.lot(), effectue.apercu(), dto);
     }
 
     @Transactional
     public ReleveBancaireDto importer(UUID entrepriseId, ImporterReleveRequest request, MultipartFile fichier,
                                        UtilisateurPrincipal principal) {
-        Entreprise entreprise = entrepriseAccessService.verifierAcces(entrepriseId, principal);
-        CompteComptable compte = chargerCompte(entrepriseId, request.compteId());
-
-        List<LigneReleve> lignesImportees = parserCsv(fichier);
-        if (lignesImportees.isEmpty()) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Le fichier ne contient aucune ligne exploitable");
+        BankStatementImporter.DemandeImport demande = new BankStatementImporter.DemandeImport(request.compteId(), request.libelle(),
+                request.dateDebut(), request.dateFin(), request.soldeDebut(), request.soldeFin(), null);
+        ResultatImport resultat = importerComplet(entrepriseId, demande, fichier, principal);
+        if (resultat.releve() == null) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "Ce releve a deja ete importe : aucune nouvelle transaction");
         }
-
-        ReleveBancaire releve = new ReleveBancaire();
-        releve.setEntreprise(entreprise);
-        releve.setCompte(compte);
-        releve.setLibelle(request.libelle());
-        releve.setDateDebut(request.dateDebut());
-        releve.setDateFin(request.dateFin());
-        releve.setSoldeDebut(request.soldeDebut());
-        releve.setSoldeFin(request.soldeFin());
-        lignesImportees.forEach(releve::ajouterLigne);
-
-        releve = releveBancaireRepository.save(releve);
-        rapprocherAutomatiquement(releve);
-
-        return toDto(releve);
+        return resultat.releve();
     }
 
     @Transactional(readOnly = true)
@@ -162,17 +178,10 @@ public class RapprochementBancaireService {
         entrepriseAccessService.verifierAcces(entrepriseId, principal);
         ReleveBancaire releve = chargerReleve(entrepriseId, releveId);
         LigneReleve ligneReleve = chargerLigneReleve(releve, ligneReleveId);
-
+        // Le rapprochement est une entite tracable : plus d'ecriture directe du pointeur.
+        reconciliationService.pointer(entrepriseId, ligneReleve.getId(), ligneEcritureId, SourceReconciliation.USER, principal);
         LigneEcriture ligneEcriture = ligneEcritureRepository.findById(ligneEcritureId)
-                .filter(le -> le.getEcriture().getEntreprise().getId().equals(entrepriseId))
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Ligne d'ecriture introuvable"));
-        if (!ligneEcriture.getCompte().getId().equals(releve.getCompte().getId())) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
-                    "Cette ligne d'ecriture ne concerne pas le compte de ce releve");
-        }
-
-        ligneReleve.setLigneEcritureId(ligneEcriture.getId());
-        ligneReleveRepository.save(ligneReleve);
         return toLigneDto(ligneReleve, ligneEcriture);
     }
 
@@ -181,8 +190,7 @@ public class RapprochementBancaireService {
         entrepriseAccessService.verifierAcces(entrepriseId, principal);
         ReleveBancaire releve = chargerReleve(entrepriseId, releveId);
         LigneReleve ligneReleve = chargerLigneReleve(releve, ligneReleveId);
-        ligneReleve.setLigneEcritureId(null);
-        ligneReleveRepository.save(ligneReleve);
+        reconciliationService.annuler(entrepriseId, ligneReleve.getId(), "Depointage manuel", principal);
     }
 
     private void rapprocherAutomatiquement(ReleveBancaire releve) {
@@ -194,17 +202,26 @@ public class RapprochementBancaireService {
         Set<UUID> dejaPointees = new HashSet<>(
                 ligneReleveRepository.rechercherLigneEcritureIdsPointees(releve.getCompte().getId()));
 
-        for (LigneReleve ligneReleve : releve.getLignes()) {
-            List<LigneEcriture> candidats = mouvements.stream()
-                    .filter(le -> !dejaPointees.contains(le.getId()))
-                    .filter(le -> montantCorrespond(ligneReleve.getMontant(), le))
-                    .toList();
-            if (candidats.size() == 1) {
-                LigneEcriture match = candidats.get(0);
-                ligneReleve.setLigneEcritureId(match.getId());
-                dejaPointees.add(match.getId());
+        // Classification deterministe et score explicable (jamais de choix arbitraire du premier candidat) : seuls les
+        // rapprochements EXACTS sont confirmes par le systeme ; les PROBABLES sont proposes ; AMBIGUOUS / UNMATCHED restent a traiter.
+        // Virements internes d'abord : leurs deux jambes ne sont ni un reglement fournisseur ni un encaissement client.
+        internalTransferService.detecter(releve.getEntreprise());
+        Set<UUID> jambesDeVirement = internalTransferService.jambes(releve.getLignes().stream().map(LigneReleve::getId).toList());
+        List<LigneReleve> aClasser = releve.getLignes().stream().filter(l -> !jambesDeVirement.contains(l.getId())).toList();
+        List<BankReconciliationService.DemandeAutomatique> demandes = new java.util.ArrayList<>();
+        for (ClassementNote note : RapprochementScorer.classer(aClasser, mouvements, dejaPointees)) {
+            RapprochementScorer.Candidat meilleur = note.meilleur();
+            if (note.statut() == RapprochementClassifier.Statut.EXACT) {
+                demandes.add(new BankReconciliationService.DemandeAutomatique(note.ligne(), meilleur.ligne().getId(), SourceReconciliation.SYSTEM_EXACT,
+                        DecisionReconciliation.EXACT, BigDecimal.valueOf(meilleur.score()), meilleur.explication(), true));
+            } else if (note.statut() == RapprochementClassifier.Statut.PROBABLE) {
+                demandes.add(new BankReconciliationService.DemandeAutomatique(note.ligne(), meilleur.ligne().getId(), SourceReconciliation.SYSTEM_PROPOSAL,
+                        DecisionReconciliation.PROBABLE, BigDecimal.valueOf(meilleur.score()), meilleur.explication(), false));
             }
         }
+        // Tout est decide en memoire puis ecrit d'un bloc ; les ecritures prises par un cas certain ne sont plus candidates aux filets suivants.
+        reconciliationService.appliquerLot(releve.getEntreprise().getId(), demandes);
+        releve.getLignes().stream().map(LigneReleve::getLigneEcritureId).filter(java.util.Objects::nonNull).forEach(dejaPointees::add);
 
         completerParMatchingSemantique(releve, mouvements, dejaPointees);
         completerParUniversalMatchingEngine(releve);
@@ -301,81 +318,12 @@ public class RapprochementBancaireService {
         Map<UUID, LigneReleve> ligneReleveParId = nonRapprochees.stream()
                 .collect(Collectors.toMap(LigneReleve::getId, ligne -> ligne));
         for (AppariementSemantique appariement : appariements) {
-            ligneReleveParId.get(appariement.ligneReleveId()).setLigneEcritureId(appariement.ligneEcritureId());
+            reconciliationService.confirmerParLeSysteme(ligneReleveParId.get(appariement.ligneReleveId()), appariement.ligneEcritureId(),
+                    SourceReconciliation.AI_PROPOSAL, DecisionReconciliation.PROBABLE, BigDecimal.valueOf(appariement.confiance() * 100),
+                    appariement.justification());
             log.info("Rapprochement semantique applique : releve={} -> ecriture={} (confiance={}, {})",
                     appariement.ligneReleveId(), appariement.ligneEcritureId(), appariement.confiance(),
                     appariement.justification());
-        }
-    }
-
-    /** Montant releve positif (entree d'argent) doit correspondre a un debit du compte de tresorerie, negatif a un credit. */
-    private boolean montantCorrespond(BigDecimal montantReleve, LigneEcriture ligne) {
-        BigDecimal montantAttendu = montantReleve.signum() > 0 ? ligne.getDebit() : ligne.getCredit();
-        return montantAttendu.compareTo(montantReleve.abs()) == 0;
-    }
-
-    private List<LigneReleve> parserCsv(MultipartFile fichier) {
-        if (fichier == null || fichier.isEmpty()) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Fichier manquant");
-        }
-        List<LigneReleve> lignes = new ArrayList<>();
-        try (BufferedReader lecteur = new BufferedReader(new InputStreamReader(fichier.getInputStream(), StandardCharsets.UTF_8))) {
-            String ligneBrute;
-            boolean premiereLigne = true;
-            String separateur = null;
-            while ((ligneBrute = lecteur.readLine()) != null) {
-                if (ligneBrute.isBlank()) {
-                    continue;
-                }
-                if (separateur == null) {
-                    separateur = ligneBrute.contains(";") ? ";" : ",";
-                }
-                if (premiereLigne) {
-                    premiereLigne = false;
-                    if (estEnTete(ligneBrute)) {
-                        continue;
-                    }
-                }
-                String[] champs = ligneBrute.split(separateur, -1);
-                if (champs.length < 3) {
-                    continue;
-                }
-                LocalDate date = parserDate(champs[0].trim());
-                String libelle = champs[1].trim();
-                BigDecimal montant = parserMontant(champs[2].trim());
-                if (date == null || montant == null) {
-                    continue;
-                }
-                lignes.add(new LigneReleve(date, libelle, montant));
-            }
-        } catch (IOException e) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Fichier illisible");
-        }
-        return lignes;
-    }
-
-    private boolean estEnTete(String ligne) {
-        String debut = ligne.length() > 4 ? ligne.substring(0, 4) : ligne;
-        return !debut.chars().anyMatch(Character::isDigit);
-    }
-
-    private LocalDate parserDate(String texte) {
-        for (DateTimeFormatter format : FORMATS_DATE) {
-            try {
-                return LocalDate.parse(texte, format);
-            } catch (DateTimeParseException ignored) {
-                // on tente le format suivant
-            }
-        }
-        return null;
-    }
-
-    private BigDecimal parserMontant(String texte) {
-        String normalise = texte.replace(" ", "").replace(" ", "").replace(",", ".");
-        try {
-            return new BigDecimal(normalise);
-        } catch (NumberFormatException e) {
-            return null;
         }
     }
 
@@ -383,7 +331,7 @@ public class RapprochementBancaireService {
      * par ligne de releve, pour eviter un N+1 sur les releves contenant beaucoup de mouvements. */
     private ReleveBancaireDto toDto(ReleveBancaire releve) {
         BigDecimal soldeComptable = ligneEcritureRepository.soldeNetAvant(releve.getCompte().getId(), releve.getDateFin().plusDays(1));
-        BigDecimal ecart = releve.getSoldeFin().subtract(soldeComptable);
+        BigDecimal ecart = releve.getSoldeFin() != null && soldeComptable != null ? releve.getSoldeFin().subtract(soldeComptable) : null;
 
         List<UUID> ligneEcritureIds = releve.getLignes().stream()
                 .map(LigneReleve::getLigneEcritureId)

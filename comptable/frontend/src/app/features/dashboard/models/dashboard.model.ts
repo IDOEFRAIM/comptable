@@ -74,14 +74,18 @@ export interface ControlItemDto {
   severite: string | null;
   message: string | null;
   evidence: string | null;
+  domaine?: string | null;
 }
 
 export interface ClotureReadinessDto {
-  statut: 'READY' | 'READY_WITH_REVIEW' | 'NOT_READY';
+  statut: 'READY' | 'READY_WITH_WARNINGS' | 'NOT_READY';
   blockingItems: string[];
   warnings: string[];
   recommendations: string[];
   checklist: ControlItemDto[];
+  resume?: { bloquants: number; avertissements: number; enOrdre: number; nonApplicables: number } | null;
+  evaluatedAt?: string | null;
+  controlesExecutesLe?: string | null;
 }
 
 export const LIBELLES_STATUT_CONTROLE: Record<StatutControleCloture, string> = {
@@ -93,6 +97,6 @@ export const LIBELLES_STATUT_CONTROLE: Record<StatutControleCloture, string> = {
 
 export const LIBELLES_CLOTURE_READINESS: Record<string, string> = {
   READY: 'Prêt à clôturer',
-  READY_WITH_REVIEW: 'Prêt, sous réserve de revue',
+  READY_WITH_WARNINGS: 'Prêt, sous réserve de revue',
   NOT_READY: 'Pas prêt',
 };

@@ -1,10 +1,14 @@
 package com.example.comptable.fiscalite.service;
 
 import com.example.comptable.comptabilite.domain.CompteComptable;
-import com.example.comptable.comptabilite.repository.CompteComptableRepository;
+import com.example.comptable.comptabilite.parametrage.AccountContext;
+import com.example.comptable.comptabilite.parametrage.AccountingAccountResolver;
+import com.example.comptable.comptabilite.parametrage.domain.AccountPurpose;
 import com.example.comptable.comptabilite.repository.LigneEcritureRepository;
 import com.example.comptable.entreprise.domain.Entreprise;
 import com.example.comptable.entreprise.service.EntrepriseAccessService;
+import com.example.comptable.fiscalite.core.TaxDeadlineGenerator;
+import com.example.comptable.fiscalite.core.TaxFrameworkService;
 import com.example.comptable.fiscalite.domain.DeclarationFiscale;
 import com.example.comptable.fiscalite.domain.StatutDeclaration;
 import com.example.comptable.fiscalite.domain.TypeImpot;
@@ -35,13 +39,11 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class DeclarationFiscaleService {
 
-    private static final String COMPTE_TVA_COLLECTEE = "443";
-    private static final String COMPTE_TVA_DEDUCTIBLE = "4456";
-
     private final EntrepriseAccessService entrepriseAccessService;
     private final DeclarationFiscaleRepository declarationFiscaleRepository;
-    private final CompteComptableRepository compteComptableRepository;
+    private final AccountingAccountResolver accountingAccountResolver;
     private final LigneEcritureRepository ligneEcritureRepository;
+    private final TaxFrameworkService cadres;
 
     @Transactional(readOnly = true)
     public List<DeclarationFiscaleDto> lister(UUID entrepriseId, UtilisateurPrincipal principal) {
@@ -70,14 +72,23 @@ public class DeclarationFiscaleService {
         return DeclarationFiscaleDto.from(declarationFiscaleRepository.save(declaration));
     }
 
-    /** Idempotent : les periodes deja presentes pour cette annee sont ignorees, pas dupliquees. */
+    /**
+     * Idempotent : les periodes deja presentes pour cette annee sont ignorees, pas dupliquees. Les periodes et echeances viennent UNIQUEMENT de la regle d'un cadre fiscal VERIFIED
+     * (periodicite + regle d'echeance) : sans cadre verifie ou sans regle, rien n'est genere (aucune convention codee en dur).
+     */
     @Transactional
     public List<DeclarationFiscaleDto> genererEcheancierTva(UUID entrepriseId, int annee, UtilisateurPrincipal principal) {
         Entreprise entreprise = entrepriseAccessService.verifierAcces(entrepriseId, principal);
+        var regles = cadres.resoudre(entreprise.getTenant().getId(), entreprise.getPays(), TaxFrameworkService.TVA, LocalDate.of(annee, 12, 31))
+                .filter(TaxFrameworkService.Resolution::verifie).map(r -> r.framework().rules()).orElse(null);
+        var periodes = TaxDeadlineGenerator.periodesAnnuelles(regles, annee);
+        if (periodes.isEmpty()) {
+            throw new ResponseStatusException(HttpStatus.UNPROCESSABLE_ENTITY,
+                    "Aucun echeancier n'est genere : il n'existe pas de cadre fiscal TVA verifie fournissant une periodicite mensuelle et une regle d'echeance pour " + annee);
+        }
 
-        List<DeclarationFiscale> creees = EcheancierTvaGenerator.genererPeriodesAnnuelles(annee).stream()
-                .filter(p -> !declarationFiscaleRepository.existsByEntrepriseIdAndTypeImpotAndPeriode(
-                        entrepriseId, TypeImpot.TVA, p.periode()))
+        List<DeclarationFiscale> creees = periodes.stream()
+                .filter(p -> !declarationFiscaleRepository.existsByEntrepriseIdAndTypeImpotAndPeriode(entrepriseId, TypeImpot.TVA, p.periode()))
                 .map(p -> {
                     DeclarationFiscale declaration = new DeclarationFiscale();
                     declaration.setEntreprise(entreprise);
@@ -126,8 +137,8 @@ public class DeclarationFiscaleService {
 
     /**
      * Calcule le montant de TVA a payer sur une periode a partir des ecritures VALIDEES :
-     * TVA collectee (443, credite sur les ventes) moins TVA deductible (4456, debitee sur
-     * les achats). Ne persiste rien ; utilise par {@link #recalculerMontantTva} et exposable
+     * TVA collectee (compte du purpose TVA_COLLECTEE, credite sur les ventes) moins TVA
+     * recuperable (purpose TVA_RECUPERABLE, debitee sur les achats). Ne persiste rien ; utilise par {@link #recalculerMontantTva} et exposable
      * en previsualisation.
      */
     @Transactional(readOnly = true)
@@ -147,22 +158,29 @@ public class DeclarationFiscaleService {
         LocalDate dateDebut = mois.atDay(1);
         LocalDate dateFin = mois.atEndOfMonth();
 
-        CompteComptable compteCollectee = chargerCompteTva(entrepriseId, COMPTE_TVA_COLLECTEE);
-        CompteComptable compteDeductible = chargerCompteTva(entrepriseId, COMPTE_TVA_DEDUCTIBLE);
+        CompteComptable compteCollectee = chargerCompteTva(entrepriseId, AccountPurpose.TVA_COLLECTEE, "TVA collectee");
+        CompteComptable compteDeductible = chargerCompteTva(entrepriseId, AccountPurpose.TVA_RECUPERABLE, "TVA recuperable");
 
         BigDecimal montantCollecte = ligneEcritureRepository.mouvementNetPeriode(compteCollectee.getId(), dateDebut, dateFin);
         BigDecimal montantDeductibleBrut = ligneEcritureRepository.mouvementNetPeriode(compteDeductible.getId(), dateDebut, dateFin);
-        // Le compte 4456 est naturellement debiteur : son mouvement net (credit - debit) est
+        // Le compte de TVA recuperable est naturellement debiteur : son mouvement net (credit - debit) est
         // negatif ou nul en usage normal ; on l'exprime en valeur positive pour la soustraction.
         BigDecimal montantDeductible = montantDeductibleBrut.negate();
 
         return new CalculTvaDto(periode, montantCollecte, montantDeductible, montantCollecte.subtract(montantDeductible));
     }
 
-    private CompteComptable chargerCompteTva(UUID entrepriseId, String numero) {
-        return compteComptableRepository.findByEntrepriseIdAndNumero(entrepriseId, numero)
-                .orElseThrow(() -> new IllegalStateException(
-                        "Compte TVA " + numero + " introuvable, l'entreprise n'a pas ete initialisee correctement"));
+    /** Les comptes de TVA lus pour la declaration sont ceux que l'entreprise a configures (purposes
+     * TVA_COLLECTEE / TVA_RECUPERABLE), les memes que ceux utilises pour passer les ecritures : jamais un
+     * numero suppose. Le taux, lui, releve de la fiscalite (TaxRule) et n'intervient pas ici. */
+    private CompteComptable chargerCompteTva(UUID entrepriseId, AccountPurpose purpose, String libelle) {
+        AccountingAccountResolver.CompteResolu resolu = accountingAccountResolver.resoudreCompte(entrepriseId, purpose,
+                AccountContext.vide(), null);
+        if (!resolu.estResolu()) {
+            throw new ResponseStatusException(HttpStatus.UNPROCESSABLE_ENTITY,
+                    "Calcul de la TVA impossible : " + resolu.explicationBlocage("de " + libelle));
+        }
+        return resolu.compte();
     }
 
     /** Recalcule et persiste le montant d'une declaration TVA depuis les ecritures. Impossible une fois payee. */

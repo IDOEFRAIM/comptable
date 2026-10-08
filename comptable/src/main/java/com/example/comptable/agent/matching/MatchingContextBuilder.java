@@ -59,6 +59,7 @@ public class MatchingContextBuilder {
     private final FactureRepository factureRepository;
     private final DocumentRepository documentRepository;
     private final TiersRepository tiersRepository;
+    private final com.example.comptable.comptabilite.allocation.StatutPaiementFactureService statutPaiementFactureService;
 
     public MatchingRequestDTO construire(Entreprise entreprise, CompteComptable compte, LigneReleve ligne,
                                           Set<UUID> ecrituresDejaUtilisees) {
@@ -210,11 +211,14 @@ public class MatchingContextBuilder {
      * (reutilise {@link DocumentRepository#rechercherParFournisseur}, deja borne a 5 - meme
      * requete que l'outil consulter_historique_fournisseur de l'agent comptable autonome). */
     private List<HistoricalPaymentDTO> construireHistorique(Entreprise entreprise, Tiers tiers) {
-        List<Facture> facturesPayees = factureRepository
-                .rechercherCandidatsRapprochement(entreprise.getId(), TypeFacture.FACTURE, StatutFacture.PAYEE,
-                        LocalDate.now().minusMonths(HISTORIQUE_MOIS), LocalDate.now())
+        // « Payee » = reste a payer nul, calcule depuis les allocations (le drapeau PAYEE n'existe plus).
+        List<Facture> facturesPayees = statutPaiementFactureService.payees(entreprise.getId(), factureRepository
+                        .rechercherCandidatsRapprochement(entreprise.getId(), TypeFacture.FACTURE, StatutFacture.VALIDEE,
+                                LocalDate.now().minusMonths(HISTORIQUE_MOIS), LocalDate.now())
+                        .stream()
+                        .filter(facture -> facture.getTiers().getId().equals(tiers.getId()))
+                        .toList())
                 .stream()
-                .filter(facture -> facture.getTiers().getId().equals(tiers.getId()))
                 .limit(LIMITE_HISTORIQUE)
                 .toList();
         if (!facturesPayees.isEmpty()) {

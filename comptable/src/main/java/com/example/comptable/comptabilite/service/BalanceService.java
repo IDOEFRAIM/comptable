@@ -1,8 +1,8 @@
 package com.example.comptable.comptabilite.service;
 
-import com.example.comptable.comptabilite.domain.CompteComptable;
-import com.example.comptable.comptabilite.domain.LigneEcriture;
-import com.example.comptable.comptabilite.repository.LigneEcritureRepository;
+import com.example.comptable.comptabilite.balance.AccountBalance;
+import com.example.comptable.comptabilite.balance.AccountingBalanceEngine;
+import com.example.comptable.comptabilite.balance.ReportingView;
 import com.example.comptable.comptabilite.web.dto.BalanceDto;
 import com.example.comptable.comptabilite.web.dto.BalanceLigneDto;
 import com.example.comptable.comptabilite.web.dto.SoldeDto;
@@ -14,70 +14,44 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
-import java.util.Comparator;
 import java.util.List;
 import java.util.UUID;
+import java.util.function.Function;
 
 /**
- * Balance generale : pour chaque compte mouvemente, solde d'ouverture / mouvements de
- * la periode / solde de cloture. Les totaux debit et credit doivent s'equilibrer a
- * chaque colonne (invariant fondamental de la partie double sur l'ensemble des comptes).
+ * Balance generale OFFICIELLE (vue {@link ReportingView#LEGAL_LEDGER} : ecritures validees, toutes natures) : pour chaque compte mouvemente, solde
+ * d'ouverture / mouvements de la periode / solde de cloture. Aucun calcul de solde ici : tout vient de {@link AccountingBalanceEngine} (une seule
+ * agregation SQL). Les totaux debit et credit s'equilibrent a chaque colonne (invariant fondamental de la partie double).
  */
 @Service
 @RequiredArgsConstructor
 public class BalanceService {
 
     private final EntrepriseAccessService entrepriseAccessService;
-    private final CompteComptableValidationService compteComptableValidationService;
-    private final LigneEcritureRepository ligneEcritureRepository;
+    private final AccountingBalanceEngine accountingBalanceEngine;
 
     @Transactional(readOnly = true)
     public BalanceDto generer(UUID entrepriseId, LocalDate dateDebut, LocalDate dateFin, UtilisateurPrincipal principal) {
         entrepriseAccessService.verifierAcces(entrepriseId, principal);
 
-        List<UUID> comptesMouvementes = ligneEcritureRepository.rechercherComptesMouvementes(entrepriseId, dateFin);
-
-        List<BalanceLigneDto> lignes = comptesMouvementes.stream()
-                .map(compteId -> genererLigne(entrepriseId, compteId, dateDebut, dateFin))
-                .sorted(Comparator.comparing(BalanceLigneDto::compteNumero))
+        List<BalanceLigneDto> lignes = accountingBalanceEngine.balances(entrepriseId, dateDebut, dateFin, ReportingView.LEGAL_LEDGER).stream()
+                .map(BalanceService::enLigne)
                 .toList();
 
-        BigDecimal totalSoldeOuvertureDebit = sommer(lignes, l -> l.soldeOuverture().debit());
-        BigDecimal totalSoldeOuvertureCredit = sommer(lignes, l -> l.soldeOuverture().credit());
-        BigDecimal totalMouvementDebit = sommer(lignes, BalanceLigneDto::mouvementDebit);
-        BigDecimal totalMouvementCredit = sommer(lignes, BalanceLigneDto::mouvementCredit);
-        BigDecimal totalSoldeClotureDebit = sommer(lignes, l -> l.soldeCloture().debit());
-        BigDecimal totalSoldeClotureCredit = sommer(lignes, l -> l.soldeCloture().credit());
-
         return new BalanceDto(dateDebut, dateFin, lignes,
-                totalSoldeOuvertureDebit, totalSoldeOuvertureCredit,
-                totalMouvementDebit, totalMouvementCredit,
-                totalSoldeClotureDebit, totalSoldeClotureCredit);
+                sommer(lignes, l -> l.soldeOuverture().debit()), sommer(lignes, l -> l.soldeOuverture().credit()),
+                sommer(lignes, BalanceLigneDto::mouvementDebit), sommer(lignes, BalanceLigneDto::mouvementCredit),
+                sommer(lignes, l -> l.soldeCloture().debit()), sommer(lignes, l -> l.soldeCloture().credit()));
     }
 
-    private BalanceLigneDto genererLigne(UUID entrepriseId, UUID compteId, LocalDate dateDebut, LocalDate dateFin) {
-        CompteComptable compte = compteComptableValidationService.chargerCompteDeLEntreprise(entrepriseId, compteId);
-
-        BigDecimal netOuverture = ligneEcritureRepository.soldeNetAvant(compteId, dateDebut);
-        List<LigneEcriture> mouvements = ligneEcritureRepository.rechercherMouvementsValides(compteId, dateDebut, dateFin);
-
-        BigDecimal mouvementDebit = sommerLignes(mouvements, LigneEcriture::getDebit);
-        BigDecimal mouvementCredit = sommerLignes(mouvements, LigneEcriture::getCredit);
-        BigDecimal netCloture = netOuverture.add(mouvementDebit).subtract(mouvementCredit);
-
-        return new BalanceLigneDto(
-                compte.getId(), compte.getNumero(), compte.getIntitule(),
-                SoldeDto.depuisNet(netOuverture),
-                mouvementDebit, mouvementCredit,
-                SoldeDto.depuisNet(netCloture)
-        );
+    private static BalanceLigneDto enLigne(AccountBalance solde) {
+        return new BalanceLigneDto(solde.accountId(), solde.accountNumber(), solde.accountLabel(),
+                new SoldeDto(solde.openingDebit(), solde.openingCredit()),
+                solde.periodDebit(), solde.periodCredit(),
+                new SoldeDto(solde.closingDebit(), solde.closingCredit()));
     }
 
-    private BigDecimal sommer(List<BalanceLigneDto> lignes, java.util.function.Function<BalanceLigneDto, BigDecimal> extracteur) {
-        return lignes.stream().map(extracteur).reduce(BigDecimal.ZERO, BigDecimal::add);
-    }
-
-    private BigDecimal sommerLignes(List<LigneEcriture> lignes, java.util.function.Function<LigneEcriture, BigDecimal> extracteur) {
+    private static BigDecimal sommer(List<BalanceLigneDto> lignes, Function<BalanceLigneDto, BigDecimal> extracteur) {
         return lignes.stream().map(extracteur).reduce(BigDecimal.ZERO, BigDecimal::add);
     }
 }

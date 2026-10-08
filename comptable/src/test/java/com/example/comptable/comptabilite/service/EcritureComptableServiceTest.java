@@ -59,6 +59,9 @@ class EcritureComptableServiceTest {
     @Mock
     private UtilisateurRepository utilisateurRepository;
 
+    @Mock
+    private com.example.comptable.audit.AuditTrailService auditTrailService;
+
     @InjectMocks
     private EcritureComptableService ecritureComptableService;
 

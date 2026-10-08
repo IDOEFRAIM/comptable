@@ -1,0 +1,196 @@
+{
+  "framework": "SYSCOHADA_REVISED",
+  "primarySource": {
+    "title": "AUDCIF + Système comptable OHADA",
+    "publication": "Journal Officiel OHADA, numéro spécial, 15 février 2017",
+    "sha256": "d5ecb380984b792c4d586b0efa77931249a4c0c25daf39d3c50b27648dd05300"
+  },
+  "closeout": "docs/syscohada-regulatory-closeout.md",
+  "accountPlan": {
+    "classes1to99": "VERIFIED",
+    "sourceAnomalies": {
+      "412_duplicate_printed_code": "VERIFIED_AS_PRINTED",
+      "4282_4285_absent_from_adjacent_official_pages": "VERIFIED_ABSENCE",
+      "4794_duplicate_label": "VERIFIED_AS_PRINTED",
+      "class9_907_heading_with_908_subaccounts": "SOURCE_ANOMALY"
+    }
+  },
+  "balanceSheet": {
+    "structure": "VERIFIED",
+    "asset": {
+      "status": "PARTIAL_READY",
+      "grossMapping": "VERIFIED_EXCEPT_AK_AL",
+      "depreciationMapping": "VERIFIED_FOR_AG_AJ_AP_AR_AS_BA_BB_BH_BI_BJ_BQ_BR_BS__PARTIAL_FOR_AE_AF_AH_AK_AL_AM_AN",
+      "totalsFormulas": "VERIFIED_DERIVED_FROM_PRIMARY",
+      "corrections": {
+        "BH_depreciation": "490 (printed p.1068); definition F2 v1 has 499 and must be corrected",
+        "BJ_depreciation": "492-497 explicit",
+        "BS_depreciation": "592, 593, 594 explicit"
+      }
+    },
+    "liability": {
+      "status": "PARTIAL_READY",
+      "directPublishedMapping": "NOT_PRESENT_PAGE_1068_CROPPED",
+      "derivedMapping": "VERIFIED_DERIVED_FROM_PRIMARY_FOR_22_POSTS",
+      "partialPoints": [
+        "103",
+        "104",
+        "404",
+        "186-188",
+        "4998",
+        "599",
+        "credit balances 54-58"
+      ],
+      "totalsFormulas": "VERIFIED_DERIVED_FROM_PRIMARY",
+      "CJ": "VERIFIED_DERIVED_NEEDS_USER_VALIDATION"
+    },
+    "balanceCheck_BZ_equals_DZ": "VERIFIED_DERIVED_FROM_PRIMARY",
+    "gate": "PARTIAL_READY"
+  },
+  "incomeStatement": {
+    "structure": "VERIFIED",
+    "mapping": "VERIFIED",
+    "TG": "VERIFIED_71",
+    "XA_formula": "VERIFIED_DIRECT_PRIMARY: XA = TA + RA + RB (p.1069)",
+    "subtotalFormulas": "VERIFIED"
+  },
+  "cashFlowStatement": {
+    "structure": "VERIFIED",
+    "formulas": "VERIFIED",
+    "cafgTerms": "VERIFIED_LIST_AND_SIGNS",
+    "cafgAccountMapping": "PARTIAL_FOR_5_OF_12_TERMS",
+    "operatingVariations": "VERIFIED_FORMULAS__PARTIAL_ACCOUNT_EXCLUSION_LIST",
+    "investing": "VERIFIED_FF_FG_FI__DERIVED_FH_FJ",
+    "financing": "VERIFIED_EVENTS__PARTIAL_LEDGER_IDENTIFICATION",
+    "cashComposition": "VERIFIED_BT_MINUS_DT",
+    "directAccountMappingTable": "NOT_PRESENT",
+    "gate": "PARTIAL"
+  },
+  "notes": {
+    "catalogueR4": "VERIFIED",
+    "detailedModelsRead": "46_OF_46__7_WITH_CROPPED_COLUMNS",
+    "automation": "PARTIAL_PROPOSED",
+    "anomalies": [
+      "3F printed as 8A on p.1032",
+      "3C inner title printed 3B",
+      "16B and 16B bis share the same title",
+      "Note 11 title differs between summary and page",
+      "Note 35 mandatory above 250 employees"
+    ]
+  },
+  "gates": {
+    "F2": "READY",
+    "F3_incomeStatement": "READY",
+    "F3_asset": "PARTIAL_READY",
+    "F3_liability": "PARTIAL_READY_DERIVED",
+    "F4": "READY",
+    "F5": "PARTIAL_READY",
+    "F6": "READY",
+    "F7": "PARTIAL_READY",
+    "F8_catalogue": "READY",
+    "F8_automation": "PARTIAL_READY"
+  },
+  "counts": {
+    "actif": {
+      "VERIFIED": 69,
+      "PARTIAL": 9,
+      "UNVERIFIED": 0
+    },
+    "passif": {
+      "VERIFIED": 51,
+      "PARTIAL": 6,
+      "UNVERIFIED": 0
+    },
+    "tft": {
+      "VERIFIED": 34,
+      "PARTIAL": 5,
+      "UNVERIFIED": 0
+    },
+    "notes": {
+      "VERIFIED": 85,
+      "PARTIAL": 7,
+      "UNVERIFIED": 0
+    }
+  },
+  "implementation": {
+    "asOf": "2026-10-05",
+    "definitionsVersion": "2",
+    "balanceSheet": "IMPLEMENTED (READY when no PARTIAL line / reserved account carries a balance)",
+    "cashFlowStatement": "IMPLEMENTED (READY only without movement on the 5 PARTIAL CAFG terms and without unqualified cash events)",
+    "notesGenerated": [
+      "5",
+      "10",
+      "21",
+      "22",
+      "23",
+      "24",
+      "29",
+      "30",
+      "34"
+    ],
+    "cashFlowEventColumn": "ecriture_comptable.cash_flow_event (V63)",
+    "dossierComplet": "success path tested; requires explicit human decisions on all 46 notes",
+    "remainingRegulatoryBlockers": [
+      "AK",
+      "AL",
+      "suffix p",
+      "AE/AF/AH/AM/AN gross only",
+      "Passif reserves (103/104, 404, 186-188, 4998, 599, 54-58 creditors)",
+      "CAFG terms: financial income, financial expenses, FX gains, FX losses, HAO income",
+      "Note 34 indicator formulas",
+      "Notes 21/22 zone breakdown"
+    ],
+    "notesWorkspace": {
+      "table": "financial_statement_note (V64)",
+      "separation": "generated_data / manual_data (distinct columns)",
+      "completionStatuses": [
+        "INCOMPLETE",
+        "READY",
+        "MANUAL_REQUIRED",
+        "NOT_APPLICABLE"
+      ],
+      "applicabilityStatuses": [
+        "TO_DETERMINE",
+        "NOT_APPLICABLE_CANDIDATE",
+        "NOT_APPLICABLE",
+        "APPLICABLE"
+      ],
+      "endToEnd": [
+        "AUTOMATIC (23)",
+        "MIXED (17, 22)",
+        "MANUAL_REQUIRED (2)",
+        "NOT_APPLICABLE (validated candidates)"
+      ],
+      "notesWithPartialSchemaNeverFinalisable": [
+        "3A",
+        "3B",
+        "3C",
+        "27B",
+        "28",
+        "31",
+        "33"
+      ],
+      "doc": "docs/syscohada-notes-workspace.md"
+    },
+    "remainingBlockersF8": [
+      "generated tables not coded for most MIXED/AUTOMATIC notes",
+      "PARTIAL schema notes (3A, 3B, 3C, 27B, 28, 31, 33)",
+      "Note 34 indicator formulas",
+      "Notes 21/22 zone breakdown"
+    ],
+    "reviewWorkspace": {
+      "frontend": "features/dossier-financier (route /entreprises/:id/etats-financiers)",
+      "doc": "docs/financial-review-workspace.md",
+      "finalisation": "EXPERT_COMPTABLE only; finalizable decided by FinancialDossierService",
+      "exports": "HTML printable (no PDF engine): BROUILLON watermark / FINAL from snapshot"
+    },
+    "hardening": {
+      "legacyReporting": "removed (controller, service, DTOs, Angular screen)",
+      "closure": "canonical balance engine, classes 6/7/8",
+      "frontendTests": "Karma + Jasmine (19), Playwright E2E (1 full journey)",
+      "synthesisPerformance": "35 -> 14 queries, 6.6s -> 2.3s on 30,000 lines",
+      "productPhaseF": "DONE (see docs/financial-review-workspace.md)",
+      "regulatoryCoverage": "F5/F7/F8 PARTIAL_READY unchanged"
+    }
+  }
+}

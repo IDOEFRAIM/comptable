@@ -60,17 +60,39 @@
       @if (clotureReadiness(); as c) {
         <div class="carte carte-cloture" [class]="'cloture-' + c.statut">
           <h3>Clôture — {{ libellesClotureReadiness[c.statut] }}</h3>
+          @if (c.resume) {
+            <p class="resume-cloture">
+              <strong>{{ c.resume.bloquants }}</strong> bloquant(s) · <strong>{{ c.resume.avertissements }}</strong> avertissement(s) ·
+              <strong>{{ c.resume.enOrdre }}</strong> point(s) en ordre
+            </p>
+          }
           <ul class="checklist-cloture">
             @for (item of c.checklist; track item.code) {
-              <li [class]="'controle-' + item.statut">
-                <span class="controle-icone">{{ libellesStatutControle[item.statut] }}</span>
-                <span class="controle-libelle">{{ item.libelle }}</span>
-                @if (item.message) {
-                  <span class="controle-message">{{ item.message }}</span>
-                }
-              </li>
+              @if (item.statut === 'BLOCKING' || item.statut === 'WARNING') {
+                <li [class]="'controle-' + item.statut">
+                  <span class="point-statut" [class.danger]="item.statut === 'BLOCKING'" [class.attention]="item.statut === 'WARNING'"></span>
+                  <span class="controle-libelle">{{ item.libelle }}</span>
+                  @if (item.message) {
+                    <span class="controle-message">{{ item.message }}</span>
+                  }
+                </li>
+              }
             }
           </ul>
+          <details class="autres-points">
+            <summary>Voir les autres points de contrôle</summary>
+            <ul class="checklist-cloture">
+              @for (item of c.checklist; track item.code) {
+                @if (item.statut === 'OK' || item.statut === 'NOT_APPLICABLE') {
+                  <li [class]="'controle-' + item.statut">
+                    <span class="point-statut" [class.succes]="item.statut === 'OK'" [class.neutre]="item.statut === 'NOT_APPLICABLE'"></span>
+                    <span class="controle-libelle">{{ item.libelle }}</span>
+                    <span class="controle-message">{{ item.statut === 'OK' ? (item.message ?? 'Conforme') : 'Sans objet pour ce dossier' }}</span>
+                  </li>
+                }
+              }
+            </ul>
+          </details>
         </div>
       }
 
@@ -121,7 +143,7 @@
                       @if (proposition.status === 'PROPOSED') {
                         <div class="carte-proposition">
                           <p class="titre-proposition">
-                            Proposition de comptabilisation
+                            Suggestion d'imputation
                             <span class="confiance-proposition">({{ (proposition.confidence * 100).toFixed(0) }}% confiance)</span>
                           </p>
                           <ul class="detail-proposition">
@@ -132,17 +154,17 @@
                               <li><strong>Compte :</strong> {{ proposition.compteChargeProduitNumero }}</li>
                             }
                             @if (proposition.montantTtc !== null) {
-                              <li><strong>Montant TTC :</strong> {{ proposition.montantTtc }}</li>
+                              <li><strong>Montant TTC :</strong> {{ proposition.montantTtc | number: '1.0-2' }}</li>
                             }
                           </ul>
                           <div class="actions-proposition">
-                            <button type="button" class="bouton-lien" (click)="accepterProposition(f, proposition.id)">
+                            <button type="button" class="bouton-lien" (click)="accepterSuggestion(f, proposition.id)">
                               Accepter
                             </button>
                             <button
                               type="button"
                               class="bouton-lien bouton-discret"
-                              (click)="rejeterProposition(f, proposition.id)"
+                              (click)="rejeterSuggestion(f, proposition.id)"
                             >
                               Rejeter
                             </button>

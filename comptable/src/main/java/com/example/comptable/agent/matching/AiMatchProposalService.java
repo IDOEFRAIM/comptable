@@ -38,6 +38,7 @@ public class AiMatchProposalService {
     private final LigneReleveRepository ligneReleveRepository;
     private final EntrepriseAccessService entrepriseAccessService;
     private final UtilisateurRepository utilisateurRepository;
+    private final com.example.comptable.banque.BankReconciliationService reconciliationService;
 
     @Transactional(readOnly = true)
     public Optional<AiMatchProposalDto> obtenirPourLigne(UUID entrepriseId, UUID ligneReleveId,
@@ -59,9 +60,10 @@ public class AiMatchProposalService {
         if (proposition.getCandidateType() == SourceType.ACCOUNTING_ENTRY && proposition.getCandidateId() != null) {
             UUID ligneReleveId = UUID.fromString(proposition.getSourceId());
             LigneReleve ligne = ligneReleveRepository.findById(ligneReleveId)
+                    .filter(l -> l.getReleve().getEntreprise().getId().equals(entreprise.getId()))
                     .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Ligne de releve introuvable"));
-            ligne.setLigneEcritureId(UUID.fromString(proposition.getCandidateId()));
-            ligneReleveRepository.save(ligne);
+            reconciliationService.pointer(entreprise.getId(), ligne.getId(), UUID.fromString(proposition.getCandidateId()),
+                    com.example.comptable.banque.SourceReconciliation.AI_PROPOSAL, principal);
         }
 
         proposition.setStatus(StatutPropositionIA.ACCEPTED);

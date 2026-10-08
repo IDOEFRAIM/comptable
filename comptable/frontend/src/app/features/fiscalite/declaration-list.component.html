@@ -2,6 +2,7 @@
   <div class="entete">
     <h2>Déclarations fiscales</h2>
     <div class="actions-entete">
+      <a class="bouton-principal" routerLink="tva" data-action="espace-tva">Espace TVA</a>
       <input type="number" class="champ-annee" [(ngModel)]="anneeEcheancier" [ngModelOptions]="{ standalone: true }" />
       <button type="button" class="bouton-secondaire" [disabled]="envoiEnCours()" (click)="genererEcheancierTva()">
         Générer échéancier TVA
@@ -93,8 +94,61 @@
                   Marquer payée
                 </button>
               }
+              @if (d.statut !== 'PAYEE') {
+                <button type="button" class="bouton-lien" [disabled]="actionEnCours() === d.id" (click)="ouvrirPaiement(d)">
+                  Payer en ligne
+                </button>
+              }
             </td>
           </tr>
+          @if (paiementOuvertPour() === d.id) {
+            <tr>
+              <td colspan="6" class="ligne-paiement">
+                <label class="champ">
+                  <span>Fournisseur</span>
+                  <select [ngModel]="fournisseurChoisi()" (ngModelChange)="fournisseurChoisi.set($event)" [ngModelOptions]="{ standalone: true }">
+                    @for (f of fournisseursPaiement; track f) {
+                      <option [value]="f">{{ libellesFournisseur[f] }}</option>
+                    }
+                  </select>
+                </label>
+                @if (fournisseurChoisi() === 'FASO_ARZEKA') {
+                  <label class="champ">
+                    <span>Téléphone (mobile money)</span>
+                    <input
+                      type="tel"
+                      [ngModel]="telephonePayeur()"
+                      (ngModelChange)="telephonePayeur.set($event)"
+                      [ngModelOptions]="{ standalone: true }"
+                      placeholder="70123456"
+                    />
+                  </label>
+                }
+                <button type="button" class="bouton-principal" [disabled]="actionEnCours() === d.id" (click)="payerEnLigne(d)">
+                  Confirmer l'initiation
+                </button>
+                <button type="button" class="bouton-lien" (click)="annulerPaiement()">Annuler</button>
+              </td>
+            </tr>
+          }
+          @if (derniersPaiements()[d.id]; as paiement) {
+            <tr>
+              <td colspan="6" class="ligne-paiement-statut">
+                {{ libellesFournisseur[paiement.fournisseur] }} — {{ libellesStatutPaiement[paiement.statut] }}
+                @if (paiement.messageStatut) {
+                  <span class="message-paiement">({{ paiement.messageStatut }})</span>
+                }
+                @if (paiement.statut === 'EN_ATTENTE_CONFIRMATION') {
+                  <button type="button" class="bouton-lien" [disabled]="actionEnCours() === d.id" (click)="simulerConfirmation(d, true)">
+                    Simuler confirmation
+                  </button>
+                  <button type="button" class="bouton-lien" [disabled]="actionEnCours() === d.id" (click)="simulerConfirmation(d, false)">
+                    Simuler échec
+                  </button>
+                }
+              </td>
+            </tr>
+          }
         }
       </tbody>
     </table>

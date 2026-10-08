@@ -1,5 +1,7 @@
 package com.example.comptable.comptabilite.service;
 
+import com.example.comptable.comptabilite.operation.common.AccountingSource;
+
 import com.example.comptable.comptabilite.domain.CompteComptable;
 import com.example.comptable.comptabilite.domain.EcritureComptable;
 import com.example.comptable.comptabilite.domain.ExerciceComptable;
@@ -9,10 +11,19 @@ import com.example.comptable.comptabilite.domain.PlanComptableReference;
 import com.example.comptable.comptabilite.domain.StatutExercice;
 import com.example.comptable.comptabilite.domain.Tiers;
 import com.example.comptable.comptabilite.domain.TypeTiers;
+import com.example.comptable.comptabilite.domain.StatutEcriture;
+import com.example.comptable.comptabilite.operation.achat.AchatRule;
+import com.example.comptable.comptabilite.operation.common.AccountingOperationEngine;
+import com.example.comptable.comptabilite.operation.common.AccountingOperationType;
+import com.example.comptable.comptabilite.operation.common.ResultatRegle;
+import com.example.comptable.comptabilite.operation.common.domain.AccountingOperationProposalLigne;
+import com.example.comptable.comptabilite.operation.common.web.dto.AccountingOperationProposalDto;
+import com.example.comptable.comptabilite.operation.vente.VenteRule;
+import com.example.comptable.comptabilite.parametrage.AccountingAccountResolver;
+import com.example.comptable.comptabilite.parametrage.ResolvedAccount;
+import com.example.comptable.comptabilite.parametrage.domain.AccountPurpose;
 import com.example.comptable.comptabilite.repository.CompteComptableRepository;
 import com.example.comptable.comptabilite.repository.EcritureComptableRepository;
-import com.example.comptable.comptabilite.repository.ExerciceComptableRepository;
-import com.example.comptable.comptabilite.repository.JournalRepository;
 import com.example.comptable.comptabilite.repository.TiersRepository;
 import com.example.comptable.comptabilite.web.dto.ComptabiliserDocumentRequest;
 import com.example.comptable.comptabilite.web.dto.EcritureComptableDto;
@@ -23,7 +34,6 @@ import com.example.comptable.entreprise.domain.Entreprise;
 import com.example.comptable.entreprise.service.EntrepriseAccessService;
 import com.example.comptable.identite.domain.Role;
 import com.example.comptable.identite.domain.Utilisateur;
-import com.example.comptable.identite.repository.UtilisateurRepository;
 import com.example.comptable.security.UtilisateurPrincipal;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -35,6 +45,7 @@ import org.springframework.web.server.ResponseStatusException;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
@@ -42,6 +53,8 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -56,13 +69,18 @@ class ComptabilisationServiceTest {
     @Mock
     private CompteComptableRepository compteComptableRepository;
     @Mock
-    private ExerciceComptableRepository exerciceComptableRepository;
-    @Mock
-    private JournalRepository journalRepository;
-    @Mock
     private EcritureComptableRepository ecritureComptableRepository;
     @Mock
-    private UtilisateurRepository utilisateurRepository;
+    private AccountingAccountResolver accountingAccountResolver;
+    @Mock
+    private AccountingOperationEngine accountingOperationEngine;
+    @Mock
+    private AchatRule achatRule;
+    @Mock
+    private VenteRule venteRule;
+
+    @Mock
+    private com.example.comptable.audit.AuditTrailService auditTrailService;
 
     @InjectMocks
     private ComptabilisationService comptabilisationService;
@@ -149,44 +167,56 @@ class ComptabilisationServiceTest {
         return journal;
     }
 
+    /**
+     * Migre (Phase 1, lot 1.2) : l'ancien test verifiait la construction directe de l'ecriture par ce
+     * service. Il verifie desormais l'ORCHESTRATION - le service ne cree plus d'EcritureComptable,
+     * il resout la TVA par purpose et confie la proposition au moteur en BROUILLON. Le rendu detaille
+     * (lignes, comptes, journal, numerotation) est fige par ComptabilisationDocumentCaracterisationTest.
+     */
     @Test
-    void genere_une_ecriture_dachat_equilibree_avec_tva() {
+    void confie_la_creation_de_l_ecriture_au_moteur_en_brouillon_avec_la_tva_resolue_par_purpose() {
         Document document = documentFactureAchat(new BigDecimal("100000"), new BigDecimal("18000"), new BigDecimal("118000"));
         CompteComptable compteCharge = compteAvecNature("601", NatureCompte.CHARGE);
         CompteComptable compteFournisseur = compteAvecNature("401001", null);
         CompteComptable compteTva = compteAvecNature("4456", null);
         Tiers fournisseur = tiersFournisseur(compteFournisseur);
-        ExerciceComptable exercice = exerciceOuvert();
-        Journal journal = journalAchats();
+        UUID ecritureId = UUID.randomUUID();
 
         when(documentRepository.findById(documentId)).thenReturn(Optional.of(document));
         when(tiersRepository.findById(fournisseur.getId())).thenReturn(Optional.of(fournisseur));
         when(compteComptableRepository.findById(compteCharge.getId())).thenReturn(Optional.of(compteCharge));
-        when(exerciceComptableRepository.findByEntrepriseIdAndDate(entrepriseId, document.getDatePiece()))
-                .thenReturn(Optional.of(exercice));
-        when(journalRepository.findByEntrepriseIdAndCode(entrepriseId, "ACH")).thenReturn(Optional.of(journal));
-        when(compteComptableRepository.findByEntrepriseIdAndNumero(entrepriseId, "4456"))
-                .thenReturn(Optional.of(compteTva));
-        when(ecritureComptableRepository.countByJournalId(journal.getId())).thenReturn(0L);
-        when(utilisateurRepository.getReferenceById(principal.getId())).thenReturn(utilisateur);
-        when(ecritureComptableRepository.save(any())).thenAnswer(inv -> {
-            EcritureComptable ecriture = inv.getArgument(0);
-            if (ecriture.getId() == null) {
-                ecriture.setId(UUID.randomUUID());
-            }
-            return ecriture;
-        });
+        when(compteComptableRepository.findById(compteTva.getId())).thenReturn(Optional.of(compteTva));
+        when(accountingAccountResolver.resolve(eq(entrepriseId), eq(AccountPurpose.TVA_RECUPERABLE), any(), isNull()))
+                .thenReturn(new ResolvedAccount(com.example.comptable.comptabilite.parametrage.AccountResolutionStatus.RESOLVED,
+                        compteTva.getId(), "4456", "TVA", com.example.comptable.comptabilite.parametrage.AccountResolutionSource.ROLE_SYSTEME,
+                        com.example.comptable.comptabilite.parametrage.NiveauConfiance.CERTAIN, "test"));
+        List<AccountingOperationProposalLigne> lignes = List.of(AccountingOperationProposalLigne.debit(compteCharge, new BigDecimal("100000"), "x"));
+        when(achatRule.construireLignesAchatDepuisMontantsPrecalcules(eq(fournisseur), eq(compteCharge), any(), eq(compteTva), any(), any(), any()))
+                .thenReturn(lignes);
+        AccountingOperationProposalDto proposition = org.mockito.Mockito.mock(AccountingOperationProposalDto.class);
+        when(proposition.ecritureId()).thenReturn(ecritureId);
+        when(accountingOperationEngine.proposerEtValider(eq(entrepriseId), eq(AccountingOperationType.ACHAT), eq(fournisseur), eq(document.getDatePiece()), any(), isNull(), any(ResultatRegle.class), eq(AccountingSource.de("DOCUMENT", documentId, "COMPTABILISATION")), eq(StatutEcriture.BROUILLON), eq(principal))).thenReturn(proposition);
+        EcritureComptable ecriture = new EcritureComptable();
+        ecriture.setId(ecritureId);
+        ecriture.setEntreprise(entreprise);
+        Journal journal = new Journal();
+        journal.setCode("ACH");
+        ecriture.setJournal(journal);
+        ecriture.setNumeroPiece("ACH-2026-0001");
+        ecriture.setDateEcriture(document.getDatePiece());
+        ecriture.setLibelle("x");
+        ecriture.setStatut(StatutEcriture.BROUILLON);
+        when(ecritureComptableRepository.findById(ecritureId)).thenReturn(Optional.of(ecriture));
         when(documentRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
 
-        ComptabiliserDocumentRequest request = new ComptabiliserDocumentRequest(fournisseur.getId(), compteCharge.getId(), null, null);
+        EcritureComptableDto resultat = comptabilisationService.comptabiliser(entrepriseId, documentId,
+                new ComptabiliserDocumentRequest(fournisseur.getId(), compteCharge.getId(), null, null), principal);
 
-        EcritureComptableDto resultat = comptabilisationService.comptabiliser(entrepriseId, documentId, request, principal);
-
+        assertThat(resultat.id()).isEqualTo(ecritureId);
         assertThat(resultat.statut()).isEqualTo("BROUILLON");
-        assertThat(resultat.lignes()).hasSize(3);
-        assertThat(resultat.totalDebit()).isEqualByComparingTo("118000");
-        assertThat(resultat.totalCredit()).isEqualByComparingTo("118000");
-        assertThat(document.getEcritureId()).isNotNull();
+        assertThat(document.getEcritureId()).isEqualTo(ecritureId);
+        // Le service ne construit ni ne sauvegarde plus d'ecriture lui-meme.
+        org.mockito.Mockito.verify(ecritureComptableRepository, org.mockito.Mockito.never()).save(any());
     }
 
     @Test

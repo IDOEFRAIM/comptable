@@ -1,4 +1,5 @@
 import { Component, inject, signal } from '@angular/core';
+import { TokenStorageService } from '../../core/auth/token-storage.service';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { finalize } from 'rxjs/operators';
@@ -16,6 +17,7 @@ export class LoginComponent {
   private readonly fb = inject(FormBuilder);
   private readonly authService = inject(AuthService);
   private readonly router = inject(Router);
+  private readonly tokens = inject(TokenStorageService);
 
   protected readonly messageErreurChamp = messageErreurChamp;
 
@@ -41,11 +43,18 @@ export class LoginComponent {
       .login(email, motDePasse)
       .pipe(finalize(() => this.envoiEnCours.set(false)))
       .subscribe({
-        next: () => this.router.navigateByUrl('/entreprises'),
+        // un membre du cabinet arrive sur son espace de travail (Cabinet Workspace) ; un client sur la liste de ses entreprises
+        next: (reponse) => {
+          if (reponse.mustChangePassword) {
+            this.router.navigateByUrl('/changer-mot-de-passe');
+            return;
+          }
+          const roles = this.tokens.getRoles();
+          const cabinet = roles.includes('ROLE_EXPERT_COMPTABLE') || roles.includes('ROLE_COLLABORATEUR');
+          this.router.navigateByUrl(cabinet ? '/cabinet' : '/entreprises');
+        },
         error: (err) => {
-          this.erreur.set(
-            err.status === 401 ? 'Identifiants invalides.' : 'Connexion impossible. Réessayez plus tard.',
-          );
+          this.erreur.set(err.status === 401 ? 'Identifiants invalides.' : err.status === 429 ? err.error?.message : 'Connexion impossible. Réessayez plus tard.');
         },
       });
   }

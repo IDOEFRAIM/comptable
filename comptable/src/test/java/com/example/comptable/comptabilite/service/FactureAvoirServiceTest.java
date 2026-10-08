@@ -1,10 +1,11 @@
 package com.example.comptable.comptabilite.service;
 
+import com.example.comptable.comptabilite.operation.common.AccountingSource;
+
 import com.example.comptable.comptabilite.domain.CompteComptable;
 import com.example.comptable.comptabilite.domain.Facture;
 import com.example.comptable.comptabilite.domain.FactureAvoir;
 import com.example.comptable.comptabilite.domain.LigneFacture;
-import com.example.comptable.comptabilite.domain.RoleCompteSysteme;
 import com.example.comptable.comptabilite.domain.StatutFacture;
 import com.example.comptable.comptabilite.domain.StatutFactureAvoir;
 import com.example.comptable.comptabilite.domain.Tiers;
@@ -47,6 +48,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
@@ -72,7 +74,7 @@ class FactureAvoirServiceTest {
     @Mock
     private CompteComptableValidationService compteComptableValidationService;
     @Mock
-    private CompteSystemeResolver compteSystemeResolver;
+    private com.example.comptable.comptabilite.parametrage.AccountingAccountResolver accountingAccountResolver;
     @Mock
     private VenteRule venteRule;
     @Mock
@@ -161,13 +163,12 @@ class FactureAvoirServiceTest {
 
     private void mockerContexteComptable() {
         when(compteComptableValidationService.chargerCompteUtilisable(entrepriseId, compteVentes.getId(), true)).thenReturn(compteVentes);
-        when(compteSystemeResolver.resoudre(entrepriseId, RoleCompteSysteme.TVA_COLLECTEE)).thenReturn(Optional.of(compteTva));
+        when(accountingAccountResolver.resoudreCompte(eq(entrepriseId), eq(com.example.comptable.comptabilite.parametrage.domain.AccountPurpose.TVA_COLLECTEE), any(), isNull()))
+                .thenReturn(new com.example.comptable.comptabilite.parametrage.AccountingAccountResolver.CompteResolu(compteTva, null));
         when(venteRule.construireLignesAvoirVenteDepuisMontantsPrecalcules(any(), any(), any(), any(), any(), any(), any()))
                 .thenReturn(List.of());
-        when(accountingOperationEngine.proposerEtValiderImmediatement(any(), any(), any(), any(), any(), any(), any(), any(), any(), any()))
-                .thenAnswer(inv -> new AccountingOperationProposalDto(UUID.randomUUID(), entrepriseId, "AVOIR_VENTE", "APPROVED",
-                        null, null, client.getId(), LocalDate.now(), "libelle", null, List.of(), BigDecimal.ZERO, BigDecimal.ZERO,
-                        true, List.of(), List.of(), null, null, null, null, UUID.randomUUID(), "FACTURE_AVOIR", null));
+        when(accountingOperationEngine.proposerEtValiderImmediatement(any(), any(), any(), any(), any(), any(), any(), any(), any()))
+                .thenAnswer(inv -> new AccountingOperationProposalDto(UUID.randomUUID(), entrepriseId, "AVOIR_VENTE", "APPROVED", null, null, client.getId(), LocalDate.now(), "libelle", null, List.of(), BigDecimal.ZERO, BigDecimal.ZERO, true, List.of(), List.of(), null, null, null, null, UUID.randomUUID(), "FACTURE_AVOIR", null, "VALIDATION"));
         when(lettrageService.lettrerAutomatiquement(any(), any(), any())).thenReturn(List.of());
     }
 
@@ -193,15 +194,13 @@ class FactureAvoirServiceTest {
         assertThat(avoirCree.montantTtc()).isEqualByComparingTo("118000");
 
         when(compteComptableValidationService.chargerCompteUtilisable(entrepriseId, compteVentes.getId(), true)).thenReturn(compteVentes);
-        when(compteSystemeResolver.resoudre(entrepriseId, RoleCompteSysteme.TVA_COLLECTEE)).thenReturn(Optional.of(compteTva));
+        when(accountingAccountResolver.resoudreCompte(eq(entrepriseId), eq(com.example.comptable.comptabilite.parametrage.domain.AccountPurpose.TVA_COLLECTEE), any(), isNull()))
+                .thenReturn(new com.example.comptable.comptabilite.parametrage.AccountingAccountResolver.CompteResolu(compteTva, null));
         when(venteRule.construireLignesAvoirVenteDepuisMontantsPrecalcules(any(), any(), any(), any(), any(), any(), any()))
                 .thenReturn(List.of());
         UUID ecritureId = UUID.randomUUID();
-        when(accountingOperationEngine.proposerEtValiderImmediatement(eq(entrepriseId), eq(AccountingOperationType.AVOIR_VENTE),
-                eq(client), any(), any(), any(), any(), eq("FACTURE_AVOIR"), any(), eq(principal)))
-                .thenReturn(new AccountingOperationProposalDto(UUID.randomUUID(), entrepriseId, "AVOIR_VENTE", "APPROVED",
-                        null, null, client.getId(), facture.getDateEmission(), "libelle", null, List.of(), BigDecimal.ZERO,
-                        BigDecimal.ZERO, true, List.of(), List.of(), null, null, null, null, ecritureId, "FACTURE_AVOIR", null));
+        when(accountingOperationEngine.proposerEtValiderImmediatement(eq(entrepriseId), eq(AccountingOperationType.AVOIR_VENTE), eq(client), any(), any(), any(), any(), any(AccountingSource.class), eq(principal)))
+                .thenReturn(new AccountingOperationProposalDto(UUID.randomUUID(), entrepriseId, "AVOIR_VENTE", "APPROVED", null, null, client.getId(), facture.getDateEmission(), "libelle", null, List.of(), BigDecimal.ZERO, BigDecimal.ZERO, true, List.of(), List.of(), null, null, null, null, ecritureId, "FACTURE_AVOIR", null, "VALIDATION"));
         when(lettrageService.lettrerAutomatiquement(any(), any(), any())).thenReturn(List.of());
 
         FactureAvoir avoirEntite = construireAvoirDepuisDto(avoirCree, facture);

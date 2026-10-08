@@ -1,3 +1,4 @@
+import { DecimalPipe } from '@angular/common';
 import { Component, inject, OnInit, signal } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
@@ -8,7 +9,7 @@ import { CabinetService } from '../cabinet/cabinet.service';
 import { CollaborateurDto } from '../cabinet/models/cabinet.model';
 import { CopilotWidgetComponent } from '../copilot/copilot-widget.component';
 import { LIBELLES_TYPE_IMPOT } from '../fiscalite/models/fiscalite.model';
-import { AccountingProposalDto } from './models/accounting-proposal.model';
+import { ImputationSuggestionDto } from './models/imputation-suggestion.model';
 import { DashboardService } from './dashboard.service';
 import {
   ClotureReadinessDto,
@@ -29,7 +30,7 @@ import {
 @Component({
   selector: 'app-tableau-de-bord',
   standalone: true,
-  imports: [RouterLink, FormsModule, AideContextuelleComponent, CopilotWidgetComponent],
+  imports: [DecimalPipe, RouterLink, FormsModule, AideContextuelleComponent, CopilotWidgetComponent],
   templateUrl: './tableau-de-bord.component.html',
   styleUrl: './tableau-de-bord.component.scss',
 })
@@ -56,8 +57,8 @@ export class TableauDeBordComponent implements OnInit {
   readonly collaborateurs = signal<CollaborateurDto[]>([]);
   /** Cache par sourceId de Document : undefined = pas encore charge, null = pas de proposition
    * (404 attendu - tous les Finding source DOCUMENT n'ont pas de proposition, voir
-   * AccountingProposalBuilder). */
-  readonly propositionsParDocument = signal<Map<string, AccountingProposalDto | null>>(new Map());
+   * ImputationSuggestionBuilder). */
+  readonly propositionsParDocument = signal<Map<string, ImputationSuggestionDto | null>>(new Map());
 
   readonly chargement = signal(false);
   readonly erreur = signal<string | null>(null);
@@ -115,7 +116,7 @@ export class TableauDeBordComponent implements OnInit {
 
   private chargerPropositionPourDocument(documentId: string): void {
     this.dashboardService
-      .obtenirPropositionPourDocument(this.entrepriseId(), documentId)
+      .obtenirSuggestionPourDocument(this.entrepriseId(), documentId)
       .pipe(catchError(() => of(null)))
       .subscribe((proposition) => {
         const propositions = new Map(this.propositionsParDocument());
@@ -124,25 +125,25 @@ export class TableauDeBordComponent implements OnInit {
       });
   }
 
-  propositionPour(finding: FindingDto): AccountingProposalDto | null | undefined {
+  propositionPour(finding: FindingDto): ImputationSuggestionDto | null | undefined {
     return this.propositionsParDocument().get(finding.sourceId);
   }
 
-  accepterProposition(finding: FindingDto, propositionId: string): void {
-    this.dashboardService.accepterProposition(this.entrepriseId(), propositionId).subscribe({
+  accepterSuggestion(finding: FindingDto, propositionId: string): void {
+    this.dashboardService.accepterSuggestion(this.entrepriseId(), propositionId).subscribe({
       next: (proposition) => this.remplacerProposition(finding.sourceId, proposition),
       error: (err) => this.erreur.set(err.error?.message ?? 'Impossible d’accepter cette proposition.'),
     });
   }
 
-  rejeterProposition(finding: FindingDto, propositionId: string): void {
-    this.dashboardService.rejeterProposition(this.entrepriseId(), propositionId).subscribe({
+  rejeterSuggestion(finding: FindingDto, propositionId: string): void {
+    this.dashboardService.rejeterSuggestion(this.entrepriseId(), propositionId).subscribe({
       next: (proposition) => this.remplacerProposition(finding.sourceId, proposition),
       error: (err) => this.erreur.set(err.error?.message ?? 'Impossible de rejeter cette proposition.'),
     });
   }
 
-  private remplacerProposition(documentId: string, proposition: AccountingProposalDto): void {
+  private remplacerProposition(documentId: string, proposition: ImputationSuggestionDto): void {
     const propositions = new Map(this.propositionsParDocument());
     propositions.set(documentId, proposition);
     this.propositionsParDocument.set(propositions);
@@ -165,7 +166,12 @@ export class TableauDeBordComponent implements OnInit {
   }
 
   rejeter(findingId: string): void {
-    this.dashboardService.rejeterFinding(this.entrepriseId(), findingId).subscribe({
+    // Écarter n'est pas supprimer : le constat reste tracé, un motif est donc exigé.
+    const motif = window.prompt('Motif pour écarter ce constat (obligatoire) :')?.trim();
+    if (!motif) {
+      return;
+    }
+    this.dashboardService.rejeterFinding(this.entrepriseId(), findingId, motif).subscribe({
       next: () => this.rafraichirFindings(),
       error: (err) => this.erreur.set(err.error?.message ?? 'Impossible de rejeter ce constat.'),
     });

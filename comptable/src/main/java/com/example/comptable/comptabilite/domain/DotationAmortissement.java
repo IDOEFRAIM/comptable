@@ -15,7 +15,8 @@ import java.math.BigDecimal;
 import java.util.UUID;
 
 /** Trace la dotation d'amortissement deja generee pour une immobilisation sur une annee donnee,
- * pour empecher une double generation (contrainte unique immobilisation+annee en base). */
+ * pour empecher une double generation (contrainte unique immobilisation+annee en base). Le montant est
+ * calcule par le domaine Immobilisation ; l'ecriture correspondante est creee par le moteur comptable. */
 @Entity
 @Table(name = "dotation_amortissement")
 @Getter
@@ -33,6 +34,6 @@ public class DotationAmortissement extends UuidEntity {
     @Column(nullable = false)
     private BigDecimal montant;
 
-    @Column(name = "ligne_ecriture_id")
-    private UUID ligneEcritureId;
+    @Column(name = "ecriture_id")
+    private UUID ecritureId;
 }

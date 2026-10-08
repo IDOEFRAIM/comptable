@@ -1,5 +1,7 @@
 package com.example.comptable.stock.service;
 
+import com.example.comptable.comptabilite.operation.common.AccountingSource;
+
 import com.example.comptable.comptabilite.domain.CompteComptable;
 import com.example.comptable.comptabilite.domain.Tiers;
 import com.example.comptable.comptabilite.domain.TypeJournal;
@@ -178,12 +180,8 @@ class AvoirFournisseurServiceTest {
         when(achatRule.construireMultiLigne(eq(entreprise), eq(fournisseur), any())).thenReturn(resultatOrigine);
 
         UUID ecritureId = UUID.randomUUID();
-        AccountingOperationProposalDto proposition = new AccountingOperationProposalDto(UUID.randomUUID(), entrepriseId,
-                "AVOIR_ACHAT", "APPROVED", null, null, fournisseur.getId(), LocalDate.now(), "libelle", null, List.of(),
-                new BigDecimal("10000"), new BigDecimal("10000"), true, List.of(), List.of(), null, null, null, null,
-                ecritureId, "AVOIR_FACTURE_FOURNISSEUR", null);
-        when(accountingOperationEngine.proposerEtValiderImmediatement(eq(entrepriseId), eq(AccountingOperationType.AVOIR_ACHAT),
-                eq(fournisseur), any(), any(), any(), any(), eq("AVOIR_FACTURE_FOURNISSEUR"), any(), eq(principal)))
+        AccountingOperationProposalDto proposition = new AccountingOperationProposalDto(UUID.randomUUID(), entrepriseId, "AVOIR_ACHAT", "APPROVED", null, null, fournisseur.getId(), LocalDate.now(), "libelle", null, List.of(), new BigDecimal("10000"), new BigDecimal("10000"), true, List.of(), List.of(), null, null, null, null, ecritureId, "AVOIR_FACTURE_FOURNISSEUR", null, "VALIDATION");
+        when(accountingOperationEngine.proposerEtValiderImmediatement(eq(entrepriseId), eq(AccountingOperationType.AVOIR_ACHAT), eq(fournisseur), any(), any(), any(), any(), any(AccountingSource.class), eq(principal)))
                 .thenReturn(proposition);
 
         var resultat = avoirFournisseurService.creer(entrepriseId, facture.getId(),
@@ -195,8 +193,7 @@ class AvoirFournisseurServiceTest {
         assertThat(resultat.ecritureId()).isEqualTo(ecritureId);
 
         ArgumentCaptor<ResultatRegle> captor = ArgumentCaptor.forClass(ResultatRegle.class);
-        verify(accountingOperationEngine).proposerEtValiderImmediatement(eq(entrepriseId), eq(AccountingOperationType.AVOIR_ACHAT),
-                eq(fournisseur), any(), any(), any(), captor.capture(), eq("AVOIR_FACTURE_FOURNISSEUR"), any(), eq(principal));
+        verify(accountingOperationEngine).proposerEtValiderImmediatement(eq(entrepriseId), eq(AccountingOperationType.AVOIR_ACHAT), eq(fournisseur), any(), any(), any(), captor.capture(), any(AccountingSource.class), eq(principal));
         ResultatRegle resultatInverse = captor.getValue();
         assertThat(resultatInverse.lignes()).anySatisfy(l -> {
             assertThat(l.getCompte().getNumero()).isEqualTo("601");
@@ -232,11 +229,8 @@ class AvoirFournisseurServiceTest {
             return a;
         });
         when(achatRule.construireMultiLigne(any(), any(), any())).thenReturn(new ResultatRegle(TypeJournal.ACHATS, List.of(), List.of(), List.of()));
-        when(accountingOperationEngine.proposerEtValiderImmediatement(any(), any(), any(), any(), any(), any(), any(), any(), any(), any()))
-                .thenReturn(new AccountingOperationProposalDto(UUID.randomUUID(), entrepriseId, "AVOIR_ACHAT", "APPROVED",
-                        null, null, fournisseur.getId(), LocalDate.now(), "libelle", null, List.of(), BigDecimal.ZERO,
-                        BigDecimal.ZERO, true, List.of(), List.of(), null, null, null, null, UUID.randomUUID(),
-                        "AVOIR_FACTURE_FOURNISSEUR", null));
+        when(accountingOperationEngine.proposerEtValiderImmediatement(any(), any(), any(), any(), any(), any(), any(), any(), any()))
+                .thenReturn(new AccountingOperationProposalDto(UUID.randomUUID(), entrepriseId, "AVOIR_ACHAT", "APPROVED", null, null, fournisseur.getId(), LocalDate.now(), "libelle", null, List.of(), BigDecimal.ZERO, BigDecimal.ZERO, true, List.of(), List.of(), null, null, null, null, UUID.randomUUID(), "AVOIR_FACTURE_FOURNISSEUR", null, "VALIDATION"));
         when(mouvementStockService.enregistrerAvecSource(any(), any(), any(), eq("AVOIR_FOURNISSEUR"), any()))
                 .thenReturn(mock(MouvementStockDto.class));
 
@@ -268,11 +262,8 @@ class AvoirFournisseurServiceTest {
             return a;
         });
         when(achatRule.construireMultiLigne(any(), any(), any())).thenReturn(new ResultatRegle(TypeJournal.ACHATS, List.of(), List.of(), List.of()));
-        when(accountingOperationEngine.proposerEtValiderImmediatement(any(), any(), any(), any(), any(), any(), any(), any(), any(), any()))
-                .thenReturn(new AccountingOperationProposalDto(UUID.randomUUID(), entrepriseId, "AVOIR_ACHAT", "APPROVED",
-                        null, null, fournisseur.getId(), LocalDate.now(), "libelle", null, List.of(), BigDecimal.ZERO,
-                        BigDecimal.ZERO, true, List.of(), List.of(), null, null, null, null, UUID.randomUUID(),
-                        "AVOIR_FACTURE_FOURNISSEUR", null));
+        when(accountingOperationEngine.proposerEtValiderImmediatement(any(), any(), any(), any(), any(), any(), any(), any(), any()))
+                .thenReturn(new AccountingOperationProposalDto(UUID.randomUUID(), entrepriseId, "AVOIR_ACHAT", "APPROVED", null, null, fournisseur.getId(), LocalDate.now(), "libelle", null, List.of(), BigDecimal.ZERO, BigDecimal.ZERO, true, List.of(), List.of(), null, null, null, null, UUID.randomUUID(), "AVOIR_FACTURE_FOURNISSEUR", null, "VALIDATION"));
         when(mouvementStockService.enregistrerAvecSource(any(), any(), any(), eq("AVOIR_FOURNISSEUR"), any()))
                 .thenReturn(null);
 

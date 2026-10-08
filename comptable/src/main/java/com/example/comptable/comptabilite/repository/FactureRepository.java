@@ -69,4 +69,12 @@ public interface FactureRepository extends JpaRepository<Facture, UUID> {
      * necessaire pour reconstituer l'historique de paiement). */
     List<Facture> findByEntrepriseIdAndTypeAndTiersIdAndDateEcheanceIsNotNullAndEcritureIdIsNotNull(
             UUID entrepriseId, TypeFacture type, UUID tiersId);
+
+    /** Factures clients portant ce numero (normalise) : une piece de vente retrouve ainsi sa facture, lignes chargees pour le TTC. */
+    @Query("select distinct f from Facture f left join fetch f.lignes "
+            + "where f.entreprise.id = :entrepriseId and f.type = :type and f.numeroNormalise = :numeroNormalise")
+    List<Facture> rechercherParNumero(UUID entrepriseId, TypeFacture type, String numeroNormalise);
+
+    @Query("select distinct f from Facture f left join fetch f.lignes where f.id = :id and f.entreprise.id = :entrepriseId")
+    java.util.Optional<Facture> chargerAvecLignes(UUID id, UUID entrepriseId);
 }

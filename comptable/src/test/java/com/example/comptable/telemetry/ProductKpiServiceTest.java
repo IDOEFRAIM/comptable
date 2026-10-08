@@ -1,8 +1,8 @@
 package com.example.comptable.telemetry;
 
-import com.example.comptable.agent.comptabilisation.domain.AccountingProposal;
-import com.example.comptable.agent.comptabilisation.domain.StatutAccountingProposal;
-import com.example.comptable.agent.comptabilisation.repository.AccountingProposalRepository;
+import com.example.comptable.agent.imputation.domain.ImputationSuggestion;
+import com.example.comptable.agent.imputation.domain.StatutImputationSuggestion;
+import com.example.comptable.agent.imputation.repository.ImputationSuggestionRepository;
 import com.example.comptable.agent.finding.domain.Finding;
 import com.example.comptable.agent.finding.domain.SeveriteFinding;
 import com.example.comptable.agent.finding.domain.StatutFinding;
@@ -53,7 +53,7 @@ class ProductKpiServiceTest {
     @Mock
     private AiMatchProposalRepository aiMatchProposalRepository;
     @Mock
-    private AccountingProposalRepository accountingProposalRepository;
+    private ImputationSuggestionRepository imputationSuggestionRepository;
     @Mock
     private CopilotQueryRepository copilotQueryRepository;
 
@@ -105,7 +105,7 @@ class ProductKpiServiceTest {
     @Test
     void aucune_proposition_ne_produit_un_taux_null_pas_zero() {
         when(aiMatchProposalRepository.findByEntrepriseIdIn(any())).thenReturn(List.of());
-        when(accountingProposalRepository.findByEntrepriseIdIn(any())).thenReturn(List.of());
+        when(imputationSuggestionRepository.findByEntrepriseIdIn(any())).thenReturn(List.of());
         stubsVidesRestants();
 
         ProductKpiDto kpi = productKpiService.generer(principal);
@@ -125,7 +125,7 @@ class ProductKpiServiceTest {
 
         when(aiMatchProposalRepository.findByEntrepriseIdIn(any()))
                 .thenReturn(List.of(autoApplique, accepteParHumain, rejeteParHumain, expiree, enAttente));
-        when(accountingProposalRepository.findByEntrepriseIdIn(any())).thenReturn(List.of());
+        when(imputationSuggestionRepository.findByEntrepriseIdIn(any())).thenReturn(List.of());
         stubsVidesRestants();
 
         ProductKpiDto kpi = productKpiService.generer(principal);
@@ -149,7 +149,7 @@ class ProductKpiServiceTest {
 
         when(aiMatchProposalRepository.findByEntrepriseIdIn(any()))
                 .thenReturn(List.of(acceptee1, acceptee2, rejetee, enAttente));
-        when(accountingProposalRepository.findByEntrepriseIdIn(any())).thenReturn(List.of());
+        when(imputationSuggestionRepository.findByEntrepriseIdIn(any())).thenReturn(List.of());
         stubsVidesRestants();
 
         ProductKpiDto kpi = productKpiService.generer(principal);
@@ -254,7 +254,7 @@ class ProductKpiServiceTest {
 
     private void stubsVidesSaufFindings() {
         lenient().when(aiMatchProposalRepository.findByEntrepriseIdIn(any())).thenReturn(List.of());
-        lenient().when(accountingProposalRepository.findByEntrepriseIdIn(any())).thenReturn(List.of());
+        lenient().when(imputationSuggestionRepository.findByEntrepriseIdIn(any())).thenReturn(List.of());
         lenient().when(findingRepository.findByEntrepriseIdInAndStatusOrderBySeverityAscCreatedAtDesc(any(), any())).thenReturn(List.of());
         lenient().when(demandePieceRepository.countByEntrepriseIdInAndStatut(any(), any())).thenReturn(0L);
         lenient().when(demandePieceRepository.findByEntrepriseIdInAndStatutOrderByDateLimiteAsc(any(), any())).thenReturn(List.of());
@@ -264,7 +264,7 @@ class ProductKpiServiceTest {
 
     private void stubsVidesSaufCopilot() {
         lenient().when(aiMatchProposalRepository.findByEntrepriseIdIn(any())).thenReturn(List.of());
-        lenient().when(accountingProposalRepository.findByEntrepriseIdIn(any())).thenReturn(List.of());
+        lenient().when(imputationSuggestionRepository.findByEntrepriseIdIn(any())).thenReturn(List.of());
         lenient().when(findingRepository.findByEntrepriseIdInAndStatus(any(), any())).thenReturn(List.of());
         lenient().when(findingRepository.findByEntrepriseIdInAndStatusOrderBySeverityAscCreatedAtDesc(any(), any())).thenReturn(List.of());
         lenient().when(demandePieceRepository.countByEntrepriseIdInAndStatut(any(), any())).thenReturn(0L);

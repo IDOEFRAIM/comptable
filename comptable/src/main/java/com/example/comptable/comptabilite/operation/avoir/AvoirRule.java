@@ -1,5 +1,7 @@
 package com.example.comptable.comptabilite.operation.avoir;
 
+import com.example.comptable.comptabilite.operation.common.Blocages;
+
 import com.example.comptable.comptabilite.domain.CompteComptable;
 import com.example.comptable.comptabilite.domain.Tiers;
 import com.example.comptable.comptabilite.domain.TypeJournal;
@@ -45,7 +47,7 @@ public class AvoirRule {
         CompteComptable compte = compteComptableValidationService
                 .chargerCompteUtilisable(entreprise.getId(), request.compteId(), true);
 
-        List<String> explications = new ArrayList<>();
+        Blocages explications = new Blocages();
         List<String> warnings = new ArrayList<>();
 
         List<AccountingOperationProposalLigne> lignesOrigine = request.type() == AccountingOperationType.AVOIR_VENTE

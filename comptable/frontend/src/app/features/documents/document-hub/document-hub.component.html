@@ -1,0 +1,259 @@
+<div class="hub">
+  <div class="entete">
+    <div>
+      <h2>Documents</h2>
+      <p class="sous-titre">Les pièces certaines se rangent seules. Ici : ce qui demande une décision.</p>
+    </div>
+    <div class="periode">
+      <label>
+        <input type="checkbox" [(ngModel)]="toutesPeriodes" (ngModelChange)="filtresChanges()" /> Toutes périodes
+      </label>
+      @if (!toutesPeriodes) {
+        <input type="month" [(ngModel)]="periode" (ngModelChange)="filtresChanges()" aria-label="Période" />
+      }
+      <button type="button" class="bouton-secondaire" (click)="rafraichir()">Actualiser</button>
+    </div>
+  </div>
+
+  @if (erreur()) {
+    <p class="message-erreur">{{ erreur() }}</p>
+  }
+  @if (info()) {
+    <p class="message-info">{{ info() }}</p>
+  }
+
+  <section class="tuiles" aria-label="Synthèse des documents">
+    @for (t of tuiles; track t.code) {
+      <button type="button" class="tuile" [class.active]="tuile === t.code" [class.vide]="nombre(t.cle) === 0" (click)="choisirTuile(t.code)">
+        <span class="tuile-nombre">{{ nombre(t.cle) }}</span>
+        <span class="tuile-libelle">{{ t.libelle }}</span>
+      </button>
+    }
+    <button type="button" class="tuile tuile-externe" [class.vide]="(synthese()?.piecesManquantes ?? 0) === 0" (click)="voirPiecesManquantes()"
+      title="Opérations comptabilisées sans justificatif : traitées dans la Révision">
+      <span class="tuile-nombre">{{ synthese()?.piecesManquantes ?? 0 }}</span>
+      <span class="tuile-libelle">Pièces manquantes ›</span>
+    </button>
+  </section>
+
+  @if (peutGerer() && (synthese()?.rapprochesAutomatiquement ?? 0) > 0) {
+    <div class="bandeau-lot">
+      <span><strong>{{ synthese()?.rapprochesAutomatiquement }}</strong> pièce(s) rapprochée(s) automatiquement, pas encore validée(s).</span>
+      <button type="button" class="bouton-lien" (click)="ouvrirApercuLot()">Prévisualiser et valider</button>
+    </div>
+  }
+
+  @if (apercuLot(); as apercu) {
+    <section class="carte apercu">
+      <h3>Validation en masse — aperçu</h3>
+      <p class="aide">Seuls les rapprochements <strong>certains</strong> faits par le système sont listés. Décochez ce que vous voulez revoir.</p>
+      <ul>
+        @for (d of apercu; track d.id) {
+          <li>
+            <label>
+              <input type="checkbox" [checked]="selectionLot().has(d.id)" (change)="basculerSelection(d.id)" />
+              <span class="nom">{{ d.nomFichier }}</span>
+              @if (d.numeroFacture) { <span class="meta">n° {{ d.numeroFacture }}</span> }
+              @if (d.montantTtc !== null) { <span class="meta">{{ d.montantTtc | currency: 'XOF' : 'symbol' : '1.0-0' }}</span> }
+              <span class="meta">{{ d.raison }}</span>
+            </label>
+          </li>
+        }
+      </ul>
+      <div class="actions">
+        <button type="button" class="bouton-principal petit" [disabled]="selectionLot().size === 0" (click)="validerSelection()">
+          Valider {{ selectionLot().size }} pièce(s)
+        </button>
+        <button type="button" class="bouton-lien" (click)="apercuLot.set(null)">Annuler</button>
+      </div>
+    </section>
+  }
+
+  <section class="filtres carte">
+    <label class="champ">
+      <span>Recherche</span>
+      <input type="search" [(ngModel)]="recherche" (ngModelChange)="rechercheChangee()" placeholder="Fichier, n° de facture…" />
+    </label>
+    <label class="champ">
+      <span>Type</span>
+      <select [(ngModel)]="type" (ngModelChange)="filtresChanges()">
+        <option value="">Tous</option>
+        @for (t of typesDocument; track t) {
+          <option [value]="t">{{ libellesType[t] }}</option>
+        }
+      </select>
+    </label>
+    @if (tuile) {
+      <button type="button" class="bouton-lien" (click)="choisirTuile(tuile)">Retirer le filtre « {{ tuile }} »</button>
+    }
+  </section>
+
+  @if (chargement()) {
+    <p class="etat-vide">Chargement…</p>
+  } @else if (lignes().length === 0) {
+    <p class="etat-vide">Aucune pièce pour ces critères.</p>
+  } @else {
+    <p class="compteur">{{ total() }} pièce(s)</p>
+    <div class="liste">
+      @for (l of lignes(); track l.id) {
+        <article class="carte ligne" [class.doublon]="l.doublonConfirme">
+          <div class="ligne-principale">
+            <div class="col-id">
+              <strong>{{ l.numeroFacture ?? '—' }}</strong>
+              <span class="meta">{{ libellesType[l.type] }} · {{ libellesCanal[l.canal] }}</span>
+              <span class="meta">reçu le {{ l.recuLe | date: 'dd/MM/yyyy' }}</span>
+            </div>
+            <div class="col-tiers">
+              @if (l.tiersNom) {
+                <strong>{{ l.tiersNom }}</strong>
+              } @else if (l.fournisseurExtrait) {
+                <strong class="inconnu">{{ l.fournisseurExtrait }}</strong>
+              } @else {
+                <span class="meta">—</span>
+              }
+              @if (l.qualiteTiers && l.qualiteTiers !== 'EXACT') {
+                <span class="meta alerte">{{ libelleQualite(l.qualiteTiers) }}</span>
+              }
+              <span class="meta">{{ l.datePiece ? (l.datePiece | date: 'dd/MM/yyyy') : 'date inconnue' }}</span>
+            </div>
+            <div class="col-montant">
+              @if (l.montantTtc !== null) {
+                <strong>{{ l.montantTtc | currency: (l.devise ?? 'XOF') : 'symbol' : '1.0-0' }}</strong>
+              } @else {
+                <span class="meta">—</span>
+              }
+            </div>
+            <div class="col-statut">
+              <span class="badge" [class]="'badge ' + libelleStatut(l).classe">{{ libelleStatut(l).texte }}</span>
+              @if (confiance(l)) {
+                <span class="meta">confiance {{ confiance(l) }}</span>
+              }
+            </div>
+          </div>
+
+          @if (l.association) {
+            <p class="association">
+              @if (l.statutRapprochement === 'A_CONFIRMER') { Proposée : } @else { Associée à : }
+              <strong>{{ l.association.libelle }}</strong>
+            </p>
+          }
+          @if (l.constats.length) {
+            <p class="constats">
+              @for (c of l.constats; track c) {
+                <span class="badge badge-erreur">{{ libellesConstat[c] ?? c }}</span>
+              }
+            </p>
+          }
+
+          <div class="actions">
+            <button type="button" class="bouton-secondaire petit" (click)="ouvrirFichier(l)">Ouvrir</button>
+            @if (peutGerer() && !l.doublonConfirme) {
+              @if (l.statutRapprochement === 'A_CONFIRMER') {
+                <button type="button" class="bouton-principal petit" (click)="confirmer(l)">Confirmer</button>
+                <button type="button" class="bouton-secondaire petit" (click)="rejeterProposition(l)">Rejeter</button>
+              }
+              @if (peutAssocier(l)) {
+                <button type="button" class="bouton-secondaire petit" (click)="ouvrirAssociation(l)">Associer à une facture…</button>
+              }
+              <button type="button" class="bouton-secondaire petit" (click)="ouvrirAssociationDemande(l)">Associer à une demande…</button>
+              @if (l.statutRapprochement === 'RAPPROCHE' && !l.valide) {
+                <button type="button" class="bouton-principal petit" (click)="validerPiece(l)">Valider</button>
+              }
+              @if (l.qualiteTiers === 'INCONNU' || l.qualiteTiers === 'AMBIGU' || l.qualiteTiers === 'PROBABLE') {
+                <button type="button" class="bouton-secondaire petit" (click)="retraiter(l)" title="Après avoir créé ou corrigé le fournisseur">Réanalyser</button>
+              }
+              @if (peutComptabiliser(l)) {
+                <button type="button" class="bouton-principal petit" (click)="documentEnComptabilisation.set(l)">Comptabiliser</button>
+              }
+              <span class="espaceur"></span>
+              <button type="button" class="bouton-lien bouton-discret petit" (click)="ouvrirDoublon(l)">Marquer comme doublon…</button>
+            }
+          </div>
+
+          @if (panneau(); as p) {
+            @if (p.documentId === l.id) {
+              <div class="panneau">
+                @if (chargementPanneau()) {
+                  <p class="meta">Chargement…</p>
+                } @else if (p.type === 'ASSOCIER') {
+                  <h4>Associer à une facture</h4>
+                  @if (candidats().length === 0) {
+                    <p class="aide">Aucune facture candidate : le fournisseur n’est pas identifié, ou aucune facture n’est enregistrée pour lui.</p>
+                  }
+                  @for (c of candidats(); track c.id) {
+                    <label class="candidat" [class.fort]="c.niveau !== 'POSSIBLE'">
+                      <input type="radio" name="candidat-{{ l.id }}" [checked]="choix() === c.id" (change)="choix.set(c.id)" />
+                      <span class="cand-num">{{ c.numero }}@if (c.numeroFournisseur) { <em> (n° {{ c.numeroFournisseur }})</em> }</span>
+                      <span>{{ c.montantTtc | currency: 'XOF' : 'symbol' : '1.0-0' }}</span>
+                      <span class="meta">{{ c.date ? (c.date | date: 'dd/MM/yyyy') : '' }}</span>
+                      <span class="meta">{{ c.raison }}</span>
+                    </label>
+                  }
+                  <div class="actions">
+                    <button type="button" class="bouton-principal petit" [disabled]="!choix()" (click)="confirmerAssociation(l)">Associer</button>
+                    <button type="button" class="bouton-lien" (click)="fermerPanneau()">Annuler</button>
+                  </div>
+                } @else if (p.type === 'DEMANDE') {
+                  <h4>Associer à une demande de pièce</h4>
+                  @if (demandesCandidates().length === 0) {
+                    <p class="aide">Aucune demande de pièce ouverte pour cette entreprise.</p>
+                  }
+                  @for (c of demandesCandidates(); track c.demandeId) {
+                    <label class="candidat" [class.fort]="c.niveau !== 'POSSIBLE'">
+                      <input type="radio" name="demande-{{ l.id }}" [checked]="choix() === c.demandeId" (change)="choix.set(c.demandeId)" />
+                      <span class="cand-num">{{ c.tiers ?? 'Tiers inconnu' }}</span>
+                      <span>{{ c.description }}</span>
+                      <span>{{ c.montant !== null ? (c.montant | currency: 'XOF' : 'symbol' : '1.0-0') : '' }}</span>
+                      <span class="meta">{{ c.date ? (c.date | date: 'dd/MM/yyyy') : '' }}</span>
+                      <span class="meta">{{ niveauDemande(c.niveau) }}</span>
+                    </label>
+                  }
+                  <div class="actions">
+                    <button type="button" class="bouton-principal petit" [disabled]="!choix()" (click)="confirmerAssociationDemande(l)">Associer</button>
+                    <button type="button" class="bouton-lien" (click)="fermerPanneau()">Annuler</button>
+                  </div>
+                } @else {
+                  <h4>Doublon de quelle pièce ?</h4>
+                  @if (originaux().length === 0) {
+                    <p class="aide">Aucune autre pièce ne ressemble à celle-ci (même fichier, même facture, même montant).</p>
+                  }
+                  @for (o of originaux(); track o.id) {
+                    <label class="candidat">
+                      <input type="radio" name="original-{{ l.id }}" [checked]="choix() === o.id" (change)="choix.set(o.id)" />
+                      <span class="cand-num">{{ o.nomFichier }}</span>
+                      <span class="meta">{{ o.numeroFacture ? 'n° ' + o.numeroFacture : '' }}</span>
+                      <span class="meta">reçue le {{ o.recuLe | date: 'dd/MM/yyyy' }}</span>
+                      <span class="meta">{{ o.raison }}</span>
+                    </label>
+                  }
+                  <div class="actions">
+                    <button type="button" class="bouton-principal petit" [disabled]="!choix()" (click)="confirmerDoublon(l)">Confirmer le doublon</button>
+                    <button type="button" class="bouton-lien" (click)="fermerPanneau()">Annuler</button>
+                  </div>
+                }
+              </div>
+            }
+          }
+        </article>
+      }
+    </div>
+
+    @if (totalPages() > 1) {
+      <div class="pagination">
+        <button type="button" class="bouton-lien" [disabled]="page() === 0" (click)="changerPage(-1)">Précédent</button>
+        <span>Page {{ page() + 1 }} / {{ totalPages() }}</span>
+        <button type="button" class="bouton-lien" [disabled]="page() + 1 >= totalPages()" (click)="changerPage(1)">Suivant</button>
+      </div>
+    }
+  }
+</div>
+
+@if (documentEnComptabilisation(); as document) {
+  <app-comptabiliser-modal
+    [entrepriseId]="entrepriseId()"
+    [documentId]="document.id"
+    [typeDocument]="asTypeComptabilisable(document.type)"
+    (valide)="documentEnComptabilisation.set(null); rafraichir()"
+    (annule)="documentEnComptabilisation.set(null)"
+  />
+}

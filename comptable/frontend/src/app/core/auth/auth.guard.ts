@@ -8,7 +8,8 @@ export const authGuard: CanActivateFn = () => {
   const router = inject(Router);
 
   if (tokenStorage.getToken()) {
-    return true;
+    // Mot de passe temporaire ou réinitialisé : aucune page de travail avant le changement de mot de passe.
+    return tokenStorage.doitChangerMotDePasse() ? router.parseUrl('/changer-mot-de-passe') : true;
   }
   return router.parseUrl('/login');
 };

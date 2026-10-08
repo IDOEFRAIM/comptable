@@ -60,7 +60,7 @@
             <span [class]="classeStatut(d)">{{ libellesStatut[d.statut] }}</span>
           </div>
 
-          @if (d.statut === 'EN_ATTENTE') {
+          @if (d.statut === 'EN_ATTENTE' || d.statut === 'A_ENVOYER' || d.statut === 'ECHEC_ENVOI') {
             @if (peutGerer) {
               <div class="actions">
                 <button type="button" class="bouton-lien" (click)="annuler(d)">Annuler la demande</button>

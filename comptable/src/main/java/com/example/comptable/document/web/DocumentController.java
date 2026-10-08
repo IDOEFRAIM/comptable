@@ -16,6 +16,9 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RequestBody;
+import jakarta.validation.Valid;
+import com.example.comptable.document.web.dto.LierEcritureRequest;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -28,6 +31,7 @@ import java.util.UUID;
 public class DocumentController {
 
     private final DocumentService documentService;
+    private final com.example.comptable.document.service.DocumentLiaisonService documentLiaisonService;
 
     @PostMapping
     public ResponseEntity<DocumentDto> uploader(
@@ -60,5 +64,13 @@ public class DocumentController {
                 .contentType(type)
                 .header(HttpHeaders.CONTENT_DISPOSITION, "inline; filename=\"" + fichier.nomFichier() + "\"")
                 .body(fichier.resource());
+    }
+
+    /** Ecriture <-> piece : rattache cette piece a une ecriture deja comptabilisee (ferme le constat "piece manquante"). */
+    @PostMapping("/{documentId}/lier-ecriture")
+    public DocumentDto lierEcriture(@PathVariable UUID entrepriseId, @PathVariable UUID documentId,
+                                    @Valid @RequestBody LierEcritureRequest requete,
+                                    @AuthenticationPrincipal UtilisateurPrincipal principal) {
+        return documentLiaisonService.lierAEcriture(entrepriseId, documentId, requete.ecritureId(), principal);
     }
 }

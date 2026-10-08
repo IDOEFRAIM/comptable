@@ -50,6 +50,23 @@ public class Utilisateur extends UuidEntity {
     @Column(name = "created_at", nullable = false)
     private OffsetDateTime createdAt;
 
+    /** Mot de passe temporaire ou réinitialisé : tout est refusé (sauf le changement de mot de passe) tant que l'utilisateur n'en a pas choisi un. */
+    @Column(name = "must_change_password", nullable = false)
+    private boolean mustChangePassword;
+
+    /** Incrémentée à chaque changement / réinitialisation de mot de passe et à chaque désactivation : les jetons émis avant sont révoqués. */
+    @Column(name = "credentials_version", nullable = false)
+    private int credentialsVersion;
+
+    @Column(name = "failed_login_count", nullable = false)
+    private int failedLoginCount;
+
+    @Column(name = "locked_until")
+    private OffsetDateTime lockedUntil;
+
+    @Column(name = "last_login_at")
+    private OffsetDateTime lastLoginAt;
+
     @ManyToMany(fetch = FetchType.EAGER)
     @JoinTable(
             name = "utilisateur_role",

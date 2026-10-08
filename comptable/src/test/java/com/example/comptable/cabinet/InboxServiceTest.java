@@ -92,6 +92,10 @@ class InboxServiceTest {
         f.setEntreprise(entreprise);
         f.setType(TypeFinding.MISSING_EVIDENCE);
         f.setSeverity(severite);
+        f.setControlCode("MISSING_DOCUMENT");
+        f.setCategory(com.example.comptable.controle.ControlCategory.DOCUMENT);
+        f.setControlSeverity(com.example.comptable.controle.ControlSeverity.WARNING);
+        f.setLastDetectedAt(OffsetDateTime.now());
         f.setSourceType("LIGNE_RELEVE");
         f.setSourceId("ligne-1");
         f.setTitle("Justificatif manquant");

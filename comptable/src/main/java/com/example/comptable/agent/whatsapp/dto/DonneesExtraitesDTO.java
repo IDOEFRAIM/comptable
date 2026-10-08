@@ -30,6 +30,13 @@ public record DonneesExtraitesDTO(
         String devise,
         String modePaiement,
         LocalDate datePiece,
-        double confiance
+        double confiance,
+        /** Numero de la facture du fournisseur (Phase C), facultatif. */
+        String numeroFacture
 ) {
+    /** Forme historique, sans numero de facture. */
+    public DonneesExtraitesDTO(String fournisseur, BigDecimal montantHt, BigDecimal montantTva, BigDecimal montantTtc, String devise,
+                               String modePaiement, LocalDate datePiece, double confiance) {
+        this(fournisseur, montantHt, montantTva, montantTtc, devise, modePaiement, datePiece, confiance, null);
+    }
 }

@@ -1,6 +1,6 @@
 package com.example.comptable.dossier;
 
-import com.example.comptable.agent.finding.ControlEngine;
+import com.example.comptable.controle.ControlRunService;
 import com.example.comptable.agent.finding.domain.Finding;
 import com.example.comptable.agent.finding.domain.SeveriteFinding;
 import com.example.comptable.agent.finding.domain.StatutFinding;
@@ -30,7 +30,7 @@ import java.util.function.Predicate;
  * "Dossier Comptable Intelligent" (mission P0, section 8) : point d'entree qui repond a "qu'est-ce
  * qui est deja correct / qu'est-ce qui manque / qu'est-ce qui est anormal / que dois-je faire
  * maintenant" pour une entreprise. Jamais persiste (voir la javadoc de {@link DossierComptableDto})
- * - recalcule a chaque appel a partir de {@link Finding} (deja peuples par {@link ControlEngine} et
+ * - recalcule a chaque appel a partir de {@link Finding} (deja peuples par ControlRunService et
  * {@code MissingEvidenceAnalyzer}) et de quelques compteurs deterministes existants.
  * <p>
  * Limite assumee pour ce P0 : les domaines Banque et Justificatifs partagent aujourd'hui la meme
@@ -54,20 +54,23 @@ public class DossierComptableService {
     private static final int MAX_ACTIONS_PRIORITAIRES = 50;
 
     private final EntrepriseAccessService entrepriseAccessService;
-    private final ControlEngine controlEngine;
+    private final ControlRunService controlRunService;
     private final FindingRepository findingRepository;
     private final FactureRepository factureRepository;
+    private final com.example.comptable.comptabilite.allocation.StatutPaiementFactureService statutPaiementFactureService;
     private final DocumentRepository documentRepository;
 
     public DossierComptableService(EntrepriseAccessService entrepriseAccessService,
-                                    ControlEngine controlEngine,
+                                    ControlRunService controlRunService,
                                     FindingRepository findingRepository,
                                     FactureRepository factureRepository,
+                                    com.example.comptable.comptabilite.allocation.StatutPaiementFactureService statutPaiementFactureService,
                                     DocumentRepository documentRepository) {
         this.entrepriseAccessService = entrepriseAccessService;
-        this.controlEngine = controlEngine;
+        this.controlRunService = controlRunService;
         this.findingRepository = findingRepository;
         this.factureRepository = factureRepository;
+        this.statutPaiementFactureService = statutPaiementFactureService;
         this.documentRepository = documentRepository;
     }
 
@@ -78,7 +81,7 @@ public class DossierComptableService {
         // Rafraichit les findings deterministes avant de scorer (declarations manquantes/en
         // retard, documents a risque, ecritures brouillon anciennes) - le Missing Evidence Engine,
         // lui, est deja tenu a jour a chaque import de releve (evenementiel, pas relu ici).
-        controlEngine.analyser(entreprise);
+        controlRunService.executerSiPerime(entreprise);
 
         List<Finding> findingsOuverts = findingRepository
                 .findByEntrepriseIdAndStatusOrderBySeverityAscCreatedAtDesc(entrepriseId, StatutFinding.OPEN);
@@ -148,8 +151,10 @@ public class DossierComptableService {
     }
 
     private int scoreClients(UUID entrepriseId) {
-        long facturesEnRetard = factureRepository.countByEntrepriseIdAndTypeAndStatutAndDateEcheanceBefore(
-                entrepriseId, TypeFacture.FACTURE, StatutFacture.VALIDEE, LocalDate.now());
+        // En retard = echeance depassee ET reste a payer > 0 (calcule depuis les allocations), jamais un drapeau saisi.
+        long facturesEnRetard = statutPaiementFactureService.ouvertes(entrepriseId, factureRepository
+                .findByEntrepriseIdAndTypeAndStatutAndDateEcheanceBeforeOrderByDateEcheanceAsc(
+                        entrepriseId, TypeFacture.FACTURE, StatutFacture.VALIDEE, LocalDate.now())).size();
         return Math.max(0, 100 - Math.min(100, (int) facturesEnRetard * PENALITE_PAR_FACTURE_CLIENT_EN_RETARD));
     }
 

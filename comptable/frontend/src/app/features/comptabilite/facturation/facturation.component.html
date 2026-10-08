@@ -120,6 +120,11 @@
               <span class="date">{{ doc.dateEmission }}</span>
               <span class="montant">{{ doc.montantTtc | number: '1.0-0' }}</span>
               <span class="badge" [attr.data-statut]="doc.statut">{{ libellesStatut[doc.statut] }}</span>
+              @if (doc.statutPaiement === 'PARTIELLEMENT_PAYEE') {
+                <span class="badge" data-paiement="PARTIELLEMENT_PAYEE">Partiellement payée · reste {{ doc.resteAPayer }}</span>
+              } @else if (doc.statutPaiement === 'PAYEE') {
+                <span class="badge" data-paiement="PAYEE">Réglée</span>
+              }
             </button>
 
             @if (documentOuvert() === doc.id) {
@@ -194,14 +199,7 @@
                       <button type="button" class="bouton-secondaire" (click)="ouvrirFormulaireAvoir(doc)">
                         Créer un avoir
                       </button>
-                      <button type="button" class="bouton-principal" [disabled]="actionEnCours() === doc.id" (click)="marquerPayee(doc)">
-                        Marquer payée
-                      </button>
-                    }
-                    @if (doc.statut === 'PAYEE') {
-                      <button type="button" class="bouton-secondaire" (click)="ouvrirFormulaireAvoir(doc)">
-                        Créer un avoir
-                      </button>
+                      <span class="meta" data-aide="paiement">Le paiement se lit dans les règlements affectés (écran Banque) : enregistrez le règlement, il sera affecté à la facture.</span>
                     }
                   }
                 </div>

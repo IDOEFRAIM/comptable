@@ -58,7 +58,8 @@ public class CabinetAnalyticsService {
                     .average();
             tempsMoyenResolutionJours = moyenne.isPresent() ? moyenne.getAsDouble() : null;
 
-            long resolues = demandePieceRepository.countByEntrepriseIdInAndStatut(entrepriseIds, StatutDemandePiece.RECU);
+            long resolues = demandePieceRepository.countByEntrepriseIdInAndStatut(entrepriseIds, StatutDemandePiece.RECU)
+                    + demandePieceRepository.countByEntrepriseIdInAndStatut(entrepriseIds, StatutDemandePiece.RAPPROCHEE);
             long enAttente = demandePieceRepository.countByEntrepriseIdInAndStatut(entrepriseIds, StatutDemandePiece.EN_ATTENTE);
             long annulees = demandePieceRepository.countByEntrepriseIdInAndStatut(entrepriseIds, StatutDemandePiece.ANNULEE);
             long total = resolues + enAttente + annulees;

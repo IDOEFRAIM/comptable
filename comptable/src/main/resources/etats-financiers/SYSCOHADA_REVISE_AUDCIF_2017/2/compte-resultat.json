@@ -1,0 +1,1146 @@
+{
+ "framework": "SYSCOHADA_REVISE_AUDCIF_2017",
+ "version": "2",
+ "statementType": "COMPTE_RESULTAT",
+ "presentationSystem": "NORMAL",
+ "effectiveFrom": "2018-01-01",
+ "source": {
+  "document": "AUDCIF + Système comptable OHADA (SYSCOHADA), Journal officiel de l'OHADA, numéro spécial du 15 février 2017",
+  "sha256": "d5ecb380984b792c4d586b0efa77931249a4c0c25daf39d3c50b27648dd05300",
+  "pages": "1001-1004 ; correspondance 1069",
+  "matrix": "docs/syscohada-official-matrix.md",
+  "note": "SYSCOHADA_REVISE_AUDCIF_2017 est un identifiant applicatif, pas un identifiant officiel OHADA."
+ },
+ "scope": {
+  "accountClasses": [
+   6,
+   7,
+   8
+  ],
+  "excludedPrefixes": []
+ },
+ "lines": [
+  {
+   "code": "TA",
+   "label": "TA",
+   "order": 1,
+   "section": null,
+   "parentCode": null,
+   "calculationType": "MAPPED",
+   "signConvention": "RESULT_ALGEBRAIC",
+   "mappingRules": [
+    {
+     "role": "GROSS",
+     "includePrefixes": [
+      "701"
+     ],
+     "excludePrefixes": [],
+     "side": "ANY",
+     "polarity": "PLUS",
+     "verificationStatus": "VERIFIED",
+     "provenanceType": "DIRECT_PRIMARY"
+    }
+   ],
+   "formula": null,
+   "noteReference": null,
+   "verificationStatus": "VERIFIED",
+   "provenanceType": "DIRECT_PRIMARY",
+   "officialSourceReference": "ch.4 Compte de résultat, correspondance Postes/Comptes p.1069",
+   "remark": "Libelle officiel du poste non transcrit (code affiche).",
+   "calculationBlockedReason": null
+  },
+  {
+   "code": "RA",
+   "label": "RA",
+   "order": 2,
+   "section": null,
+   "parentCode": null,
+   "calculationType": "MAPPED",
+   "signConvention": "RESULT_ALGEBRAIC",
+   "mappingRules": [
+    {
+     "role": "GROSS",
+     "includePrefixes": [
+      "601"
+     ],
+     "excludePrefixes": [],
+     "side": "ANY",
+     "polarity": "MINUS",
+     "verificationStatus": "VERIFIED",
+     "provenanceType": "DIRECT_PRIMARY"
+    }
+   ],
+   "formula": null,
+   "noteReference": null,
+   "verificationStatus": "VERIFIED",
+   "provenanceType": "DIRECT_PRIMARY",
+   "officialSourceReference": "ch.4 Compte de résultat, correspondance Postes/Comptes p.1069",
+   "remark": "Libelle officiel du poste non transcrit (code affiche).",
+   "calculationBlockedReason": null
+  },
+  {
+   "code": "RB",
+   "label": "RB",
+   "order": 3,
+   "section": null,
+   "parentCode": null,
+   "calculationType": "MAPPED",
+   "signConvention": "RESULT_ALGEBRAIC",
+   "mappingRules": [
+    {
+     "role": "GROSS",
+     "includePrefixes": [
+      "6031"
+     ],
+     "excludePrefixes": [],
+     "side": "ANY",
+     "polarity": "EITHER",
+     "verificationStatus": "VERIFIED",
+     "provenanceType": "DIRECT_PRIMARY"
+    }
+   ],
+   "formula": null,
+   "noteReference": null,
+   "verificationStatus": "VERIFIED",
+   "provenanceType": "DIRECT_PRIMARY",
+   "officialSourceReference": "ch.4 Compte de résultat, correspondance Postes/Comptes p.1069",
+   "remark": "Libelle officiel du poste non transcrit (code affiche).",
+   "calculationBlockedReason": null
+  },
+  {
+   "code": "XA",
+   "label": "Marge commerciale",
+   "order": 4,
+   "section": null,
+   "parentCode": null,
+   "calculationType": "FORMULA",
+   "signConvention": "RESULT_ALGEBRAIC",
+   "mappingRules": [],
+   "formula": "TA + RA + RB",
+   "noteReference": null,
+   "verificationStatus": "VERIFIED",
+   "provenanceType": "DIRECT_PRIMARY",
+   "officialSourceReference": "ch.4 Compte de résultat, correspondance Postes/Comptes p.1069",
+   "remark": null,
+   "calculationBlockedReason": null
+  },
+  {
+   "code": "TB",
+   "label": "TB",
+   "order": 5,
+   "section": null,
+   "parentCode": null,
+   "calculationType": "MAPPED",
+   "signConvention": "RESULT_ALGEBRAIC",
+   "mappingRules": [
+    {
+     "role": "GROSS",
+     "includePrefixes": [
+      "702",
+      "703",
+      "704"
+     ],
+     "excludePrefixes": [],
+     "side": "ANY",
+     "polarity": "PLUS",
+     "verificationStatus": "VERIFIED",
+     "provenanceType": "DIRECT_PRIMARY"
+    }
+   ],
+   "formula": null,
+   "noteReference": null,
+   "verificationStatus": "VERIFIED",
+   "provenanceType": "DIRECT_PRIMARY",
+   "officialSourceReference": "ch.4 Compte de résultat, correspondance Postes/Comptes p.1069",
+   "remark": "Libelle officiel du poste non transcrit (code affiche).",
+   "calculationBlockedReason": null
+  },
+  {
+   "code": "TC",
+   "label": "TC",
+   "order": 6,
+   "section": null,
+   "parentCode": null,
+   "calculationType": "MAPPED",
+   "signConvention": "RESULT_ALGEBRAIC",
+   "mappingRules": [
+    {
+     "role": "GROSS",
+     "includePrefixes": [
+      "705",
+      "706"
+     ],
+     "excludePrefixes": [],
+     "side": "ANY",
+     "polarity": "PLUS",
+     "verificationStatus": "VERIFIED",
+     "provenanceType": "DIRECT_PRIMARY"
+    }
+   ],
+   "formula": null,
+   "noteReference": null,
+   "verificationStatus": "VERIFIED",
+   "provenanceType": "DIRECT_PRIMARY",
+   "officialSourceReference": "ch.4 Compte de résultat, correspondance Postes/Comptes p.1069",
+   "remark": "Libelle officiel du poste non transcrit (code affiche).",
+   "calculationBlockedReason": null
+  },
+  {
+   "code": "TD",
+   "label": "TD",
+   "order": 7,
+   "section": null,
+   "parentCode": null,
+   "calculationType": "MAPPED",
+   "signConvention": "RESULT_ALGEBRAIC",
+   "mappingRules": [
+    {
+     "role": "GROSS",
+     "includePrefixes": [
+      "707"
+     ],
+     "excludePrefixes": [],
+     "side": "ANY",
+     "polarity": "PLUS",
+     "verificationStatus": "VERIFIED",
+     "provenanceType": "DIRECT_PRIMARY"
+    }
+   ],
+   "formula": null,
+   "noteReference": null,
+   "verificationStatus": "VERIFIED",
+   "provenanceType": "DIRECT_PRIMARY",
+   "officialSourceReference": "ch.4 Compte de résultat, correspondance Postes/Comptes p.1069",
+   "remark": "Libelle officiel du poste non transcrit (code affiche).",
+   "calculationBlockedReason": null
+  },
+  {
+   "code": "XB",
+   "label": "Chiffre d'affaires",
+   "order": 8,
+   "section": null,
+   "parentCode": null,
+   "calculationType": "FORMULA",
+   "signConvention": "RESULT_ALGEBRAIC",
+   "mappingRules": [],
+   "formula": "TA + TB + TC + TD",
+   "noteReference": null,
+   "verificationStatus": "VERIFIED",
+   "provenanceType": "DIRECT_PRIMARY",
+   "officialSourceReference": "ch.4 Compte de résultat, correspondance Postes/Comptes p.1069",
+   "remark": null,
+   "calculationBlockedReason": null
+  },
+  {
+   "code": "TE",
+   "label": "TE",
+   "order": 9,
+   "section": null,
+   "parentCode": null,
+   "calculationType": "MAPPED",
+   "signConvention": "RESULT_ALGEBRAIC",
+   "mappingRules": [
+    {
+     "role": "GROSS",
+     "includePrefixes": [
+      "73"
+     ],
+     "excludePrefixes": [],
+     "side": "ANY",
+     "polarity": "EITHER",
+     "verificationStatus": "VERIFIED",
+     "provenanceType": "DIRECT_PRIMARY"
+    }
+   ],
+   "formula": null,
+   "noteReference": null,
+   "verificationStatus": "VERIFIED",
+   "provenanceType": "DIRECT_PRIMARY",
+   "officialSourceReference": "ch.4 Compte de résultat, correspondance Postes/Comptes p.1069",
+   "remark": "Libelle officiel du poste non transcrit (code affiche).",
+   "calculationBlockedReason": null
+  },
+  {
+   "code": "TF",
+   "label": "TF",
+   "order": 10,
+   "section": null,
+   "parentCode": null,
+   "calculationType": "MAPPED",
+   "signConvention": "RESULT_ALGEBRAIC",
+   "mappingRules": [
+    {
+     "role": "GROSS",
+     "includePrefixes": [
+      "72"
+     ],
+     "excludePrefixes": [],
+     "side": "ANY",
+     "polarity": "PLUS",
+     "verificationStatus": "VERIFIED",
+     "provenanceType": "DIRECT_PRIMARY"
+    }
+   ],
+   "formula": null,
+   "noteReference": null,
+   "verificationStatus": "VERIFIED",
+   "provenanceType": "DIRECT_PRIMARY",
+   "officialSourceReference": "ch.4 Compte de résultat, correspondance Postes/Comptes p.1069",
+   "remark": "Libelle officiel du poste non transcrit (code affiche).",
+   "calculationBlockedReason": null
+  },
+  {
+   "code": "TG",
+   "label": "TG",
+   "order": 11,
+   "section": null,
+   "parentCode": null,
+   "calculationType": "MAPPED",
+   "signConvention": "RESULT_ALGEBRAIC",
+   "mappingRules": [
+    {
+     "role": "GROSS",
+     "includePrefixes": [
+      "71"
+     ],
+     "excludePrefixes": [],
+     "side": "ANY",
+     "polarity": "PLUS",
+     "verificationStatus": "VERIFIED",
+     "provenanceType": "DIRECT_PRIMARY"
+    }
+   ],
+   "formula": null,
+   "noteReference": null,
+   "verificationStatus": "VERIFIED",
+   "provenanceType": "DIRECT_PRIMARY",
+   "officialSourceReference": "ch.4 Compte de résultat, correspondance Postes/Comptes p.1069",
+   "remark": "Libelle officiel du poste non transcrit (code affiche).",
+   "calculationBlockedReason": null
+  },
+  {
+   "code": "TH",
+   "label": "TH",
+   "order": 12,
+   "section": null,
+   "parentCode": null,
+   "calculationType": "MAPPED",
+   "signConvention": "RESULT_ALGEBRAIC",
+   "mappingRules": [
+    {
+     "role": "GROSS",
+     "includePrefixes": [
+      "75"
+     ],
+     "excludePrefixes": [],
+     "side": "ANY",
+     "polarity": "PLUS",
+     "verificationStatus": "VERIFIED",
+     "provenanceType": "DIRECT_PRIMARY"
+    }
+   ],
+   "formula": null,
+   "noteReference": null,
+   "verificationStatus": "VERIFIED",
+   "provenanceType": "DIRECT_PRIMARY",
+   "officialSourceReference": "ch.4 Compte de résultat, correspondance Postes/Comptes p.1069",
+   "remark": "Libelle officiel du poste non transcrit (code affiche).",
+   "calculationBlockedReason": null
+  },
+  {
+   "code": "TI",
+   "label": "TI",
+   "order": 13,
+   "section": null,
+   "parentCode": null,
+   "calculationType": "MAPPED",
+   "signConvention": "RESULT_ALGEBRAIC",
+   "mappingRules": [
+    {
+     "role": "GROSS",
+     "includePrefixes": [
+      "781"
+     ],
+     "excludePrefixes": [],
+     "side": "ANY",
+     "polarity": "PLUS",
+     "verificationStatus": "VERIFIED",
+     "provenanceType": "DIRECT_PRIMARY"
+    }
+   ],
+   "formula": null,
+   "noteReference": null,
+   "verificationStatus": "VERIFIED",
+   "provenanceType": "DIRECT_PRIMARY",
+   "officialSourceReference": "ch.4 Compte de résultat, correspondance Postes/Comptes p.1069",
+   "remark": "Libelle officiel du poste non transcrit (code affiche).",
+   "calculationBlockedReason": null
+  },
+  {
+   "code": "RC",
+   "label": "RC",
+   "order": 14,
+   "section": null,
+   "parentCode": null,
+   "calculationType": "MAPPED",
+   "signConvention": "RESULT_ALGEBRAIC",
+   "mappingRules": [
+    {
+     "role": "GROSS",
+     "includePrefixes": [
+      "602"
+     ],
+     "excludePrefixes": [],
+     "side": "ANY",
+     "polarity": "MINUS",
+     "verificationStatus": "VERIFIED",
+     "provenanceType": "DIRECT_PRIMARY"
+    }
+   ],
+   "formula": null,
+   "noteReference": null,
+   "verificationStatus": "VERIFIED",
+   "provenanceType": "DIRECT_PRIMARY",
+   "officialSourceReference": "ch.4 Compte de résultat, correspondance Postes/Comptes p.1069",
+   "remark": "Libelle officiel du poste non transcrit (code affiche).",
+   "calculationBlockedReason": null
+  },
+  {
+   "code": "RD",
+   "label": "RD",
+   "order": 15,
+   "section": null,
+   "parentCode": null,
+   "calculationType": "MAPPED",
+   "signConvention": "RESULT_ALGEBRAIC",
+   "mappingRules": [
+    {
+     "role": "GROSS",
+     "includePrefixes": [
+      "6032"
+     ],
+     "excludePrefixes": [],
+     "side": "ANY",
+     "polarity": "EITHER",
+     "verificationStatus": "VERIFIED",
+     "provenanceType": "DIRECT_PRIMARY"
+    }
+   ],
+   "formula": null,
+   "noteReference": null,
+   "verificationStatus": "VERIFIED",
+   "provenanceType": "DIRECT_PRIMARY",
+   "officialSourceReference": "ch.4 Compte de résultat, correspondance Postes/Comptes p.1069",
+   "remark": "Libelle officiel du poste non transcrit (code affiche).",
+   "calculationBlockedReason": null
+  },
+  {
+   "code": "RE",
+   "label": "RE",
+   "order": 16,
+   "section": null,
+   "parentCode": null,
+   "calculationType": "MAPPED",
+   "signConvention": "RESULT_ALGEBRAIC",
+   "mappingRules": [
+    {
+     "role": "GROSS",
+     "includePrefixes": [
+      "604",
+      "605",
+      "608"
+     ],
+     "excludePrefixes": [],
+     "side": "ANY",
+     "polarity": "MINUS",
+     "verificationStatus": "VERIFIED",
+     "provenanceType": "DIRECT_PRIMARY"
+    }
+   ],
+   "formula": null,
+   "noteReference": null,
+   "verificationStatus": "VERIFIED",
+   "provenanceType": "DIRECT_PRIMARY",
+   "officialSourceReference": "ch.4 Compte de résultat, correspondance Postes/Comptes p.1069",
+   "remark": "Libelle officiel du poste non transcrit (code affiche).",
+   "calculationBlockedReason": null
+  },
+  {
+   "code": "RF",
+   "label": "RF",
+   "order": 17,
+   "section": null,
+   "parentCode": null,
+   "calculationType": "MAPPED",
+   "signConvention": "RESULT_ALGEBRAIC",
+   "mappingRules": [
+    {
+     "role": "GROSS",
+     "includePrefixes": [
+      "6033"
+     ],
+     "excludePrefixes": [],
+     "side": "ANY",
+     "polarity": "EITHER",
+     "verificationStatus": "VERIFIED",
+     "provenanceType": "DIRECT_PRIMARY"
+    }
+   ],
+   "formula": null,
+   "noteReference": null,
+   "verificationStatus": "VERIFIED",
+   "provenanceType": "DIRECT_PRIMARY",
+   "officialSourceReference": "ch.4 Compte de résultat, correspondance Postes/Comptes p.1069",
+   "remark": "Libelle officiel du poste non transcrit (code affiche).",
+   "calculationBlockedReason": null
+  },
+  {
+   "code": "RG",
+   "label": "RG",
+   "order": 18,
+   "section": null,
+   "parentCode": null,
+   "calculationType": "MAPPED",
+   "signConvention": "RESULT_ALGEBRAIC",
+   "mappingRules": [
+    {
+     "role": "GROSS",
+     "includePrefixes": [
+      "61"
+     ],
+     "excludePrefixes": [],
+     "side": "ANY",
+     "polarity": "MINUS",
+     "verificationStatus": "VERIFIED",
+     "provenanceType": "DIRECT_PRIMARY"
+    }
+   ],
+   "formula": null,
+   "noteReference": null,
+   "verificationStatus": "VERIFIED",
+   "provenanceType": "DIRECT_PRIMARY",
+   "officialSourceReference": "ch.4 Compte de résultat, correspondance Postes/Comptes p.1069",
+   "remark": "Libelle officiel du poste non transcrit (code affiche).",
+   "calculationBlockedReason": null
+  },
+  {
+   "code": "RH",
+   "label": "RH",
+   "order": 19,
+   "section": null,
+   "parentCode": null,
+   "calculationType": "MAPPED",
+   "signConvention": "RESULT_ALGEBRAIC",
+   "mappingRules": [
+    {
+     "role": "GROSS",
+     "includePrefixes": [
+      "62",
+      "63"
+     ],
+     "excludePrefixes": [],
+     "side": "ANY",
+     "polarity": "MINUS",
+     "verificationStatus": "VERIFIED",
+     "provenanceType": "DIRECT_PRIMARY"
+    }
+   ],
+   "formula": null,
+   "noteReference": null,
+   "verificationStatus": "VERIFIED",
+   "provenanceType": "DIRECT_PRIMARY",
+   "officialSourceReference": "ch.4 Compte de résultat, correspondance Postes/Comptes p.1069",
+   "remark": "Libelle officiel du poste non transcrit (code affiche).",
+   "calculationBlockedReason": null
+  },
+  {
+   "code": "RI",
+   "label": "RI",
+   "order": 20,
+   "section": null,
+   "parentCode": null,
+   "calculationType": "MAPPED",
+   "signConvention": "RESULT_ALGEBRAIC",
+   "mappingRules": [
+    {
+     "role": "GROSS",
+     "includePrefixes": [
+      "64"
+     ],
+     "excludePrefixes": [],
+     "side": "ANY",
+     "polarity": "MINUS",
+     "verificationStatus": "VERIFIED",
+     "provenanceType": "DIRECT_PRIMARY"
+    }
+   ],
+   "formula": null,
+   "noteReference": null,
+   "verificationStatus": "VERIFIED",
+   "provenanceType": "DIRECT_PRIMARY",
+   "officialSourceReference": "ch.4 Compte de résultat, correspondance Postes/Comptes p.1069",
+   "remark": "Libelle officiel du poste non transcrit (code affiche).",
+   "calculationBlockedReason": null
+  },
+  {
+   "code": "RJ",
+   "label": "RJ",
+   "order": 21,
+   "section": null,
+   "parentCode": null,
+   "calculationType": "MAPPED",
+   "signConvention": "RESULT_ALGEBRAIC",
+   "mappingRules": [
+    {
+     "role": "GROSS",
+     "includePrefixes": [
+      "65"
+     ],
+     "excludePrefixes": [],
+     "side": "ANY",
+     "polarity": "MINUS",
+     "verificationStatus": "VERIFIED",
+     "provenanceType": "DIRECT_PRIMARY"
+    }
+   ],
+   "formula": null,
+   "noteReference": null,
+   "verificationStatus": "VERIFIED",
+   "provenanceType": "DIRECT_PRIMARY",
+   "officialSourceReference": "ch.4 Compte de résultat, correspondance Postes/Comptes p.1069",
+   "remark": "Libelle officiel du poste non transcrit (code affiche).",
+   "calculationBlockedReason": null
+  },
+  {
+   "code": "XC",
+   "label": "Valeur ajoutée",
+   "order": 22,
+   "section": null,
+   "parentCode": null,
+   "calculationType": "FORMULA",
+   "signConvention": "RESULT_ALGEBRAIC",
+   "mappingRules": [],
+   "formula": "XB + RA + RB + SUM(TE..RJ)",
+   "noteReference": null,
+   "verificationStatus": "VERIFIED",
+   "provenanceType": "DIRECT_PRIMARY",
+   "officialSourceReference": "ch.4 Compte de résultat, correspondance Postes/Comptes p.1069",
+   "remark": null,
+   "calculationBlockedReason": null
+  },
+  {
+   "code": "RK",
+   "label": "RK",
+   "order": 23,
+   "section": null,
+   "parentCode": null,
+   "calculationType": "MAPPED",
+   "signConvention": "RESULT_ALGEBRAIC",
+   "mappingRules": [
+    {
+     "role": "GROSS",
+     "includePrefixes": [
+      "66"
+     ],
+     "excludePrefixes": [],
+     "side": "ANY",
+     "polarity": "MINUS",
+     "verificationStatus": "VERIFIED",
+     "provenanceType": "DIRECT_PRIMARY"
+    }
+   ],
+   "formula": null,
+   "noteReference": null,
+   "verificationStatus": "VERIFIED",
+   "provenanceType": "DIRECT_PRIMARY",
+   "officialSourceReference": "ch.4 Compte de résultat, correspondance Postes/Comptes p.1069",
+   "remark": "Libelle officiel du poste non transcrit (code affiche).",
+   "calculationBlockedReason": null
+  },
+  {
+   "code": "XD",
+   "label": "Excédent brut d'exploitation",
+   "order": 24,
+   "section": null,
+   "parentCode": null,
+   "calculationType": "FORMULA",
+   "signConvention": "RESULT_ALGEBRAIC",
+   "mappingRules": [],
+   "formula": "XC + RK",
+   "noteReference": null,
+   "verificationStatus": "VERIFIED",
+   "provenanceType": "DIRECT_PRIMARY",
+   "officialSourceReference": "ch.4 Compte de résultat, correspondance Postes/Comptes p.1069",
+   "remark": null,
+   "calculationBlockedReason": null
+  },
+  {
+   "code": "TJ",
+   "label": "TJ",
+   "order": 25,
+   "section": null,
+   "parentCode": null,
+   "calculationType": "MAPPED",
+   "signConvention": "RESULT_ALGEBRAIC",
+   "mappingRules": [
+    {
+     "role": "GROSS",
+     "includePrefixes": [
+      "791",
+      "798",
+      "799"
+     ],
+     "excludePrefixes": [],
+     "side": "ANY",
+     "polarity": "PLUS",
+     "verificationStatus": "VERIFIED",
+     "provenanceType": "DIRECT_PRIMARY"
+    }
+   ],
+   "formula": null,
+   "noteReference": null,
+   "verificationStatus": "VERIFIED",
+   "provenanceType": "DIRECT_PRIMARY",
+   "officialSourceReference": "ch.4 Compte de résultat, correspondance Postes/Comptes p.1069",
+   "remark": "Libelle officiel du poste non transcrit (code affiche).",
+   "calculationBlockedReason": null
+  },
+  {
+   "code": "RL",
+   "label": "RL",
+   "order": 26,
+   "section": null,
+   "parentCode": null,
+   "calculationType": "MAPPED",
+   "signConvention": "RESULT_ALGEBRAIC",
+   "mappingRules": [
+    {
+     "role": "GROSS",
+     "includePrefixes": [
+      "681",
+      "691"
+     ],
+     "excludePrefixes": [],
+     "side": "ANY",
+     "polarity": "MINUS",
+     "verificationStatus": "VERIFIED",
+     "provenanceType": "DIRECT_PRIMARY"
+    }
+   ],
+   "formula": null,
+   "noteReference": null,
+   "verificationStatus": "VERIFIED",
+   "provenanceType": "DIRECT_PRIMARY",
+   "officialSourceReference": "ch.4 Compte de résultat, correspondance Postes/Comptes p.1069",
+   "remark": "Libelle officiel du poste non transcrit (code affiche).",
+   "calculationBlockedReason": null
+  },
+  {
+   "code": "XE",
+   "label": "Résultat d'exploitation",
+   "order": 27,
+   "section": null,
+   "parentCode": null,
+   "calculationType": "FORMULA",
+   "signConvention": "RESULT_ALGEBRAIC",
+   "mappingRules": [],
+   "formula": "XD + TJ + RL",
+   "noteReference": null,
+   "verificationStatus": "VERIFIED",
+   "provenanceType": "DIRECT_PRIMARY",
+   "officialSourceReference": "ch.4 Compte de résultat, correspondance Postes/Comptes p.1069",
+   "remark": null,
+   "calculationBlockedReason": null
+  },
+  {
+   "code": "TK",
+   "label": "TK",
+   "order": 28,
+   "section": null,
+   "parentCode": null,
+   "calculationType": "MAPPED",
+   "signConvention": "RESULT_ALGEBRAIC",
+   "mappingRules": [
+    {
+     "role": "GROSS",
+     "includePrefixes": [
+      "77"
+     ],
+     "excludePrefixes": [],
+     "side": "ANY",
+     "polarity": "PLUS",
+     "verificationStatus": "VERIFIED",
+     "provenanceType": "DIRECT_PRIMARY"
+    }
+   ],
+   "formula": null,
+   "noteReference": null,
+   "verificationStatus": "VERIFIED",
+   "provenanceType": "DIRECT_PRIMARY",
+   "officialSourceReference": "ch.4 Compte de résultat, correspondance Postes/Comptes p.1069",
+   "remark": "Libelle officiel du poste non transcrit (code affiche).",
+   "calculationBlockedReason": null
+  },
+  {
+   "code": "TL",
+   "label": "TL",
+   "order": 29,
+   "section": null,
+   "parentCode": null,
+   "calculationType": "MAPPED",
+   "signConvention": "RESULT_ALGEBRAIC",
+   "mappingRules": [
+    {
+     "role": "GROSS",
+     "includePrefixes": [
+      "797"
+     ],
+     "excludePrefixes": [],
+     "side": "ANY",
+     "polarity": "PLUS",
+     "verificationStatus": "VERIFIED",
+     "provenanceType": "DIRECT_PRIMARY"
+    }
+   ],
+   "formula": null,
+   "noteReference": null,
+   "verificationStatus": "VERIFIED",
+   "provenanceType": "DIRECT_PRIMARY",
+   "officialSourceReference": "ch.4 Compte de résultat, correspondance Postes/Comptes p.1069",
+   "remark": "Libelle officiel du poste non transcrit (code affiche).",
+   "calculationBlockedReason": null
+  },
+  {
+   "code": "TM",
+   "label": "TM",
+   "order": 30,
+   "section": null,
+   "parentCode": null,
+   "calculationType": "MAPPED",
+   "signConvention": "RESULT_ALGEBRAIC",
+   "mappingRules": [
+    {
+     "role": "GROSS",
+     "includePrefixes": [
+      "787"
+     ],
+     "excludePrefixes": [],
+     "side": "ANY",
+     "polarity": "PLUS",
+     "verificationStatus": "VERIFIED",
+     "provenanceType": "DIRECT_PRIMARY"
+    }
+   ],
+   "formula": null,
+   "noteReference": null,
+   "verificationStatus": "VERIFIED",
+   "provenanceType": "DIRECT_PRIMARY",
+   "officialSourceReference": "ch.4 Compte de résultat, correspondance Postes/Comptes p.1069",
+   "remark": "Libelle officiel du poste non transcrit (code affiche).",
+   "calculationBlockedReason": null
+  },
+  {
+   "code": "RM",
+   "label": "RM",
+   "order": 31,
+   "section": null,
+   "parentCode": null,
+   "calculationType": "MAPPED",
+   "signConvention": "RESULT_ALGEBRAIC",
+   "mappingRules": [
+    {
+     "role": "GROSS",
+     "includePrefixes": [
+      "67"
+     ],
+     "excludePrefixes": [],
+     "side": "ANY",
+     "polarity": "MINUS",
+     "verificationStatus": "VERIFIED",
+     "provenanceType": "DIRECT_PRIMARY"
+    }
+   ],
+   "formula": null,
+   "noteReference": null,
+   "verificationStatus": "VERIFIED",
+   "provenanceType": "DIRECT_PRIMARY",
+   "officialSourceReference": "ch.4 Compte de résultat, correspondance Postes/Comptes p.1069",
+   "remark": "Libelle officiel du poste non transcrit (code affiche).",
+   "calculationBlockedReason": null
+  },
+  {
+   "code": "RN",
+   "label": "RN",
+   "order": 32,
+   "section": null,
+   "parentCode": null,
+   "calculationType": "MAPPED",
+   "signConvention": "RESULT_ALGEBRAIC",
+   "mappingRules": [
+    {
+     "role": "GROSS",
+     "includePrefixes": [
+      "697"
+     ],
+     "excludePrefixes": [],
+     "side": "ANY",
+     "polarity": "MINUS",
+     "verificationStatus": "VERIFIED",
+     "provenanceType": "DIRECT_PRIMARY"
+    }
+   ],
+   "formula": null,
+   "noteReference": null,
+   "verificationStatus": "VERIFIED",
+   "provenanceType": "DIRECT_PRIMARY",
+   "officialSourceReference": "ch.4 Compte de résultat, correspondance Postes/Comptes p.1069",
+   "remark": "Libelle officiel du poste non transcrit (code affiche).",
+   "calculationBlockedReason": null
+  },
+  {
+   "code": "XF",
+   "label": "Résultat financier",
+   "order": 33,
+   "section": null,
+   "parentCode": null,
+   "calculationType": "FORMULA",
+   "signConvention": "RESULT_ALGEBRAIC",
+   "mappingRules": [],
+   "formula": "SUM(TK..RN)",
+   "noteReference": null,
+   "verificationStatus": "VERIFIED",
+   "provenanceType": "DIRECT_PRIMARY",
+   "officialSourceReference": "ch.4 Compte de résultat, correspondance Postes/Comptes p.1069",
+   "remark": null,
+   "calculationBlockedReason": null
+  },
+  {
+   "code": "XG",
+   "label": "Résultat des activités ordinaires",
+   "order": 34,
+   "section": null,
+   "parentCode": null,
+   "calculationType": "FORMULA",
+   "signConvention": "RESULT_ALGEBRAIC",
+   "mappingRules": [],
+   "formula": "XE + XF",
+   "noteReference": null,
+   "verificationStatus": "VERIFIED",
+   "provenanceType": "DIRECT_PRIMARY",
+   "officialSourceReference": "ch.4 Compte de résultat, correspondance Postes/Comptes p.1069",
+   "remark": null,
+   "calculationBlockedReason": null
+  },
+  {
+   "code": "TN",
+   "label": "TN",
+   "order": 35,
+   "section": null,
+   "parentCode": null,
+   "calculationType": "MAPPED",
+   "signConvention": "RESULT_ALGEBRAIC",
+   "mappingRules": [
+    {
+     "role": "GROSS",
+     "includePrefixes": [
+      "82"
+     ],
+     "excludePrefixes": [],
+     "side": "ANY",
+     "polarity": "PLUS",
+     "verificationStatus": "VERIFIED",
+     "provenanceType": "DIRECT_PRIMARY"
+    }
+   ],
+   "formula": null,
+   "noteReference": null,
+   "verificationStatus": "VERIFIED",
+   "provenanceType": "DIRECT_PRIMARY",
+   "officialSourceReference": "ch.4 Compte de résultat, correspondance Postes/Comptes p.1069",
+   "remark": "Libelle officiel du poste non transcrit (code affiche).",
+   "calculationBlockedReason": null
+  },
+  {
+   "code": "TO",
+   "label": "TO",
+   "order": 36,
+   "section": null,
+   "parentCode": null,
+   "calculationType": "MAPPED",
+   "signConvention": "RESULT_ALGEBRAIC",
+   "mappingRules": [
+    {
+     "role": "GROSS",
+     "includePrefixes": [
+      "84",
+      "86",
+      "88"
+     ],
+     "excludePrefixes": [],
+     "side": "ANY",
+     "polarity": "PLUS",
+     "verificationStatus": "VERIFIED",
+     "provenanceType": "DIRECT_PRIMARY"
+    }
+   ],
+   "formula": null,
+   "noteReference": null,
+   "verificationStatus": "VERIFIED",
+   "provenanceType": "DIRECT_PRIMARY",
+   "officialSourceReference": "ch.4 Compte de résultat, correspondance Postes/Comptes p.1069",
+   "remark": "Libelle officiel du poste non transcrit (code affiche).",
+   "calculationBlockedReason": null
+  },
+  {
+   "code": "RO",
+   "label": "RO",
+   "order": 37,
+   "section": null,
+   "parentCode": null,
+   "calculationType": "MAPPED",
+   "signConvention": "RESULT_ALGEBRAIC",
+   "mappingRules": [
+    {
+     "role": "GROSS",
+     "includePrefixes": [
+      "81"
+     ],
+     "excludePrefixes": [],
+     "side": "ANY",
+     "polarity": "MINUS",
+     "verificationStatus": "VERIFIED",
+     "provenanceType": "DIRECT_PRIMARY"
+    }
+   ],
+   "formula": null,
+   "noteReference": null,
+   "verificationStatus": "VERIFIED",
+   "provenanceType": "DIRECT_PRIMARY",
+   "officialSourceReference": "ch.4 Compte de résultat, correspondance Postes/Comptes p.1069",
+   "remark": "Libelle officiel du poste non transcrit (code affiche).",
+   "calculationBlockedReason": null
+  },
+  {
+   "code": "RP",
+   "label": "RP",
+   "order": 38,
+   "section": null,
+   "parentCode": null,
+   "calculationType": "MAPPED",
+   "signConvention": "RESULT_ALGEBRAIC",
+   "mappingRules": [
+    {
+     "role": "GROSS",
+     "includePrefixes": [
+      "83",
+      "85"
+     ],
+     "excludePrefixes": [],
+     "side": "ANY",
+     "polarity": "MINUS",
+     "verificationStatus": "VERIFIED",
+     "provenanceType": "DIRECT_PRIMARY"
+    }
+   ],
+   "formula": null,
+   "noteReference": null,
+   "verificationStatus": "VERIFIED",
+   "provenanceType": "DIRECT_PRIMARY",
+   "officialSourceReference": "ch.4 Compte de résultat, correspondance Postes/Comptes p.1069",
+   "remark": "Libelle officiel du poste non transcrit (code affiche).",
+   "calculationBlockedReason": null
+  },
+  {
+   "code": "XH",
+   "label": "Résultat hors activités ordinaires",
+   "order": 39,
+   "section": null,
+   "parentCode": null,
+   "calculationType": "FORMULA",
+   "signConvention": "RESULT_ALGEBRAIC",
+   "mappingRules": [],
+   "formula": "SUM(TN..RP)",
+   "noteReference": null,
+   "verificationStatus": "VERIFIED",
+   "provenanceType": "DIRECT_PRIMARY",
+   "officialSourceReference": "ch.4 Compte de résultat, correspondance Postes/Comptes p.1069",
+   "remark": null,
+   "calculationBlockedReason": null
+  },
+  {
+   "code": "RQ",
+   "label": "RQ",
+   "order": 40,
+   "section": null,
+   "parentCode": null,
+   "calculationType": "MAPPED",
+   "signConvention": "RESULT_ALGEBRAIC",
+   "mappingRules": [
+    {
+     "role": "GROSS",
+     "includePrefixes": [
+      "87"
+     ],
+     "excludePrefixes": [],
+     "side": "ANY",
+     "polarity": "MINUS",
+     "verificationStatus": "VERIFIED",
+     "provenanceType": "DIRECT_PRIMARY"
+    }
+   ],
+   "formula": null,
+   "noteReference": null,
+   "verificationStatus": "VERIFIED",
+   "provenanceType": "DIRECT_PRIMARY",
+   "officialSourceReference": "ch.4 Compte de résultat, correspondance Postes/Comptes p.1069",
+   "remark": "Libelle officiel du poste non transcrit (code affiche).",
+   "calculationBlockedReason": null
+  },
+  {
+   "code": "RS",
+   "label": "RS",
+   "order": 41,
+   "section": null,
+   "parentCode": null,
+   "calculationType": "MAPPED",
+   "signConvention": "RESULT_ALGEBRAIC",
+   "mappingRules": [
+    {
+     "role": "GROSS",
+     "includePrefixes": [
+      "89"
+     ],
+     "excludePrefixes": [],
+     "side": "ANY",
+     "polarity": "MINUS",
+     "verificationStatus": "VERIFIED",
+     "provenanceType": "DIRECT_PRIMARY"
+    }
+   ],
+   "formula": null,
+   "noteReference": null,
+   "verificationStatus": "VERIFIED",
+   "provenanceType": "DIRECT_PRIMARY",
+   "officialSourceReference": "ch.4 Compte de résultat, correspondance Postes/Comptes p.1069",
+   "remark": "Libelle officiel du poste non transcrit (code affiche).",
+   "calculationBlockedReason": null
+  },
+  {
+   "code": "XI",
+   "label": "Résultat net",
+   "order": 42,
+   "section": null,
+   "parentCode": null,
+   "calculationType": "FORMULA",
+   "signConvention": "RESULT_ALGEBRAIC",
+   "mappingRules": [],
+   "formula": "XG + XH + RQ + RS",
+   "noteReference": null,
+   "verificationStatus": "VERIFIED",
+   "provenanceType": "DIRECT_PRIMARY",
+   "officialSourceReference": "ch.4 Compte de résultat, correspondance Postes/Comptes p.1069",
+   "remark": null,
+   "calculationBlockedReason": null
+  }
+ ]
+}

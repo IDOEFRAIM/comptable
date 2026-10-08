@@ -1,6 +1,6 @@
 package com.example.comptable.document.service;
 
-import com.example.comptable.agent.comptabilisation.AccountingProposalBuilder;
+import com.example.comptable.agent.imputation.ImputationSuggestionBuilder;
 import com.example.comptable.agent.fraude.AlerteFraude;
 import com.example.comptable.agent.fraude.AnalyseFraudeService;
 import com.example.comptable.agent.fraude.RapportFraude;
@@ -56,11 +56,12 @@ public class DocumentService {
     private final DocumentStorageService storageService;
     private final OcrExtractionService ocrExtractionService;
     private final AnalyseFraudeService analyseFraudeService;
-    private final AccountingProposalBuilder accountingProposalBuilder;
+    private final ImputationSuggestionBuilder imputationSuggestionBuilder;
     private final ObjectMapper objectMapper;
+    private final DocumentPipeline documentPipeline;
 
     /** Mission P0, desactive par defaut comme les autres briques IA de ce projet
-     * (agent.vlm.enabled, agent.matching-ia.enabled...) : construit une AccountingProposal apres
+     * (agent.vlm.enabled, agent.matching-ia.enabled...) : construit une ImputationSuggestion apres
      * extraction reussie, sur les deux canaux (comme le controleur de fraude ci-dessus), mais ne
      * declenche jamais elle-meme une comptabilisation reelle (reservee au Niveau 3, verifie
      * uniquement dans agent.pipeline.EcritureNode). */
@@ -80,6 +81,7 @@ public class DocumentService {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Fichier illisible");
         }
 
+        validerSignature(contenu, fichier.getContentType());
         Utilisateur deposePar = utilisateurRepository.getReferenceById(principal.getId());
         Document document = creerEtStockerDocument(entreprise, typeDocument, CanalSource.WEB, deposePar,
                 contenu, fichier.getOriginalFilename(), fichier.getContentType());
@@ -101,6 +103,7 @@ public class DocumentService {
         Entreprise entreprise = entrepriseRepository.findById(entrepriseId)
                 .orElseThrow(() -> new IllegalArgumentException("Entreprise introuvable : " + entrepriseId));
         validerContenu(contenu, contentType);
+        validerSignature(contenu, contentType);                  // canaux ouverts au public (lien de dépôt, WhatsApp) : le contenu réel doit être celui annoncé
 
         Document document = creerEtStockerDocument(entreprise, typeDocument, canal, null,
                 contenu, nomFichierOriginal, contentType);
@@ -144,9 +147,12 @@ public class DocumentService {
         document.setTailleOctets(stocke.tailleOctets());
         document.setCheminFichier(stocke.cheminFichier());
 
+        document.setContentHash(ContentHasher.sha256(contenu));
         appliquerExtractionExterne(document, donnees, alertesVisuelles);
 
-        return DocumentDto.from(documentRepository.save(document));
+        Document enregistre = documentRepository.save(document);
+        documentPipeline.apresReception(enregistre);
+        return DocumentDto.from(enregistre);
     }
 
     public List<DocumentDto> lister(UUID entrepriseId, StatutDocument statut, UtilisateurPrincipal principal) {
@@ -194,9 +200,12 @@ public class DocumentService {
         document.setTailleOctets(stocke.tailleOctets());
         document.setCheminFichier(stocke.cheminFichier());
 
+        document.setContentHash(ContentHasher.sha256(contenu));
         appliquerExtraction(document, contenu, contentType);
 
-        return documentRepository.save(document);
+        Document enregistre = documentRepository.save(document);
+        documentPipeline.apresReception(enregistre);
+        return enregistre;
     }
 
     private void appliquerExtraction(Document document, byte[] contenu, String contentType) {
@@ -210,6 +219,12 @@ public class DocumentService {
         donneesOcr.put("message", resultat.message());
         donneesOcr.put("confiance", resultat.confiance());
         donneesOcr.put("fournisseur", resultat.fournisseur());
+        document.setNumeroFacture(resultat.numeroFacture());
+        document.setDevise(resultat.devise());
+        donneesOcr.put("numeroFacture", resultat.numeroFacture());
+        donneesOcr.put("devise", resultat.devise());
+        donneesOcr.put("moteur", ocrExtractionService.nomMoteur());
+        donneesOcr.put("champs", champsExtraits(document, ocrExtractionService.nomMoteur(), resultat.confiance(), resultat.fournisseur()));
         document.setDonneesOcr(donneesOcr);
 
         if (resultat.reussite()) {
@@ -219,12 +234,12 @@ public class DocumentService {
     }
 
     /** Mission P0 : proposition de comptabilisation deterministe (jamais un appel LLM), voir
-     * {@link AccountingProposalBuilder}. Ne remplace jamais {@link #appliquerAnalyseFraude} ni
+     * {@link ImputationSuggestionBuilder}. Ne remplace jamais {@link #appliquerAnalyseFraude} ni
      * n'applique quoi que ce soit automatiquement - seul {@code agent.pipeline.EcritureNode}
      * decide d'auto-appliquer une proposition, et uniquement pour le canal WhatsApp (Niveau 3). */
     private void proposerComptabilisation(Document document) {
         if (accountingProposalActif) {
-            accountingProposalBuilder.proposer(document.getEntreprise(), document);
+            imputationSuggestionBuilder.suggerer(document.getEntreprise(), document);
         }
     }
 
@@ -266,6 +281,11 @@ public class DocumentService {
         donneesOcr.put("fournisseur", donnees.fournisseur());
         donneesOcr.put("devise", donnees.devise());
         donneesOcr.put("modePaiement", donnees.modePaiement());
+        document.setNumeroFacture(donnees.numeroFacture());
+        document.setDevise(donnees.devise());
+        donneesOcr.put("numeroFacture", donnees.numeroFacture());
+        donneesOcr.put("moteur", "ai-service");
+        donneesOcr.put("champs", champsExtraits(document, "ai-service", resultat.confiance(), donnees.fournisseur()));
         document.setDonneesOcr(donneesOcr);
 
         if (resultat.reussite()) {
@@ -297,6 +317,28 @@ public class DocumentService {
         return dtos.stream().map(AlerteFraudeDTO::versAlerteFraude).toList();
     }
 
+    /**
+     * Provenance de chaque champ extrait : {@code valeur}, {@code confiance} (celle du moteur pour la piece, les moteurs
+     * actuels n'en donnent pas une par champ) et {@code source}. Un champ non lu n'apparait pas.
+     */
+    private Map<String, Object> champsExtraits(Document document, String moteur, double confiance, String fournisseur) {
+        Map<String, Object> champs = new HashMap<>();
+        ajouterChamp(champs, "fournisseur", fournisseur, confiance, moteur);
+        ajouterChamp(champs, "numeroFacture", document.getNumeroFacture(), confiance, moteur);
+        ajouterChamp(champs, "datePiece", document.getDatePiece(), confiance, moteur);
+        ajouterChamp(champs, "devise", document.getDevise(), confiance, moteur);
+        ajouterChamp(champs, "montantHt", document.getMontantHt(), confiance, moteur);
+        ajouterChamp(champs, "montantTva", document.getMontantTva(), confiance, moteur);
+        ajouterChamp(champs, "montantTtc", document.getMontantTtc(), confiance, moteur);
+        return champs;
+    }
+
+    private void ajouterChamp(Map<String, Object> champs, String nom, Object valeur, double confiance, String source) {
+        if (valeur != null) {
+            champs.put(nom, Map.of("valeur", String.valueOf(valeur), "confiance", confiance, "source", source != null ? source : "inconnu"));
+        }
+    }
+
     private void validerFichier(MultipartFile fichier) {
         if (fichier.isEmpty()) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Fichier vide");
@@ -309,6 +351,42 @@ public class DocumentService {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Fichier vide");
         }
         validerTailleEtType(contenu.length, contentType);
+    }
+
+    /**
+     * Le contenu réel doit correspondre au type annoncé : un exécutable ou une page HTML renommés en .png / .pdf sont refusés (415). Contrôle des octets de tête (« signature »), sans bibliothèque :
+     * PDF « %PDF- » dans le premier kilo-octet, JPEG FF D8 FF, PNG 89 50 4E 47 0D 0A 1A 0A.
+     */
+    static void validerSignature(byte[] contenu, String contentType) {
+        boolean conforme = switch (contentType == null ? "" : contentType) {
+            case "image/png" -> commencePar(contenu, 0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A);
+            case "image/jpeg" -> commencePar(contenu, 0xFF, 0xD8, 0xFF);
+            case "application/pdf" -> contientEnTete(contenu, "%PDF-", 1024);
+            default -> false;
+        };
+        if (!conforme) {
+            throw new ResponseStatusException(HttpStatus.UNSUPPORTED_MEDIA_TYPE, "Le contenu du fichier ne correspond pas à son type (PDF, JPEG ou PNG authentiques uniquement)");
+        }
+    }
+
+    private static boolean commencePar(byte[] contenu, int... octets) {
+        if (contenu == null || contenu.length < octets.length) {
+            return false;
+        }
+        for (int i = 0; i < octets.length; i++) {
+            if ((contenu[i] & 0xFF) != octets[i]) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    private static boolean contientEnTete(byte[] contenu, String motif, int fenetre) {
+        if (contenu == null) {
+            return false;
+        }
+        String tete = new String(contenu, 0, Math.min(contenu.length, fenetre), java.nio.charset.StandardCharsets.ISO_8859_1);
+        return tete.contains(motif);
     }
 
     private void validerTailleEtType(long taille, String contentType) {

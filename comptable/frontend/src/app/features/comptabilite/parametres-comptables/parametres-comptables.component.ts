@@ -98,13 +98,13 @@ export class ParametresComptablesComponent implements OnInit {
     }
     switch (resolution.status) {
       case 'RESOLVED':
-        return { texte: '✓ Résolu', classe: 'badge-resolu' };
+        return { texte: 'Résolu', classe: 'badge-resolu' };
       case 'AMBIGUOUS':
-        return { texte: '🔴 Ambigu', classe: 'badge-ambigu' };
+        return { texte: 'Ambigu', classe: 'badge-ambigu' };
       case 'INVALID':
-        return { texte: '⛔ Invalide', classe: 'badge-ambigu' };
+        return { texte: 'Invalide', classe: 'badge-ambigu' };
       default:
-        return { texte: '⚠ Non configuré', classe: 'badge-non-configure' };
+        return { texte: 'Non configuré', classe: 'badge-non-configure' };
     }
   }
 

@@ -2,7 +2,7 @@ package com.example.comptable.comptabilite.domain;
 
 /** Role technique joue par un compte du referentiel dans les traitements automatiques (TVA,
  * dotations, resultat, racines tiers) - remplace les lookups par numero code en dur disperses
- * dans plusieurs services (voir CompteSystemeResolver). */
+ * dans plusieurs services (voir AccountingAccountResolver). */
 public enum RoleCompteSysteme {
     TVA_COLLECTEE,
     TVA_DEDUCTIBLE,

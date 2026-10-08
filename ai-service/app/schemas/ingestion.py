@@ -14,6 +14,7 @@ class DonneesExtraites(BaseModel):
     matcher la convention Jackson du reste des DTOs Java (ex: document.ocr.OcrResult)."""
 
     fournisseur: str | None = None
+    numero_facture: str | None = Field(default=None, alias="numeroFacture")
     montant_ht: Decimal | None = Field(default=None, alias="montantHt")
     montant_tva: Decimal | None = Field(default=None, alias="montantTva")
     montant_ttc: Decimal | None = Field(default=None, alias="montantTtc")
@@ -28,6 +29,7 @@ class DonneesExtraites(BaseModel):
     def depuis_ocr_result(cls, resultat: OcrResult) -> "DonneesExtraites":
         return cls(
             fournisseur=resultat.fournisseur,
+            numero_facture=resultat.numero_facture,
             montant_ht=resultat.montant_ht,
             montant_tva=resultat.montant_tva,
             montant_ttc=resultat.montant_ttc,

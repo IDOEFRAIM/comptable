@@ -1,5 +1,7 @@
 package com.example.comptable.comptabilite.operation.regularisation;
 
+import com.example.comptable.comptabilite.operation.common.Blocages;
+
 import com.example.comptable.comptabilite.depreciation.domain.Depreciation;
 import com.example.comptable.comptabilite.domain.CompteComptable;
 import com.example.comptable.comptabilite.domain.TypeJournal;
@@ -28,7 +30,7 @@ public class DepreciationRule {
     private final CompteComptableValidationService compteComptableValidationService;
 
     public ResultatRegle construire(Entreprise entreprise, Depreciation depreciation) {
-        List<String> explications = new ArrayList<>();
+        Blocages explications = new Blocages();
         List<String> warnings = new ArrayList<>();
         List<AccountingOperationProposalLigne> lignes = new ArrayList<>();
 
@@ -46,7 +48,7 @@ public class DepreciationRule {
             compteDepreciation = compteComptableValidationService.chargerCompteUtilisable(
                     entreprise.getId(), depreciation.getCompteDepreciation().getId(), true);
         } catch (ResponseStatusException e) {
-            explications.add("Compte de dotation ou de depreciation non configure ou inactif");
+            explications.ajouter(com.example.comptable.comptabilite.parametrage.CompteNonUtilisableException.codeDe(e), "Compte de dotation ou de depreciation non configure ou inactif");
             return new ResultatRegle(TypeJournal.OPERATIONS_DIVERSES, lignes, explications, warnings);
         }
 

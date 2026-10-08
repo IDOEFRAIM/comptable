@@ -1,5 +1,7 @@
 package com.example.comptable.comptabilite.service;
 
+import com.example.comptable.comptabilite.operation.common.AccountingSource;
+
 import com.example.comptable.comptabilite.domain.CompteComptable;
 import com.example.comptable.comptabilite.domain.Facture;
 import com.example.comptable.comptabilite.domain.StatutFacture;
@@ -87,6 +89,14 @@ class FacturationServiceTest {
     @Mock
     private MouvementStockService mouvementStockService;
 
+    @Mock
+    private com.example.comptable.comptabilite.allocation.StatutPaiementFactureService statutPaiementFactureService;
+
+    @Mock
+    private com.example.comptable.comptabilite.repository.LigneEcritureRepository ligneEcritureRepository;
+    @Mock
+    private com.example.comptable.comptabilite.repository.FactureAvoirRepository factureAvoirRepository;
+
     @InjectMocks
     private FacturationService facturationService;
 
@@ -164,10 +174,7 @@ class FacturationServiceTest {
     }
 
     private AccountingOperationProposalDto propositionApprouvee(Facture facture, UUID ecritureId) {
-        return new AccountingOperationProposalDto(UUID.randomUUID(), entrepriseId, "VENTE", "APPROVED", null, null,
-                client.getId(), facture.getDateEmission(), "Facture " + facture.getNumero(), facture.getNumero(),
-                List.of(), BigDecimal.ZERO, BigDecimal.ZERO, true, List.of(), List.of(), null, null, null, null,
-                ecritureId, "FACTURE", facture.getId());
+        return new AccountingOperationProposalDto(UUID.randomUUID(), entrepriseId, "VENTE", "APPROVED", null, null, client.getId(), facture.getDateEmission(), "Facture " + facture.getNumero(), facture.getNumero(), List.of(), BigDecimal.ZERO, BigDecimal.ZERO, true, List.of(), List.of(), null, null, null, null, ecritureId, "FACTURE", facture.getId(), "VALIDATION");
     }
 
     @Test
@@ -197,8 +204,7 @@ class FacturationServiceTest {
         when(venteRule.construireLignesVenteDepuisMontantsPrecalcules(any(), any(), any(), any(), any(), any(), any()))
                 .thenReturn(List.of());
         when(accountingOperationEngine.proposerEtValiderImmediatement(eq(entrepriseId), eq(AccountingOperationType.VENTE),
-                eq(client), eq(facture.getDateEmission()), any(), eq(facture.getNumero()), any(), eq("FACTURE"),
-                eq(facture.getId()), eq(principal)))
+                eq(client), eq(facture.getDateEmission()), any(), eq(facture.getNumero()), any(), eq(AccountingSource.de("FACTURE", facture.getId(), "VALIDATION")), eq(principal)))
                 .thenReturn(propositionApprouvee(facture, ecritureId));
         when(factureRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
 
@@ -293,26 +299,6 @@ class FacturationServiceTest {
     }
 
     @Test
-    void marque_payee_une_facture_validee() {
-        Facture fact = facture(TypeFacture.FACTURE, StatutFacture.VALIDEE);
-        when(factureRepository.findById(fact.getId())).thenReturn(Optional.of(fact));
-        when(factureRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
-
-        FactureDto resultat = facturationService.marquerPayee(entrepriseId, fact.getId(), principal);
-
-        assertThat(resultat.statut()).isEqualTo("PAYEE");
-    }
-
-    @Test
-    void refuse_de_marquer_payee_une_facture_en_brouillon() {
-        Facture fact = facture(TypeFacture.FACTURE, StatutFacture.BROUILLON);
-        when(factureRepository.findById(fact.getId())).thenReturn(Optional.of(fact));
-
-        assertThatThrownBy(() -> facturationService.marquerPayee(entrepriseId, fact.getId(), principal))
-                .hasMessageContaining("validee");
-    }
-
-    @Test
     void refuse_de_valider_une_facture_dont_lexercice_est_cloture() {
         Facture fact = facture(TypeFacture.FACTURE, StatutFacture.BROUILLON);
 
@@ -323,7 +309,7 @@ class FacturationServiceTest {
         when(compteComptableValidationService.chargerCompteUtilisable(entrepriseId, compteTva.getId(), true)).thenReturn(compteTva);
         when(venteRule.construireLignesVenteDepuisMontantsPrecalcules(any(), any(), any(), any(), any(), any(), any()))
                 .thenReturn(List.of());
-        when(accountingOperationEngine.proposerEtValiderImmediatement(any(), any(), any(), any(), any(), any(), any(), any(), any(), any()))
+        when(accountingOperationEngine.proposerEtValiderImmediatement(any(), any(), any(), any(), any(), any(), any(), any(), any()))
                 .thenThrow(new ResponseStatusException(HttpStatus.UNPROCESSABLE_ENTITY, "L'exercice couvrant cette date est cloture"));
 
         assertThatThrownBy(() -> facturationService.validerFacture(entrepriseId, fact.getId(), compteVentes.getId(), principal))
@@ -368,8 +354,7 @@ class FacturationServiceTest {
         when(venteRule.construireLignesVenteDepuisMontantsPrecalcules(any(), any(), any(), any(), any(), any(), any()))
                 .thenReturn(List.of());
         when(accountingOperationEngine.proposerEtValiderImmediatement(eq(entrepriseId), eq(AccountingOperationType.VENTE),
-                eq(client), eq(facture.getDateEmission()), any(), eq(facture.getNumero()), any(), eq("FACTURE"),
-                eq(facture.getId()), eq(principal)))
+                eq(client), eq(facture.getDateEmission()), any(), eq(facture.getNumero()), any(), eq(AccountingSource.de("FACTURE", facture.getId(), "VALIDATION")), eq(principal)))
                 .thenReturn(propositionApprouvee(facture, ecritureId));
         when(mouvementStockService.enregistrerAvecSource(eq(entrepriseId), any(), eq(principal), eq("FACTURE"), eq(facture.getId())))
                 .thenReturn(new MouvementStockDto(
@@ -408,8 +393,7 @@ class FacturationServiceTest {
         when(venteRule.construireLignesVenteDepuisMontantsPrecalcules(any(), any(), any(), any(), any(), any(), any()))
                 .thenReturn(List.of());
         when(accountingOperationEngine.proposerEtValiderImmediatement(eq(entrepriseId), eq(AccountingOperationType.VENTE),
-                eq(client), eq(facture.getDateEmission()), any(), eq(facture.getNumero()), any(), eq("FACTURE"),
-                eq(facture.getId()), eq(principal)))
+                eq(client), eq(facture.getDateEmission()), any(), eq(facture.getNumero()), any(), eq(AccountingSource.de("FACTURE", facture.getId(), "VALIDATION")), eq(principal)))
                 .thenReturn(propositionApprouvee(facture, ecritureId));
         when(mouvementStockService.enregistrerAvecSource(eq(entrepriseId), any(), eq(principal), eq("FACTURE"), eq(facture.getId())))
                 .thenThrow(new StockInsuffisantException("ART-001", new BigDecimal("2"), new BigDecimal("10")));

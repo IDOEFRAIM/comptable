@@ -1,0 +1,395 @@
+// =====================================================================================================================
+// Design system « ui » — tokens et primitives partagés (dossier financier, puis le reste de l'application).
+// Direction : sobre, premium, dense mais lisible. Structure par l'espacement, la typographie et les filets, pas par des cartes encadrées.
+// Les couleurs saturées (rouge, orange, vert) sont réservées aux VRAIS statuts : un écran qui contient des anomalies ne devient pas rouge.
+// Préfixe `ui-` : aucune collision avec les classes historiques de styles.scss.
+// =====================================================================================================================
+
+:root {
+  // ---- Couleurs
+  --ui-bg: #f6f7f9;                 // fond global, très clair, froid
+  --ui-surface: #ffffff;
+  --ui-surface-subtle: #fafbfc;     // variation de fond (en-têtes de tableau, zones secondaires)
+  --ui-line: #e7eaf0;               // filet standard
+  --ui-line-strong: #d5dae3;        // filet appuyé (champs, séparations de totaux)
+  --ui-text: #19212e;               // anthracite
+  --ui-text-2: #566074;             // secondaire
+  --ui-text-3: #6b7487;             // tertiaire / métadonnées
+  --ui-primary: #1c4fc4;            // bleu sobre : action principale uniquement
+  --ui-primary-hover: #163f9d;
+  --ui-primary-tint: #eef3fd;
+  --ui-success: #17744a;
+  --ui-warning: #9a5b0a;
+  --ui-danger: #b3261e;
+  --ui-danger-tint: #fdf4f3;
+
+  // ---- Espacement (grille 4 / 8 / 12 / 16 / 24 / 32 / 48)
+  --ui-s1: 4px;
+  --ui-s2: 8px;
+  --ui-s3: 12px;
+  --ui-s4: 16px;
+  --ui-s5: 24px;
+  --ui-s6: 32px;
+  --ui-s7: 48px;
+
+  // ---- Rayons (limités) et filets
+  --ui-r: 6px;
+  --ui-r-lg: 8px;
+
+  // ---- Typographie
+  --ui-fs-xs: 12px;
+  --ui-fs-sm: 13px;
+  --ui-fs-md: 14px;
+  --ui-fs-lg: 16px;
+  --ui-fs-xl: 20px;
+  --ui-fs-2xl: 24px;
+  --ui-fw-regular: 400;
+  --ui-fw-medium: 500;
+  --ui-fw-semibold: 600;
+  --ui-mono: ui-monospace, 'SF Mono', 'Cascadia Mono', Consolas, monospace;
+
+  --ui-page-max: 1440px;
+}
+
+// ---- Typographie ---------------------------------------------------------------------------------------------------
+// Hiérarchie : titre de page > titre de section > contenu principal > métadonnées > actions.
+
+.ui-page-title {
+  margin: 0;
+  font-size: var(--ui-fs-2xl);
+  line-height: 1.2;
+  font-weight: var(--ui-fw-semibold);
+  letter-spacing: -0.02em;
+  color: var(--ui-text);
+}
+
+.ui-section-title {
+  margin: 0;
+  font-size: var(--ui-fs-lg);
+  line-height: 1.3;
+  font-weight: var(--ui-fw-semibold);
+  color: var(--ui-text);
+}
+
+.ui-eyebrow {
+  margin: 0;
+  font-size: var(--ui-fs-xs);
+  font-weight: var(--ui-fw-semibold);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--ui-text-3);
+}
+
+.ui-meta {
+  font-size: var(--ui-fs-sm);
+  color: var(--ui-text-2);
+}
+
+.ui-muted {
+  color: var(--ui-text-3);
+}
+
+.ui-mono {
+  font-family: var(--ui-mono);
+  font-size: var(--ui-fs-xs);
+  word-break: break-all;
+}
+
+// ---- Boutons : une hiérarchie, partout la même ---------------------------------------------------------------------
+// Primary = l'action recommandée (une par zone) ; Secondary = contour ; Tertiary = sans cadre ; Danger = destructif.
+
+.ui-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--ui-s2);
+  min-height: 34px;
+  padding: 0 var(--ui-s4);
+  border: 1px solid transparent;
+  border-radius: var(--ui-r);
+  background: transparent;
+  color: var(--ui-text);
+  font: inherit;
+  font-size: var(--ui-fs-sm);
+  font-weight: var(--ui-fw-medium);
+  line-height: 1;
+  cursor: pointer;
+  white-space: nowrap;
+  text-decoration: none;
+  transition: background-color 0.12s ease, border-color 0.12s ease, color 0.12s ease;
+}
+
+.ui-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.ui-btn--primary {
+  background: var(--ui-primary);
+  color: #fff;
+}
+
+.ui-btn--primary:hover:not(:disabled) {
+  background: var(--ui-primary-hover);
+}
+
+.ui-btn--secondary {
+  background: var(--ui-surface);
+  border-color: var(--ui-line-strong);
+}
+
+.ui-btn--secondary:hover:not(:disabled) {
+  background: var(--ui-surface-subtle);
+  border-color: var(--ui-text-3);
+}
+
+.ui-btn--tertiary {
+  color: var(--ui-text-2);
+  padding: 0 var(--ui-s3);
+}
+
+.ui-btn--tertiary:hover:not(:disabled) {
+  background: var(--ui-bg);
+  color: var(--ui-text);
+}
+
+.ui-btn--link {
+  min-height: 0;
+  padding: 0;
+  color: var(--ui-primary);
+  font-weight: var(--ui-fw-medium);
+}
+
+.ui-btn--link:hover:not(:disabled) {
+  text-decoration: underline;
+}
+
+.ui-btn--danger {
+  background: var(--ui-surface);
+  border-color: var(--ui-danger);
+  color: var(--ui-danger);
+}
+
+.ui-btn--sm {
+  min-height: 28px;
+  padding: 0 var(--ui-s3);
+  font-size: var(--ui-fs-xs);
+}
+
+// ---- Surfaces ------------------------------------------------------------------------------------------------------
+// `ui-surface` : surface blanche avec un filet fin, sans ombre. À utiliser avec parcimonie : on structure d'abord par l'espacement.
+
+.ui-surface {
+  background: var(--ui-surface);
+  border: 1px solid var(--ui-line);
+  border-radius: var(--ui-r-lg);
+}
+
+.ui-section {
+  padding-top: var(--ui-s5);
+  margin-top: var(--ui-s5);
+  border-top: 1px solid var(--ui-line);
+}
+
+.ui-section:first-child {
+  padding-top: 0;
+  margin-top: 0;
+  border-top: 0;
+}
+
+// ---- Onglets ---------------------------------------------------------------------------------------------------------
+
+.ui-tabs {
+  display: flex;
+  gap: var(--ui-s5);
+  border-bottom: 1px solid var(--ui-line);
+  overflow-x: auto;
+}
+
+.ui-tab {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--ui-s2);
+  padding: var(--ui-s3) 0;
+  margin-bottom: -1px;
+  border: 0;
+  border-bottom: 2px solid transparent;
+  background: transparent;
+  color: var(--ui-text-2);
+  font: inherit;
+  font-size: var(--ui-fs-md);
+  font-weight: var(--ui-fw-medium);
+  border-radius: 0;
+  box-shadow: none;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.ui-tab:hover,
+button.ui-tab:hover:not(:disabled) {
+  background: transparent;
+  border-color: transparent;
+  box-shadow: none;
+  transform: none;
+  color: var(--ui-text);
+}
+
+button.ui-tab[aria-selected='true'],
+button.ui-tab[aria-selected='true']:hover:not(:disabled),
+.ui-tab[aria-selected='true'] {
+  color: var(--ui-text);
+  border-bottom-color: var(--ui-primary);
+  font-weight: var(--ui-fw-semibold);
+}
+
+.ui-tab__count {
+  font-size: var(--ui-fs-xs);
+  font-weight: var(--ui-fw-medium);
+  color: var(--ui-text-3);
+  font-variant-numeric: tabular-nums;
+}
+
+// ---- Tableaux ---------------------------------------------------------------------------------------------------------
+
+.ui-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--ui-fs-sm);
+  color: var(--ui-text);
+}
+
+.ui-table th {
+  padding: var(--ui-s2) var(--ui-s3);
+  text-align: left;
+  font-size: var(--ui-fs-xs);
+  font-weight: var(--ui-fw-semibold);
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  color: var(--ui-text-3);
+  background: transparent;
+  border: 0;
+  border-bottom: 1px solid var(--ui-line-strong);
+  white-space: nowrap;
+}
+
+.ui-table td {
+  padding: var(--ui-s2) var(--ui-s3);
+  border: 0;
+  border-bottom: 1px solid var(--ui-line);
+  vertical-align: baseline;
+  background: transparent;
+}
+
+.ui-table tbody tr:hover td {
+  background: var(--ui-surface-subtle);
+}
+
+.ui-table .ui-num,
+.ui-table th.ui-num {
+  text-align: right;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+
+.ui-table .ui-code {
+  width: 56px;
+  font-family: var(--ui-mono);
+  font-size: var(--ui-fs-xs);
+  color: var(--ui-text-3);
+}
+
+// ---- Champs de formulaire -------------------------------------------------------------------------------------------
+
+.ui-field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ui-s1);
+  margin-bottom: var(--ui-s4);
+}
+
+.ui-field__label {
+  font-size: var(--ui-fs-sm);
+  font-weight: var(--ui-fw-medium);
+  color: var(--ui-text);
+}
+
+.ui-field__label .ui-required {
+  color: var(--ui-danger);
+  margin-left: 2px;
+}
+
+.ui-field__hint {
+  font-size: var(--ui-fs-xs);
+  color: var(--ui-text-3);
+}
+
+.ui-input {
+  width: 100%;
+  padding: var(--ui-s2) var(--ui-s3);
+  border: 1px solid var(--ui-line-strong);
+  border-radius: var(--ui-r);
+  background: var(--ui-surface);
+  color: var(--ui-text);
+  font: inherit;
+  font-size: var(--ui-fs-md);
+}
+
+.ui-input:focus {
+  outline: 2px solid var(--ui-primary-tint);
+  outline-offset: 0;
+  border-color: var(--ui-primary);
+}
+
+.ui-input:disabled {
+  background: var(--ui-surface-subtle);
+  color: var(--ui-text-2);
+}
+
+// ---- Notice (message de page sobre, jamais un bloc rouge plein) ---------------------------------------------------------
+
+.ui-notice {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--ui-s3);
+  padding: var(--ui-s3) var(--ui-s4);
+  border-left: 2px solid var(--ui-text-3);
+  background: var(--ui-surface-subtle);
+  font-size: var(--ui-fs-sm);
+  color: var(--ui-text);
+}
+
+.ui-notice--danger {
+  border-left-color: var(--ui-danger);
+  background: var(--ui-danger-tint);
+}
+
+.ui-notice--success {
+  border-left-color: var(--ui-success);
+}
+
+.ui-notice--info {
+  border-left-color: var(--ui-primary);
+  background: var(--ui-primary-tint);
+}
+
+// ---- Accessibilité -------------------------------------------------------------------------------------------------
+
+.ui-btn:focus-visible,
+.ui-tab:focus-visible,
+.ui-input:focus-visible {
+  outline: 2px solid var(--ui-primary);
+  outline-offset: 2px;
+}
+
+.ui-sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
+}

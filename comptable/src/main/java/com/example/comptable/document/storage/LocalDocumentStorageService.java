@@ -48,8 +48,13 @@ public class LocalDocumentStorageService implements DocumentStorageService {
         return new FileSystemResource(fichier);
     }
 
-    private String assainir(String nomFichier) {
-        String nom = Path.of(nomFichier).getFileName().toString();
-        return nom.replaceAll("[^a-zA-Z0-9._-]", "_");
+    /** Garde uniquement le nom (jamais un chemin, séparateurs / et \\ compris), remplace tout caractère inattendu, borne la longueur ; un nom absent ou vide devient « document ». */
+    static String assainir(String nomFichier) {
+        String nom = nomFichier == null ? "" : nomFichier.substring(Math.max(nomFichier.lastIndexOf('/'), nomFichier.lastIndexOf('\\')) + 1);
+        nom = nom.replaceAll("[^a-zA-Z0-9._-]", "_").replaceAll("^\\.+", "_");
+        if (nom.isBlank() || nom.chars().allMatch(c -> c == '_')) {
+            return "document";
+        }
+        return nom.length() > 100 ? nom.substring(nom.length() - 100) : nom;
     }
 }

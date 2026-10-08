@@ -1,8 +1,10 @@
-import { Component, ElementRef, QueryList, ViewChildren, inject, signal } from '@angular/core';
+import { DecimalPipe } from '@angular/common';
+import { Component, ElementRef, HostListener, QueryList, ViewChildren, inject, signal } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { FormArray, FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { finalize, map } from 'rxjs/operators';
+import { AvecModificationsNonEnregistrees } from '../../../core/forms/modifications-non-enregistrees.guard';
 import { ComptabiliteService } from '../comptabilite.service';
 import { CompteComptableDto, JournalDto, TiersDto } from '../models/comptabilite.model';
 
@@ -13,11 +15,11 @@ function aujourdhui(): string {
 @Component({
   selector: 'app-saisie-ecriture',
   standalone: true,
-  imports: [ReactiveFormsModule, RouterLink],
+  imports: [DecimalPipe, ReactiveFormsModule, RouterLink],
   templateUrl: './saisie-ecriture.component.html',
   styleUrl: './saisie-ecriture.component.scss',
 })
-export class SaisieEcritureComponent {
+export class SaisieEcritureComponent implements AvecModificationsNonEnregistrees {
   private readonly fb = inject(FormBuilder);
   private readonly comptabiliteService = inject(ComptabiliteService);
   private readonly route = inject(ActivatedRoute);
@@ -34,6 +36,7 @@ export class SaisieEcritureComponent {
   readonly tiers = signal<TiersDto[]>([]);
   readonly envoiEnCours = signal(false);
   readonly erreur = signal<string | null>(null);
+  private enregistree = false;
 
   readonly form = this.fb.nonNullable.group({
     journalId: ['', Validators.required],
@@ -52,6 +55,18 @@ export class SaisieEcritureComponent {
     this.comptabiliteService.listerJournaux(entrepriseId).subscribe((j) => this.journaux.set(j));
     this.comptabiliteService.listerComptes(entrepriseId).subscribe((c) => this.comptes.set(c));
     this.comptabiliteService.listerTiers(entrepriseId).subscribe((t) => this.tiers.set(t));
+  }
+
+  /** Vrai dès qu'une saisie existe et n'est pas enregistrée : le routeur et la fermeture de l'onglet demandent alors confirmation. */
+  aDesModificationsNonEnregistrees(): boolean {
+    return this.form.dirty && !this.enregistree;
+  }
+
+  @HostListener('window:beforeunload', ['$event'])
+  avantFermetureOnglet(evenement: BeforeUnloadEvent): void {
+    if (this.aDesModificationsNonEnregistrees()) {
+      evenement.preventDefault();
+    }
   }
 
   private creerLigne() {
@@ -131,7 +146,10 @@ export class SaisieEcritureComponent {
       })
       .pipe(finalize(() => this.envoiEnCours.set(false)))
       .subscribe({
-        next: () => this.router.navigate(['..'], { relativeTo: this.route }),
+        next: () => {
+          this.enregistree = true;
+          this.router.navigate(['..'], { relativeTo: this.route });
+        },
         error: (err) => this.erreur.set(err.error?.message ?? 'Impossible de créer cette écriture.'),
       });
   }

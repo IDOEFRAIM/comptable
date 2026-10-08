@@ -4,7 +4,14 @@ import com.example.comptable.audit.AuditTrailService;
 import com.example.comptable.demande.domain.DemandePiece;
 import com.example.comptable.demande.domain.StatutDemandePiece;
 import com.example.comptable.demande.repository.DemandePieceRepository;
+import com.example.comptable.agent.finding.domain.Finding;
+import com.example.comptable.agent.finding.domain.StatutFinding;
+import com.example.comptable.agent.finding.repository.FindingRepository;
+import com.example.comptable.controle.ControlCodes;
 import com.example.comptable.demande.web.dto.CreerDemandePieceRequest;
+import com.example.comptable.demande.web.dto.DemanderPieceRequest;
+import com.example.comptable.document.repository.DocumentRepository;
+import com.example.comptable.document.service.PieceEcritureLinker;
 import com.example.comptable.demande.web.dto.DemandePieceDto;
 import com.example.comptable.document.domain.TypeDocument;
 import com.example.comptable.document.service.DocumentService;
@@ -44,6 +51,11 @@ public class DemandePieceService {
     private final DocumentService documentService;
     private final NotificationService notificationService;
     private final AuditTrailService auditTrailService;
+    private final FindingRepository findingRepository;
+    private final PieceEcritureLinker pieceEcritureLinker;
+    private final DocumentRepository documentRepository;
+    private final com.example.comptable.collecte.service.CollecteService collecteService;
+    private final com.example.comptable.collecte.repository.OutboundMessageRepository outboundMessageRepository;
 
     @Transactional(readOnly = true)
     public List<DemandePieceDto> lister(UUID entrepriseId, StatutDemandePiece statut, UtilisateurPrincipal principal) {
@@ -51,7 +63,33 @@ public class DemandePieceService {
         List<DemandePiece> demandes = statut != null
                 ? demandePieceRepository.findByEntrepriseIdAndStatutOrderByCreatedAtDesc(entrepriseId, statut)
                 : demandePieceRepository.findByEntrepriseIdOrderByCreatedAtDesc(entrepriseId);
-        return demandes.stream().map(DemandePieceDto::from).toList();
+        return enrichir(demandes);
+    }
+
+    @Transactional(readOnly = true)
+    public List<com.example.comptable.demande.web.dto.DemandePieceClientDto> listerPourClient(UUID entrepriseId, StatutDemandePiece statut,
+                                                                                               UtilisateurPrincipal principal) {
+        entrepriseAccessService.verifierAcces(entrepriseId, principal);
+        List<DemandePiece> demandes = statut != null
+                ? demandePieceRepository.findByEntrepriseIdAndStatutOrderByCreatedAtDesc(entrepriseId, statut)
+                : demandePieceRepository.findByEntrepriseIdOrderByCreatedAtDesc(entrepriseId);
+        return demandes.stream().filter(d -> d.getStatut() != StatutDemandePiece.ANNULEE)
+                .map(com.example.comptable.demande.web.dto.DemandePieceClientDto::from).toList();
+    }
+
+    /** Ajoute le dernier message de chaque demande, charge EN UNE requete (pas de requete par ligne). */
+    public List<DemandePieceDto> enrichir(List<DemandePiece> demandes) {
+        if (demandes.isEmpty()) {
+            return List.of();
+        }
+        Map<UUID, DemandePieceDto.DernierMessageDto> derniers = new java.util.HashMap<>();
+        for (Object[] ligne : outboundMessageRepository.derniersMessages(demandes.stream().map(DemandePiece::getId).toList())) {
+            com.example.comptable.collecte.domain.OutboundMessage m = (com.example.comptable.collecte.domain.OutboundMessage) ligne[1];
+            derniers.putIfAbsent((UUID) ligne[0], new DemandePieceDto.DernierMessageDto(m.getId(), m.getStatus().name(), m.getKind().name(),
+                    m.getAttemptCount(), m.getSentAt(), m.getLastError(),
+                    m.getStatus() == com.example.comptable.collecte.domain.StatutMessage.PENDING ? m.getNextAttemptAt() : null));
+        }
+        return demandes.stream().map(d -> DemandePieceDto.from(d).avecDernierMessage(derniers.get(d.getId()))).toList();
     }
 
     @Transactional
@@ -64,7 +102,15 @@ public class DemandePieceService {
         demande.setDescription(request.description());
         demande.setDateLimite(request.dateLimite());
         demande.setDemandeePar(utilisateurRepository.getReferenceById(principal.getId()));
-        DemandePieceDto dto = DemandePieceDto.from(demandePieceRepository.save(demande));
+        boolean envoyer = Boolean.TRUE.equals(request.envoyer());
+        if (envoyer) {
+            demande.setStatut(StatutDemandePiece.A_ENVOYER);
+        }
+        DemandePiece enregistree = demandePieceRepository.save(demande);
+        if (envoyer) {
+            collecteService.enfiler(entreprise, List.of(enregistree), com.example.comptable.collecte.domain.TypeMessage.INITIAL);
+        }
+        DemandePieceDto dto = DemandePieceDto.from(enregistree);
         auditTrailService.enregistrerActionHumaine(principal.getTenantId(), principal.getId(),
                 "DEMANDE_CREEE", "DEMANDE_PIECE", dto.id().toString(), Map.of("libelle", dto.libelle()));
         return dto;
@@ -109,19 +155,39 @@ public class DemandePieceService {
         return DemandePieceDto.from(demandePieceRepository.save(demande));
     }
 
+    /**
+     * Cycle de collecte : constat {@code MISSING_DOCUMENT} -&gt; demande -&gt; MESSAGE reel (boite d'envoi) -&gt; relances -&gt; piece recue
+     * -&gt; rapprochee, constat resolu. Une seule demande ouverte par ecriture (409 sinon).
+     */
+    @Transactional
+    public DemandePieceDto demanderPourConstat(UUID entrepriseId, UUID findingId, DemanderPieceRequest request, UtilisateurPrincipal principal) {
+        com.example.comptable.collecte.service.CollecteService.ResultatDemande r = collecteService.demander(entrepriseId, List.of(findingId), principal);
+        if (r.demandeIds().isEmpty()) {
+            Finding finding = findingRepository.findById(findingId).filter(f -> f.getEntreprise().getId().equals(entrepriseId))
+                    .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Constat introuvable"));
+            if (ControlCodes.MISSING_DOCUMENT.equals(finding.getControlCode()) && finding.getStatus() == StatutFinding.OPEN) {
+                throw new ResponseStatusException(HttpStatus.CONFLICT, "Une demande de piece existe deja pour cette operation");
+            }
+            throw new ResponseStatusException(HttpStatus.UNPROCESSABLE_ENTITY,
+                    "Seul un constat de piece manquante ouvert, portant sur une ecriture, peut donner lieu a une demande de piece");
+        }
+        DemandePiece demande = demandePieceRepository.findById(r.demandeIds().get(0)).orElseThrow();
+        if (request != null) {
+            demande.setDateLimite(request.dateLimite());
+            if (request.canal() != null) {
+                demande.setCanalPrefere(request.canal());
+            }
+            if (request.message() != null && !request.message().isBlank()) {
+                demande.setDescription(request.message());
+            }
+            demandePieceRepository.save(demande);
+        }
+        return DemandePieceDto.from(demande);
+    }
+
     @Transactional
     public DemandePieceDto annuler(UUID entrepriseId, UUID demandeId, UtilisateurPrincipal principal) {
-        entrepriseAccessService.verifierAcces(entrepriseId, principal);
-        DemandePiece demande = charger(entrepriseId, demandeId);
-
-        if (demande.getStatut() == StatutDemandePiece.RECU) {
-            throw new ResponseStatusException(HttpStatus.CONFLICT,
-                    "Cette demande a deja ete satisfaite, impossible de l'annuler");
-        }
-
-        demande.setStatut(StatutDemandePiece.ANNULEE);
-        demande.setResolueAt(OffsetDateTime.now());
-        return DemandePieceDto.from(demandePieceRepository.save(demande));
+        return DemandePieceDto.from(collecteService.annuler(entrepriseId, demandeId, principal));
     }
 
     /** Le client (ou un collaborateur pour son compte) depose la piece directement sur la demande. */
@@ -131,7 +197,8 @@ public class DemandePieceService {
         Entreprise entreprise = entrepriseAccessService.verifierAcces(entrepriseId, principal);
         DemandePiece demande = charger(entrepriseId, demandeId);
 
-        if (demande.getStatut() != StatutDemandePiece.EN_ATTENTE) {
+        if (demande.getStatut() != StatutDemandePiece.EN_ATTENTE && demande.getStatut() != StatutDemandePiece.A_ENVOYER
+                && demande.getStatut() != StatutDemandePiece.ECHEC_ENVOI) {
             throw new ResponseStatusException(HttpStatus.CONFLICT, "Cette demande a deja ete traitee");
         }
 
@@ -141,6 +208,11 @@ public class DemandePieceService {
         demande.setStatut(StatutDemandePiece.RECU);
         demande.setResolueAt(OffsetDateTime.now());
         demande = demandePieceRepository.save(demande);
+        if (demande.getEcritureId() != null) {
+            // La piece repond a une operation precise : elle en devient le justificatif (constat ferme, demande rapprochee).
+            UUID ecritureId = demande.getEcritureId();
+            documentRepository.findById(document.id()).ifPresent(d -> pieceEcritureLinker.lier(d, ecritureId));
+        }
 
         if (demande.getDemandeePar() != null) {
             String contenu = "Pièce reçue pour \"" + demande.getLibelle() + "\" (" + entreprise.getRaisonSociale() + ")";

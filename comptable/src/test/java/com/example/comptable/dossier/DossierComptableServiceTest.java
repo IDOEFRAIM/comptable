@@ -1,6 +1,6 @@
 package com.example.comptable.dossier;
 
-import com.example.comptable.agent.finding.ControlEngine;
+import com.example.comptable.controle.ControlRunService;
 import com.example.comptable.agent.finding.domain.Finding;
 import com.example.comptable.agent.finding.domain.SeveriteFinding;
 import com.example.comptable.agent.finding.domain.StatutFinding;
@@ -42,7 +42,7 @@ class DossierComptableServiceTest {
     @Mock
     private EntrepriseAccessService entrepriseAccessService;
     @Mock
-    private ControlEngine controlEngine;
+    private ControlRunService controlRunService;
     @Mock
     private FindingRepository findingRepository;
     @Mock
@@ -50,12 +50,22 @@ class DossierComptableServiceTest {
     @Mock
     private DocumentRepository documentRepository;
 
+    @Mock
+    private com.example.comptable.comptabilite.allocation.StatutPaiementFactureService statutPaiementFactureService;
+
     @InjectMocks
     private DossierComptableService dossierComptableService;
 
     private UUID entrepriseId;
     private Entreprise entreprise;
     private UtilisateurPrincipal principal;
+
+    /** N factures echues avec un reste a payer (calcule depuis les allocations : c'est la seule definition du retard). */
+    private static List<com.example.comptable.comptabilite.allocation.StatutPaiementFactureService.FactureOuverte> facturesOuvertes(int n) {
+        return java.util.stream.IntStream.range(0, n).mapToObj(i -> new com.example.comptable.comptabilite.allocation.StatutPaiementFactureService.FactureOuverte(new com.example.comptable.comptabilite.domain.Facture(),
+                java.math.BigDecimal.TEN, java.math.BigDecimal.ZERO, java.math.BigDecimal.TEN,
+                com.example.comptable.comptabilite.allocation.StatutPaiement.NON_PAYEE)).toList();
+    }
 
     @BeforeEach
     void setUp() {
@@ -89,6 +99,10 @@ class DossierComptableServiceTest {
         f.setTitle("titre");
         f.setStatus(StatutFinding.OPEN);
         f.setCreatedAt(OffsetDateTime.now());
+        f.setControlCode(type.name());
+        f.setCategory(com.example.comptable.controle.ControlCategory.ACCOUNTING);
+        f.setControlSeverity(com.example.comptable.controle.ControlSeverity.WARNING);
+        f.setLastDetectedAt(OffsetDateTime.now());
         return f;
     }
 
@@ -96,9 +110,8 @@ class DossierComptableServiceTest {
     void dossier_propre_sans_probleme_obtient_un_score_parfait() {
         when(findingRepository.findByEntrepriseIdAndStatusOrderBySeverityAscCreatedAtDesc(entrepriseId, StatutFinding.OPEN))
                 .thenReturn(List.of());
-        when(factureRepository.countByEntrepriseIdAndTypeAndStatutAndDateEcheanceBefore(
-                eq(entrepriseId), eq(TypeFacture.FACTURE), eq(StatutFacture.VALIDEE), any(LocalDate.class)))
-                .thenReturn(0L);
+        when(statutPaiementFactureService.ouvertes(eq(entrepriseId), org.mockito.ArgumentMatchers.anyCollection()))
+                .thenReturn(facturesOuvertes(0));
         when(documentRepository.countByEntrepriseIdAndStatutAndTypeDocumentInAndEcritureIdIsNull(
                 entrepriseId, StatutDocument.TRAITE, List.of(TypeDocument.FACTURE_ACHAT)))
                 .thenReturn(0L);
@@ -118,9 +131,8 @@ class DossierComptableServiceTest {
         Finding critique = finding(TypeFinding.DOCUMENT_REVIEW, SeveriteFinding.CRITICAL, "DOCUMENT");
         when(findingRepository.findByEntrepriseIdAndStatusOrderBySeverityAscCreatedAtDesc(entrepriseId, StatutFinding.OPEN))
                 .thenReturn(List.of(critique));
-        when(factureRepository.countByEntrepriseIdAndTypeAndStatutAndDateEcheanceBefore(
-                eq(entrepriseId), eq(TypeFacture.FACTURE), eq(StatutFacture.VALIDEE), any(LocalDate.class)))
-                .thenReturn(0L);
+        when(statutPaiementFactureService.ouvertes(eq(entrepriseId), org.mockito.ArgumentMatchers.anyCollection()))
+                .thenReturn(facturesOuvertes(0));
         when(documentRepository.countByEntrepriseIdAndStatutAndTypeDocumentInAndEcritureIdIsNull(
                 entrepriseId, StatutDocument.TRAITE, List.of(TypeDocument.FACTURE_ACHAT)))
                 .thenReturn(0L);
@@ -139,9 +151,8 @@ class DossierComptableServiceTest {
     void les_factures_clients_en_retard_degradent_le_score_clients() {
         when(findingRepository.findByEntrepriseIdAndStatusOrderBySeverityAscCreatedAtDesc(entrepriseId, StatutFinding.OPEN))
                 .thenReturn(List.of());
-        when(factureRepository.countByEntrepriseIdAndTypeAndStatutAndDateEcheanceBefore(
-                eq(entrepriseId), eq(TypeFacture.FACTURE), eq(StatutFacture.VALIDEE), any(LocalDate.class)))
-                .thenReturn(3L);
+        when(statutPaiementFactureService.ouvertes(eq(entrepriseId), org.mockito.ArgumentMatchers.anyCollection()))
+                .thenReturn(facturesOuvertes(3));
         when(documentRepository.countByEntrepriseIdAndStatutAndTypeDocumentInAndEcritureIdIsNull(
                 entrepriseId, StatutDocument.TRAITE, List.of(TypeDocument.FACTURE_ACHAT)))
                 .thenReturn(0L);

@@ -1,6 +1,7 @@
 import { Component, EventEmitter, OnInit, Output, inject, input, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { finalize, forkJoin } from 'rxjs';
+import { messageErreur } from '../../core/forms/message-erreur';
 import { ComptabiliteService } from './comptabilite.service';
 import { CompteComptableDto, EcritureComptableDto, TiersDto, TypeTiers } from './models/comptabilite.model';
 
@@ -73,7 +74,7 @@ export class ComptabiliserModalComponent implements OnInit {
       .pipe(finalize(() => this.envoiEnCours.set(false)))
       .subscribe({
         next: (ecriture) => this.valide.emit(ecriture),
-        error: (err) => this.erreur.set(err.error?.message ?? 'Comptabilisation impossible.'),
+        error: (err) => this.erreur.set(messageErreur(err, 'Comptabilisation impossible.')),
       });
   }
 }
