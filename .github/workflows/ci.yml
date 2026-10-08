@@ -18,7 +18,9 @@ jobs:
           cache: maven
       - name: mvn verify
         working-directory: comptable
-        run: ./mvnw -B -ntp verify
+        run: |
+          chmod +x mvnw
+          ./mvnw -B -ntp verify
 
   frontend:
     name: Frontend (Angular)
@@ -75,6 +77,8 @@ jobs:
       - name: npm ci
         working-directory: comptable/frontend
         run: npm ci
+      - name: Wrapper Maven exécutable (lancé par Playwright pour démarrer le backend)
+        run: chmod +x comptable/mvnw
       - name: Suite Playwright complète (pilote, cabinet, dossier financier, TVA, responsive / accessibilité)
         working-directory: comptable/frontend
         run: npx playwright test
