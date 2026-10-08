@@ -48,7 +48,7 @@ class StockageDocumentsSecuriteTest {
         assertThatThrownBy(() -> stockage.charger("../../../../etc/passwd")).isInstanceOf(SecurityException.class);
         // un antislash n'est un séparateur que sous Windows : sous Linux c'est un simple caractère de nom, qui reste DANS la racine ; dans les deux cas rien ne sort de la racine
         try {
-            assertThat(stockage.charger("..\\..\\secret").getFile().toPath().toAbsolutePath().normalize()).startsWith(racine.toAbsolutePath().normalize());
+            assertThat(stockage.charger("..\\..\\secret").getFile().toPath().toAbsolutePath().normalize().toString()).startsWith(racine.toAbsolutePath().normalize().toString());
         } catch (SecurityException | java.io.IOException refus) {
             // refus explicite : acceptable
         }

@@ -31,6 +31,13 @@ public class SecurityConfig {
         return http
                 .csrf(AbstractHttpConfigurer::disable)
                 .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                // Requête non authentifiée (jeton absent, expiré, révoqué, émis avant un changement de mot de passe) : 401, et non le 403 par défaut de Spring. Le 401 est ce qui ramène l'interface à la connexion ;
+                // un refus de rôle (utilisateur connecté sans le droit) reste un 403.
+                .exceptionHandling(e -> e.authenticationEntryPoint((req, res, ex) -> {
+                    res.setStatus(jakarta.servlet.http.HttpServletResponse.SC_UNAUTHORIZED);
+                    res.setContentType("application/json;charset=UTF-8");
+                    res.getWriter().write("{\"code\":\"UNAUTHORIZED\",\"message\":\"Session absente ou expirée : reconnectez-vous.\"}");
+                }))
                 .authorizeHttpRequests(auth -> auth
                         // Changement de mot de passe : réservé à un utilisateur authentifié (la seule route permise avec un mot de passe temporaire). Doit précéder /api/auth/**.
                         .requestMatchers("/api/auth/change-password").authenticated()

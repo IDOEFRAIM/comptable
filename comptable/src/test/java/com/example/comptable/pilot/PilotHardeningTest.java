@@ -302,6 +302,21 @@ class PilotHardeningTest extends CollecteTestBase {
     }
 
     @Test
+    void sessionAbsenteOuInvalide_repond401_pourQueLInterfaceRevienneALaConnexion() throws Exception {
+        for (String entete : new String[] {null, "Bearer abc.def.ghi", "Bearer "}) {
+            var requete = get("/api/entreprises");
+            MockHttpServletResponse r = appeler(entete == null ? requete : requete.header("Authorization", entete));
+            assertThat(r.getStatus()).as(String.valueOf(entete)).isEqualTo(401);
+            assertThat(r.getContentAsString()).contains("UNAUTHORIZED");
+        }
+        // un utilisateur connecté mais sans le droit reçoit toujours 403 (et pas 401)
+        Cabinet c = cabinet();
+        var collab = equipe.ajouter(c.principal(), new MembreRequest("c-" + UUID.randomUUID().toString().substring(0, 8) + "@pilote.test", "A", "B", "COLLABORATEUR", MDP));
+        String jeton = auth.login(new LoginRequest(collab.membre().email(), MDP), "ip-" + UUID.randomUUID()).token();
+        assertThat(appeler(get("/api/cabinet/support/diagnostic").header("Authorization", "Bearer " + jeton)).getStatus()).isEqualTo(403);
+    }
+
+    @Test
     void lienDeDepotPublic_estLimiteEnDebit_etLesJetonsInventesRestentUniformes() throws Exception {
         String cleLecture = "depot-lecture|127.0.0.1";
         String cleEnvoi = "depot-envoi|127.0.0.1";

@@ -138,11 +138,10 @@ class P1_5SecuriteHttpE2ETest {
 
     @Test
     void requete_sans_jeton_est_rejetee() throws Exception {
-        // Pas de AuthenticationEntryPoint dedie dans SecurityConfig : une requete anonyme rejetee
-        // par ".anyRequest().authenticated()" recoit 403 (comportement reel confirme par ce test),
-        // pas 401 - verifie ici que c'est bien le cas plutot que de le supposer.
+        // Requete anonyme : 401 (AuthenticationEntryPoint de SecurityConfig), ce qui ramene l'interface a la connexion ;
+        // un utilisateur connecte sans le droit, lui, recoit 403 (voir les autres tests de cette classe).
         mockMvc.perform(get("/api/entreprises/" + entrepriseTenantAId + "/tableau-de-bord"))
-                .andExpect(status().isForbidden());
+                .andExpect(status().isUnauthorized());
     }
 
     @Test

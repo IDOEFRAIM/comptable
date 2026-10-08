@@ -137,7 +137,7 @@ class P1_9SecuriteHttpE2ETest {
         mockMvc.perform(post("/api/copilot/queries/" + UUID.randomUUID() + "/feedback")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"feedback\":\"POSITIVE\",\"reason\":null}"))
-                .andExpect(status().isForbidden());
+                .andExpect(status().isUnauthorized());
     }
 
     @Test
