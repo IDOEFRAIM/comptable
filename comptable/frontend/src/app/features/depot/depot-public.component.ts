@@ -80,7 +80,7 @@ type Etat = 'CHARGEMENT' | 'PRET' | 'INVALIDE' | 'ENVOYE';
       .resume { background: #f6f8fb; border-radius: 10px; padding: 1rem; margin: 1rem 0; }
       .champ-fichier { display: flex; flex-direction: column; gap: 0.4rem; margin: 1rem 0; }
       .meta { color: #5b6475; font-size: 0.85rem; }
-      .envoyer { width: 100%; padding: 0.9rem; font-size: 1rem; border: 0; border-radius: 8px; background: #2f5be7; color: #fff; }
+      .envoyer { width: 100%; padding: 0.9rem; font-size: 1rem; border: 0; border-radius: 8px; background: var(--color-primary, #14662f); color: #fff; }
       .envoyer:disabled { background: #a9b6dd; }
       .message-erreur { color: #b42318; }
       .message-ok { background: #e7f6ec; padding: 1rem; border-radius: 8px; }

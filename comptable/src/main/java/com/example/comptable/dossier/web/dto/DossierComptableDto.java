@@ -16,6 +16,11 @@ public record DossierComptableDto(
         String statut,
         List<ScoreDomaineDto> scoresParDomaine,
         List<FindingDto> actionsPrioritaires,
-        List<FindingDto> blockingItems
+        List<FindingDto> blockingItems,
+        boolean aucuneActivite
 ) {
+
+    public DossierComptableDto(String entrepriseNom, int scoreGlobal, String statut, List<ScoreDomaineDto> scoresParDomaine, List<FindingDto> actionsPrioritaires, List<FindingDto> blockingItems) {
+        this(entrepriseNom, scoreGlobal, statut, scoresParDomaine, actionsPrioritaires, blockingItems, false);
+    }
 }

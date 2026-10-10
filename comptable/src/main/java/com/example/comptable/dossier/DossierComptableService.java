@@ -59,19 +59,22 @@ public class DossierComptableService {
     private final FactureRepository factureRepository;
     private final com.example.comptable.comptabilite.allocation.StatutPaiementFactureService statutPaiementFactureService;
     private final DocumentRepository documentRepository;
+    private final com.example.comptable.comptabilite.repository.EcritureComptableRepository ecritureRepository;
 
     public DossierComptableService(EntrepriseAccessService entrepriseAccessService,
                                     ControlRunService controlRunService,
                                     FindingRepository findingRepository,
                                     FactureRepository factureRepository,
                                     com.example.comptable.comptabilite.allocation.StatutPaiementFactureService statutPaiementFactureService,
-                                    DocumentRepository documentRepository) {
+                                    DocumentRepository documentRepository,
+                                    com.example.comptable.comptabilite.repository.EcritureComptableRepository ecritureRepository) {
         this.entrepriseAccessService = entrepriseAccessService;
         this.controlRunService = controlRunService;
         this.findingRepository = findingRepository;
         this.factureRepository = factureRepository;
         this.statutPaiementFactureService = statutPaiementFactureService;
         this.documentRepository = documentRepository;
+        this.ecritureRepository = ecritureRepository;
     }
 
     @Transactional
@@ -92,17 +95,19 @@ public class DossierComptableService {
         int scoreFiscalite = scorePenalise(findingsOuverts, f -> f.getType() == TypeFinding.TAX_REVIEW);
         int scoreCloture = scorePenalise(findingsOuverts,
                 f -> f.getType() == TypeFinding.ECRITURE_A_CONTROLER || f.getType() == TypeFinding.CLOSING_BLOCKER);
-        int scoreClients = scoreClients(entrepriseId);
-        int scoreFournisseurs = scoreFournisseurs(entrepriseId);
+        long clientsEnRetard = facturesClientsEnRetard(entrepriseId);
+        long fournisseursEnAttente = piecesFournisseursEnAttente(entrepriseId);
+        int scoreClients = Math.max(0, 100 - Math.min(100, (int) clientsEnRetard * PENALITE_PAR_FACTURE_CLIENT_EN_RETARD));
+        int scoreFournisseurs = Math.max(0, 100 - Math.min(100, (int) fournisseursEnAttente * PENALITE_PAR_PIECE_FOURNISSEUR_EN_ATTENTE));
 
         List<ScoreDomaineDto> scoresParDomaine = List.of(
-                new ScoreDomaineDto("Banque", scoreBanque),
-                new ScoreDomaineDto("Documents", scoreDocuments),
-                new ScoreDomaineDto("Clients", scoreClients),
-                new ScoreDomaineDto("Fournisseurs", scoreFournisseurs),
-                new ScoreDomaineDto("Justificatifs", scoreJustificatifs),
-                new ScoreDomaineDto("Fiscalite", scoreFiscalite),
-                new ScoreDomaineDto("Cloture", scoreCloture)
+                new ScoreDomaineDto("Banque", scoreBanque, compter(findingsOuverts, f -> "LIGNE_RELEVE".equals(f.getSourceType()))),
+                new ScoreDomaineDto("Documents", scoreDocuments, compter(findingsOuverts, f -> f.getType() == TypeFinding.DOCUMENT_REVIEW)),
+                new ScoreDomaineDto("Clients", scoreClients, (int) clientsEnRetard),
+                new ScoreDomaineDto("Fournisseurs", scoreFournisseurs, (int) fournisseursEnAttente),
+                new ScoreDomaineDto("Justificatifs", scoreJustificatifs, compter(findingsOuverts, f -> f.getType() == TypeFinding.MISSING_EVIDENCE)),
+                new ScoreDomaineDto("Fiscalite", scoreFiscalite, compter(findingsOuverts, f -> f.getType() == TypeFinding.TAX_REVIEW)),
+                new ScoreDomaineDto("Cloture", scoreCloture, compter(findingsOuverts, f -> f.getType() == TypeFinding.ECRITURE_A_CONTROLER || f.getType() == TypeFinding.CLOSING_BLOCKER))
         );
 
         int scoreGlobal = (int) Math.round(scoresParDomaine.stream()
@@ -122,8 +127,11 @@ public class DossierComptableService {
                 .map(FindingDto::from)
                 .toList();
 
+        // Aucune écriture, aucune pièce, aucun constat : il n'y a RIEN à évaluer. Un score de 100 / « prêt » serait une fausse assurance (l'absence de problème détecté n'est pas l'absence de problème).
+        boolean aucuneActivite = findingsOuverts.isEmpty() && ecritureRepository.countByEntrepriseId(entrepriseId) == 0 && documentRepository.countByEntrepriseId(entrepriseId) == 0;
+
         return new DossierComptableDto(entreprise.getRaisonSociale(), scoreGlobal, statut,
-                scoresParDomaine, actionsPrioritaires, blockingItems);
+                scoresParDomaine, actionsPrioritaires, blockingItems, aucuneActivite);
     }
 
     private String determinerStatut(int scoreGlobal, boolean auMoinsUneCritique) {
@@ -150,17 +158,19 @@ public class DossierComptableService {
         return Math.max(0, 100 - Math.min(100, penalite));
     }
 
-    private int scoreClients(UUID entrepriseId) {
-        // En retard = echeance depassee ET reste a payer > 0 (calcule depuis les allocations), jamais un drapeau saisi.
-        long facturesEnRetard = statutPaiementFactureService.ouvertes(entrepriseId, factureRepository
-                .findByEntrepriseIdAndTypeAndStatutAndDateEcheanceBeforeOrderByDateEcheanceAsc(
-                        entrepriseId, TypeFacture.FACTURE, StatutFacture.VALIDEE, LocalDate.now())).size();
-        return Math.max(0, 100 - Math.min(100, (int) facturesEnRetard * PENALITE_PAR_FACTURE_CLIENT_EN_RETARD));
+    private int compter(List<Finding> findings, Predicate<Finding> filtre) {
+        return (int) findings.stream().filter(filtre).count();
     }
 
-    private int scoreFournisseurs(UUID entrepriseId) {
-        long piecesEnAttente = documentRepository.countByEntrepriseIdAndStatutAndTypeDocumentInAndEcritureIdIsNull(
+    /** En retard = echeance depassee ET reste a payer > 0 (calcule depuis les allocations), jamais un drapeau saisi. */
+    private long facturesClientsEnRetard(UUID entrepriseId) {
+        return statutPaiementFactureService.ouvertes(entrepriseId, factureRepository
+                .findByEntrepriseIdAndTypeAndStatutAndDateEcheanceBeforeOrderByDateEcheanceAsc(
+                        entrepriseId, TypeFacture.FACTURE, StatutFacture.VALIDEE, LocalDate.now())).size();
+    }
+
+    private long piecesFournisseursEnAttente(UUID entrepriseId) {
+        return documentRepository.countByEntrepriseIdAndStatutAndTypeDocumentInAndEcritureIdIsNull(
                 entrepriseId, StatutDocument.TRAITE, List.of(TypeDocument.FACTURE_ACHAT));
-        return Math.max(0, 100 - Math.min(100, (int) piecesEnAttente * PENALITE_PAR_PIECE_FOURNISSEUR_EN_ATTENTE));
     }
 }

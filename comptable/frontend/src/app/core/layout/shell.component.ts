@@ -1,8 +1,10 @@
 import { Component, OnDestroy, OnInit, inject, signal } from '@angular/core';
 import { Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
-import { Subscription, interval, startWith, switchMap } from 'rxjs';
+import { Subscription, catchError, interval, of, startWith, switchMap } from 'rxjs';
 import { AuthService } from '../auth/auth.service';
 import { TokenStorageService } from '../auth/token-storage.service';
+import { BandeauConnexionComponent } from '../pwa/bandeau-connexion.component';
+import { HorsLigneService } from '../pwa/hors-ligne.service';
 import { NotificationService } from '../../features/notifications/notification.service';
 import { NotificationDto } from '../../features/notifications/models/notification.model';
 
@@ -11,7 +13,7 @@ const INTERVALLE_RAFRAICHISSEMENT_MS = 30_000;
 @Component({
   selector: 'app-shell',
   standalone: true,
-  imports: [RouterOutlet, RouterLink, RouterLinkActive],
+  imports: [RouterOutlet, RouterLink, RouterLinkActive, BandeauConnexionComponent],
   templateUrl: './shell.component.html',
   styleUrl: './shell.component.scss',
 })
@@ -20,6 +22,7 @@ export class ShellComponent implements OnInit, OnDestroy {
   private readonly tokenStorage = inject(TokenStorageService);
   private readonly notificationService = inject(NotificationService);
   private readonly router = inject(Router);
+  readonly horsLigne = inject(HorsLigneService);
 
   private abonnementCompteur?: Subscription;
 
@@ -35,7 +38,8 @@ export class ShellComponent implements OnInit, OnDestroy {
     this.abonnementCompteur = interval(INTERVALLE_RAFRAICHISSEMENT_MS)
       .pipe(
         startWith(0),
-        switchMap(() => this.notificationService.compterNonLues()),
+        // hors ligne ou serveur indisponible : on garde le dernier compteur connu et le sondage continue
+        switchMap(() => this.notificationService.compterNonLues().pipe(catchError(() => of({ nonLues: this.compteurNonLues() })))),
       )
       .subscribe((reponse) => this.compteurNonLues.set(reponse.nonLues));
   }

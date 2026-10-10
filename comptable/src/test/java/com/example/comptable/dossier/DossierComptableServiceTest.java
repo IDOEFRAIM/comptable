@@ -49,6 +49,8 @@ class DossierComptableServiceTest {
     private FactureRepository factureRepository;
     @Mock
     private DocumentRepository documentRepository;
+    @Mock
+    private com.example.comptable.comptabilite.repository.EcritureComptableRepository ecritureRepository;
 
     @Mock
     private com.example.comptable.comptabilite.allocation.StatutPaiementFactureService statutPaiementFactureService;
@@ -119,6 +121,7 @@ class DossierComptableServiceTest {
         DossierComptableDto dossier = dossierComptableService.generer(entrepriseId, principal);
 
         assertThat(dossier.entrepriseNom()).isEqualTo("ABC SARL");
+        assertThat(dossier.aucuneActivite()).as("aucune écriture, aucune pièce, aucun constat : rien à évaluer, jamais « prêt »").isTrue();
         assertThat(dossier.scoreGlobal()).isEqualTo(100);
         assertThat(dossier.statut()).isEqualTo("PRET");
         assertThat(dossier.scoresParDomaine()).hasSize(7);
@@ -163,5 +166,30 @@ class DossierComptableServiceTest {
                 .filteredOn(s -> s.domaine().equals("Clients"))
                 .extracting(com.example.comptable.dossier.web.dto.ScoreDomaineDto::score)
                 .containsExactly(76); // 100 - 3*8
+    }
+
+    @Test
+    void des_ecritures_enregistrees_sans_probleme_ne_sont_pas_une_absence_d_activite() {
+        when(findingRepository.findByEntrepriseIdAndStatusOrderBySeverityAscCreatedAtDesc(entrepriseId, StatutFinding.OPEN)).thenReturn(List.of());
+        when(statutPaiementFactureService.ouvertes(eq(entrepriseId), org.mockito.ArgumentMatchers.anyCollection())).thenReturn(facturesOuvertes(0));
+        when(ecritureRepository.countByEntrepriseId(entrepriseId)).thenReturn(42L);
+
+        DossierComptableDto dossier = dossierComptableService.generer(entrepriseId, principal);
+
+        assertThat(dossier.aucuneActivite()).isFalse();
+        assertThat(dossier.statut()).isEqualTo("PRET");
+    }
+
+    @Test
+    void chaque_domaine_expose_le_nombre_reel_d_elements_a_traiter() {
+        when(findingRepository.findByEntrepriseIdAndStatusOrderBySeverityAscCreatedAtDesc(entrepriseId, StatutFinding.OPEN)).thenReturn(List.of());
+        when(statutPaiementFactureService.ouvertes(eq(entrepriseId), org.mockito.ArgumentMatchers.anyCollection())).thenReturn(facturesOuvertes(3));
+        when(documentRepository.countByEntrepriseIdAndStatutAndTypeDocumentInAndEcritureIdIsNull(entrepriseId, StatutDocument.TRAITE, List.of(TypeDocument.FACTURE_ACHAT))).thenReturn(5L);
+
+        DossierComptableDto dossier = dossierComptableService.generer(entrepriseId, principal);
+
+        assertThat(dossier.scoresParDomaine()).filteredOn(s -> s.domaine().equals("Clients")).singleElement().satisfies(s -> assertThat(s.elementsOuverts()).isEqualTo(3));
+        assertThat(dossier.scoresParDomaine()).filteredOn(s -> s.domaine().equals("Fournisseurs")).singleElement().satisfies(s -> assertThat(s.elementsOuverts()).isEqualTo(5));
+        assertThat(dossier.scoresParDomaine()).filteredOn(s -> s.domaine().equals("Banque")).singleElement().satisfies(s -> assertThat(s.elementsOuverts()).isZero());
     }
 }

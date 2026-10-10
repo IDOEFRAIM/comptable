@@ -117,6 +117,7 @@ public class SecurityConfig {
                         .hasAnyRole("COLLABORATEUR", "EXPERT_COMPTABLE")
                         // Depot par lien : public, MAIS l'autorisation reelle est le jeton signe (verifie puis recharge la demande reelle).
                         .requestMatchers("/api/depot/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/config").permitAll()
                         .requestMatchers("/api/entreprises/*/documents-agent/**")
                         .hasAnyRole("COLLABORATEUR", "EXPERT_COMPTABLE")
                         .requestMatchers("/api/entreprises/*/ecritures", "/api/entreprises/*/ecritures/**")

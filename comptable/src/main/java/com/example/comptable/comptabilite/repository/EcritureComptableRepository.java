@@ -21,6 +21,8 @@ public interface EcritureComptableRepository extends JpaRepository<EcritureCompt
 
     long countByEntrepriseIdAndStatut(UUID entrepriseId, StatutEcriture statut);
 
+    long countByEntrepriseId(UUID entrepriseId);
+
     /** Ecritures BROUILLON anciennes (mission P0, ControlEngine) : jamais validees depuis
      * longtemps, signal qu'un comptable a probablement oublie de les revoir. */
     List<EcritureComptable> findByEntrepriseIdAndStatutAndDateEcritureBefore(

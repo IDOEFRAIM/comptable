@@ -7,17 +7,22 @@
   </div>
 
   <section class="carte carte-score">
-    <h3>Score fiscal</h3>
+    <h3>État de la conformité fiscale</h3>
     @if (erreurTaxHealth()) {
       <p class="message-erreur">{{ erreurTaxHealth() }}</p>
     } @else if (chargementTaxHealth()) {
       <p class="etat-vide">Chargement…</p>
     } @else {
       @if (taxHealth(); as t) {
-        <div class="jauge-score" [class.score-bon]="t.score >= 80" [class.score-moyen]="t.score >= 50 && t.score < 80" [class.score-mauvais]="t.score < 50">
-          <span class="valeur-score">{{ t.score }}</span>
-          <span class="libelle-score">/ 100</span>
-        </div>
+        @if (t.evalue) {
+          <p class="etat-conformite" data-champ="conformite-evaluee">
+            <strong>{{ t.anomaliesOuvertes }}</strong> anomalie{{ t.anomaliesOuvertes > 1 ? 's' : '' }} fiscale{{ t.anomaliesOuvertes > 1 ? 's' : '' }} ouverte{{ t.anomaliesOuvertes > 1 ? 's' : '' }}.
+          </p>
+        } @else {
+          <p class="etat-conformite non-evalue" data-champ="conformite-non-evaluee">
+            <strong>Non évalué.</strong> {{ t.motif }}
+          </p>
+        }
       }
     }
   </section>

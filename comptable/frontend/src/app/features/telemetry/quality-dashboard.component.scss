@@ -117,3 +117,14 @@ dd {
   font-size: 0.75rem;
   color: var(--text-placeholder);
 }
+
+.section-technique {
+  margin-top: 1.5rem;
+
+  summary {
+    cursor: pointer;
+    font-weight: 600;
+    color: var(--text-secondary);
+    padding: 0.5rem 0;
+  }
+}

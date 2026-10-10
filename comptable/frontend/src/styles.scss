@@ -4,14 +4,14 @@
 // style par composant. Les composants continuent de définir leur mise en page locale, mais
 // référencent ces variables pour la couleur/l'ombre/le rayon plutôt que des valeurs en dur.
 :root {
-  // Marque — bleu plus soutenu que le bleu générique d'origine (#2563eb), toujours dans la
-  // même famille pour rester familier/rassurant (secteur financier) sans avoir l'air d'un
-  // template par défaut.
-  --color-primary: #175cd3;
-  --color-primary-hover: #0e4fbd;
-  --color-primary-active: #0b3f99;
-  --color-primary-light: #eff4ff;
-  --color-primary-border: #b2ccf3;
+  // Marque Warimara — vert profond du logo (action principale), or et rouge en touches d'accent seulement.
+  --color-primary: #14662f;
+  --color-primary-hover: #0f5226;
+  --color-primary-active: #0b3f1d;
+  --color-primary-light: #ecf6ef;
+  --color-primary-border: #b9ddc5;
+  --color-accent-gold: #f2b705;       // jaune du canari : accents, puces, soulignements (jamais pour du texte sur fond blanc)
+  --color-accent-red: #d33a1f;        // rouge des motifs : accents rares
 
   // Neutres (échelle Untitled UI, déjà utilisée en dur ci-et-là — centralisée ici)
   --gray-25: #fcfcfd;

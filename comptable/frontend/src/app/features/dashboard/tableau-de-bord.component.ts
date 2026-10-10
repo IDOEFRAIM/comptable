@@ -46,6 +46,7 @@ export class TableauDeBordComponent implements OnInit {
   readonly libellesType = LIBELLES_TYPE_IMPOT;
   readonly libellesSeverite = LIBELLES_SEVERITE_FINDING;
   readonly libellesStatutDossier = LIBELLES_STATUT_DOSSIER;
+  readonly libellesDomaine: Record<string, string> = { Fiscalite: 'Fiscalité', Cloture: 'Clôture' };
   readonly libellesClotureReadiness = LIBELLES_CLOTURE_READINESS;
   readonly libellesStatutControle = LIBELLES_STATUT_CONTROLE;
 

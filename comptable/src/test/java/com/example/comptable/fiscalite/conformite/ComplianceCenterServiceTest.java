@@ -34,6 +34,8 @@ import java.util.Set;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -47,6 +49,8 @@ class ComplianceCenterServiceTest {
     private FindingRepository findingRepository;
     @Mock
     private DossierComptableService dossierComptableService;
+    @Mock
+    private com.example.comptable.fiscalite.core.TaxFrameworkService cadres;
 
     @InjectMocks
     private ComplianceCenterService complianceCenterService;
@@ -111,15 +115,51 @@ class ComplianceCenterServiceTest {
         assertThat(conformite.anomalies().get(0).title()).isEqualTo("Declaration TVA manquante");
     }
 
+    private Entreprise entrepriseDuBurkina() {
+        Entreprise e = new Entreprise();
+        e.setId(entrepriseId);
+        e.setPays("BF");
+        com.example.comptable.identite.domain.Tenant tenant = new com.example.comptable.identite.domain.Tenant();
+        tenant.setId(UUID.randomUUID());
+        e.setTenant(tenant);
+        org.mockito.Mockito.lenient().when(entrepriseAccessService.verifierAcces(entrepriseId, principal)).thenReturn(e);
+        return e;
+    }
+
     @Test
-    void tax_health_reutilise_le_score_du_domaine_fiscalite_du_dossier() {
-        DossierComptableDto dossier = new DossierComptableDto("SARL Test", 88, "A_SURVEILLER",
-                List.of(new ScoreDomaineDto("Banque", 100), new ScoreDomaineDto("Fiscalite", 75)),
-                List.of(), List.of());
-        when(dossierComptableService.generer(entrepriseId, principal)).thenReturn(dossier);
+    void sans_cadre_fiscal_verifie_la_conformite_est_non_evaluee_jamais_un_score_parfait() {
+        entrepriseDuBurkina();
+        when(cadres.resoudre(any(), eq("BF"), eq(com.example.comptable.fiscalite.core.TaxFrameworkService.TVA), any())).thenReturn(java.util.Optional.empty());
 
-        TaxHealthDto taxHealth = complianceCenterService.genererTaxHealth(entrepriseId, principal);
+        TaxHealthDto sante = complianceCenterService.genererTaxHealth(entrepriseId, principal);
 
-        assertThat(taxHealth.score()).isEqualTo(75);
+        assertThat(sante.evalue()).isFalse();
+        assertThat(sante.motif()).contains("Non évalué").contains("cadre fiscal vérifié");
+    }
+
+    @Test
+    void cadre_fiscal_non_verifie_est_aussi_non_evalue() {
+        entrepriseDuBurkina();
+        when(cadres.resoudre(any(), eq("BF"), eq(com.example.comptable.fiscalite.core.TaxFrameworkService.TVA), any()))
+                .thenReturn(java.util.Optional.of(new com.example.comptable.fiscalite.core.TaxFrameworkService.Resolution(null, false)));
+
+        assertThat(complianceCenterService.genererTaxHealth(entrepriseId, principal).evalue()).isFalse();
+    }
+
+    @Test
+    void avec_un_cadre_verifie_le_nombre_reel_d_anomalies_fiscales_ouvertes_est_donne() {
+        entrepriseDuBurkina();
+        when(cadres.resoudre(any(), eq("BF"), eq(com.example.comptable.fiscalite.core.TaxFrameworkService.TVA), any()))
+                .thenReturn(java.util.Optional.of(new com.example.comptable.fiscalite.core.TaxFrameworkService.Resolution(null, true)));
+        Finding anomalie = new Finding();
+        anomalie.setType(TypeFinding.TAX_REVIEW);
+        Finding autre = new Finding();
+        autre.setType(TypeFinding.DOCUMENT_REVIEW);
+        when(findingRepository.findByEntrepriseIdAndStatusOrderBySeverityAscCreatedAtDesc(entrepriseId, StatutFinding.OPEN)).thenReturn(List.of(anomalie, autre));
+
+        TaxHealthDto sante = complianceCenterService.genererTaxHealth(entrepriseId, principal);
+
+        assertThat(sante.evalue()).isTrue();
+        assertThat(sante.anomaliesOuvertes()).isEqualTo(1);
     }
 }

@@ -94,7 +94,7 @@
                   Marquer payée
                 </button>
               }
-              @if (d.statut !== 'PAYEE') {
+              @if (d.statut !== 'PAYEE' && config.paiementEnLigneDisponible()) {
                 <button type="button" class="bouton-lien" [disabled]="actionEnCours() === d.id" (click)="ouvrirPaiement(d)">
                   Payer en ligne
                 </button>
@@ -138,7 +138,7 @@
                 @if (paiement.messageStatut) {
                   <span class="message-paiement">({{ paiement.messageStatut }})</span>
                 }
-                @if (paiement.statut === 'EN_ATTENTE_CONFIRMATION') {
+                @if (paiement.statut === 'EN_ATTENTE_CONFIRMATION' && config.outilsDeTestVisibles()) {
                   <button type="button" class="bouton-lien" [disabled]="actionEnCours() === d.id" (click)="simulerConfirmation(d, true)">
                     Simuler confirmation
                   </button>

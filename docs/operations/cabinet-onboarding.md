@@ -26,9 +26,11 @@ make provision CABINET="<Nom du cabinet>" EMAIL=<expert@cabinet> NOM=<Nom> PRENO
 - [ ] Rôles de l'équipe : *expert-comptable* (administration, revue, clôture, support) et *collaborateur* (saisie, pièces, banque, contrôles).  Un collaborateur ne voit que les dossiers qui lui sont affectés ; un membre d'un autre cabinet ne voit rien (réponse « introuvable »).
 - [ ] Au moins **deux experts** actifs pour éviter le blocage (le dernier expert actif ne peut pas être désactivé).
 
-## D. Première entreprise (E) — assistant « Onboarding entreprise »
+## D. Première entreprise (E)
 
-1. **Identité** : raison sociale, pays, devise, régime fiscal, secteur.
+> **Limite connue (audit de valeur métier, 2026-10-09)** : l'assistant d'accueil « Bienvenue » (devise, régime fiscal, secteur, puis une étape WhatsApp) n'est atteint qu'après l'inscription publique, qui est **fermée** en mode provisioning : il est donc inaccessible. Une entreprise se crée avec le bouton **« + Nouvelle entreprise »**, qui ne demande que la **raison sociale et le pays** ; la devise et le régime fiscal ne sont pas saisis à cette étape. Voir `docs/audit-valeur-metier.md` §5.5.
+
+1. **Identité** : raison sociale et pays (formulaire « + Nouvelle entreprise »).
    - Pays **Burkina Faso** : le régime fiscal est enregistré, mais **aucun cadre fiscal burkinabè n'est activé** ; l'écran TVA indique « Cadre réglementaire : non vérifié » et la finalisation reste impossible.
 2. **Plan comptable** : le plan comptable de référence est cloné pour l'entreprise à la création, avec les journaux standards et l'exercice de l'année en cours. Vérifier l'exercice (dates) dans « Exercices » ; ajuster si l'exercice n'est pas calendaire.
 3. **Paramètres comptables** (écran « Paramètres comptables ») : vérifier les comptes de TVA collectée / récupérable, banque, caisse. Par défaut des comptes système sont utilisés ; un compte non configuré provoque un message explicite à la comptabilisation (jamais d'écriture silencieuse sur un mauvais compte).

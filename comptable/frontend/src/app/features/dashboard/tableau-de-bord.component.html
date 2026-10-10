@@ -12,213 +12,24 @@
       <div class="entete-dossier">
         <div>
           <h3>{{ d.entrepriseNom }}</h3>
-          <span class="statut-dossier" [class]="'statut-' + d.statut">{{ libellesStatutDossier[d.statut] }}</span>
-        </div>
-        <div class="score-global">
-          <span class="valeur">{{ d.scoreGlobal }}%</span>
-          <span class="libelle">Score global</span>
-        </div>
-      </div>
-      <div class="grille-scores-domaines">
-        @for (s of d.scoresParDomaine; track s.domaine) {
-          <div class="score-domaine" [class.faible]="s.score < 70" [class.moyen]="s.score >= 70 && s.score < 95">
-            <span class="valeur">{{ s.score }}%</span>
-            <span class="libelle">{{ s.domaine }}</span>
-          </div>
-        }
-      </div>
-    </div>
-  }
-
-  @if (chargement()) {
-    <p class="etat-vide">Chargement…</p>
-  } @else {
-    @if (tableau(); as t) {
-      <div class="grille-compteurs">
-        <a routerLink="../documents" class="carte-compteur" [class.attention]="t.documentsATraiter > 0">
-          <span class="valeur">{{ t.documentsATraiter }}</span>
-          <span class="libelle">Document{{ t.documentsATraiter > 1 ? 's' : '' }} à comptabiliser</span>
-        </a>
-        <a routerLink="../documents" class="carte-compteur" [class.danger]="t.documentsEnErreur > 0">
-          <span class="valeur">{{ t.documentsEnErreur }}</span>
-          <span class="libelle">Document{{ t.documentsEnErreur > 1 ? 's' : '' }} en erreur d'extraction</span>
-        </a>
-        <a routerLink="../ecritures" class="carte-compteur" [class.attention]="t.ecrituresBrouillon > 0">
-          <span class="valeur">{{ t.ecrituresBrouillon }}</span>
-          <span class="libelle">Écriture{{ t.ecrituresBrouillon > 1 ? 's' : '' }} en brouillon à valider</span>
-        </a>
-        <div class="carte-compteur" [class.danger]="t.soldeTresorerie.credit > 0">
-          <span class="valeur">{{ t.soldeTresorerie.debit || -t.soldeTresorerie.credit }}</span>
-          <span class="libelle">Solde de trésorerie (classe 5)</span>
-        </div>
-      </div>
-    }
-  }
-
-  <div class="grille-dashboard">
-    <div class="colonne-principale">
-      @if (clotureReadiness(); as c) {
-        <div class="carte carte-cloture" [class]="'cloture-' + c.statut">
-          <h3>Clôture — {{ libellesClotureReadiness[c.statut] }}</h3>
-          @if (c.resume) {
-            <p class="resume-cloture">
-              <strong>{{ c.resume.bloquants }}</strong> bloquant(s) · <strong>{{ c.resume.avertissements }}</strong> avertissement(s) ·
-              <strong>{{ c.resume.enOrdre }}</strong> point(s) en ordre
-            </p>
+          @if (!d.aucuneActivite) {
+            <span class="statut-dossier" [class]="'statut-' + d.statut">{{ libellesStatutDossier[d.statut] }}</span>
           }
-          <ul class="checklist-cloture">
-            @for (item of c.checklist; track item.code) {
-              @if (item.statut === 'BLOCKING' || item.statut === 'WARNING') {
-                <li [class]="'controle-' + item.statut">
-                  <span class="point-statut" [class.danger]="item.statut === 'BLOCKING'" [class.attention]="item.statut === 'WARNING'"></span>
-                  <span class="controle-libelle">{{ item.libelle }}</span>
-                  @if (item.message) {
-                    <span class="controle-message">{{ item.message }}</span>
-                  }
-                </li>
-              }
-            }
-          </ul>
-          <details class="autres-points">
-            <summary>Voir les autres points de contrôle</summary>
-            <ul class="checklist-cloture">
-              @for (item of c.checklist; track item.code) {
-                @if (item.statut === 'OK' || item.statut === 'NOT_APPLICABLE') {
-                  <li [class]="'controle-' + item.statut">
-                    <span class="point-statut" [class.succes]="item.statut === 'OK'" [class.neutre]="item.statut === 'NOT_APPLICABLE'"></span>
-                    <span class="controle-libelle">{{ item.libelle }}</span>
-                    <span class="controle-message">{{ item.statut === 'OK' ? (item.message ?? 'Conforme') : 'Sans objet pour ce dossier' }}</span>
-                  </li>
-                }
-              }
-            </ul>
-          </details>
         </div>
-      }
-
-      <div class="carte carte-findings">
-        <h3>Actions prioritaires ({{ findings().length }})</h3>
-        @if (findings().length === 0) {
-          <p class="etat-vide">Rien à traiter pour le moment.</p>
-        } @else {
-          <ul class="liste-findings">
-            @for (f of findings(); track f.id) {
-              <li class="ligne-finding" [class]="'severite-' + f.severity">
-                <div class="entete-finding">
-                  <span class="badge-severite">{{ libellesSeverite[f.severity] }}</span>
-                  <span class="titre-finding">{{ f.title }}</span>
-                </div>
-                @if (f.description) {
-                  <p class="description-finding">{{ f.description }}</p>
-                }
-                @if (f.recommendedAction) {
-                  <p class="action-recommandee"><strong>Action recommandée :</strong> {{ f.recommendedAction }}</p>
-                }
-                <div class="actions-finding">
-                  <button type="button" class="bouton-lien" (click)="resoudre(f.id)">Résoudre</button>
-                  <button type="button" class="bouton-lien bouton-discret" (click)="rejeter(f.id)">Rejeter</button>
-                  <button type="button" class="bouton-lien bouton-discret" (click)="basculerDetails(f)">
-                    {{ detailsOuverts().has(f.id) ? 'Masquer détails' : 'Voir détails' }}
-                  </button>
-                  <label class="selecteur-assignation">
-                    Assigner à
-                    <select [ngModel]="f.assignedToId ?? ''" (ngModelChange)="assigner(f.id, $event)">
-                      <option value="">Non assigné</option>
-                      @for (c of collaborateurs(); track c.id) {
-                        <option [value]="c.id">{{ c.nomComplet }}</option>
-                      }
-                    </select>
-                  </label>
-                </div>
-                @if (detailsOuverts().has(f.id)) {
-                  @if (evidenceEntries(f).length > 0) {
-                    <ul class="preuve-finding">
-                      @for (entry of evidenceEntries(f); track entry[0]) {
-                        <li><strong>{{ entry[0] }} :</strong> {{ entry[1] }}</li>
-                      }
-                    </ul>
-                  }
-                  @if (f.sourceType === 'DOCUMENT') {
-                    @if (propositionPour(f); as proposition) {
-                      @if (proposition.status === 'PROPOSED') {
-                        <div class="carte-proposition">
-                          <p class="titre-proposition">
-                            Suggestion d'imputation
-                            <span class="confiance-proposition">({{ (proposition.confidence * 100).toFixed(0) }}% confiance)</span>
-                          </p>
-                          <ul class="detail-proposition">
-                            @if (proposition.tiersNom) {
-                              <li><strong>Tiers :</strong> {{ proposition.tiersNom }}</li>
-                            }
-                            @if (proposition.compteChargeProduitNumero) {
-                              <li><strong>Compte :</strong> {{ proposition.compteChargeProduitNumero }}</li>
-                            }
-                            @if (proposition.montantTtc !== null) {
-                              <li><strong>Montant TTC :</strong> {{ proposition.montantTtc | number: '1.0-2' }}</li>
-                            }
-                          </ul>
-                          <div class="actions-proposition">
-                            <button type="button" class="bouton-lien" (click)="accepterSuggestion(f, proposition.id)">
-                              Accepter
-                            </button>
-                            <button
-                              type="button"
-                              class="bouton-lien bouton-discret"
-                              (click)="rejeterSuggestion(f, proposition.id)"
-                            >
-                              Rejeter
-                            </button>
-                          </div>
-                        </div>
-                      } @else {
-                        <p class="statut-proposition">Proposition {{ proposition.status === 'ACCEPTED' ? 'acceptée' : 'rejetée' }}.</p>
-                      }
-                    }
-                  }
-                }
-              </li>
-            }
-          </ul>
-        }
       </div>
-    </div>
-
-    <div class="colonne-secondaire">
-      <app-copilot-widget portee="entreprise" [entrepriseId]="entrepriseId()" />
-
-      @if (tableau(); as t) {
-        @if (t.echeancesEnRetard.length > 0) {
-          <div class="carte section-echeances section-retard">
-            <h3>Échéances en retard</h3>
-            <ul>
-              @for (d of t.echeancesEnRetard; track d.id) {
-                <li>
-                  <a routerLink="../fiscalite">
-                    <strong>{{ libellesType[d.typeImpot] }}</strong> — {{ d.periode }} (échéance {{ d.dateEcheance }})
-                  </a>
-                </li>
-              }
-            </ul>
-          </div>
-        }
-
-        <div class="carte section-echeances">
-          <h3>Prochaines échéances fiscales (30 jours)</h3>
-          @if (t.prochainesEcheances.length === 0) {
-            <p class="etat-vide">Aucune échéance dans les 30 prochains jours.</p>
-          } @else {
-            <ul>
-              @for (d of t.prochainesEcheances; track d.id) {
-                <li>
-                  <a routerLink="../fiscalite">
-                    <strong>{{ libellesType[d.typeImpot] }}</strong> — {{ d.periode }} (échéance {{ d.dateEcheance }})
-                  </a>
-                </li>
-              }
-            </ul>
+      @if (d.aucuneActivite) {
+        <p class="aucune-activite" data-champ="aucune-activite">
+          Aucune activité enregistrée : ce dossier ne contient encore ni écriture, ni pièce, ni constat. Il n'y a rien à évaluer pour le moment.
+        </p>
+      } @else {
+        <div class="grille-scores-domaines">
+          @for (s of d.scoresParDomaine; track s.domaine) {
+            <div class="score-domaine" [class.moyen]="s.elementsOuverts > 0" [attr.data-domaine]="s.domaine">
+              <span class="valeur">{{ s.elementsOuverts > 0 ? s.elementsOuverts + ' à traiter' : 'Aucun constat' }}</span>
+              <span class="libelle">{{ libellesDomaine[s.domaine] ?? s.domaine }}</span>
+            </div>
           }
         </div>
       }
     </div>
-  </div>
-</div>
+  }

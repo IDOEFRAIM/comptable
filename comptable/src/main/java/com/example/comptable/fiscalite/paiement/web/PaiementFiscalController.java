@@ -25,6 +25,7 @@ import java.util.UUID;
 public class PaiementFiscalController {
 
     private final PaiementFiscalService paiementFiscalService;
+    private final com.example.comptable.fiscalite.paiement.PaiementEnLigneGarde garde;
 
     @GetMapping
     public List<PaiementFiscalDto> lister(@PathVariable UUID entrepriseId, @PathVariable UUID declarationId,
@@ -36,6 +37,7 @@ public class PaiementFiscalController {
     public ResponseEntity<PaiementFiscalDto> initier(@PathVariable UUID entrepriseId, @PathVariable UUID declarationId,
                                                        @Valid @RequestBody InitierPaiementRequest request,
                                                        @AuthenticationPrincipal UtilisateurPrincipal principal) {
+        garde.exigerInitiationPossible();
         PaiementFiscalDto paiement = paiementFiscalService.initierPaiement(entrepriseId, declarationId, request, principal);
         return ResponseEntity.status(HttpStatus.CREATED).body(paiement);
     }
@@ -50,6 +52,7 @@ public class PaiementFiscalController {
                                                   @PathVariable UUID paiementId,
                                                   @RequestBody(required = false) SimulerConfirmationRequest request,
                                                   @AuthenticationPrincipal UtilisateurPrincipal principal) {
+        garde.exigerHorsProduction();
         boolean reussite = request == null || request.reussite();
         return paiementFiscalService.confirmerParId(entrepriseId, declarationId, paiementId, reussite, principal);
     }

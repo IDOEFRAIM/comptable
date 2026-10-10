@@ -1,4 +1,5 @@
 import { Component, inject, signal } from '@angular/core';
+import { ConfigPubliqueService } from '../../core/config/config-publique.service';
 import { TokenStorageService } from '../../core/auth/token-storage.service';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
@@ -14,6 +15,7 @@ import { messageErreurChamp } from '../../core/forms/messages-validation';
   styleUrl: './login.component.scss',
 })
 export class LoginComponent {
+  readonly config = inject(ConfigPubliqueService);
   private readonly fb = inject(FormBuilder);
   private readonly authService = inject(AuthService);
   private readonly router = inject(Router);

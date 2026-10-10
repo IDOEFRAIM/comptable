@@ -54,6 +54,10 @@
       selon l'ancienneté). Aucune prédiction statistique n'est affichée faute d'historique de paiement
       suffisant.
     </p>
+    <p class="avertissement-prevision" role="note" data-champ="avertissement-prevision">
+      <strong>Attention : cette prévision est incomplète.</strong> Elle ne tient compte ni des paiements aux fournisseurs, ni des salaires, ni des autres charges courantes : seuls les encaissements des clients et les impôts à
+      payer sont connus. Le « solde prévisionnel » est donc un <strong>plafond optimiste</strong>, pas une prévision de trésorerie.
+    </p>
     @if (erreurPrevision()) {
       <p class="message-erreur">{{ erreurPrevision() }}</p>
     } @else if (chargementPrevision()) {
@@ -72,9 +76,9 @@
               <dd class="montant-positif">+{{ horizon.encaissementsConnus | number: '1.0-0' }} FCFA</dd>
               <dt>Encaissements attendus</dt>
               <dd class="montant-attendu">+{{ horizon.encaissementsAttendus | number: '1.0-0' }} FCFA</dd>
-              <dt>Décaissements connus</dt>
+              <dt>Impôts à payer (seuls décaissements connus)</dt>
               <dd class="montant-negatif">-{{ horizon.decaissementsConnus | number: '1.0-0' }} FCFA</dd>
-              <dt>Solde prévisionnel</dt>
+              <dt>Solde prévisionnel (hors fournisseurs et charges)</dt>
               <dd class="solde-previsionnel">{{ horizon.soldePrevisionnel | number: '1.0-0' }} FCFA</dd>
             </dl>
           </div>
@@ -84,7 +88,11 @@
   </section>
 
   <section class="carte carte-snapshot">
-    <h3>Snapshot financier</h3>
+    <h3>Chiffres de la période (indicatifs)</h3>
+    <p class="note-methode" data-champ="note-chiffres-periode">
+      Calcul simplifié sur les comptes de classe 7 (produits) et de classe 6 (charges), sans les opérations hors activité ordinaire ni l'impôt sur le résultat. <strong>Ce n'est pas le résultat comptable :</strong> le compte de
+      résultat officiel (SYSCOHADA) se trouve dans <a [routerLink]="['../etats-financiers']">États financiers</a>.
+    </p>
     <div class="barre-periode">
       <label>
         Du
@@ -121,15 +129,15 @@
           </div>
           <div>
             <span class="valeur">{{ s.revenue | number: '1.0-0' }}</span>
-            <span class="libelle">Chiffre d'affaires</span>
+            <span class="libelle">Produits (classe 7)</span>
           </div>
           <div>
             <span class="valeur">{{ s.expenses | number: '1.0-0' }}</span>
-            <span class="libelle">Charges</span>
+            <span class="libelle">Charges (classe 6)</span>
           </div>
           <div>
             <span class="valeur">{{ s.profit | number: '1.0-0' }}</span>
-            <span class="libelle">Résultat</span>
+            <span class="libelle">Produits − charges (indicatif)</span>
           </div>
           <div>
             <span class="valeur">{{ s.taxes | number: '1.0-0' }}</span>

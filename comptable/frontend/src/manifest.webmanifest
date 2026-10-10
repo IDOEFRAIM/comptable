@@ -1,0 +1,20 @@
+{
+  "name": "Warimara — Comptez mieux. Gérez mieux. Décidez mieux.",
+  "short_name": "Warimara",
+  "description": "Warimara : comptabilité, pièces, banque et pilotage pour cabinets comptables et entreprises.",
+  "id": "/",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "any",
+  "lang": "fr",
+  "dir": "ltr",
+  "background_color": "#ffffff",
+  "theme_color": "#14662f",
+  "categories": ["business", "finance", "productivity"],
+  "icons": [
+    { "src": "assets/icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "assets/icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "assets/icons/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}

@@ -21,6 +21,8 @@ export interface TableauDeBordDto {
 export interface ScoreDomaineDto {
   domaine: string;
   score: number;
+  /** Nombre réel d'éléments à traiter dans ce domaine (le score, à barème fixe, n'est plus affiché). */
+  elementsOuverts: number;
 }
 
 export type SeveriteFinding = 'CRITICAL' | 'IMPORTANT' | 'REVIEW';
@@ -57,10 +59,12 @@ export interface DossierComptableDto {
   scoresParDomaine: ScoreDomaineDto[];
   actionsPrioritaires: FindingDto[];
   blockingItems: FindingDto[];
+  /** Aucune écriture, aucune pièce, aucun constat : rien à évaluer (jamais « prêt »). */
+  aucuneActivite: boolean;
 }
 
 export const LIBELLES_STATUT_DOSSIER: Record<string, string> = {
-  PRET: 'Prêt',
+  PRET: 'Aucun point bloquant',
   A_SURVEILLER: 'À surveiller',
   BLOQUE: 'Bloqué',
 };

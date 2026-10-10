@@ -302,6 +302,14 @@ class PilotHardeningTest extends CollecteTestBase {
     }
 
     @Test
+    void configurationPublique_accessibleSansConnexion_etNeContientQueDesIndicateursSansSecret() throws Exception {
+        MockHttpServletResponse r = appeler(get("/api/config"));
+        assertThat(r.getStatus()).isEqualTo(200);
+        assertThat(r.getContentAsString()).contains("inscriptionOuverte").contains("production").contains("paiementEnLigneIndisponible");
+        assertThat(r.getContentAsString().toLowerCase()).doesNotContain("secret").doesNotContain("token").doesNotContain("password");
+    }
+
+    @Test
     void sessionAbsenteOuInvalide_repond401_pourQueLInterfaceRevienneALaConnexion() throws Exception {
         for (String entete : new String[] {null, "Bearer abc.def.ghi", "Bearer "}) {
             var requete = get("/api/entreprises");

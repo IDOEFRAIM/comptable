@@ -1,4 +1,5 @@
 import { Component, inject, OnInit, signal } from '@angular/core';
+import { ConfigPubliqueService } from '../../core/config/config-publique.service';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { FormBuilder, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, RouterLink } from '@angular/router';
@@ -23,6 +24,7 @@ import {
   styleUrl: './declaration-list.component.scss',
 })
 export class DeclarationListComponent implements OnInit {
+  readonly config = inject(ConfigPubliqueService);
   private readonly fb = inject(FormBuilder);
   private readonly fiscaliteService = inject(FiscaliteService);
   private readonly route = inject(ActivatedRoute);

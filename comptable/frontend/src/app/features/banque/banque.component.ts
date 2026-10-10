@@ -444,7 +444,7 @@ type Onglet = 'TRANSACTIONS' | 'REGLEMENTS' | 'IMPORTS';
       .filtres-haut label, .ligne-champs label, .panneau-motif label { display: flex; flex-direction: column; gap: 0.2rem; font-size: 0.85rem; color: #5b6475; }
       .onglets { display: flex; gap: 0.5rem; align-items: center; border-bottom: 1px solid #d6dbe4; padding-bottom: 0.5rem; flex-wrap: wrap; }
       .onglets button[role=tab] { background: none; border: 0; padding: 0.4rem 0.8rem; cursor: pointer; font: inherit; border-bottom: 2px solid transparent; }
-      .onglets button.actif { border-bottom-color: #2f5be7; font-weight: 600; }
+      .onglets button.actif { border-bottom-color: var(--color-primary, #14662f); font-weight: 600; }
       .onglets .petit { margin-left: auto; }
       .pastille { background: #b42318; color: #fff; border-radius: 999px; padding: 0 0.45rem; font-size: 0.75rem; }
       .tuiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 0.6rem; }
@@ -452,7 +452,7 @@ type Onglet = 'TRANSACTIONS' | 'REGLEMENTS' | 'IMPORTS';
       button.tuile { cursor: pointer; }
       .tuile strong { font-size: 1.4rem; }
       .tuile span { font-size: 0.8rem; color: #5b6475; }
-      .tuile.active { border-color: #2f5be7; box-shadow: 0 0 0 1px #2f5be7; }
+      .tuile.active { border-color: var(--color-primary, #14662f); box-shadow: 0 0 0 1px var(--color-primary, #14662f); }
       .tuile-alerte strong { color: #b42318; }
       .barre-liste { display: flex; gap: 0.6rem; align-items: center; flex-wrap: wrap; }
       .barre-liste input[type=search] { flex: 1; min-width: 14rem; padding: 0.4rem 0.6rem; }
@@ -475,7 +475,7 @@ type Onglet = 'TRANSACTIONS' | 'REGLEMENTS' | 'IMPORTS';
       .ligne-champs { display: flex; flex-wrap: wrap; gap: 1rem; }
       .chiffres { display: flex; flex-wrap: wrap; gap: 1.2rem; list-style: none; padding: 0; }
       .chiffres .alerte { color: #b42318; }
-      .apercu { margin-top: 1rem; padding-top: 0.8rem; border-top: 2px solid #2f5be7; }
+      .apercu { margin-top: 1rem; padding-top: 0.8rem; border-top: 2px solid var(--color-primary, #14662f); }
       .rejet { color: #b42318; font-size: 0.85rem; margin: 0.1rem 0; }
       .ok { color: #067647; }
       .ligne-lot { display: flex; flex-wrap: wrap; gap: 0.7rem; align-items: center; padding: 0.3rem 0; }
@@ -484,7 +484,7 @@ type Onglet = 'TRANSACTIONS' | 'REGLEMENTS' | 'IMPORTS';
       .meta { color: #5b6475; font-size: 0.82rem; }
       .mesures { margin-top: 0.5rem; }
       .pagination { display: flex; gap: 1rem; align-items: center; justify-content: center; }
-      .message-info { background: #e8f1ff; padding: 0.5rem 0.8rem; border-radius: 6px; }
+      .message-info { background: var(--color-primary-light, #ecf6ef); padding: 0.5rem 0.8rem; border-radius: 6px; }
       .message-erreur { color: #b42318; }
     `,
   ],

@@ -34,6 +34,7 @@ public class ComplianceCenterService {
     private final DeclarationFiscaleRepository declarationFiscaleRepository;
     private final FindingRepository findingRepository;
     private final DossierComptableService dossierComptableService;
+    private final com.example.comptable.fiscalite.core.TaxFrameworkService cadres;
 
     @Transactional(readOnly = true)
     public ComplianceCenterDto genererCentreConformite(UUID entrepriseId, UtilisateurPrincipal principal) {
@@ -55,12 +56,14 @@ public class ComplianceCenterService {
 
     @Transactional(readOnly = true)
     public TaxHealthDto genererTaxHealth(UUID entrepriseId, UtilisateurPrincipal principal) {
-        DossierComptableDto dossier = dossierComptableService.generer(entrepriseId, principal);
-        int score = dossier.scoresParDomaine().stream()
-                .filter(s -> "Fiscalite".equals(s.domaine()))
-                .findFirst()
-                .map(ScoreDomaineDto::score)
-                .orElse(100);
-        return new TaxHealthDto(score);
+        var entreprise = entrepriseAccessService.verifierAcces(entrepriseId, principal);
+        boolean cadreVerifie = cadres.resoudre(entreprise.getTenant().getId(), entreprise.getPays(), com.example.comptable.fiscalite.core.TaxFrameworkService.TVA, java.time.LocalDate.now())
+                .filter(com.example.comptable.fiscalite.core.TaxFrameworkService.Resolution::verifie).isPresent();
+        if (!cadreVerifie) {
+            return new TaxHealthDto(false, "Non évalué : aucun cadre fiscal vérifié ne s'applique à ce pays. La conformité fiscale ne peut pas être jugée par l'application.", 0);
+        }
+        int anomalies = (int) findingRepository.findByEntrepriseIdAndStatusOrderBySeverityAscCreatedAtDesc(entrepriseId, StatutFinding.OPEN).stream()
+                .filter(f -> f.getType() == TypeFinding.TAX_REVIEW).count();
+        return new TaxHealthDto(true, null, anomalies);
     }
 }

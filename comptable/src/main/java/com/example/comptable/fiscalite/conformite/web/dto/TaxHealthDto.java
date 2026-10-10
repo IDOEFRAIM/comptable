@@ -1,7 +1,8 @@
 package com.example.comptable.fiscalite.conformite.web.dto;
 
-/** Mission P1 (section 33) : "Tax Health" - simple presentation du score du domaine Fiscalite
- * deja calcule par {@code DossierComptableService} (mission P0). Pas un second algorithme de
- * score : meme penalites, meme source de Finding. */
-public record TaxHealthDto(int score) {
+/**
+ * État de la conformité fiscale. {@code evalue = false} tant qu'aucun cadre fiscal TVA VÉRIFIÉ ne s'applique à l'entreprise (cas du Burkina Faso aujourd'hui) : le produit ne peut alors pas juger la conformité et
+ * ne l'affiche pas comme bonne. Sinon, {@code anomaliesOuvertes} est le nombre réel de constats fiscaux ouverts (jamais un score à barème fixe).
+ */
+public record TaxHealthDto(boolean evalue, String motif, int anomaliesOuvertes) {
 }

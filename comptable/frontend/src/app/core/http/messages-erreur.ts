@@ -4,7 +4,9 @@ import { HttpErrorResponse } from '@angular/common/http';
 export function messageParDefaut(statut: number): string {
   switch (statut) {
     case 0:
-      return 'Le serveur est injoignable. Vérifiez votre connexion puis réessayez.';
+      return typeof navigator !== 'undefined' && navigator.onLine === false
+        ? 'Vous êtes hors ligne et cette page n’a pas encore été consultée sur cet appareil : reconnectez-vous à Internet pour la charger.'
+        : 'Le serveur est injoignable. Vérifiez votre connexion puis réessayez.';
     case 400:
       return 'La demande est invalide. Vérifiez les informations saisies.';
     case 401:

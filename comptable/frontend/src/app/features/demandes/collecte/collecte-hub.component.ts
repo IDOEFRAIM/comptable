@@ -211,18 +211,18 @@ type Filtre = 'TOUTES' | 'A_ENVOYER' | 'EN_ATTENTE' | 'A_RELANCER' | 'ECHEC_ENVO
       button.tuile { cursor: pointer; }
       .tuile strong { font-size: 1.4rem; }
       .tuile span { font-size: 0.8rem; color: #5b6475; }
-      .tuile.active { border-color: #2f5be7; box-shadow: 0 0 0 1px #2f5be7; }
+      .tuile.active { border-color: var(--color-primary, #14662f); box-shadow: 0 0 0 1px var(--color-primary, #14662f); }
       .tuile-alerte strong { color: #b42318; }
       .ligne-element, .ligne { display: flex; flex-wrap: wrap; align-items: center; gap: 0.6rem; padding: 0.45rem 0; border-bottom: 1px solid #eef0f4; }
       .ligne-element.deja { opacity: 0.55; }
       .tiers { font-weight: 600; min-width: 9rem; }
       .meta { color: #5b6475; font-size: 0.82rem; }
       .actions { display: flex; flex-wrap: wrap; gap: 0.6rem; margin-top: 0.4rem; align-items: center; }
-      .apercu { margin-top: 1rem; padding-top: 0.8rem; border-top: 2px solid #2f5be7; }
+      .apercu { margin-top: 1rem; padding-top: 0.8rem; border-top: 2px solid var(--color-primary, #14662f); }
       .message-apercu pre { white-space: pre-wrap; background: #f6f8fb; padding: 0.6rem; border-radius: 6px; font-family: inherit; margin: 0.3rem 0 0.6rem; }
       .demande { padding: 0.6rem 0; border-bottom: 1px solid #eef0f4; }
       .historique { margin: 0.4rem 0 0; padding-left: 1.2rem; font-size: 0.82rem; color: #5b6475; }
-      .message-info { background: #e8f1ff; padding: 0.5rem 0.8rem; border-radius: 6px; }
+      .message-info { background: var(--color-primary-light, #ecf6ef); padding: 0.5rem 0.8rem; border-radius: 6px; }
       .message-erreur { color: #b42318; }
       .case-immediat { display: flex; align-items: center; gap: 0.4rem; margin: 0.6rem 0; }
       select { padding: 0.3rem 0.5rem; }

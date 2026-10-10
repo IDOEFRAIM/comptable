@@ -5,10 +5,8 @@ import { TelemetryService } from './telemetry.service';
 import { ProductKpiDto } from './models/telemetry.model';
 
 /**
- * "Quality Dashboard" (mission P1.9, section 24) : repond aux 4 questions du chantier avec des
- * donnees reelles - destine au produit/cabinet, pas au client final (section 24). Chaque KPI
- * affiche son echantillon (N) a cote du pourcentage, jamais un chiffre nu sur un petit
- * echantillon (voir docs/P1_9_AUDIT.md section H).
+ * « Suivi du cabinet » : ce que le cabinet pilote (travail en cours, délai de réponse des clients, délai de traitement des constats), puis, repliée, la qualité de l'assistant automatique (suivi technique).
+ * Audit de valeur métier (docs/audit-valeur-metier.md) : retirés de l'écran la latence, le P90, le « fallback » et les libellés anglais ; un pourcentage n'est affiché qu'à partir de 10 cas.
  */
 @Component({
   selector: 'app-quality-dashboard',
@@ -20,9 +18,17 @@ import { ProductKpiDto } from './models/telemetry.model';
 export class QualityDashboardComponent implements OnInit {
   private readonly telemetryService = inject(TelemetryService);
 
+  /** En dessous, un pourcentage n'est pas significatif : seuls les nombres réels sont affichés. */
+  readonly echantillonMin = 10;
+
   readonly kpi = signal<ProductKpiDto | null>(null);
   readonly chargement = signal(false);
   readonly erreur = signal<string | null>(null);
+
+  /** Pourcentage affiché seulement si l'échantillon atteint {@link echantillonMin} ; sinon « — » (jamais « 0 % » sur un ou deux cas). */
+  pourcent(valeur: number | null, echantillon: number): string {
+    return valeur === null || echantillon < this.echantillonMin ? '—' : `${Math.round(valeur)} %`;
+  }
 
   ngOnInit(): void {
     this.rafraichir();

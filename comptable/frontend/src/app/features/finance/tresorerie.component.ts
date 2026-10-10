@@ -1,7 +1,7 @@
 import { DatePipe, DecimalPipe } from '@angular/common';
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, RouterLink } from '@angular/router';
 import { finalize, map } from 'rxjs/operators';
 import { FinanceService } from './finance.service';
 import {
@@ -30,7 +30,7 @@ function aujourdhui(): string {
 @Component({
   selector: 'app-tresorerie',
   standalone: true,
-  imports: [DatePipe, DecimalPipe],
+  imports: [DatePipe, DecimalPipe, RouterLink],
   templateUrl: './tresorerie.component.html',
   styleUrl: './tresorerie.component.scss',
 })

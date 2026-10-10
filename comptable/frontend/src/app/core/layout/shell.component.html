@@ -1,7 +1,8 @@
+<app-bandeau-connexion />
 <header class="entete-app">
   <a routerLink="/entreprises" class="logo">
-    <span class="logo-marque" aria-hidden="true">C</span>
-    Comptable
+    <img class="logo-marque" src="assets/warimara-mark.png" alt="" width="34" height="32" />
+    <span class="logo-nom">Warimara</span>
   </a>
   <nav class="nav-principale">
     @if (estMembreCabinet) {
@@ -49,6 +50,9 @@
 
     @if (email) {
       <span class="email" [title]="email">{{ email }}</span>
+    }
+    @if (horsLigne.installable()) {
+      <button type="button" class="bouton-installer" (click)="horsLigne.installer()" data-action="installer-application">Installer l’application</button>
     }
     <button type="button" (click)="seDeconnecter()">Déconnexion</button>
   </div>

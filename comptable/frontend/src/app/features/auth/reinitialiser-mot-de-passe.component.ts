@@ -14,7 +14,7 @@ import { AuthService } from '../../core/auth/auth.service';
     <div class="page-login" data-zone="reinitialiser-mot-de-passe">
       <aside class="panneau-marque">
         <div class="panneau-contenu">
-          <span class="marque"><span class="marque-icone" aria-hidden="true">C</span>Comptable</span>
+          <span class="marque"><span class="marque-carte"><img src="assets/warimara-logo.png" alt="Warimara — Comptez mieux. Gérez mieux. Décidez mieux." width="300" height="296" /></span></span>
           <h2>Réinitialisation du mot de passe.</h2>
           <ul class="atouts"><li>Le lien est à usage unique</li><li>Il expire au bout de 24 heures</li></ul>
         </div>

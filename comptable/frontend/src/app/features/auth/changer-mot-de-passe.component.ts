@@ -18,7 +18,7 @@ import { TokenStorageService } from '../../core/auth/token-storage.service';
     <div class="page-login" data-zone="changer-mot-de-passe">
       <aside class="panneau-marque">
         <div class="panneau-contenu">
-          <span class="marque"><span class="marque-icone" aria-hidden="true">C</span>Comptable</span>
+          <span class="marque"><span class="marque-carte"><img src="assets/warimara-logo.png" alt="Warimara — Comptez mieux. Gérez mieux. Décidez mieux." width="300" height="296" /></span></span>
           <h2>Choisissez votre mot de passe.</h2>
           <ul class="atouts"><li>12 caractères au minimum</li><li>Mélangez lettres, chiffres et symboles</li><li>Ne réutilisez pas un mot de passe d’un autre service</li></ul>
         </div>

@@ -1,4 +1,5 @@
 import { Injectable } from '@angular/core';
+import { viderCachesDonnees } from '../pwa/caches-donnees';
 
 const CLE_TOKEN = 'comptable.jwt';
 
@@ -16,10 +17,12 @@ export class TokenStorageService {
   }
 
   setToken(token: string): void {
+    viderCachesDonnees(); // nouvelle session : aucune donnée de la précédente ne doit rester lisible hors ligne
     localStorage.setItem(CLE_TOKEN, token);
   }
 
   clear(): void {
+    viderCachesDonnees();
     localStorage.removeItem(CLE_TOKEN);
   }
 

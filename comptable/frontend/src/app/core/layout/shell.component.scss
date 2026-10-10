@@ -23,16 +23,16 @@
 }
 
 .logo-marque {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 26px;
-  height: 26px;
-  border-radius: var(--radius-sm);
-  background: var(--color-primary);
-  color: var(--text-on-primary);
-  font-size: 0.8125rem;
-  font-weight: 700;
+  display: block;
+  width: auto;
+  height: 32px;
+}
+
+.logo-nom {
+  color: var(--color-primary);
+  font-weight: 800;
+  font-size: 1.0625rem;
+  letter-spacing: 0.01em;
 }
 
 .nav-principale {
@@ -184,4 +184,11 @@ button {
   &:hover {
     background: var(--bg-subtle-hover);
   }
+}
+
+.bouton-installer {
+  border: 1px solid var(--color-primary);
+  background: var(--color-primary-light);
+  color: var(--color-primary-active);
+  font-weight: 600;
 }

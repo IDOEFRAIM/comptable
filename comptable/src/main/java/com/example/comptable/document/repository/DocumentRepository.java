@@ -25,6 +25,8 @@ public interface DocumentRepository extends JpaRepository<Document, UUID>,
 
     long countByEntrepriseIdAndStatut(UUID entrepriseId, StatutDocument statut);
 
+    long countByEntrepriseId(UUID entrepriseId);
+
     long countByEntrepriseIdAndStatutAndTypeDocumentInAndEcritureIdIsNull(
             UUID entrepriseId, StatutDocument statut, Collection<TypeDocument> typesDocument);
 

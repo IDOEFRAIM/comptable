@@ -1,10 +1,7 @@
 <div class="page-login">
   <aside class="panneau-marque">
     <div class="panneau-contenu">
-      <span class="marque">
-        <span class="marque-icone" aria-hidden="true">C</span>
-        Comptable
-      </span>
+      <span class="marque"><span class="marque-carte"><img src="assets/warimara-logo.png" alt="Warimara — Comptez mieux. Gérez mieux. Décidez mieux." width="300" height="296" /></span></span>
       <h2>La plateforme de pilotage comptable pour cabinets exigeants.</h2>
       <ul class="atouts">
         <li>Extraction automatique des pièces et rapprochement bancaire</li>
@@ -53,9 +50,13 @@
         {{ envoiEnCours() ? 'Connexion…' : 'Se connecter' }}
       </button>
 
-      <p class="lien-secondaire">
-        Nouveau cabinet ? <a routerLink="/register">Créer un compte</a>
-      </p>
+      @if (config.inscriptionOuverte()) {
+        <p class="lien-secondaire">
+          Nouveau cabinet ? <a routerLink="/register">Créer un compte</a>
+        </p>
+      } @else {
+        <p class="lien-secondaire" data-champ="acces-sur-invitation">Accès sur invitation : votre cabinet reçoit ses identifiants de l'équipe Warimara.</p>
+      }
     </form>
   </div>
 </div>

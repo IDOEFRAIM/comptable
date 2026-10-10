@@ -200,6 +200,12 @@
   }
 }
 
+.aucune-activite {
+  margin: 0.75rem 0 0;
+  color: var(--text-secondary);
+  font-size: 0.875rem;
+}
+
 .grille-scores-domaines {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));

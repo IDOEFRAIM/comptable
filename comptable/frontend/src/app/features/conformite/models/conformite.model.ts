@@ -19,7 +19,10 @@ export interface ObligationFiscaleDto {
 }
 
 export interface TaxHealthDto {
-  score: number;
+  /** Faux tant qu'aucun cadre fiscal vérifié ne s'applique : la conformité ne peut pas être jugée. */
+  evalue: boolean;
+  motif: string | null;
+  anomaliesOuvertes: number;
 }
 
 export interface ComplianceCenterDto {

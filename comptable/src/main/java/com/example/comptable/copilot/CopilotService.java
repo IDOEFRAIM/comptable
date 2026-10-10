@@ -139,9 +139,14 @@ public class CopilotService {
     private FactsEtPreuves collecterDossier(UUID entrepriseId, UtilisateurPrincipal principal) {
         DossierComptableDto dossier = dossierComptableService.generer(entrepriseId, principal);
         Map<String, Object> facts = new LinkedHashMap<>();
-        facts.put("scoreGlobal", dossier.scoreGlobal());
-        facts.put("statut", dossier.statut());
-        dossier.scoresParDomaine().forEach(s -> facts.put("score_" + s.domaine(), s.score()));
+        if (dossier.aucuneActivite()) {
+            // rien n'est enregistré : ne jamais présenter un score ou un statut « prêt » (voir DossierComptableService)
+            facts.put("aucuneActivite", true);
+        } else {
+            facts.put("scoreGlobal", dossier.scoreGlobal());
+            facts.put("statut", dossier.statut());
+            dossier.scoresParDomaine().forEach(s -> facts.put("score_" + s.domaine(), s.score()));
+        }
 
         List<FindingDto> top = dossier.actionsPrioritaires().stream().limit(MAX_ITEMS_PREUVE).toList();
         facts.put("nombreActionsPrioritaires", dossier.actionsPrioritaires().size());
