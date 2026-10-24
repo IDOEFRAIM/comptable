@@ -1,0 +1,116 @@
+:host {
+  position: fixed;
+  right: 1rem;
+  bottom: 1rem;
+  z-index: 40;
+}
+
+.guide-bouton {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.55rem 0.9rem;
+  border: 0;
+  border-radius: 999px;
+  background: var(--color-primary);
+  color: var(--text-on-primary);
+  font-weight: 600;
+  box-shadow: var(--shadow-md);
+  cursor: pointer;
+
+  &:hover {
+    background: var(--color-primary-hover);
+  }
+}
+
+.guide-panneau {
+  position: absolute;
+  right: 0;
+  bottom: 3rem;
+  width: min(360px, calc(100vw - 2rem));
+  max-height: min(70vh, 560px);
+  display: flex;
+  flex-direction: column;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-md);
+}
+
+.guide-entete {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.6rem 0.9rem;
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.guide-fermer {
+  border: 0;
+  background: none;
+  font-size: 1.25rem;
+  cursor: pointer;
+  color: var(--text-tertiary);
+}
+
+.guide-corps {
+  padding: 0.75rem 0.9rem 1rem;
+  overflow-y: auto;
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+
+  h3 {
+    margin: 0 0 0.25rem;
+    font-size: 1rem;
+    color: var(--text-primary);
+  }
+
+  ol {
+    padding-left: 1.2rem;
+    margin: 0.5rem 0 1rem;
+  }
+
+  li {
+    margin-bottom: 0.4rem;
+  }
+
+  a {
+    color: var(--color-primary);
+    font-weight: 600;
+    margin-left: 0.25rem;
+    white-space: nowrap;
+  }
+
+  input {
+    width: 100%;
+    box-sizing: border-box;
+    padding: 0.5rem 0.6rem;
+    border: 1px solid var(--border-default);
+    border-radius: var(--radius-lg);
+  }
+}
+
+.guide-label {
+  display: block;
+  margin: 0.5rem 0 0.3rem;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.guide-resultat {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  margin-top: 0.6rem;
+  padding: 0.5rem 0.6rem;
+  background: var(--bg-subtle);
+  border-radius: var(--radius-lg);
+
+  a {
+    margin-left: 0;
+  }
+}
+
+.guide-vide {
+  margin-top: 0.5rem;
+}

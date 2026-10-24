@@ -1,18 +1,39 @@
-import { DOCUMENT } from '@angular/common';
+import { DOCUMENT, DatePipe } from '@angular/common';
 import { Component, OnDestroy, inject, signal } from '@angular/core';
-import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
+import { ActivatedRoute, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { TokenStorageService } from '../../core/auth/token-storage.service';
+import { DossierHorsLigneService } from '../../core/pwa/dossier-hors-ligne.service';
+import { HorsLigneService } from '../../core/pwa/hors-ligne.service';
 
 @Component({
   selector: 'app-entreprise-workspace',
   standalone: true,
-  imports: [RouterOutlet, RouterLink, RouterLinkActive],
+  imports: [RouterOutlet, RouterLink, RouterLinkActive, DatePipe],
   templateUrl: './entreprise-workspace.component.html',
   styleUrl: './entreprise-workspace.component.scss',
 })
 export class EntrepriseWorkspaceComponent implements OnDestroy {
   private readonly tokenStorage = inject(TokenStorageService);
   private readonly document = inject(DOCUMENT);
+  private readonly route = inject(ActivatedRoute);
+  readonly horsLigne = inject(HorsLigneService);
+  readonly telechargement = inject(DossierHorsLigneService);
+
+  private readonly entrepriseId = this.route.snapshot.paramMap.get('entrepriseId') ?? '';
+  readonly dateTelechargement = signal<number | null>(this.entrepriseId ? this.telechargement.derniereDate(this.entrepriseId) : null);
+  readonly messageTelechargement = signal<string | null>(null);
+
+  /** Garde les pages de lecture de ce dossier sur l'appareil, pour les consulter sans Internet. */
+  async telechargerPourHorsLigne(): Promise<void> {
+    this.messageTelechargement.set(null);
+    const bilan = await this.telechargement.telecharger(this.entrepriseId);
+    this.dateTelechargement.set(bilan.reussies > 0 ? bilan.date : this.dateTelechargement());
+    this.messageTelechargement.set(
+      bilan.reussies === 0
+        ? 'Téléchargement impossible : vérifiez votre connexion.'
+        : `Dossier téléchargé (${bilan.reussies} page(s) gardées${bilan.echecs > 0 ? `, ${bilan.echecs} indisponible(s)` : ''}). Il reste consultable sans Internet.`,
+    );
+  }
 
   /** Le tableau de bord, les tiers, les ecritures, les rapports et la fiscalite sont
    * reserves au cabinet : un CLIENT n'y a pas acces cote API, inutile de lui montrer l'onglet. */

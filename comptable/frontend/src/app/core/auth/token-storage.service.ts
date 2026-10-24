@@ -1,5 +1,6 @@
 import { Injectable } from '@angular/core';
 import { viderCachesDonnees } from '../pwa/caches-donnees';
+import { purgerFileAutresUtilisateurs } from '../pwa/file-attente.store';
 
 const CLE_TOKEN = 'comptable.jwt';
 
@@ -19,6 +20,8 @@ export class TokenStorageService {
   setToken(token: string): void {
     viderCachesDonnees(); // nouvelle session : aucune donnée de la précédente ne doit rester lisible hors ligne
     localStorage.setItem(CLE_TOKEN, token);
+    // la file d'attente hors ligne de l'utilisateur précédent est supprimée ; celle du même utilisateur est conservée pour être envoyée
+    purgerFileAutresUtilisateurs(this.getEmail());
   }
 
   clear(): void {

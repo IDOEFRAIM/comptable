@@ -1,0 +1,53 @@
+<button type="button" class="guide-bouton" [attr.aria-expanded]="ouvert()" (click)="basculer()">
+  <span aria-hidden="true">?</span> Aide
+</button>
+
+@if (ouvert()) {
+  <section class="guide-panneau" aria-label="Guide d'utilisation">
+    <header class="guide-entete">
+      <strong>Guide</strong>
+      <button type="button" class="guide-fermer" aria-label="Fermer" (click)="basculer()">×</button>
+    </header>
+
+    <div class="guide-corps">
+      @if (guideCourant(); as g) {
+        <h3>{{ g.titre }}</h3>
+        <p>{{ g.resume }}</p>
+        <ol>
+          @for (e of g.etapes; track e.texte) {
+            <li>
+              {{ e.texte }}
+              @if (e.onglet && lien(e.onglet); as l) {
+                <a [routerLink]="l" (click)="basculer()">Y aller →</a>
+              }
+            </li>
+          }
+        </ol>
+      } @else {
+        <p>Ouvrez un dossier pour obtenir le guide de chaque page.</p>
+      }
+
+      <label class="guide-label" for="guide-question">Que voulez-vous faire ?</label>
+      <input
+        id="guide-question"
+        type="search"
+        placeholder="ex. faire le bilan, saisir une facture, stock…"
+        [value]="question()"
+        (input)="saisir($event)"
+      />
+
+      @if (question().trim().length >= 3 && resultats().length === 0) {
+        <p class="guide-vide">Aucun guide trouvé. Essayez un autre mot (bilan, TVA, banque, stock…).</p>
+      }
+      @for (r of resultats(); track r.onglet) {
+        <div class="guide-resultat">
+          <strong>{{ r.titre }}</strong>
+          <span>{{ r.resume }}</span>
+          @if (lien(r.onglet); as l) {
+            <a [routerLink]="l" (click)="basculer()">Ouvrir la page →</a>
+          }
+        </div>
+      }
+    </div>
+  </section>
+}

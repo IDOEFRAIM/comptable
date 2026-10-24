@@ -12,7 +12,7 @@ from app.schemas.agent import AnalyseAgentResponse, DonneesExtraitesAgent, Metad
 from app.schemas.extraction import TypeDocumentDetecte
 from app.services import java_tools_client
 from app.services.anthropic_client import get_client
-from app.services.pdf_utils import rendre_premiere_page_en_png
+from app.services.pdf_utils import preparer_image_pour_vlm, rendre_premiere_page_en_png
 
 logger = logging.getLogger(__name__)
 
@@ -49,7 +49,7 @@ Avant chaque decision ou appel d'outil, ecris ton analyse dans une balise <scrat
 suivant ces 4 etapes :
 
 - ETAPE 1 (TYPAGE & VALIDATION VISUELLE) : identifie le type exact du document
-  (FACTURE_NORMALISEE, RECIPISSE_MOBILE_MONEY, TICKET_CAISSE, FACTURE_PROFORMA, INEXPLOITABLE).
+  (FACTURE_NORMALISEE, RECIPISSE_MOBILE_MONEY, TICKET_CAISSE, RECU_BANCAIRE, FACTURE_PROFORMA, INEXPLOITABLE).
   Repere les indices de falsification visuelle (police non uniforme, logo altere, capture
   d'ecran pure sans metadonnees d'application).
 - ETAPE 2 (EXTRACTION & CONTROLE MATHEMATIQUE) : extrais montants (HT, TVA, TTC), date,
@@ -149,6 +149,7 @@ _REPONDRE_FINAL_SCHEMA = {
                 "FACTURE_NORMALISEE",
                 "RECIPISSE_MOBILE_MONEY",
                 "TICKET_CAISSE",
+                "RECU_BANCAIRE",
                 "FACTURE_PROFORMA",
                 "INEXPLOITABLE",
             ],
@@ -239,6 +240,7 @@ def analyser_piece_autonome(entreprise_id: str, contenu: bytes, content_type: st
     if content_type not in _MEDIA_TYPES_SUPPORTES:
         return _reponse_echec(f"Type de fichier non supporte : {content_type}.")
 
+    contenu, content_type = preparer_image_pour_vlm(contenu)
     image_b64 = base64.b64encode(contenu).decode()
     messages: list[dict[str, Any]] = [
         {

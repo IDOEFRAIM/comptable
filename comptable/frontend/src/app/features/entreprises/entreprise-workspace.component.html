@@ -74,6 +74,21 @@
         </div>
       }
     </nav>
+    @if (estMembreCabinet) {
+      <div class="bloc-hors-ligne">
+        <p class="titre-groupe">Hors ligne</p>
+        <button type="button" class="bouton-telecharger" [disabled]="telechargement.enCours() || !horsLigne.enLigne()" (click)="telechargerPourHorsLigne()" data-action="telecharger-dossier">
+          {{ telechargement.enCours() ? 'Téléchargement…' : 'Télécharger ce dossier' }}
+        </button>
+        @if (messageTelechargement()) {
+          <p class="aide-hors-ligne" data-zone="message-telechargement">{{ messageTelechargement() }}</p>
+        } @else if (dateTelechargement()) {
+          <p class="aide-hors-ligne">Dernier téléchargement : {{ dateTelechargement() | date: 'dd/MM/yyyy HH:mm' }}</p>
+        } @else {
+          <p class="aide-hors-ligne">Gardez ce dossier sur l’appareil pour le consulter sans Internet.</p>
+        }
+      </div>
+    }
   </aside>
   <div class="contenu-onglet">
     <router-outlet />

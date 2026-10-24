@@ -26,7 +26,7 @@ class Settings(BaseSettings):
     # niveau (contrairement au Universal Matching Engine) - une cle Groq reelle est necessaire des
     # qu'une piece contenant une image doit etre extraite ou analysee visuellement.
     groq_api_key: str = ""
-    groq_model: str = "qwen/qwen3.6-27b"
+    groq_model: str = "qwen/qwen3.8-27b"
 
     # Provider LLM utilise par le Universal Matching Engine et le Copilot (cf.
     # matching_engine.py/copilot_service.py::_get_default_provider) : "mock" (par defaut - aucune

@@ -3,6 +3,7 @@ import logging
 import time
 from typing import Any
 
+import httpx
 from groq import Groq
 
 from app.core.config import get_settings
@@ -15,7 +16,15 @@ logger = logging.getLogger(__name__)
 def get_client() -> Groq:
     global _client
     if _client is None:
-        _client = Groq(api_key=get_settings().groq_api_key)
+        # Pas de connexion reutilisee (keep-alive coupe en silence par le NAT de Docker Desktop,
+        # d'ou des "Connection error" intermittents de ~25 s sur les envois d'image), IPv4 force et
+        # reconnexions a la mise en place du lien.
+        http_client = httpx.Client(
+            limits=httpx.Limits(max_keepalive_connections=0),
+            transport=httpx.HTTPTransport(local_address="0.0.0.0", retries=2),
+            timeout=httpx.Timeout(40.0, connect=10.0),
+        )
+        _client = Groq(api_key=get_settings().groq_api_key, max_retries=2, http_client=http_client)
     return _client
 
 

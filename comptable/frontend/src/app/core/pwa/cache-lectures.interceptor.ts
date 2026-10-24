@@ -5,8 +5,9 @@ import { normaliserErreur } from '../http/messages-erreur';
 import { NOM_CACHE_DONNEES } from './caches-donnees';
 import { HorsLigneService } from './hors-ligne.service';
 
-const DUREE_MAX_MS = 7 * 24 * 3600 * 1000;
-const TAILLE_MAX = 300;
+// 30 jours / 800 réponses : un dossier téléchargé pour le hors ligne (voir DossierHorsLigneService) doit rester lisible pendant un déplacement
+const DUREE_MAX_MS = 30 * 24 * 3600 * 1000;
+const TAILLE_MAX = 800;
 const ENTETE_DATE = 'x-warimara-mis-en-cache-le';
 
 /**
@@ -18,6 +19,7 @@ const ROUTES_EN_CACHE: RegExp[] = [
   /^\/api\/entreprises$/,
   /^\/api\/entreprises\/[^/]+$/,
   /^\/api\/entreprises\/[^/]+\/(tableau-de-bord|documents|comptes|journaux|exercices|tiers|demandes-pieces|ecritures)$/,
+  /^\/api\/entreprises\/[^/]+\/(plan-comptable|plan-comptable\/arbre|articles|commandes-achat|factures|factures-avoir|devis|immobilisations|inventaires|regularisations|documents\/hub|documents\/hub\/synthese|demandes-pieces\/collecte|demandes-pieces\/collecte\/a-demander|demandes-pieces\/collecte\/synthese|recouvrement\/risques|tresorerie\/position|tresorerie\/prevision)$/,
   /^\/api\/entreprises\/[^/]+\/ecritures\/[^/]+$/,
   /^\/api\/entreprises\/[^/]+\/revue\/[^/]+(\/[^/]+)?$/,
   /^\/api\/entreprises\/[^/]+\/rapports\/[^/]+$/,

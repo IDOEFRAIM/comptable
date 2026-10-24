@@ -1,9 +1,11 @@
 import base64
+from datetime import date
 from decimal import Decimal
 
+from app.core.config import get_settings
 from app.schemas.extraction import OcrResult
 from app.services.groq_client import call_structured
-from app.services.pdf_utils import rendre_premiere_page_en_png
+from app.services.pdf_utils import preparer_image_pour_vlm, rendre_premiere_page_en_png
 
 # Tolerance d'arrondi locale (FCFA) pour le controle SYSCOHADA HT + TVA = TTC.
 TOLERANCE_ARRONDI_FCFA = Decimal("5")
@@ -26,6 +28,11 @@ type_document) :
 - FACTURE_NORMALISEE : facture avec NIF/RCCM et mentions legales UEMOA/CEMAC
 - RECIPISSE_MOBILE_MONEY : reçu Wave, Orange Money, MTN MoMo ou Moov Money
 - TICKET_CAISSE : ticket de caisse thermique, souvent froisse ou partiellement efface
+- RECU_BANCAIRE : bordereau de versement/retrait, avis de credit/debit, reçu de virement ou de
+  depot bancaire (banque, caissier, numero de compte, libelle, "Type Tran: CREDIT/DEBIT"). Le
+  montant a retenir est le champ "Montant" ; renseigne montant_ttc avec, montant_ht et
+  montant_tva a null, mode_paiement ESPECES ou VIREMENT selon le libelle, reference_transaction
+  = "Ref Tran" et fournisseur = beneficiaire ou titulaire du compte.
 - FACTURE_PROFORMA : facture proforma ou bon de commande - CE N'EST PAS une charge definitive,
   classe-la toujours ainsi meme si les montants sont parfaitement lisibles
 - INEXPLOITABLE : brouillard total, hors sujet (selfie, objet quelconque), ou image vide
@@ -41,6 +48,10 @@ ETAPE 2 - Auto-critique mathematique et temporelle, APRES avoir lu les montants 
   motif plutot que de l'ignorer silencieusement.
 
 Regles strictes :
+- Une piece PETITE, courte ou recadree (bordereau, ticket, reçu de quelques lignes), meme prise
+  de travers ou avec peu de details, n'est PAS illisible tant que tu peux lire son montant : extrais
+  ce qui est lisible et laisse le reste a null. Ne classe INEXPLOITABLE que si aucun montant ni
+  aucune date n'est lisible.
 - N'invente jamais un montant, une date, un nom de fournisseur, un NIF/RCCM, une reference de
   transaction ou un mode de paiement que tu ne peux pas lire distinctement : renvoie null plutot
   qu'une valeur devinee.
@@ -66,6 +77,7 @@ INPUT_SCHEMA = {
                 "FACTURE_NORMALISEE",
                 "RECIPISSE_MOBILE_MONEY",
                 "TICKET_CAISSE",
+                "RECU_BANCAIRE",
                 "FACTURE_PROFORMA",
                 "INEXPLOITABLE",
             ],
@@ -140,11 +152,17 @@ def extraire(contenu: bytes, content_type: str) -> OcrResult:
     if content_type not in _MEDIA_TYPES_SUPPORTES:
         return OcrResult.echec(f"Type de fichier non supporte pour l'extraction VLM: {content_type}")
 
+    if not get_settings().groq_api_key:
+        return OcrResult.echec(
+            "Extraction par IA non configuree : GROQ_API_KEY est vide dans le .env ; saisie manuelle requise."
+        )
+
+    contenu, content_type = preparer_image_pour_vlm(contenu)
     image_b64 = base64.b64encode(contenu).decode()
     try:
         raw = call_structured(
             system_prompt=SYSTEM_PROMPT,
-            user_text="Voici la piece a analyser.",
+            user_text=f"Date du jour : {date.today().isoformat()}. Voici la piece a analyser.",
             tool_name="extraire_piece",
             tool_description="Retourne le type de document, les montants et la date extraits de l'image",
             input_schema=INPUT_SCHEMA,

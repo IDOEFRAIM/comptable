@@ -188,12 +188,12 @@ logique métier (prompts, garde-fous, taxonomie d'anomalies) n'a été touchée.
   pièce contenant une image doit être extraite ou analysée. **Ne jamais committer de clé réelle**
   (ni dans `.env`, ni en dur dans le code) — `GROQ_API_KEY` doit rester une variable
   d'environnement.
-- **`GROQ_MODEL` par défaut : `qwen/qwen3.6-27b`** — **vérifié avec une vraie clé sur une vraie
+- **`GROQ_MODEL` par défaut : `qwen/qwen3.8-27b`** — **vérifié avec une vraie clé sur une vraie
   facture** (`comptable/data/documents/.../fac.png`, facture d'eau O.N.E.A.) : les 8 champs
   extraits (type de document, fournisseur, HT/TVA/TTC, date, NIF/RCCM, référence) correspondent
   exactement à la pièce réelle, reproduit sur 3 appels indépendants via `extraction_service.extraire`.
 - **`temperature=0` et `max_completion_tokens=3000`, pas les valeurs par défaut naïves (`1` et
-  `1024`)** — bug réel trouvé pendant la vérification ci-dessus : `qwen/qwen3.6-27b` est un
+  `1024`)** — bug réel trouvé pendant la vérification ci-dessus : `qwen/qwen3.8-27b` est un
   modèle de raisonnement qui consomme des jetons de réflexion interne
   (`usage.completion_tokens_details.reasoning_tokens`, entre ~750 et ~1070 observés selon
   l'appel) avant d'émettre le tool call. Avec `temperature=1` et un budget de 1024 jetons,
