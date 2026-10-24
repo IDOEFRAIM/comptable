@@ -28,6 +28,14 @@ class Settings(BaseSettings):
     groq_api_key: str = ""
     groq_model: str = "qwen/qwen3.8-27b"
 
+    # Fournisseur des appels IA "groq_client.call_structured" (extraction, fraude visuelle et, quand
+    # AI_PROVIDER=groq, matching/copilot) : "groq" (defaut) ou "bedrock" (Amazon Bedrock, API Converse).
+    # Avec "bedrock", AUCUNE cle n'est necessaire sur AWS : boto3 utilise le role IAM de l'instance EC2.
+    # bedrock_model_id = identifiant du modele (ou du profil d'inference) visible dans la console Bedrock.
+    vlm_provider: str = "groq"
+    bedrock_region: str = "us-east-1"
+    bedrock_model_id: str = ""
+
     # Provider LLM utilise par le Universal Matching Engine et le Copilot (cf.
     # matching_engine.py/copilot_service.py::_get_default_provider) : "mock" (par defaut - aucune
     # cle requise, aucun appel reseau), "anthropic" (necessite anthropic_api_key) ou "groq"

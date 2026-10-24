@@ -42,7 +42,23 @@ def call_structured(
     (function calling au format OpenAI-compatible expose par Groq) pour obtenir une reponse
     structuree fiable, jamais de parsing de texte libre / JSON en best-effort. Meme signature
     que la version Anthropic - extraction_service.py et fraude_service.py n'ont besoin de
-    changer que leur import pour basculer de l'un a l'autre."""
+    changer que leur import pour basculer de l'un a l'autre.
+
+    Quand VLM_PROVIDER=bedrock, l'appel est delegue tel quel a bedrock_client (meme contrat) : tous les
+    appelants (extraction, fraude, matching/copilot en AI_PROVIDER=groq) passent ainsi sur Amazon
+    Bedrock sans autre changement."""
+    if get_settings().vlm_provider == "bedrock":
+        from app.services import bedrock_client
+
+        return bedrock_client.call_structured(
+            system_prompt=system_prompt,
+            user_text=user_text,
+            tool_name=tool_name,
+            tool_description=tool_description,
+            input_schema=input_schema,
+            image_b64=image_b64,
+            image_media_type=image_media_type,
+        )
     content: list[dict[str, Any]] = [{"type": "text", "text": user_text}]
     if image_b64 and image_media_type:
         content.append(

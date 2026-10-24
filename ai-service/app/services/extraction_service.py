@@ -152,7 +152,13 @@ def extraire(contenu: bytes, content_type: str) -> OcrResult:
     if content_type not in _MEDIA_TYPES_SUPPORTES:
         return OcrResult.echec(f"Type de fichier non supporte pour l'extraction VLM: {content_type}")
 
-    if not get_settings().groq_api_key:
+    reglages = get_settings()
+    if reglages.vlm_provider == "bedrock":
+        if not reglages.bedrock_model_id:
+            return OcrResult.echec(
+                "Extraction par IA non configuree : BEDROCK_MODEL_ID est vide dans le .env ; saisie manuelle requise."
+            )
+    elif not reglages.groq_api_key:
         return OcrResult.echec(
             "Extraction par IA non configuree : GROQ_API_KEY est vide dans le .env ; saisie manuelle requise."
         )

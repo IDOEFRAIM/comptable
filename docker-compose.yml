@@ -51,6 +51,10 @@ services:
       CORE_SERVICE_API_KEY: ${AI_SERVICE_INBOUND_API_KEY:?}
       GROQ_API_KEY: ${GROQ_API_KEY:-}
       GROQ_MODEL: ${GROQ_MODEL:-qwen/qwen3.8-27b}
+      # groq (defaut) ou bedrock : avec bedrock, aucune cle - role IAM de l'instance EC2 (voir DEPLOYMENT.md)
+      VLM_PROVIDER: ${VLM_PROVIDER:-groq}
+      BEDROCK_REGION: ${BEDROCK_REGION:-us-east-1}
+      BEDROCK_MODEL_ID: ${BEDROCK_MODEL_ID:-}
       ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
       ANTHROPIC_MODEL: ${ANTHROPIC_MODEL:-claude-sonnet-5}
       AI_PROVIDER: ${AI_PROVIDER:-mock}
