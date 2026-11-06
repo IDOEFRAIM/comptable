@@ -6,47 +6,101 @@
   <section class="guide-panneau" aria-label="Guide d'utilisation">
     <header class="guide-entete">
       <strong>Guide</strong>
-      <button type="button" class="guide-fermer" aria-label="Fermer" (click)="basculer()">×</button>
+      <button type="button" class="guide-fermer" aria-label="Fermer" (click)="fermer()">×</button>
     </header>
 
     <div class="guide-corps">
-      @if (guideCourant(); as g) {
-        <h3>{{ g.titre }}</h3>
-        <p>{{ g.resume }}</p>
-        <ol>
-          @for (e of g.etapes; track e.texte) {
-            <li>
-              {{ e.texte }}
-              @if (e.onglet && lien(e.onglet); as l) {
-                <a [routerLink]="l" (click)="basculer()">Y aller →</a>
-              }
-            </li>
-          }
-        </ol>
-      } @else {
-        <p>Ouvrez un dossier pour obtenir le guide de chaque page.</p>
-      }
-
       <label class="guide-label" for="guide-question">Que voulez-vous faire ?</label>
-      <input
-        id="guide-question"
-        type="search"
-        placeholder="ex. faire le bilan, saisir une facture, stock…"
-        [value]="question()"
-        (input)="saisir($event)"
-      />
+      <div class="guide-recherche">
+        <input
+          id="guide-question"
+          type="search"
+          autocomplete="off"
+          placeholder="ex. faire une facture, importer la banque, bilan…"
+          [value]="question()"
+          (input)="saisir($event)"
+        />
+        @if (question()) {
+          <button type="button" class="guide-effacer" aria-label="Effacer la recherche" (click)="effacer()">×</button>
+        }
+      </div>
 
-      @if (question().trim().length >= 3 && resultats().length === 0) {
-        <p class="guide-vide">Aucun guide trouvé. Essayez un autre mot (bilan, TVA, banque, stock…).</p>
+      <!-- Hors d'un dossier : dire OÙ les boutons nous emmènent, et laisser choisir s'il y en a plusieurs -->
+      @if (choixDossierRequis()) {
+        <div class="guide-dossier" data-zone="choix-dossier">
+          <label for="guide-dossier">Dans quel dossier ?</label>
+          <select id="guide-dossier" (change)="choisirDossier($event)">
+            <option value="" [selected]="!entrepriseId()">Choisir un dossier…</option>
+            @for (e of entreprises(); track e.id) {
+              <option [value]="e.id" [selected]="e.id === entrepriseId()">{{ e.raisonSociale }}</option>
+            }
+          </select>
+        </div>
+      } @else if (aucunDossier()) {
+        <p class="guide-info" data-zone="aucun-dossier">
+          Vous n’avez pas encore de dossier. Créez d’abord une entreprise depuis la liste des entreprises : le guide pourra ensuite vous y emmener.
+        </p>
+      } @else if (!dansUnDossier() && nomDossier()) {
+        <p class="guide-info" data-zone="dossier-cible">Les boutons ouvrent le dossier <strong>{{ nomDossier() }}</strong>.</p>
       }
-      @for (r of resultats(); track r.onglet) {
-        <div class="guide-resultat">
-          <strong>{{ r.titre }}</strong>
-          <span>{{ r.resume }}</span>
-          @if (lien(r.onglet); as l) {
-            <a [routerLink]="l" (click)="basculer()">Ouvrir la page →</a>
+
+      @if (!recherche()) {
+        <p class="guide-astuce">Tapez ce que vous voulez faire, ou choisissez un exemple :</p>
+        <div class="guide-suggestions">
+          @for (s of propositions(); track s.id) {
+            <button type="button" class="guide-puce" (click)="utiliser(s)">{{ s.court }}</button>
           }
         </div>
+      } @else if (resultats().length === 0) {
+        <p class="guide-vide" data-zone="aucun-resultat">
+          Je n’ai rien trouvé pour « {{ question() }} ». Essayez avec un autre mot : facture, banque, bilan, TVA, stock, client…
+        </p>
+      } @else {
+        @for (r of resultats(); track r.id) {
+          <article class="guide-resultat" [attr.data-tache]="r.id">
+            <h4>{{ r.question }}</h4>
+            <p class="guide-reponse">{{ r.reponse }}</p>
+
+            @if (lien(r.onglet); as l) {
+              <a class="guide-aller" [routerLink]="l" (click)="fermer()">{{ r.libelleBouton }} →</a>
+            } @else if (choixDossierRequis()) {
+              <span class="guide-attente">Choisissez un dossier ci-dessus pour ouvrir cette page.</span>
+            }
+
+            <button type="button" class="guide-etapes-bouton" [attr.aria-expanded]="estDeplie(r)" (click)="basculerEtapes(r)">
+              {{ estDeplie(r) ? 'Masquer les étapes' : 'Voir les étapes' }}
+            </button>
+            @if (estDeplie(r)) {
+              <ol class="guide-etapes">
+                @for (e of r.etapes; track e.texte) {
+                  <li>
+                    {{ e.texte }}
+                    @if (lienEtape(e); as le) {
+                      <a [routerLink]="le" (click)="fermer()">Y aller →</a>
+                    }
+                  </li>
+                }
+              </ol>
+            }
+          </article>
+        }
+      }
+
+      @if (guideCourant(); as g) {
+        <details class="guide-page" [open]="!recherche()">
+          <summary>Sur cette page : {{ g.titre }}</summary>
+          <p>{{ g.resume }}</p>
+          <ol>
+            @for (e of g.etapes; track e.texte) {
+              <li>
+                {{ e.texte }}
+                @if (lienEtape(e); as l) {
+                  <a [routerLink]="l" (click)="fermer()">Y aller →</a>
+                }
+              </li>
+            }
+          </ol>
+        </details>
       }
     </div>
   </section>

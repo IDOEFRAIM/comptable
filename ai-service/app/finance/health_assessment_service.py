@@ -22,6 +22,7 @@ from app.finance.prompts.health import (
 from app.schemas.finance import CashPosition, FinancialSnapshotWithMargins, Payables, Receivables
 from app.schemas.financial_health import FinancialHealthAssessment, FinancialHealthStatus
 from app.services.anthropic_llm_provider import AnthropicLLMProvider
+from app.services.bedrock_llm_provider import BedrockLLMProvider
 from app.services.groq_llm_provider import GroqLLMProvider
 from app.services.llm_provider import LLMProvider
 from app.services.mock_llm_provider import MockLLMProvider
@@ -44,6 +45,8 @@ def _get_default_provider() -> LLMProvider:
         return AnthropicLLMProvider()
     if provider == "groq":
         return GroqLLMProvider()
+    if provider == "bedrock":
+        return BedrockLLMProvider()
     return MockLLMProvider()
 
 

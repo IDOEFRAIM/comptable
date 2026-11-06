@@ -3,15 +3,16 @@ import json
 import logging
 from datetime import date
 from decimal import Decimal
-from typing import Any
+from typing import Any, NamedTuple
 
 from pydantic import ValidationError
 
 from app.core.config import get_settings
 from app.schemas.agent import AnalyseAgentResponse, DonneesExtraitesAgent, MetadataAgent, StatutAgent
 from app.schemas.extraction import TypeDocumentDetecte
-from app.services import java_tools_client
+from app.services import bedrock_client, java_tools_client
 from app.services.anthropic_client import get_client
+from app.services.bedrock_client import _FORMATS_IMAGE
 from app.services.pdf_utils import preparer_image_pour_vlm, rendre_premiere_page_en_png
 
 logger = logging.getLogger(__name__)
@@ -224,6 +225,114 @@ _TOOLS = [
 ]
 
 
+_MESSAGE_RELANCE = "Merci d'appeler l'outil repondre_final avec ton verdict complet."
+_MESSAGE_ANALYSE = "Analyse cette piece comptable en suivant le protocole en 4 etapes."
+
+
+class _AppelOutil(NamedTuple):
+    id: str
+    nom: str
+    entree: dict[str, Any]
+
+
+class _SessionAnthropic:
+    """Boucle agentique sur l'API Messages d'Anthropic (AI_PROVIDER autre que bedrock)."""
+
+    def __init__(self, contenu: bytes, content_type: str) -> None:
+        self._client = get_client()
+        self._messages: list[dict[str, Any]] = [
+            {
+                "role": "user",
+                "content": [
+                    {
+                        "type": "image",
+                        "source": {"type": "base64", "media_type": content_type, "data": base64.b64encode(contenu).decode()},
+                    },
+                    {"type": "text", "text": _MESSAGE_ANALYSE},
+                ],
+            }
+        ]
+
+    def tour(self) -> list[_AppelOutil]:
+        response = self._client.messages.create(
+            model=get_settings().anthropic_model,
+            max_tokens=2048,
+            system=SYSTEM_PROMPT,
+            tools=_TOOLS,
+            messages=self._messages,
+        )
+        self._messages.append({"role": "assistant", "content": response.content})
+        return [_AppelOutil(b.id, b.name, b.input) for b in response.content if b.type == "tool_use"]
+
+    def relancer(self) -> None:
+        self._messages.append({"role": "user", "content": _MESSAGE_RELANCE})
+
+    def repondre(self, resultats: list[tuple[_AppelOutil, dict[str, Any]]]) -> None:
+        self._messages.append(
+            {
+                "role": "user",
+                "content": [
+                    {
+                        "type": "tool_result",
+                        "tool_use_id": appel.id,
+                        "content": json.dumps(resultat, default=str, ensure_ascii=False),
+                    }
+                    for appel, resultat in resultats
+                ],
+            }
+        )
+
+
+class _SessionBedrock:
+    """Meme boucle sur Amazon Bedrock (Claude, API Converse) : blocs toolUse / toolResult, image en octets
+    bruts. Selectionnee par AI_PROVIDER=bedrock ; identifiants = role IAM de l'instance (cf. bedrock_client)."""
+
+    def __init__(self, contenu: bytes, content_type: str) -> None:
+        self._messages: list[dict[str, Any]] = [
+            {
+                "role": "user",
+                "content": [
+                    {"image": {"format": _FORMATS_IMAGE[content_type], "source": {"bytes": contenu}}},
+                    {"text": _MESSAGE_ANALYSE},
+                ],
+            }
+        ]
+
+    def tour(self) -> list[_AppelOutil]:
+        message = bedrock_client.converse_avec_outils(system_prompt=SYSTEM_PROMPT, messages=self._messages, outils=_TOOLS)
+        if not message.get("content"):
+            # Converse refuse un message assistant vide dans l'historique
+            message = {"role": "assistant", "content": [{"text": "(aucune reponse)"}]}
+        self._messages.append(message)
+        return [
+            _AppelOutil(b["toolUse"]["toolUseId"], b["toolUse"]["name"], b["toolUse"].get("input") or {})
+            for b in message["content"]
+            if "toolUse" in b
+        ]
+
+    def relancer(self) -> None:
+        self._messages.append({"role": "user", "content": [{"text": _MESSAGE_RELANCE}]})
+
+    def repondre(self, resultats: list[tuple[_AppelOutil, dict[str, Any]]]) -> None:
+        blocs = []
+        for appel, resultat in resultats:
+            bloc: dict[str, Any] = {
+                "toolUseId": appel.id,
+                # Converse exige un objet JSON pur (Decimal, date... passes par default=str)
+                "content": [{"json": json.loads(json.dumps(resultat, default=str))}],
+            }
+            if "erreur" in resultat:
+                bloc["status"] = "error"
+            blocs.append({"toolResult": bloc})
+        self._messages.append({"role": "user", "content": blocs})
+
+
+def _creer_session(contenu: bytes, content_type: str) -> _SessionAnthropic | _SessionBedrock:
+    if get_settings().ai_provider == "bedrock":
+        return _SessionBedrock(contenu, content_type)
+    return _SessionAnthropic(contenu, content_type)
+
+
 def analyser_piece_autonome(entreprise_id: str, contenu: bytes, content_type: str) -> AnalyseAgentResponse:
     """Point d'entree de l'agent comptable autonome : boucle de raisonnement reelle (pas un
     simple appel structure) ou le modele decide lui-meme, tour apres tour, quels outils appeler
@@ -241,68 +350,26 @@ def analyser_piece_autonome(entreprise_id: str, contenu: bytes, content_type: st
         return _reponse_echec(f"Type de fichier non supporte : {content_type}.")
 
     contenu, content_type = preparer_image_pour_vlm(contenu)
-    image_b64 = base64.b64encode(contenu).decode()
-    messages: list[dict[str, Any]] = [
-        {
-            "role": "user",
-            "content": [
-                {
-                    "type": "image",
-                    "source": {"type": "base64", "media_type": content_type, "data": image_b64},
-                },
-                {
-                    "type": "text",
-                    "text": "Analyse cette piece comptable en suivant le protocole en 4 etapes.",
-                },
-            ],
-        }
-    ]
-
-    settings = get_settings()
-    client = get_client()
+    session = _creer_session(contenu, content_type)
 
     for _ in range(MAX_ITERATIONS):
         try:
-            response = client.messages.create(
-                model=settings.anthropic_model,
-                max_tokens=2048,
-                system=SYSTEM_PROMPT,
-                tools=_TOOLS,
-                messages=messages,
-            )
+            appels = session.tour()
         except Exception as exc:
             logger.warning("Agent comptable autonome indisponible pour le moment : %s", exc)
             return _reponse_echec(f"Agent IA indisponible pour le moment ({exc}) ; saisie manuelle requise.")
 
-        messages.append({"role": "assistant", "content": response.content})
-
-        blocs_outils = [b for b in response.content if b.type == "tool_use"]
-        if not blocs_outils:
+        if not appels:
             # Le modele a repondu en texte libre (scratchpad seul) sans appeler repondre_final :
             # on le relance plutot que de deviner un JSON depuis du texte libre.
-            messages.append(
-                {
-                    "role": "user",
-                    "content": "Merci d'appeler l'outil repondre_final avec ton verdict complet.",
-                }
-            )
+            session.relancer()
             continue
 
-        bloc_final = next((b for b in blocs_outils if b.name == "repondre_final"), None)
-        if bloc_final is not None:
-            return _construire_reponse(bloc_final.input)
+        appel_final = next((a for a in appels if a.nom == "repondre_final"), None)
+        if appel_final is not None:
+            return _construire_reponse(appel_final.entree)
 
-        resultats_outils = []
-        for bloc in blocs_outils:
-            resultat = _executer_outil(entreprise_id, bloc.name, bloc.input)
-            resultats_outils.append(
-                {
-                    "type": "tool_result",
-                    "tool_use_id": bloc.id,
-                    "content": json.dumps(resultat, default=str, ensure_ascii=False),
-                }
-            )
-        messages.append({"role": "user", "content": resultats_outils})
+        session.repondre([(a, _executer_outil(entreprise_id, a.nom, a.entree)) for a in appels])
 
     logger.warning("Agent comptable autonome : boucle non convergee apres %s iterations", MAX_ITERATIONS)
     return _reponse_echec(
