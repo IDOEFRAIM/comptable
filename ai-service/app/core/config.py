@@ -36,12 +36,13 @@ class Settings(BaseSettings):
     bedrock_region: str = "us-east-1"
     bedrock_model_id: str = ""
 
-    # Provider LLM utilise par le Universal Matching Engine et le Copilot (cf.
-    # matching_engine.py/copilot_service.py::_get_default_provider) : "mock" (par defaut - aucune
-    # cle requise, aucun appel reseau), "anthropic" (necessite anthropic_api_key) ou "groq"
-    # (necessite groq_api_key, meme cle que l'extraction/la fraude). L'extraction et la fraude ne
-    # sont pas concernees par ce switch : elles appellent toujours Groq directement (pas de mode
-    # mock a ce niveau).
+    # Provider LLM de toute la partie agentique (matching, copilot, CFO, classification, sante
+    # financiere, risque de tresorerie - cf. les _get_default_provider - ET boucle d'outils de l'agent
+    # comptable autonome, cf. agent_orchestrator._creer_session) : "mock" (par defaut - aucune cle
+    # requise, aucun appel reseau), "anthropic" (necessite anthropic_api_key), "groq" (necessite
+    # groq_api_key) ou "bedrock" (n'importe quel modele Amazon Bedrock via l'API Converse - Claude, Nova, Llama, Mistral... -, role IAM, necessite bedrock_model_id).
+    # Remarque : l'agent autonome sans "bedrock" utilise l'API Anthropic ; l'extraction et la fraude
+    # sont pilotees separement par vlm_provider.
     ai_provider: str = "mock"
 
     # WhatsApp Cloud API (Meta)

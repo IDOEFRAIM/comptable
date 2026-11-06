@@ -27,6 +27,7 @@ from app.schemas.matching import (
 )
 from app.services import matching_prompts
 from app.services.anthropic_llm_provider import AnthropicLLMProvider
+from app.services.bedrock_llm_provider import BedrockLLMProvider
 from app.services.groq_llm_provider import GroqLLMProvider
 from app.services.llm_provider import LLMProvider
 from app.services.matching_prefilter import filtrer_candidats
@@ -44,6 +45,8 @@ def _get_default_provider() -> LLMProvider:
         return AnthropicLLMProvider()
     if get_settings().ai_provider == "groq":
         return GroqLLMProvider()
+    if get_settings().ai_provider == "bedrock":
+        return BedrockLLMProvider()
     return MockLLMProvider()
 
 

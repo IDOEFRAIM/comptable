@@ -24,6 +24,7 @@ from app.finance.prompts.cash_risk import (
 from app.schemas.cash_risk import CashRiskAssessment, CashRiskStatus
 from app.schemas.finance import CashForecast
 from app.services.anthropic_llm_provider import AnthropicLLMProvider
+from app.services.bedrock_llm_provider import BedrockLLMProvider
 from app.services.groq_llm_provider import GroqLLMProvider
 from app.services.llm_provider import LLMProvider
 from app.services.mock_llm_provider import MockLLMProvider
@@ -46,6 +47,8 @@ def _get_default_provider() -> LLMProvider:
         return AnthropicLLMProvider()
     if provider == "groq":
         return GroqLLMProvider()
+    if provider == "bedrock":
+        return BedrockLLMProvider()
     return MockLLMProvider()
 
 
