@@ -93,7 +93,7 @@ def test_le_resultat_d_outil_est_renvoye_en_toolresult_json(bedrock, monkeypatch
     assert dernier["role"] == "user"
     bloc = dernier["content"][0]["toolResult"]
     assert bloc["toolUseId"] == "tu1"
-    assert bloc["status"] == "error"
+    assert "status" not in bloc  # champ non supporte par tous les modeles Bedrock
     assert "Java down" in bloc["content"][0]["json"]["erreur"]
 
 

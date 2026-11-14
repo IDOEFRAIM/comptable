@@ -70,16 +70,7 @@ def call_structured(
     }
     debut = time.perf_counter()
     try:
-        try:
-            reponse = get_client().converse(**parametres)
-        except Exception as exc:
-            if not _refuse_tool_choice(exc):
-                raise
-            # Tous les modeles Bedrock ne savent pas « forcer » un outil (toolChoice) : on le laisse alors
-            # libre, il n'a de toute facon qu'un seul outil a sa disposition.
-            logger.info("Le modele %s refuse toolChoice : nouvel essai sans forcer l'outil", settings.bedrock_model_id)
-            del parametres["toolConfig"]["toolChoice"]
-            reponse = get_client().converse(**parametres)
+        reponse = _converse(parametres)
     except Exception as exc:
         _tracer_appel_ia(tool_name, debut, succes=False, erreur=exc)
         raise
@@ -110,20 +101,21 @@ def converse_avec_outils(
     if not settings.bedrock_model_id:
         raise RuntimeError("BEDROCK_MODEL_ID n'est pas defini")
 
+    parametres: dict[str, Any] = {
+        "modelId": settings.bedrock_model_id,
+        "system": [{"text": system_prompt}],
+        "messages": messages,
+        "inferenceConfig": {"maxTokens": max_tokens, "temperature": 0},
+        "toolConfig": {
+            "tools": [
+                {"toolSpec": {"name": o["name"], "description": o["description"], "inputSchema": {"json": o["input_schema"]}}}
+                for o in outils
+            ]
+        },
+    }
     debut = time.perf_counter()
     try:
-        reponse = get_client().converse(
-            modelId=settings.bedrock_model_id,
-            system=[{"text": system_prompt}],
-            messages=messages,
-            inferenceConfig={"maxTokens": max_tokens, "temperature": 0},
-            toolConfig={
-                "tools": [
-                    {"toolSpec": {"name": o["name"], "description": o["description"], "inputSchema": {"json": o["input_schema"]}}}
-                    for o in outils
-                ]
-            },
-        )
+        reponse = _converse(parametres)
     except Exception as exc:
         _tracer_appel_ia("agent_tour", debut, succes=False, erreur=exc)
         raise
@@ -132,13 +124,38 @@ def converse_avec_outils(
     return reponse["output"]["message"]
 
 
-def _refuse_tool_choice(erreur: Exception) -> bool:
-    """Vrai si AWS rejette la requete parce que le modele ne gere pas toolChoice (ValidationException)."""
+def _converse(parametres: dict[str, Any]) -> dict[str, Any]:
+    """Appel Converse tolerant : tous les modeles Bedrock ne gerent pas les memes options. Si AWS rejette
+    (ValidationException) le choix d'outil force (toolChoice) ou la temperature - c'est le cas de certains
+    modeles, notamment quand leur raisonnement est actif -, on retire cette seule option et on rejoue l'appel."""
+    options = {
+        "toolchoice": lambda p: p["toolConfig"].pop("toolChoice", None),
+        "temperature": lambda p: p["inferenceConfig"].pop("temperature", None),
+    }
+    while True:
+        try:
+            return get_client().converse(**parametres)
+        except Exception as exc:
+            retire = _option_refusee(exc, options, parametres)
+            if retire is None:
+                raise
+            logger.info("Le modele %s refuse l'option %s : nouvel essai sans elle", parametres["modelId"], retire)
+
+
+def _option_refusee(erreur: Exception, options: dict[str, Any], parametres: dict[str, Any]) -> str | None:
+    """Nom de l'option facultative (toolChoice, temperature) que l'erreur ValidationException designe ET qui est
+    encore presente dans la requete (retiree au passage) ; None si l'erreur est autre : elle est alors remontee."""
     reponse = getattr(erreur, "response", None)
     if not isinstance(reponse, dict):
-        return False
+        return None
     detail = reponse.get("Error", {})
-    return detail.get("Code") == "ValidationException" and "toolchoice" in str(detail.get("Message", "")).lower()
+    if detail.get("Code") != "ValidationException":
+        return None
+    message = str(detail.get("Message", "")).lower().replace("_", "").replace(" ", "")
+    for nom, retirer in options.items():
+        if nom in message and retirer(parametres) is not None:
+            return nom
+    return None
 
 
 def _detail_erreur(erreur: Exception | None) -> str:
