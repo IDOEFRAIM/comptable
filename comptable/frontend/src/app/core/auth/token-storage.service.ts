@@ -1,4 +1,5 @@
 import { Injectable } from '@angular/core';
+import { supprimerTousLesBrouillons } from '../forms/brouillons-stockage';
 import { viderCachesDonnees } from '../pwa/caches-donnees';
 import { purgerFileAutresUtilisateurs } from '../pwa/file-attente.store';
 
@@ -27,6 +28,7 @@ export class TokenStorageService {
     // Les données gardées hors ligne ne sont supprimées que si une AUTRE personne se connecte : le même utilisateur qui se reconnecte (session expirée) retrouve son travail intact.
     if (localStorage.getItem(CLE_DERNIER_UTILISATEUR) !== email) {
       viderCachesDonnees();
+      supprimerTousLesBrouillons();
     }
     localStorage.setItem(CLE_TOKEN, token);
     localStorage.removeItem(CLE_EXPIREE);
@@ -40,6 +42,7 @@ export class TokenStorageService {
   /** Déconnexion volontaire : tout ce qui est gardé hors ligne sur l'appareil est supprimé. */
   clear(): void {
     viderCachesDonnees();
+    supprimerTousLesBrouillons();
     localStorage.removeItem(CLE_TOKEN);
     localStorage.removeItem(CLE_EXPIREE);
     localStorage.removeItem(CLE_DERNIER_UTILISATEUR);

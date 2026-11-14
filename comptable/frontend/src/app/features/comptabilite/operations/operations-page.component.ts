@@ -4,6 +4,7 @@ import { toSignal } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { map } from 'rxjs/operators';
+import { BrouillonLocalService } from '../../../core/forms/brouillon-local.service';
 import { ComptabiliteService } from '../comptabilite.service';
 import { CompteComptableDto, TiersDto } from '../models/comptabilite.model';
 import {
@@ -14,6 +15,23 @@ import {
   NatureVente,
 } from '../models/operations.model';
 import { PropositionPreviewComponent } from './proposition-preview.component';
+
+const FORMULAIRE = 'operation';
+
+interface BrouillonOperation {
+  categorie: Categorie;
+  sens: Sens;
+  date: string;
+  libelle: string;
+  reference: string;
+  montant: number;
+  compteId: string;
+  montantTtcAttendu: number | null;
+  moyenPaiement: MoyenPaiement;
+  natureAchat: NatureAchat;
+  natureVente: NatureVente;
+  tiersId: string;
+}
 
 type Categorie = 'ACHAT' | 'VENTE' | 'REGLEMENT' | 'AVOIR';
 type Sens = 'CLIENT' | 'FOURNISSEUR';
@@ -33,6 +51,10 @@ export class OperationsPageComponent implements OnInit {
   private readonly comptabiliteService = inject(ComptabiliteService);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
+  private readonly brouillon = inject(BrouillonLocalService);
+
+  /** Moment du brouillon retrouvé à l'ouverture ; null si la saisie est neuve. */
+  readonly brouillonRestaure = signal<number | null>(null);
 
   readonly entrepriseId = toSignal(this.route.paramMap.pipe(map((p) => p.get('entrepriseId')!)), {
     initialValue: '',
@@ -93,20 +115,57 @@ export class OperationsPageComponent implements OnInit {
 
   ngOnInit(): void {
     const id = this.entrepriseId();
+    const retrouve = this.brouillon.lire<BrouillonOperation>(FORMULAIRE, id);
+    if (retrouve) {
+      const b = retrouve.valeurs;
+      this.categorie.set(b.categorie);
+      this.sens.set(b.sens);
+      Object.assign(this, { date: b.date, libelle: b.libelle, reference: b.reference, montant: b.montant, compteId: b.compteId, montantTtcAttendu: b.montantTtcAttendu, moyenPaiement: b.moyenPaiement, natureAchat: b.natureAchat, natureVente: b.natureVente, tiersId: b.tiersId });
+      this.brouillonRestaure.set(retrouve.le);
+    }
     this.comptabiliteService.listerTiers(id, 'FOURNISSEUR').subscribe((t) => this.fournisseurs.set(t));
     this.comptabiliteService.listerTiers(id, 'CLIENT').subscribe((t) => this.clients.set(t));
     this.comptabiliteService.listerComptes(id).subscribe((c) => this.comptes.set(c));
   }
 
+  /** Gardé sur l'appareil à chaque modification (appelé depuis le gabarit) : une coupure de courant ne fait plus perdre la saisie en cours. */
+  memoriser(): void {
+    // laisse ngModel écrire la valeur saisie dans les propriétés avant de les lire
+    setTimeout(() => {
+      const vide = !this.tiersId && !this.libelle && !this.reference && !this.montant && !this.compteId;
+      if (vide) {
+        this.brouillon.effacer(FORMULAIRE, this.entrepriseId());
+        return;
+      }
+      const valeurs: BrouillonOperation = {
+        categorie: this.categorie(),
+        sens: this.sens(),
+        date: this.date,
+        libelle: this.libelle,
+        reference: this.reference,
+        montant: this.montant,
+        compteId: this.compteId,
+        montantTtcAttendu: this.montantTtcAttendu,
+        moyenPaiement: this.moyenPaiement,
+        natureAchat: this.natureAchat,
+        natureVente: this.natureVente,
+        tiersId: this.tiersId,
+      };
+      this.brouillon.sauver(FORMULAIRE, this.entrepriseId(), valeurs);
+    });
+  }
+
   changerCategorie(categorie: Categorie): void {
     this.categorie.set(categorie);
     this.reinitialiserFormulaire();
+    this.memoriser();
   }
 
   changerSens(sens: Sens): void {
     this.sens.set(sens);
     this.tiersId = '';
     this.proposition.set(null);
+    this.memoriser();
   }
 
   proposer(): void {
@@ -192,6 +251,8 @@ export class OperationsPageComponent implements OnInit {
     this.envoiEnCours.set(true);
     this.comptabiliteService.validerProposition(this.entrepriseId(), proposition.id).subscribe({
       next: (dto) => {
+        this.brouillon.effacer(FORMULAIRE, this.entrepriseId());
+        this.brouillonRestaure.set(null);
         this.proposition.set(dto);
         this.envoiEnCours.set(false);
       },
@@ -227,6 +288,8 @@ export class OperationsPageComponent implements OnInit {
   nouvelleOperation(): void {
     this.proposition.set(null);
     this.reinitialiserFormulaire();
+    this.brouillon.effacer(FORMULAIRE, this.entrepriseId());
+    this.brouillonRestaure.set(null);
   }
 
   private reinitialiserFormulaire(): void {
