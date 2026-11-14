@@ -44,6 +44,15 @@ export class TableauDeBordComponent implements OnInit {
   });
 
   readonly libellesType = LIBELLES_TYPE_IMPOT;
+  /** Les tâches les plus fréquentes du comptable, à un clic depuis l'accueil du dossier. */
+  readonly raccourcis = [
+    { lien: 'documents', titre: 'Déposer une pièce', detail: 'Facture fournisseur, reçu, relevé…' },
+    { lien: 'operations', titre: 'Saisir un achat ou une vente', detail: 'L’écriture est proposée pour vous' },
+    { lien: 'facturation', titre: 'Faire une facture client', detail: 'Devis, facture, avoir' },
+    { lien: 'rapprochement', titre: 'Rapprocher la banque', detail: 'Importer un relevé, pointer les opérations' },
+    { lien: 'rapports', titre: 'Consulter la balance', detail: 'Balance, grand livre, export FEC' },
+    { lien: 'etats-financiers', titre: 'Préparer les états financiers', detail: 'Bilan, compte de résultat, notes' },
+  ];
   readonly libellesSeverite = LIBELLES_SEVERITE_FINDING;
   readonly libellesStatutDossier = LIBELLES_STATUT_DOSSIER;
   readonly libellesDomaine: Record<string, string> = { Fiscalite: 'Fiscalité', Cloture: 'Clôture' };

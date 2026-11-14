@@ -15,7 +15,7 @@
 // barre defile desormais independamment du contenu, sous l'entete qui reste toujours visible
 // (voir shell.component.scss, entete-app est maintenant sticky).
 .barre-laterale {
-  flex: 0 0 216px;
+  flex: 0 0 236px;
   padding: 1.5rem 0.75rem 2rem;
   position: sticky;
   top: 57px;
@@ -36,7 +36,7 @@
 .nav-groupee {
   display: flex;
   flex-direction: column;
-  gap: 1.25rem;
+  gap: 1.1rem;
 }
 
 .groupe {
@@ -56,25 +56,121 @@
 }
 
 .nav-groupee a {
-  padding: 0.45rem 0.6rem;
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.42rem 0.6rem;
   border-radius: var(--radius-md);
   text-decoration: none;
   color: var(--text-secondary);
   font-size: 0.8125rem;
   font-weight: 500;
   white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+
+  app-icon {
+    color: var(--text-placeholder);
+  }
+
+  span {
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
 
   &.actif {
     color: var(--color-primary);
     background: var(--color-primary-light);
     font-weight: 600;
+
+    app-icon {
+      color: var(--color-primary);
+    }
   }
 
   &:hover:not(.actif) {
     background: var(--bg-subtle);
     color: var(--text-primary);
+
+    app-icon {
+      color: var(--text-secondary);
+    }
+  }
+}
+
+// Dossier ouvert, en tete du menu : on sait toujours dans quel dossier on travaille, et on en change sans
+// repasser par la liste des dossiers.
+.bloc-dossier {
+  margin: 0 0 1.25rem;
+  padding: 0 0.1rem 1rem;
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.retour-dossiers {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  margin: 0 0 0.85rem 0.5rem;
+  color: var(--text-tertiary);
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-decoration: none;
+
+  &:hover {
+    color: var(--color-primary);
+  }
+}
+
+.etiquette-dossier {
+  margin: 0 0 0.3rem 0.5rem;
+  font-size: 0.6875rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--text-placeholder);
+}
+
+.nom-dossier {
+  margin: 0 0.5rem;
+  font-size: 0.9375rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  line-height: 1.3;
+}
+
+.selecteur-dossier {
+  position: relative;
+  display: block;
+
+  select {
+    width: 100%;
+    appearance: none;
+    padding: 0.5rem 2rem 0.5rem 0.6rem;
+    border: 1px solid var(--border-default);
+    border-radius: var(--radius-md);
+    background: var(--bg-surface);
+    color: var(--text-primary);
+    font: inherit;
+    font-size: 0.875rem;
+    font-weight: 700;
+    text-overflow: ellipsis;
+    cursor: pointer;
+
+    &:hover {
+      border-color: var(--color-primary-border);
+    }
+
+    &:focus-visible {
+      outline: 2px solid var(--color-primary);
+      outline-offset: 1px;
+    }
+  }
+
+  app-icon {
+    position: absolute;
+    right: 0.6rem;
+    top: 50%;
+    transform: translateY(-50%);
+    pointer-events: none;
+    color: var(--text-tertiary);
   }
 }
 
@@ -90,11 +186,14 @@
 @media (max-width: 960px) {
   .workspace {
     flex-direction: column;
+    align-items: stretch;
   }
 
   .bouton-menu-mobile {
     display: flex;
     align-items: center;
+    justify-content: flex-start;
+    text-align: left;
     gap: 0.5rem;
     position: sticky;
     top: 57px;
@@ -157,6 +256,27 @@
     display: block;
   }
 
+  .menu-mobile-texte {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    min-width: 0;
+    line-height: 1.2;
+  }
+
+  .menu-mobile-dossier {
+    max-width: 70vw;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .menu-mobile-page {
+    font-size: 0.75rem;
+    font-weight: 500;
+    color: var(--text-tertiary);
+  }
+
   .contenu-onglet {
     padding: 1.25rem 1rem 2rem;
   }
@@ -190,4 +310,49 @@
   font-size: 0.75rem;
   line-height: 1.35;
   color: var(--text-tertiary);
+}
+
+.pastille-connexion {
+  margin-left: auto;
+  flex: none;
+  display: inline-flex;
+  color: var(--color-warning);
+}
+
+.bouton-lien-guide {
+  display: block;
+  margin: 0.5rem 0 0 0.2rem;
+  padding: 0;
+  border: none;
+  background: none;
+  color: var(--color-primary);
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.guide-hors-ligne {
+  margin-top: 0.6rem;
+  padding: 0.7rem 0.75rem;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  background: var(--bg-subtle);
+  font-size: 0.75rem;
+  line-height: 1.45;
+  color: var(--text-secondary);
+  white-space: normal;
+
+  p {
+    margin: 0 0 0.45rem;
+  }
+
+  ul {
+    margin: 0 0 0.45rem;
+    padding-left: 1.1rem;
+  }
+
+  .bouton-telecharger {
+    margin-bottom: 0.45rem;
+  }
 }

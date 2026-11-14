@@ -49,17 +49,22 @@
 .liste-ecritures {
   display: flex;
   flex-direction: column;
-  gap: 0.75rem;
+  gap: 0.4rem;
 }
 
+// display:grid explicite : sans lui, les colonnes ne s'appliquaient pas (titres colles, lignes centrees par le
+// style global des boutons).
 .ligne-titres,
 .ligne-entete {
-  grid-template-columns: 110px 60px 1fr 110px 110px 90px;
+  display: grid;
+  justify-content: stretch;
+  grid-template-columns: 130px 60px 1fr 100px 130px 90px;
   align-items: center;
   gap: 0.75rem;
   width: 100%;
-  padding: 0.9rem 1.1rem;
+  padding: 0.7rem 1.1rem;
   border: none;
+  border-radius: var(--radius-lg);
   background: none;
   cursor: pointer;
   text-align: left;
@@ -99,9 +104,12 @@
 }
 
 .ligne-titres {
-  grid-template-columns: 110px 60px 1fr 110px 110px 90px;
-  gap: 0.75rem;
   padding: 0 1.1rem;
+  cursor: default;
+
+  &:hover {
+    background: none;
+  }
   font-size: 0.6875rem;
   font-weight: 700;
   letter-spacing: 0.05em;
@@ -196,4 +204,37 @@
 .message-erreur {
   color: var(--color-danger);
   font-size: 0.875rem;
+}
+
+// Téléphone : six colonnes ne tiennent pas. Chaque écriture devient une carte sur deux lignes
+// (pièce + montant, puis libellé + date + statut) ; la ligne de titres est masquée.
+@media (max-width: 720px) {
+  .entete {
+    flex-wrap: wrap;
+    gap: 0.75rem;
+  }
+
+  .ligne-titres {
+    display: none;
+  }
+
+  .ligne-entete {
+    grid-template-columns: 1fr auto;
+    grid-template-areas:
+      'piece montant'
+      'libelle libelle'
+      'date badge';
+    row-gap: 0.25rem;
+
+    .piece { grid-area: piece; }
+    .journal { display: none; }
+    .libelle { grid-area: libelle; }
+    .date { grid-area: date; text-align: left; }
+    .montant { grid-area: montant; }
+    .badge { grid-area: badge; }
+  }
+
+  .details {
+    overflow-x: auto;
+  }
 }

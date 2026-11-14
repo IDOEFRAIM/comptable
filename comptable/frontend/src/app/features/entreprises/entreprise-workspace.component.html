@@ -9,7 +9,12 @@
     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
       <path d="M4 6h16M4 12h16M4 18h16" />
     </svg>
-    Menu
+    <span class="menu-mobile-texte">
+      <span class="menu-mobile-dossier">{{ entrepriseCourante()?.raisonSociale ?? 'Dossier' }}</span>
+      @if (pageCourante()) {
+        <span class="menu-mobile-page">{{ pageCourante() }}</span>
+      }
+    </span>
   </button>
 
   @if (menuMobileOuvert()) {
@@ -17,66 +22,49 @@
   }
 
   <aside class="barre-laterale" [class.ouvert]="menuMobileOuvert()">
-    <nav class="nav-groupee" (click)="fermerMenuMobile()">
+    <div class="bloc-dossier" data-zone="dossier-courant">
       @if (estMembreCabinet) {
-        <div class="groupe">
-          <a routerLink="tableau-de-bord" routerLinkActive="actif">Tableau de bord</a>
-          <a routerLink="revision" routerLinkActive="actif">Révision</a>
-        </div>
+        <a routerLink="/cabinet/dossiers" class="retour-dossiers" (click)="fermerMenuMobile()">
+          <app-icon nom="arrow-left" [taille]="14" /> Tous les dossiers
+        </a>
       }
+      <p class="etiquette-dossier">Dossier</p>
+      @if (entreprises().length > 1) {
+        <label class="selecteur-dossier" title="Changer de dossier">
+          <span class="ui-sr-only">Changer de dossier</span>
+          <select [value]="entrepriseId" (change)="changerDossier($any($event.target).value)" data-action="changer-dossier">
+            @for (e of entreprises(); track e.id) {
+              <option [value]="e.id" [selected]="e.id === entrepriseId">{{ e.raisonSociale }}</option>
+            }
+          </select>
+          <app-icon nom="chevron-down" [taille]="16" />
+        </label>
+      } @else {
+        <p class="nom-dossier">{{ entrepriseCourante()?.raisonSociale ?? '…' }}</p>
+      }
+    </div>
 
-      <div class="groupe">
-        <p class="titre-groupe">Pièces &amp; validation</p>
-        <a routerLink="documents" routerLinkActive="actif">Documents</a>
-        <a routerLink="demandes-pieces" routerLinkActive="actif">Pièces demandées</a>
-        @if (estMembreCabinet) {
-          <a routerLink="validation" routerLinkActive="actif">Validation</a>
-        }
-      </div>
-
-      @if (estMembreCabinet) {
+    <nav class="nav-groupee" (click)="fermerMenuMobile()" aria-label="Pages du dossier">
+      @for (groupe of menu; track groupe.titre) {
         <div class="groupe">
-          <p class="titre-groupe">Comptabilité</p>
-          <a routerLink="tiers" routerLinkActive="actif">Tiers</a>
-          <a routerLink="plan-comptable" routerLinkActive="actif">Plan comptable</a>
-          <a routerLink="parametres-comptables" routerLinkActive="actif">Paramètres comptables</a>
-          <a routerLink="operations" routerLinkActive="actif">Opérations</a>
-          <a routerLink="ecritures" routerLinkActive="actif">Écritures</a>
-          <a routerLink="rapprochement" routerLinkActive="actif">Rapprochement</a>
-          <a routerLink="rapports" routerLinkActive="actif">Rapports</a>
-          <a routerLink="etats-financiers" routerLinkActive="actif">États financiers</a>
-          <a routerLink="regularisations" routerLinkActive="actif">Régularisations</a>
-        </div>
-
-        <div class="groupe">
-          <p class="titre-groupe">Trésorerie</p>
-          <a routerLink="tresorerie" routerLinkActive="actif">Trésorerie</a>
-          <a routerLink="recouvrement" routerLinkActive="actif">Recouvrement</a>
-        </div>
-
-        <div class="groupe">
-          <p class="titre-groupe">Facturation &amp; achats</p>
-          <a routerLink="facturation" routerLinkActive="actif">Facturation</a>
-          <a routerLink="stocks" routerLinkActive="actif">Stocks</a>
-          <a routerLink="achats" routerLinkActive="actif">Achats</a>
-          <a routerLink="immobilisations" routerLinkActive="actif">Immobilisations</a>
-        </div>
-
-        <div class="groupe">
-          <p class="titre-groupe">Conformité</p>
-          <a routerLink="fiscalite" routerLinkActive="actif">Fiscalité</a>
-          <a routerLink="conformite" routerLinkActive="actif">Conformité</a>
-        </div>
-
-        <div class="groupe">
-          <p class="titre-groupe">Administration</p>
-          <a routerLink="inviter" routerLinkActive="actif">Inviter</a>
+          @if (groupe.titre) {
+            <p class="titre-groupe">{{ groupe.titre }}</p>
+          }
+          @for (entree of groupe.entrees; track entree.lien) {
+            <a [routerLink]="entree.lien" routerLinkActive="actif" [title]="entree.aide" [attr.data-page]="entree.lien">
+              <app-icon [nom]="entree.icone" [taille]="16" />
+              <span>{{ entree.libelle }}</span>
+              @if (!horsLigne.enLigne() && disponibilite(entree.lien) === 'connexion') {
+                <span class="pastille-connexion" title="Connexion Internet requise pour cette page" aria-label="Connexion Internet requise"><app-icon nom="lock" [taille]="13" /></span>
+              }
+            </a>
+          }
         </div>
       }
     </nav>
     @if (estMembreCabinet) {
       <div class="bloc-hors-ligne">
-        <p class="titre-groupe">Hors ligne</p>
+        <p class="titre-groupe">Travailler sans Internet</p>
         <button type="button" class="bouton-telecharger" [disabled]="telechargement.enCours() || !horsLigne.enLigne()" (click)="telechargerPourHorsLigne()" data-action="telecharger-dossier">
           {{ telechargement.enCours() ? 'Téléchargement…' : 'Télécharger ce dossier' }}
         </button>
@@ -86,6 +74,35 @@
           <p class="aide-hors-ligne">Dernier téléchargement : {{ dateTelechargement() | date: 'dd/MM/yyyy HH:mm' }}</p>
         } @else {
           <p class="aide-hors-ligne">Gardez ce dossier sur l’appareil pour le consulter sans Internet.</p>
+        }
+        <button type="button" class="bouton-lien-guide" (click)="guideOuvert.set(!guideOuvert())" [attr.aria-expanded]="guideOuvert()" data-action="guide-hors-ligne">
+          {{ guideOuvert() ? 'Masquer le guide' : 'Comment ça marche ?' }}
+        </button>
+        @if (guideOuvert()) {
+          <div class="guide-hors-ligne" data-zone="guide-hors-ligne">
+            <p><strong>1. Installer sur l’ordinateur</strong></p>
+            @if (installee) {
+              <p>Warimara est déjà installée sur cet appareil.</p>
+            } @else if (horsLigne.installable()) {
+              <button type="button" class="bouton-telecharger" (click)="horsLigne.installer()" data-action="installer-application-guide">Installer Warimara</button>
+            } @else {
+              <p>Dans Chrome ou Edge : cliquez sur l’icône d’installation à droite de la barre d’adresse, ou sur le menu ⋮ puis « Installer Warimara ». L’application s’ouvre alors dans sa propre fenêtre, comme un logiciel.</p>
+            }
+            <p><strong>2. Télécharger le dossier</strong><br />Avec Internet, cliquez sur « Télécharger ce dossier » avant de partir.</p>
+            <p><strong>3. Sans Internet, vous pouvez</strong></p>
+            <ul>
+              <li>consulter les pages du dossier téléchargé ;</li>
+              <li>déposer des pièces et saisir des écritures en brouillon : elles s’envoient toutes seules au retour d’Internet.</li>
+            </ul>
+            <p><strong>Une connexion est nécessaire pour</strong></p>
+            <ul>
+              <li>valider ou comptabiliser, clôturer, déclarer ;</li>
+              <li>la lecture automatique des pièces (IA) ;</li>
+              <li>générer la balance, le grand livre, les exports ;</li>
+              <li>envoyer des messages aux clients, inviter un utilisateur ;</li>
+              <li>retrouver les modifications de vos collègues.</li>
+            </ul>
+          </div>
         }
       </div>
     }
