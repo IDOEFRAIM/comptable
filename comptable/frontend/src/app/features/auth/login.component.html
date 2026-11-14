@@ -58,5 +58,22 @@
         <p class="lien-secondaire" data-champ="acces-sur-invitation">Accès sur invitation : votre cabinet reçoit ses identifiants de l'équipe Warimara.</p>
       }
     </form>
+
+    @if (continuerPossible()) {
+      <section class="carte-login continuer-hors-ligne" data-zone="continuer-hors-ligne">
+        <h2>Pas d’Internet ?</h2>
+        <p class="sous-titre">Votre session a expiré, mais vos dossiers déjà téléchargés restent accessibles sur cet appareil.</p>
+        @if (pinRequis()) {
+          <label class="champ">
+            <span>Code PIN</span>
+            <input type="password" inputmode="numeric" autocomplete="off" maxlength="8" [value]="codePin()" (input)="codePin.set($any($event.target).value)" (keyup.enter)="continuerHorsLigne()" />
+          </label>
+        }
+        @if (erreurPin()) {
+          <p class="message-erreur">{{ erreurPin() }}</p>
+        }
+        <button type="button" class="bouton-principal" (click)="continuerHorsLigne()" data-action="continuer-hors-ligne">Continuer hors ligne</button>
+      </section>
+    }
   </div>
 </div>

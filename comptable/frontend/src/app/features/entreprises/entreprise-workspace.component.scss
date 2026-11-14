@@ -356,3 +356,17 @@
     margin-bottom: 0.45rem;
   }
 }
+
+.bloc-pin {
+  margin: 0.4rem 0 0.5rem;
+
+  input {
+    width: 100%;
+    margin: 0.2rem 0 0.4rem;
+    padding: 0.4rem 0.5rem;
+    border: 1px solid var(--border-default);
+    border-radius: var(--radius-md);
+    font: inherit;
+    font-size: 0.8125rem;
+  }
+}

@@ -5,6 +5,8 @@ import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { finalize } from 'rxjs/operators';
 import { AuthService } from '../../core/auth/auth.service';
+import { CodePinService } from '../../core/auth/code-pin.service';
+import { HorsLigneService } from '../../core/pwa/hors-ligne.service';
 import { messageErreurChamp } from '../../core/forms/messages-validation';
 
 @Component({
@@ -20,11 +22,36 @@ export class LoginComponent {
   private readonly authService = inject(AuthService);
   private readonly router = inject(Router);
   private readonly tokens = inject(TokenStorageService);
+  private readonly pin = inject(CodePinService);
+  readonly horsLigne = inject(HorsLigneService);
 
   protected readonly messageErreurChamp = messageErreurChamp;
 
   readonly envoiEnCours = signal(false);
   readonly erreur = signal<string | null>(null);
+
+  /** Session expirée, pas d'Internet : l'accès aux dossiers déjà téléchargés reste possible (7 jours), derrière le code PIN s'il est défini. */
+  readonly continuerPossible = () => !this.horsLigne.enLigne() && this.tokens.peutContinuerHorsLigne();
+  readonly pinRequis = () => this.pin.defini();
+  readonly codePin = signal('');
+  readonly erreurPin = signal<string | null>(null);
+
+  async continuerHorsLigne(): Promise<void> {
+    this.erreurPin.set(null);
+    const resultat = await this.pin.verifier(this.codePin());
+    if (resultat === 'bloque') {
+      this.tokens.clear();
+      this.erreurPin.set('Trop d’essais : connectez-vous avec Internet pour continuer.');
+      return;
+    }
+    if (resultat === 'incorrect') {
+      this.erreurPin.set(`Code incorrect. Il reste ${this.pin.essaisRestants()} essai(s).`);
+      return;
+    }
+    const roles = this.tokens.getRoles();
+    const cabinet = roles.includes('ROLE_EXPERT_COMPTABLE') || roles.includes('ROLE_COLLABORATEUR');
+    this.router.navigateByUrl(cabinet ? '/cabinet' : '/entreprises');
+  }
 
   readonly form = this.fb.nonNullable.group({
     email: ['', [Validators.required, Validators.email]],

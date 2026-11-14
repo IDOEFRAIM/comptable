@@ -88,7 +88,20 @@
             } @else {
               <p>Dans Chrome ou Edge : cliquez sur l’icône d’installation à droite de la barre d’adresse, ou sur le menu ⋮ puis « Installer Warimara ». L’application s’ouvre alors dans sa propre fenêtre, comme un logiciel.</p>
             }
-            <p><strong>2. Télécharger le dossier</strong><br />Avec Internet, cliquez sur « Télécharger ce dossier » avant de partir.</p>
+            <p><strong>2. Vos dossiers se mettent à jour tout seuls</strong><br />Les dossiers ouverts récemment sont téléchargés automatiquement dès qu’il y a du réseau. Le bouton « Télécharger ce dossier » force la mise à jour.</p>
+            <div class="bloc-pin" data-zone="code-pin">
+              <p><strong>Code PIN de l’appareil</strong><br />Il protège l’accès hors ligne quand votre session a expiré.</p>
+              @if (pinDefini()) {
+                <p>Code PIN défini sur cet appareil.</p>
+                <button type="button" class="bouton-lien-guide" (click)="retirerPin()" data-action="retirer-pin">Retirer le code</button>
+              } @else {
+                <input type="password" inputmode="numeric" maxlength="8" autocomplete="off" placeholder="4 à 8 chiffres" [value]="pinSaisi()" (input)="pinSaisi.set($any($event.target).value)" aria-label="Nouveau code PIN" />
+                <button type="button" class="bouton-telecharger" (click)="enregistrerPin()" data-action="definir-pin">Enregistrer le code</button>
+              }
+              @if (pinMessage()) {
+                <p>{{ pinMessage() }}</p>
+              }
+            </div>
             <p><strong>3. Sans Internet, vous pouvez</strong></p>
             <ul>
               <li>consulter les pages du dossier téléchargé ;</li>

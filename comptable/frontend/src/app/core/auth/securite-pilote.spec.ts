@@ -53,7 +53,7 @@ describe('errorInterceptor', () => {
   let router: jasmine.SpyObj<Router>;
 
   beforeEach(() => {
-    tokens = jasmine.createSpyObj<TokenStorageService>('TokenStorageService', ['clear', 'getToken']);
+    tokens = jasmine.createSpyObj<TokenStorageService>('TokenStorageService', ['clear', 'expirer', 'getToken']);
     router = jasmine.createSpyObj<Router>('Router', ['navigateByUrl']);
     TestBed.configureTestingModule({
       providers: [provideHttpClient(withInterceptors([errorInterceptor])), provideHttpClientTesting(), { provide: TokenStorageService, useValue: tokens }, { provide: Router, useValue: router }],
@@ -62,17 +62,18 @@ describe('errorInterceptor', () => {
     client = TestBed.inject(HttpClient);
   });
 
-  it('401 sur l’API : session nettoyée et retour à la connexion', () => {
+  it('401 sur l’API : session marquée expirée (données hors ligne conservées) et retour à la connexion', () => {
     client.get('/api/entreprises').subscribe({ error: () => undefined });
     http.expectOne('/api/entreprises').flush({}, { status: 401, statusText: 'Unauthorized' });
-    expect(tokens.clear).toHaveBeenCalled();
+    expect(tokens.expirer).toHaveBeenCalled();
+    expect(tokens.clear).not.toHaveBeenCalled();
     expect(router.navigateByUrl).toHaveBeenCalledWith('/login');
   });
 
   it('401 sur la connexion elle-même : la page de connexion gère son erreur, aucune redirection', () => {
     client.post('/api/auth/login', {}).subscribe({ error: () => undefined });
     http.expectOne('/api/auth/login').flush({ message: 'Identifiants invalides' }, { status: 401, statusText: 'Unauthorized' });
-    expect(tokens.clear).not.toHaveBeenCalled();
+    expect(tokens.expirer).not.toHaveBeenCalled();
     expect(router.navigateByUrl).not.toHaveBeenCalled();
   });
 
@@ -102,7 +103,7 @@ describe('authGuard (mot de passe temporaire)', () => {
   function garde(token: string | null, doitChanger: boolean): boolean | UrlTree {
     TestBed.configureTestingModule({
       providers: [
-        { provide: TokenStorageService, useValue: { getToken: () => token, doitChangerMotDePasse: () => doitChanger } },
+        { provide: TokenStorageService, useValue: { getToken: () => token, doitChangerMotDePasse: () => doitChanger, sessionExpiree: () => false } },
         { provide: Router, useValue: { parseUrl: (u: string) => u as unknown as UrlTree } },
       ],
     });
