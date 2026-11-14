@@ -226,6 +226,35 @@ describe('FileAttenteService', () => {
     expect(service.rapport()).toContain('reprendra automatiquement');
   });
 
+  it('chaque envoi porte une clé d’idempotence valide, et le renvoi après coupure reprend LA MÊME clé (pas de doublon)', async () => {
+    await service.enfilerEcriture('e1', ecriture);
+    await service.enfilerDocument('e1', 'RECU', new File(['x'], 'recu.png', { type: 'image/png' }));
+    enLigne.set(true);
+
+    // 1er envoi : le réseau retombe avant la réponse
+    let fin = service.synchroniser();
+    await attendre();
+    const premier = http.expectOne('/api/entreprises/e1/ecritures');
+    const cle = premier.request.headers.get('Idempotency-Key')!;
+    expect(cle).toMatch(/^[A-Za-z0-9_-]{8,100}$/); // même format que celui accepté par le serveur
+    premier.error(new ProgressEvent('error'), { status: 0 });
+    await fin;
+
+    // reprise : même clé pour la même saisie ; le document a la sienne, différente
+    fin = service.synchroniser();
+    await attendre();
+    const renvoi = http.expectOne('/api/entreprises/e1/ecritures');
+    expect(renvoi.request.headers.get('Idempotency-Key')).toBe(cle);
+    renvoi.flush({ id: 'ec1' });
+    await attendre();
+    const doc = http.expectOne('/api/entreprises/e1/documents');
+    const cleDoc = doc.request.headers.get('Idempotency-Key')!;
+    expect(cleDoc).toMatch(/^[A-Za-z0-9_-]{8,100}$/);
+    expect(cleDoc).not.toBe(cle);
+    doc.flush({ id: 'd1' });
+    await fin;
+  });
+
   it('ne fait rien hors ligne', async () => {
     await service.enfilerEcriture('e1', ecriture);
     await service.synchroniser();

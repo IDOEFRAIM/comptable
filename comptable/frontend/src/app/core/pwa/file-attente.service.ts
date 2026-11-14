@@ -164,13 +164,15 @@ export class FileAttenteService {
 
   private envoyer(element: ElementFile) {
     const contexte = new HttpContext().set(REJEU_FILE_ATTENTE, true);
+    // L'identifiant de l'élément sert de clé d'idempotence : si le réseau retombe avant la réponse et que l'envoi est repris, le serveur n'exécute la saisie qu'une fois (pas de doublon d'écriture ou de pièce).
+    const headers = { 'Idempotency-Key': element.id };
     const base = `/api/entreprises/${element.entrepriseId}`;
     if (element.type === 'DOCUMENT') {
       const formData = new FormData();
       formData.append('typeDocument', element.typeDocument ?? 'AUTRE');
       formData.append('fichier', new File([element.fichier as Blob], element.nomFichier ?? 'piece', { type: element.typeMime }));
-      return this.http.post(`${base}/documents`, formData, { context: contexte });
+      return this.http.post(`${base}/documents`, formData, { context: contexte, headers });
     }
-    return this.http.post(`${base}/ecritures`, element.requete, { context: contexte });
+    return this.http.post(`${base}/ecritures`, element.requete, { context: contexte, headers });
   }
 }
