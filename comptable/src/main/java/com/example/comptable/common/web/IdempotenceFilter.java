@@ -19,7 +19,7 @@ import java.util.regex.Pattern;
  * Empêche qu'une saisie envoyée deux fois crée deux écritures ou deux pièces. L'application hors ligne envoie chaque saisie avec une clé unique (en-tête {@code Idempotency-Key}) ; si le réseau retombe avant la
  * réponse, elle renvoie la même saisie avec la même clé. Le serveur ne l'exécute qu'une fois et rejoue la réponse mémorisée aux renvois.
  *
- * <p>Limité à la création d'écritures et au dépôt de pièces (les seules saisies mises en file d'attente hors ligne), placé APRÈS l'authentification : la clé est propre à l'utilisateur. Sans l'en-tête, le comportement
+ * <p>Limité à la création d'écritures, au dépôt de pièces et aux propositions d'opérations (les seules saisies mises en file d'attente hors ligne), placé APRÈS l'authentification : la clé est propre à l'utilisateur. Sans l'en-tête, le comportement
  * est strictement inchangé. Seules les réponses de succès (2xx) sont mémorisées ; un refus ou une panne libère la clé pour que le renvoi puisse réussir.
  */
 public class IdempotenceFilter extends OncePerRequestFilter {
@@ -27,7 +27,7 @@ public class IdempotenceFilter extends OncePerRequestFilter {
     public static final String ENTETE = "Idempotency-Key";
     static final String ENTETE_REJEU = "Idempotent-Replayed";
 
-    private static final Pattern ROUTE = Pattern.compile("^/api/entreprises/[^/]+/(ecritures|documents)$");
+    private static final Pattern ROUTE = Pattern.compile("^/api/entreprises/[^/]+/(ecritures|documents|operations/(achat|vente|reglement|avoir)/proposition)$");
     private static final Pattern CLE_VALIDE = Pattern.compile("^[A-Za-z0-9_-]{8,100}$");
 
     private final RequeteIdempotenteStore store;

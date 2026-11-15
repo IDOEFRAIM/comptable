@@ -16,9 +16,10 @@ function identifiant(): string {
 }
 
 /**
- * Saisies faites hors ligne, gardées sur l'appareil puis envoyées au retour de la connexion. Seules deux actions sont autorisées hors ligne, parce qu'elles sont sûres à rejouer plus tard :
+ * Saisies faites hors ligne, gardées sur l'appareil puis envoyées au retour de la connexion. Seules trois actions sont autorisées hors ligne, parce qu'elles sont sûres à rejouer plus tard :
  * - le dépôt d'une pièce (le serveur détecte lui-même les fichiers en double) ;
- * - la création d'une écriture en BROUILLON (elle ne compte dans aucun état tant qu'elle n'est pas validée en ligne).
+ * - la création d'une écriture en BROUILLON (elle ne compte dans aucun état tant qu'elle n'est pas validée en ligne) ;
+ * - une opération de Saisie rapide (achat, vente, règlement, avoir) : le serveur en tire une PROPOSITION d'écriture, qui n'a aucun effet comptable tant qu'elle n'est pas validée en ligne.
  * Tout le reste (validation, clôture, banque, import, facturation…) exige une connexion. Chaque élément est envoyé un par un, dans l'ordre ; un refus du serveur (exercice clôturé, donnée invalide…) met
  * l'élément en « Refusé » avec le message du serveur, sans bloquer les suivants.
  */
@@ -34,6 +35,8 @@ export class FileAttenteService {
   readonly rapport = signal<string | null>(null);
   /** Confirmation brève après une mise en file (« Enregistré hors ligne… »). */
   readonly confirmation = signal<string | null>(null);
+  /** Incrémenté à la fin de chaque synchronisation : les pages qui affichent des données envoyées (ex. propositions en attente) se rechargent. */
+  readonly synchroniseeLe = signal(0);
 
   readonly enAttente = computed(() => this.elements().filter((e) => e.statut !== 'REJETE'));
   readonly refuses = computed(() => this.elements().filter((e) => e.statut === 'REJETE'));
@@ -95,6 +98,21 @@ export class FileAttenteService {
     });
   }
 
+  async enfilerOperation(entrepriseId: string, chemin: string, requete: unknown, libelle: string): Promise<void> {
+    await this.ajouter({
+      id: identifiant(),
+      utilisateur: this.utilisateur(),
+      entrepriseId,
+      type: 'OPERATION',
+      libelle,
+      creeLe: Date.now(),
+      statut: 'EN_ATTENTE',
+      tentatives: 0,
+      requete,
+      chemin,
+    });
+  }
+
   private async ajouter(element: ElementFile): Promise<void> {
     await fileAttenteStore.ajouter(element);
     this.elements.update((liste) => [...liste, element]);
@@ -128,6 +146,7 @@ export class FileAttenteService {
     }
     this.synchronisation.set(true);
     let envoyes = 0;
+    let operations = 0;
     let refuses = 0;
     let interrompu: string | null = null;
     try {
@@ -137,6 +156,9 @@ export class FileAttenteService {
           await firstValueFrom(this.envoyer(element));
           await this.supprimer(element.id);
           envoyes++;
+          if (element.type === 'OPERATION') {
+            operations++;
+          }
         } catch (erreur) {
           const e = erreur instanceof HttpErrorResponse ? erreur : new HttpErrorResponse({ status: 0 });
           if (e.status === 0 || e.status === 401 || e.status === 502 || e.status === 503 || e.status === 504) {
@@ -152,7 +174,11 @@ export class FileAttenteService {
     } finally {
       this.synchronisation.set(false);
     }
+    this.synchroniseeLe.update((n) => n + 1);
     const parties = [`${envoyes} élément(s) envoyé(s)`];
+    if (operations > 0) {
+      parties.push(`${operations} opération(s) à valider dans Saisie rapide`);
+    }
     if (refuses > 0) {
       parties.push(`${refuses} refusé(s) par le serveur (voir le détail)`);
     }
@@ -172,6 +198,9 @@ export class FileAttenteService {
       formData.append('typeDocument', element.typeDocument ?? 'AUTRE');
       formData.append('fichier', new File([element.fichier as Blob], element.nomFichier ?? 'piece', { type: element.typeMime }));
       return this.http.post(`${base}/documents`, formData, { context: contexte, headers });
+    }
+    if (element.type === 'OPERATION') {
+      return this.http.post(`${base}/${element.chemin}`, element.requete, { context: contexte, headers });
     }
     return this.http.post(`${base}/ecritures`, element.requete, { context: contexte, headers });
   }

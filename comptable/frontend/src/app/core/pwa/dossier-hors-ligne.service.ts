@@ -38,6 +38,7 @@ const LECTURES = [
   '/revue/espace',
   '/banque/synthese',
   '/fiscalite/tva/periodes',
+  '/operations/propositions',
 ];
 const ETATS = ['dossier-financier', 'compte-resultat', 'bilan', 'tft', 'notes'];
 const MAX_DETAILS_ECRITURES = 150;
@@ -85,6 +86,9 @@ export class DossierHorsLigneService {
       for (const chemin of LECTURES) {
         resultats.set(chemin, await lire<unknown>(chemin));
       }
+      // listes de tiers par type, comme les charge la Saisie rapide (mêmes paramètres : sinon la clé de cache ne correspond pas)
+      await lire<unknown>('/tiers', new HttpParams().set('type', 'FOURNISSEUR'));
+      await lire<unknown>('/tiers', new HttpParams().set('type', 'CLIENT'));
       // vue par défaut de la page Documents (mois courant, 1re page de 20) : mêmes paramètres, dans le même ordre, que document-hub.component.ts, sinon la clé de cache ne correspond pas
       const mois = new Date().toISOString().slice(0, 7);
       await lire<unknown>('/documents/hub/synthese', new HttpParams().set('periode', mois));

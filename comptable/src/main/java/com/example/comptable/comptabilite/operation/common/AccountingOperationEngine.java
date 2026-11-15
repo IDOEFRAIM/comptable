@@ -311,6 +311,18 @@ public class AccountingOperationEngine {
                 dateRattachement, libelle, null, resultat, AccountingSource.de("DEPRECIATION", depreciation.getId(), "COMPTABILISATION"));
     }
 
+    /**
+     * Propositions du dossier qui attendent une decision humaine (completes ou a revoir), les plus recentes d'abord. Sert a retrouver, une fois en ligne, les operations saisies hors ligne : la
+     * proposition est generee a la synchronisation et se valide ensuite comme les autres.
+     */
+    @Transactional(readOnly = true)
+    public java.util.List<AccountingOperationProposalDto> listerEnAttente(UUID entrepriseId, UtilisateurPrincipal principal) {
+        entrepriseAccessService.verifierAcces(entrepriseId, principal);
+        return accountingOperationProposalRepository.findTop100ByEntrepriseIdAndStatutInOrderByCreatedAtDesc(entrepriseId,
+                java.util.List.of(StatutOperationProposal.PROPOSED, StatutOperationProposal.NEEDS_REVIEW)).stream()
+                .map(AccountingOperationProposalDto::from).toList();
+    }
+
     @Transactional(readOnly = true)
     public AccountingOperationProposalDto obtenir(UUID entrepriseId, UUID propositionId, UtilisateurPrincipal principal) {
         entrepriseAccessService.verifierAcces(entrepriseId, principal);

@@ -1,10 +1,12 @@
 import { CommonModule } from '@angular/common';
-import { Component, OnInit, computed, inject, signal } from '@angular/core';
+import { Component, OnInit, computed, effect, inject, signal } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { map } from 'rxjs/operators';
 import { BrouillonLocalService } from '../../../core/forms/brouillon-local.service';
+import { FileAttenteService } from '../../../core/pwa/file-attente.service';
+import { HorsLigneService } from '../../../core/pwa/hors-ligne.service';
 import { ComptabiliteService } from '../comptabilite.service';
 import { CompteComptableDto, TiersDto } from '../models/comptabilite.model';
 import {
@@ -52,6 +54,13 @@ export class OperationsPageComponent implements OnInit {
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly brouillon = inject(BrouillonLocalService);
+  readonly horsLigne = inject(HorsLigneService);
+  private readonly fileAttente = inject(FileAttenteService);
+
+  /** Message affiché quand l'opération a été gardée sur l'appareil (hors ligne) au lieu d'être envoyée. */
+  readonly messageEnFile = signal<string | null>(null);
+  /** Propositions du dossier qui attendent une décision (dont celles issues de saisies faites hors ligne). */
+  readonly propositionsEnAttente = signal<AccountingOperationProposalDto[]>([]);
 
   /** Moment du brouillon retrouvé à l'ouverture ; null si la saisie est neuve. */
   readonly brouillonRestaure = signal<number | null>(null);
@@ -112,6 +121,30 @@ export class OperationsPageComponent implements OnInit {
   readonly afficheNature = computed(() => this.categorie() === 'ACHAT' || this.categorie() === 'VENTE');
   readonly afficheMoyenPaiement = computed(() => this.categorie() === 'REGLEMENT');
   readonly afficheSens = computed(() => this.categorie() === 'REGLEMENT' || this.categorie() === 'AVOIR');
+
+  constructor() {
+    // après chaque synchronisation (retour d'Internet), les opérations envoyées apparaissent dans la liste « à valider »
+    effect(() => {
+      this.fileAttente.synchroniseeLe();
+      if (this.entrepriseId()) {
+        this.chargerPropositionsEnAttente();
+      }
+    });
+  }
+
+  chargerPropositionsEnAttente(): void {
+    this.comptabiliteService.listerPropositionsEnAttente(this.entrepriseId()).subscribe({
+      next: (liste) => this.propositionsEnAttente.set(liste),
+      error: () => undefined, // hors ligne sans copie locale : la liste reste telle quelle
+    });
+  }
+
+  ouvrirProposition(proposition: AccountingOperationProposalDto): void {
+    this.erreur.set(null);
+    this.messageEnFile.set(null);
+    this.proposition.set(proposition);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
 
   ngOnInit(): void {
     const id = this.entrepriseId();
@@ -233,8 +266,17 @@ export class OperationsPageComponent implements OnInit {
 
     appel.subscribe({
       next: (dto) => {
-        this.proposition.set(dto);
         this.envoiEnCours.set(false);
+        if ((dto as unknown as { enFileAttente?: boolean })?.enFileAttente) {
+          // hors ligne : l'opération est gardée sur l'appareil ; la proposition d'écriture sera générée à la synchronisation
+          this.brouillon.effacer(FORMULAIRE, entrepriseId);
+          this.brouillonRestaure.set(null);
+          this.reinitialiserFormulaire();
+          this.messageEnFile.set('Opération enregistrée sur cet appareil. Dès le retour d’Internet, elle sera envoyée et sa proposition d’écriture vous attendra ci-dessous pour validation.');
+          return;
+        }
+        this.messageEnFile.set(null);
+        this.proposition.set(dto);
       },
       error: (err) => {
         this.erreur.set(err?.error?.message ?? 'Impossible de générer la proposition.');
@@ -255,6 +297,7 @@ export class OperationsPageComponent implements OnInit {
         this.brouillonRestaure.set(null);
         this.proposition.set(dto);
         this.envoiEnCours.set(false);
+        this.chargerPropositionsEnAttente();
       },
       error: (err) => {
         this.erreur.set(err?.error?.message ?? 'Impossible de valider cette proposition.');
@@ -273,6 +316,7 @@ export class OperationsPageComponent implements OnInit {
       next: (dto) => {
         this.proposition.set(dto);
         this.envoiEnCours.set(false);
+        this.chargerPropositionsEnAttente();
       },
       error: (err) => {
         this.erreur.set(err?.error?.message ?? 'Impossible de rejeter cette proposition.');
@@ -286,6 +330,7 @@ export class OperationsPageComponent implements OnInit {
   }
 
   nouvelleOperation(): void {
+    this.messageEnFile.set(null);
     this.proposition.set(null);
     this.reinitialiserFormulaire();
     this.brouillon.effacer(FORMULAIRE, this.entrepriseId());

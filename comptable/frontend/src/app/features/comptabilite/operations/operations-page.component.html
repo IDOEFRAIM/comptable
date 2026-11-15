@@ -14,6 +14,16 @@
     </div>
   }
 
+  @if (!horsLigne.enLigne()) {
+    <p class="info-hors-ligne" role="status" data-zone="info-hors-ligne">
+      Hors ligne : vous pouvez saisir l’opération. Elle sera enregistrée sur cet appareil, et sa proposition d’écriture sera générée au retour d’Internet pour que vous la validiez.
+    </p>
+  }
+
+  @if (messageEnFile(); as message) {
+    <p class="message-en-file" role="status" data-zone="operation-en-file">{{ message }}</p>
+  }
+
   <div class="carte">
     <div class="onglets-categorie">
       <button type="button" [class.actif]="categorie() === 'ACHAT'" (click)="changerCategorie('ACHAT')">Achat</button>
@@ -129,7 +139,7 @@
 
     <div class="actions-formulaire">
       <button type="button" class="bouton-principal" [disabled]="envoiEnCours()" (click)="proposer()">
-        {{ envoiEnCours() ? 'Génération…' : 'Générer la proposition' }}
+        {{ envoiEnCours() ? (horsLigne.enLigne() ? 'Génération…' : 'Enregistrement…') : horsLigne.enLigne() ? 'Générer la proposition' : 'Enregistrer hors ligne' }}
       </button>
       @if (proposition()) {
         <button type="button" class="bouton-lien" (click)="nouvelleOperation()">Nouvelle opération</button>
@@ -144,4 +154,23 @@
       (modifier)="allerVersSaisieManuelle()"
     />
   </div>
+
+  @if (propositionsEnAttente().length > 0) {
+    <section class="carte propositions-en-attente" data-zone="propositions-en-attente">
+      <h3>Propositions à valider ({{ propositionsEnAttente().length }})</h3>
+      <p class="aide-liste">Opérations déjà saisies, dont celles envoyées après un travail hors ligne. Ouvrez-en une pour la vérifier puis la valider.</p>
+      <ul>
+        @for (p of propositionsEnAttente(); track p.id) {
+          <li>
+            <span class="type">{{ p.type }}</span>
+            <span class="libelle">{{ p.libelle }}</span>
+            <span class="date">{{ p.dateOperation }}</span>
+            <span class="montant">{{ p.totalDebit | number: '1.0-0' }}</span>
+            <span class="statut" [class.revue]="p.statut === 'NEEDS_REVIEW'">{{ p.statut === 'NEEDS_REVIEW' ? 'À revoir' : 'À valider' }}</span>
+            <button type="button" (click)="ouvrirProposition(p)" data-action="ouvrir-proposition">Ouvrir</button>
+          </li>
+        }
+      </ul>
+    </section>
+  }
 </div>

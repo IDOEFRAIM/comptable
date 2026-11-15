@@ -173,6 +173,11 @@ export class ComptabiliteService {
     );
   }
 
+  /** Propositions d'écriture qui attendent une décision (dont celles issues de saisies faites hors ligne). */
+  listerPropositionsEnAttente(entrepriseId: string): Observable<AccountingOperationProposalDto[]> {
+    return this.http.get<AccountingOperationProposalDto[]>(`${BASE_URL}/${entrepriseId}/operations/propositions`);
+  }
+
   obtenirProposition(entrepriseId: string, propositionId: string): Observable<AccountingOperationProposalDto> {
     return this.http.get<AccountingOperationProposalDto>(
       `${BASE_URL}/${entrepriseId}/operations/propositions/${propositionId}`,

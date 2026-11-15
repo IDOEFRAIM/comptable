@@ -1,4 +1,4 @@
-export type TypeElementFile = 'DOCUMENT' | 'ECRITURE';
+export type TypeElementFile = 'DOCUMENT' | 'ECRITURE' | 'OPERATION';
 export type StatutElementFile = 'EN_ATTENTE' | 'EN_COURS' | 'REJETE';
 
 /** Une saisie faite hors ligne, gardée sur l'appareil jusqu'à son envoi au serveur. */
@@ -20,8 +20,10 @@ export interface ElementFile {
   nomFichier?: string;
   typeMime?: string;
   fichier?: Blob;
-  // ECRITURE
+  // ECRITURE et OPERATION
   requete?: unknown;
+  // OPERATION : route de proposition, relative au dossier (ex. « operations/achat/proposition »)
+  chemin?: string;
 }
 
 const NOM_BASE = 'warimara-file-attente';

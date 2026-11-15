@@ -102,6 +102,7 @@ export type DisponibiliteHorsLigne = 'saisie' | 'lecture' | 'connexion';
 const HORS_LIGNE: Record<string, DisponibiliteHorsLigne> = {
   documents: 'saisie',
   ecritures: 'saisie',
+  operations: 'saisie',
   'tableau-de-bord': 'lecture',
   'demandes-pieces': 'lecture',
   tiers: 'lecture',

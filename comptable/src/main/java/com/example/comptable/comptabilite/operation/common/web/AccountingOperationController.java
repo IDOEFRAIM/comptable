@@ -58,6 +58,13 @@ public class AccountingOperationController {
         return accountingOperationEngine.proposerAvoir(entrepriseId, request, principal);
     }
 
+    /** Propositions en attente de validation du dossier (dont celles issues de saisies faites hors ligne). */
+    @GetMapping("/propositions")
+    public java.util.List<AccountingOperationProposalDto> enAttente(@PathVariable UUID entrepriseId,
+                                                                    @AuthenticationPrincipal UtilisateurPrincipal principal) {
+        return accountingOperationEngine.listerEnAttente(entrepriseId, principal);
+    }
+
     @GetMapping("/propositions/{propositionId}")
     public AccountingOperationProposalDto obtenir(@PathVariable UUID entrepriseId, @PathVariable UUID propositionId,
                                                    @AuthenticationPrincipal UtilisateurPrincipal principal) {
