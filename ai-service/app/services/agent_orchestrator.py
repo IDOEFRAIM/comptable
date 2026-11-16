@@ -316,13 +316,13 @@ class _SessionBedrock:
     def repondre(self, resultats: list[tuple[_AppelOutil, dict[str, Any]]]) -> None:
         blocs = []
         for appel, resultat in resultats:
+            # Pas de champ « status » : seuls Nova et Claude 3/4 l'acceptent. Une panne d'outil est de toute facon
+            # decrite dans le JSON ({"erreur": ...}), que le modele lit.
             bloc: dict[str, Any] = {
                 "toolUseId": appel.id,
                 # Converse exige un objet JSON pur (Decimal, date... passes par default=str)
                 "content": [{"json": json.loads(json.dumps(resultat, default=str))}],
             }
-            if "erreur" in resultat:
-                bloc["status"] = "error"
             blocs.append({"toolResult": bloc})
         self._messages.append({"role": "user", "content": blocs})
 

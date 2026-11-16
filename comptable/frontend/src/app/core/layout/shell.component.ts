@@ -5,6 +5,8 @@ import { AuthService } from '../auth/auth.service';
 import { TokenStorageService } from '../auth/token-storage.service';
 import { GuideAssistantComponent } from '../aide/guide-assistant.component';
 import { BandeauConnexionComponent } from '../pwa/bandeau-connexion.component';
+import { EtatConnexionComponent } from '../pwa/etat-connexion.component';
+import { SynchronisationAutoService } from '../pwa/synchronisation-auto.service';
 import { HorsLigneService } from '../pwa/hors-ligne.service';
 import { NotificationService } from '../../features/notifications/notification.service';
 import { NotificationDto } from '../../features/notifications/models/notification.model';
@@ -14,7 +16,7 @@ const INTERVALLE_RAFRAICHISSEMENT_MS = 30_000;
 @Component({
   selector: 'app-shell',
   standalone: true,
-  imports: [RouterOutlet, RouterLink, RouterLinkActive, BandeauConnexionComponent, GuideAssistantComponent],
+  imports: [RouterOutlet, RouterLink, RouterLinkActive, BandeauConnexionComponent, EtatConnexionComponent, GuideAssistantComponent],
   templateUrl: './shell.component.html',
   styleUrl: './shell.component.scss',
 })
@@ -24,6 +26,7 @@ export class ShellComponent implements OnInit, OnDestroy {
   private readonly notificationService = inject(NotificationService);
   private readonly router = inject(Router);
   readonly horsLigne = inject(HorsLigneService);
+  private readonly synchronisationAuto = inject(SynchronisationAutoService);
 
   private abonnementCompteur?: Subscription;
 
@@ -36,6 +39,7 @@ export class ShellComponent implements OnInit, OnDestroy {
   readonly dropdownOuvert = signal(false);
 
   ngOnInit(): void {
+    this.synchronisationAuto.demarrer();
     this.abonnementCompteur = interval(INTERVALLE_RAFRAICHISSEMENT_MS)
       .pipe(
         startWith(0),

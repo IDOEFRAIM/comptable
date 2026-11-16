@@ -19,17 +19,23 @@ export class HorsLigneService {
   private evenementInstallation: EvenementInstallation | null = null;
 
   readonly enLigne = signal(typeof navigator === 'undefined' ? true : navigator.onLine);
+  /** Heure à laquelle la connexion a été perdue (null quand on est en ligne). */
+  readonly horsLigneDepuis = signal<number | null>(typeof navigator !== 'undefined' && !navigator.onLine ? Date.now() : null);
   readonly installable = signal(false);
   readonly miseAJourDisponible = signal(false);
 
   constructor() {
     window.addEventListener('online', () => {
       this.enLigne.set(true);
+      this.horsLigneDepuis.set(null);
       if (this.miseAJour?.isEnabled) {
         this.miseAJour.checkForUpdate().catch(() => undefined);
       }
     });
-    window.addEventListener('offline', () => this.enLigne.set(false));
+    window.addEventListener('offline', () => {
+      this.enLigne.set(false);
+      this.horsLigneDepuis.set(Date.now());
+    });
     window.addEventListener('beforeinstallprompt', (evenement) => {
       evenement.preventDefault();
       this.evenementInstallation = evenement as EvenementInstallation;

@@ -21,6 +21,10 @@ import { CollecteHubComponent } from '../demandes/collecte/collecte-hub.componen
   template: `
     @if (entrepriseId(); as entrepriseId) {
       <div class="page-documents">
+        <header class="entete-documents">
+          <h2>Documents</h2>
+          <p>Déposez ici les factures, reçus et relevés : ils sont lus automatiquement puis rangés, ou envoyés en vérification s’il y a un doute.</p>
+        </header>
         @if (!estMembreCabinet) {
           <app-copilot-dirigeant-widget [entrepriseId]="entrepriseId" />
         }
@@ -41,6 +45,15 @@ import { CollecteHubComponent } from '../demandes/collecte/collecte-hub.componen
         display: flex;
         flex-direction: column;
         gap: 1.5rem;
+      }
+      .entete-documents h2 {
+        margin: 0;
+        font-size: 1.2rem;
+      }
+      .entete-documents p {
+        margin: 0.3rem 0 0;
+        color: var(--text-tertiary);
+        font-size: 0.875rem;
       }
     `,
   ],

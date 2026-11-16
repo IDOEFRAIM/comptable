@@ -6,9 +6,12 @@ import { HorsLigneService, MESSAGE_HORS_LIGNE_ECRITURE } from './hors-ligne.serv
 
 const ROUTE_DOCUMENT = /^\/api\/entreprises\/([^/]+)\/documents$/;
 const ROUTE_ECRITURE = /^\/api\/entreprises\/([^/]+)\/ecritures$/;
+const ROUTE_OPERATION = /^\/api\/entreprises\/([^/]+)\/(operations\/(achat|vente|reglement|avoir)\/proposition)$/;
 
-/** Les seules écritures acceptées hors ligne (voir {@link FileAttenteService}) : dépôt d'une pièce et création d'une écriture en brouillon. */
-function actionEnfilable(req: HttpRequest<unknown>): { entrepriseId: string; type: 'DOCUMENT' | 'ECRITURE' } | null {
+const LIBELLES_OPERATION: Record<string, string> = { achat: 'Achat', vente: 'Vente', reglement: 'Règlement', avoir: 'Avoir' };
+
+/** Les seules écritures acceptées hors ligne (voir {@link FileAttenteService}) : dépôt d'une pièce, création d'une écriture en brouillon et opération de Saisie rapide. */
+function actionEnfilable(req: HttpRequest<unknown>): { entrepriseId: string; type: 'DOCUMENT' | 'ECRITURE' | 'OPERATION'; chemin?: string; categorie?: string } | null {
   if (req.method !== 'POST' || req.context.get(REJEU_FILE_ATTENTE)) {
     return null;
   }
@@ -21,12 +24,22 @@ function actionEnfilable(req: HttpRequest<unknown>): { entrepriseId: string; typ
   if (ecriture && req.body && typeof req.body === 'object') {
     return { entrepriseId: ecriture[1], type: 'ECRITURE' };
   }
+  const operation = ROUTE_OPERATION.exec(chemin);
+  if (operation && req.body && typeof req.body === 'object') {
+    return { entrepriseId: operation[1], type: 'OPERATION', chemin: operation[2], categorie: operation[3] };
+  }
   return null;
 }
 
+/** « Achat : Transport sacs de riz (45 000) » : ce que le comptable reconnaît dans la liste d'attente. */
+function libelleOperation(categorie: string, corps: { libelle?: string; montantHt?: number; montant?: number }): string {
+  const montant = Number(corps.montantHt ?? corps.montant ?? 0);
+  return `${LIBELLES_OPERATION[categorie] ?? 'Opération'} : ${corps.libelle || 'sans libellé'} (${montant.toLocaleString('fr-FR')})`;
+}
+
 /**
- * Hors ligne, l'application est en LECTURE SEULE, sauf deux saisies sûres à rejouer plus tard qui sont mises en file d'attente sur l'appareil puis envoyées au retour d'Internet (dépôt d'une pièce,
- * écriture en brouillon : voir {@link FileAttenteService}). Toute autre écriture vers l'API est refusée immédiatement avec un message clair, au lieu d'attendre un délai réseau ou d'être perdue en
+ * Hors ligne, l'application est en LECTURE SEULE, sauf trois saisies sûres à rejouer plus tard qui sont mises en file d'attente sur l'appareil puis envoyées au retour d'Internet (dépôt d'une pièce,
+ * écriture en brouillon, opération de Saisie rapide : voir {@link FileAttenteService}). Toute autre écriture vers l'API est refusée immédiatement avec un message clair, au lieu d'attendre un délai réseau ou d'être perdue en
  * silence : en comptabilité, rejouer plus tard une validation, une clôture ou une saisie dépendant de l'état du serveur serait dangereux (période clôturée, version modifiée par un collègue). À placer
  * EN PREMIER dans la chaîne d'intercepteurs pour que ce message ne soit pas remplacé par le message générique « serveur injoignable ».
  */
@@ -39,7 +52,12 @@ export const horsLigneInterceptor: HttpInterceptorFn = (req, next) => {
   const action = actionEnfilable(req);
   if (action) {
     const file = inject(FileAttenteService);
-    const mise = action.type === 'DOCUMENT' ? mettreDocumentEnFile(file, action.entrepriseId, req.body as FormData) : file.enfilerEcriture(action.entrepriseId, req.body as never);
+    const mise =
+      action.type === 'DOCUMENT'
+        ? mettreDocumentEnFile(file, action.entrepriseId, req.body as FormData)
+        : action.type === 'OPERATION'
+          ? file.enfilerOperation(action.entrepriseId, action.chemin!, req.body, libelleOperation(action.categorie!, req.body as never))
+          : file.enfilerEcriture(action.entrepriseId, req.body as never);
     // 202 Accepted : la saisie est enregistrée sur l'appareil, pas encore sur le serveur
     return from(mise).pipe(map(() => new HttpResponse({ status: 202, statusText: 'Accepted', url: req.url, body: { enFileAttente: true } })));
   }

@@ -527,3 +527,115 @@
     margin-top: 0.6rem;
   }
 }
+
+// --- À faire : uniquement des compteurs réels renvoyés par le serveur, chacun mène à la page où le traiter.
+.carte-a-faire {
+  padding: 1.1rem 1.25rem;
+
+  h3 {
+    margin: 0 0 0.6rem;
+    font-size: 1rem;
+  }
+}
+
+.rien-a-faire {
+  margin: 0;
+  color: var(--text-tertiary);
+  font-size: 0.875rem;
+}
+
+.liste-a-faire {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+
+  li + li {
+    border-top: 1px solid var(--border-subtle);
+  }
+
+  a {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.6rem 0.25rem;
+    color: var(--text-primary);
+    text-decoration: none;
+    font-size: 0.875rem;
+
+    strong {
+      min-width: 1.75rem;
+      color: var(--color-warning);
+      font-variant-numeric: tabular-nums;
+    }
+
+    &:hover {
+      background: var(--bg-subtle);
+    }
+  }
+
+  li.danger strong {
+    color: var(--color-danger);
+  }
+
+  .fleche {
+    margin-left: auto;
+    color: var(--color-primary);
+    font-weight: 600;
+    font-size: 0.8125rem;
+  }
+}
+
+// --- Raccourcis vers les tâches courantes.
+.raccourcis h3 {
+  margin: 0 0 0.6rem;
+  font-size: 1rem;
+}
+
+.grille-raccourcis {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 0.75rem;
+}
+
+.raccourci {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  padding: 0.9rem 1rem;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-xs);
+  text-decoration: none;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+
+  &:hover {
+    border-color: var(--color-primary-border);
+    box-shadow: var(--shadow-sm);
+  }
+}
+
+.raccourci-titre {
+  color: var(--color-primary);
+  font-weight: 700;
+  font-size: 0.875rem;
+}
+
+.raccourci-detail {
+  color: var(--text-tertiary);
+  font-size: 0.75rem;
+}
+
+// Le domaine d'abord, puis son état : un domaine sans constat reste discret (texte gris, petit), seul un
+// domaine à traiter ressort. Évite la rangée de « Aucun constat » en gros caractères.
+.score-domaine {
+  .libelle {
+    order: -1;
+  }
+
+  &:not(.moyen):not(.faible) .valeur {
+    font-size: 0.8125rem;
+    font-weight: 500;
+    color: var(--text-tertiary);
+  }
+}

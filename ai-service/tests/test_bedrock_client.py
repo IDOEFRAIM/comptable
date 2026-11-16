@@ -140,3 +140,48 @@ def test_une_autre_erreur_de_validation_n_est_pas_rejouee(reglages, monkeypatch)
     with pytest.raises(ClientError):
         bedrock_client.call_structured(system_prompt="s", user_text="t", tool_name="n", tool_description="d", input_schema=SCHEMA)
     assert faux.essais == 1
+
+
+def _faux_qui_refuse(message, retire):
+    """Faux client Bedrock : leve une ValidationException tant que l'option `retire` est presente."""
+    from botocore.exceptions import ClientError
+
+    class Faux(FauxBedrock):
+        def __init__(self):
+            super().__init__(_reponse(entree={"x": 9}))
+            self.essais = []
+
+        def converse(self, **kwargs):
+            self.essais.append({cle: (dict(v) if isinstance(v, dict) else v) for cle, v in kwargs.items()})
+            if retire(kwargs):
+                raise ClientError({"Error": {"Code": "ValidationException", "Message": message}}, "Converse")
+            return self.reponse
+
+    return Faux()
+
+
+def test_message_anthropic_tool_choice_avec_underscore_est_reconnu(reglages, monkeypatch):
+    """Anthropic ecrit « tool_choice » (et non toolChoice) quand le raisonnement du modele interdit d'imposer un outil."""
+    faux = _faux_qui_refuse("Thinking may not be enabled when tool_choice forces tool use.", lambda k: "toolChoice" in k["toolConfig"])
+    monkeypatch.setattr(bedrock_client, "get_client", lambda: faux)
+    assert bedrock_client.call_structured(system_prompt="s", user_text="t", tool_name="extraire", tool_description="d", input_schema=SCHEMA) == {"x": 9}
+    assert len(faux.essais) == 2
+
+
+def test_temperature_refusee_est_retiree_puis_l_appel_rejoue(reglages, monkeypatch):
+    faux = _faux_qui_refuse("temperature may only be set to 1 when thinking is enabled", lambda k: "temperature" in k["inferenceConfig"])
+    monkeypatch.setattr(bedrock_client, "get_client", lambda: faux)
+    assert bedrock_client.call_structured(system_prompt="s", user_text="t", tool_name="extraire", tool_description="d", input_schema=SCHEMA) == {"x": 9}
+    assert "temperature" not in faux.essais[-1]["inferenceConfig"]
+
+
+def test_converse_avec_outils_est_aussi_tolerant(reglages, monkeypatch):
+    faux = _faux_qui_refuse("temperature is not supported", lambda k: "temperature" in k["inferenceConfig"])
+    faux.reponse = {"output": {"message": {"role": "assistant", "content": [{"text": "ok"}]}}}
+    monkeypatch.setattr(bedrock_client, "get_client", lambda: faux)
+    message = bedrock_client.converse_avec_outils(
+        system_prompt="s",
+        messages=[{"role": "user", "content": [{"text": "t"}]}],
+        outils=[{"name": "n", "description": "d", "input_schema": SCHEMA}],
+    )
+    assert message["content"] == [{"text": "ok"}] and len(faux.essais) == 2

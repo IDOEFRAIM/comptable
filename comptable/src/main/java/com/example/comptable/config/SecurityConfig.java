@@ -25,6 +25,7 @@ public class SecurityConfig {
 
     private final JwtAuthFilter jwtAuthFilter;
     private final io.micrometer.core.instrument.MeterRegistry meterRegistry;
+    private final com.example.comptable.common.web.RequeteIdempotenteStore requeteIdempotenteStore;
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
@@ -247,6 +248,7 @@ public class SecurityConfig {
                         .anyRequest().authenticated())
                 .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class)
                 .addFilterAfter(new com.example.comptable.common.web.AccessLogFilter(meterRegistry), JwtAuthFilter.class)
+                .addFilterAfter(new com.example.comptable.common.web.IdempotenceFilter(requeteIdempotenteStore), JwtAuthFilter.class)
                 .build();
     }
 

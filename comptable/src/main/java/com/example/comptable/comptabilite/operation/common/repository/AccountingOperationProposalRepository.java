@@ -11,6 +11,9 @@ import java.util.UUID;
 
 public interface AccountingOperationProposalRepository extends JpaRepository<AccountingOperationProposal, UUID> {
 
+    /** Propositions d'un dossier dans les statuts demandes, les plus recentes d'abord (liste « a valider »). */
+    List<AccountingOperationProposal> findTop100ByEntrepriseIdAndStatutInOrderByCreatedAtDesc(UUID entrepriseId, java.util.Collection<StatutOperationProposal> statuts);
+
     /** Consequence comptable ACTIVE (non rejetee) d'une cause metier : la cle d'idempotence metier. Au plus une
      * (garanti par l'index unique partiel {@code uq_aop_source_event}). */
     Optional<AccountingOperationProposal> findFirstByEntrepriseIdAndSourceTypeAndSourceIdAndSourceEventAndStatutNot(

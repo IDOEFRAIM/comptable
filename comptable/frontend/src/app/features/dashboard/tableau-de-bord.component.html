@@ -33,3 +33,40 @@
       }
     </div>
   }
+
+  @if (tableau(); as t) {
+    <section class="carte carte-a-faire" data-zone="a-faire">
+      <h3>À faire</h3>
+      @if (t.documentsATraiter + t.documentsEnErreur + t.ecrituresBrouillon + t.echeancesEnRetard.length === 0) {
+        <p class="rien-a-faire">Rien en attente sur ce dossier.</p>
+      } @else {
+        <ul class="liste-a-faire">
+          @if (t.echeancesEnRetard.length > 0) {
+            <li class="danger"><a routerLink="../fiscalite"><strong>{{ t.echeancesEnRetard.length }}</strong> déclaration(s) fiscale(s) en retard<span class="fleche">Ouvrir ›</span></a></li>
+          }
+          @if (t.documentsEnErreur > 0) {
+            <li class="danger"><a routerLink="../documents"><strong>{{ t.documentsEnErreur }}</strong> pièce(s) illisible(s) ou en erreur<span class="fleche">Ouvrir ›</span></a></li>
+          }
+          @if (t.documentsATraiter > 0) {
+            <li><a routerLink="../validation"><strong>{{ t.documentsATraiter }}</strong> pièce(s) à vérifier<span class="fleche">Ouvrir ›</span></a></li>
+          }
+          @if (t.ecrituresBrouillon > 0) {
+            <li><a routerLink="../ecritures"><strong>{{ t.ecrituresBrouillon }}</strong> écriture(s) en brouillon à valider<span class="fleche">Ouvrir ›</span></a></li>
+          }
+        </ul>
+      }
+    </section>
+  }
+
+  <section class="raccourcis" aria-label="Raccourcis">
+    <h3>Que voulez-vous faire ?</h3>
+    <div class="grille-raccourcis">
+      @for (r of raccourcis; track r.lien) {
+        <a class="raccourci" [routerLink]="'../' + r.lien" [attr.data-raccourci]="r.lien">
+          <span class="raccourci-titre">{{ r.titre }}</span>
+          <span class="raccourci-detail">{{ r.detail }}</span>
+        </a>
+      }
+    </div>
+  </section>
+</div>

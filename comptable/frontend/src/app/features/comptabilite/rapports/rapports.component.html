@@ -119,12 +119,12 @@
           @for (ligne of balance.lignes; track ligne.compteId) {
             <tr>
               <td>{{ ligne.compteNumero }} — {{ ligne.compteIntitule }}</td>
-              <td>{{ ligne.soldeOuverture.debit || '—' }}</td>
-              <td>{{ ligne.soldeOuverture.credit || '—' }}</td>
-              <td>{{ ligne.mouvementDebit || '—' }}</td>
-              <td>{{ ligne.mouvementCredit || '—' }}</td>
-              <td>{{ ligne.soldeCloture.debit || '—' }}</td>
-              <td>{{ ligne.soldeCloture.credit || '—' }}</td>
+              <td>{{ ligne.soldeOuverture.debit ? (ligne.soldeOuverture.debit | number: '1.0-2') : '—' }}</td>
+              <td>{{ ligne.soldeOuverture.credit ? (ligne.soldeOuverture.credit | number: '1.0-2') : '—' }}</td>
+              <td>{{ ligne.mouvementDebit ? (ligne.mouvementDebit | number: '1.0-2') : '—' }}</td>
+              <td>{{ ligne.mouvementCredit ? (ligne.mouvementCredit | number: '1.0-2') : '—' }}</td>
+              <td>{{ ligne.soldeCloture.debit ? (ligne.soldeCloture.debit | number: '1.0-2') : '—' }}</td>
+              <td>{{ ligne.soldeCloture.credit ? (ligne.soldeCloture.credit | number: '1.0-2') : '—' }}</td>
             </tr>
           }
         </tbody>
@@ -176,7 +176,7 @@
         }
       </div>
       <p class="solde-ouverture">
-        Solde d'ouverture : {{ gl.soldeOuverture.debit || gl.soldeOuverture.credit }}
+        Solde d'ouverture : {{ (gl.soldeOuverture.debit || gl.soldeOuverture.credit) | number: '1.0-2' }}
         {{ gl.soldeOuverture.debit ? '(débit)' : gl.soldeOuverture.credit ? '(crédit)' : '' }}
       </p>
       <table>
@@ -215,8 +215,8 @@
               <td>{{ ligne.journalCode }}</td>
               <td>{{ ligne.numeroPiece }}</td>
               <td>{{ ligne.libelle }}</td>
-              <td>{{ ligne.debit || '—' }}</td>
-              <td>{{ ligne.credit || '—' }}</td>
+              <td>{{ ligne.debit ? (ligne.debit | number: '1.0-2') : '—' }}</td>
+              <td>{{ ligne.credit ? (ligne.credit | number: '1.0-2') : '—' }}</td>
               @if (compteLettrable) {
                 <td>
                   @if (ligne.lettrage) {
@@ -226,7 +226,7 @@
                   }
                 </td>
               }
-              <td>{{ ligne.soldeProgressif.debit || ligne.soldeProgressif.credit }}</td>
+              <td>{{ (ligne.soldeProgressif.debit || ligne.soldeProgressif.credit) | number: '1.0-2' }}</td>
             </tr>
           }
         </tbody>
@@ -235,7 +235,7 @@
         <p class="etat-vide">Aucun mouvement validé sur cette période.</p>
       }
       <p class="solde-cloture">
-        Solde de clôture : {{ gl.soldeCloture.debit || gl.soldeCloture.credit }}
+        Solde de clôture : {{ (gl.soldeCloture.debit || gl.soldeCloture.credit) | number: '1.0-2' }}
         {{ gl.soldeCloture.debit ? '(débit)' : gl.soldeCloture.credit ? '(crédit)' : '' }}
       </p>
     </div>
@@ -264,8 +264,8 @@
                 <tr>
                   <td>{{ ligne.compteNumero }} — {{ ligne.compteIntitule }}</td>
                   <td>{{ ligne.libelle }}</td>
-                  <td>{{ ligne.debit || '—' }}</td>
-                  <td>{{ ligne.credit || '—' }}</td>
+                  <td>{{ ligne.debit ? (ligne.debit | number: '1.0-2') : '—' }}</td>
+                  <td>{{ ligne.credit ? (ligne.credit | number: '1.0-2') : '—' }}</td>
                 </tr>
               }
             </tbody>
@@ -297,10 +297,10 @@
             <tr>
               <td>{{ ligne.tiersNom }}</td>
               <td>{{ ligne.typeTiers === 'CLIENT' ? 'Client' : 'Fournisseur' }}</td>
-              <td>{{ ligne.tranche0a30 || '—' }}</td>
-              <td>{{ ligne.tranche31a60 || '—' }}</td>
-              <td>{{ ligne.tranche61a90 || '—' }}</td>
-              <td>{{ ligne.tranchePlus90 || '—' }}</td>
+              <td>{{ ligne.tranche0a30 ? (ligne.tranche0a30 | number: '1.0-2') : '—' }}</td>
+              <td>{{ ligne.tranche31a60 ? (ligne.tranche31a60 | number: '1.0-2') : '—' }}</td>
+              <td>{{ ligne.tranche61a90 ? (ligne.tranche61a90 | number: '1.0-2') : '—' }}</td>
+              <td>{{ ligne.tranchePlus90 ? (ligne.tranchePlus90 | number: '1.0-2') : '—' }}</td>
               <td>{{ ligne.total | number: '1.0-2' }}</td>
             </tr>
           }

@@ -1,12 +1,23 @@
-import { DecimalPipe } from '@angular/common';
+import { DatePipe, DecimalPipe } from '@angular/common';
 import { Component, ElementRef, HostListener, QueryList, ViewChildren, inject, signal } from '@angular/core';
-import { toSignal } from '@angular/core/rxjs-interop';
+import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { FormArray, FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
-import { finalize, map } from 'rxjs/operators';
+import { debounceTime, finalize, map } from 'rxjs/operators';
+import { BrouillonLocalService } from '../../../core/forms/brouillon-local.service';
 import { AvecModificationsNonEnregistrees } from '../../../core/forms/modifications-non-enregistrees.guard';
 import { ComptabiliteService } from '../comptabilite.service';
 import { CompteComptableDto, JournalDto, TiersDto } from '../models/comptabilite.model';
+
+const FORMULAIRE = 'ecriture';
+
+interface BrouillonEcriture {
+  journalId: string;
+  dateEcriture: string;
+  libelle: string;
+  numeroPiece: string;
+  lignes: { compteId: string; libelle: string; debit: number; credit: number; tiersId: string }[];
+}
 
 function aujourdhui(): string {
   return new Date().toISOString().slice(0, 10);
@@ -15,7 +26,7 @@ function aujourdhui(): string {
 @Component({
   selector: 'app-saisie-ecriture',
   standalone: true,
-  imports: [DecimalPipe, ReactiveFormsModule, RouterLink],
+  imports: [DatePipe, DecimalPipe, ReactiveFormsModule, RouterLink],
   templateUrl: './saisie-ecriture.component.html',
   styleUrl: './saisie-ecriture.component.scss',
 })
@@ -24,6 +35,10 @@ export class SaisieEcritureComponent implements AvecModificationsNonEnregistrees
   private readonly comptabiliteService = inject(ComptabiliteService);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
+  private readonly brouillon = inject(BrouillonLocalService);
+
+  /** Moment du brouillon retrouvé à l'ouverture (coupure, fermeture accidentelle) ; null si la saisie est neuve. */
+  readonly brouillonRestaure = signal<number | null>(null);
 
   @ViewChildren('compteSelect') compteSelects!: QueryList<ElementRef<HTMLSelectElement>>;
 
@@ -55,6 +70,40 @@ export class SaisieEcritureComponent implements AvecModificationsNonEnregistrees
     this.comptabiliteService.listerJournaux(entrepriseId).subscribe((j) => this.journaux.set(j));
     this.comptabiliteService.listerComptes(entrepriseId).subscribe((c) => this.comptes.set(c));
     this.comptabiliteService.listerTiers(entrepriseId).subscribe((t) => this.tiers.set(t));
+
+    // la saisie est gardée sur l'appareil à chaque modification : une coupure de courant ne fait plus perdre l'écriture en cours
+    const retrouve = this.brouillon.lire<BrouillonEcriture>(FORMULAIRE, entrepriseId);
+    if (retrouve) {
+      this.appliquer(retrouve.valeurs);
+      this.brouillonRestaure.set(retrouve.le);
+      this.form.markAsDirty();
+    }
+    this.form.valueChanges.pipe(debounceTime(200), takeUntilDestroyed()).subscribe(() => this.memoriser());
+  }
+
+  private appliquer(valeurs: BrouillonEcriture): void {
+    while (this.lignes.length < valeurs.lignes.length) {
+      this.lignes.push(this.creerLigne());
+    }
+    this.form.patchValue(valeurs);
+  }
+
+  private memoriser(): void {
+    if (this.enregistree || !this.form.dirty) {
+      return;
+    }
+    this.brouillon.sauver(FORMULAIRE, this.entrepriseId(), this.form.getRawValue());
+  }
+
+  /** Abandonne le brouillon retrouvé et repart d'une saisie vide. */
+  recommencer(): void {
+    this.brouillon.effacer(FORMULAIRE, this.entrepriseId());
+    this.brouillonRestaure.set(null);
+    this.lignes.clear();
+    this.lignes.push(this.creerLigne());
+    this.lignes.push(this.creerLigne());
+    this.form.reset({ journalId: '', dateEcriture: aujourdhui(), libelle: '', numeroPiece: '' });
+    this.form.markAsPristine();
   }
 
   /** Vrai dès qu'une saisie existe et n'est pas enregistrée : le routeur et la fermeture de l'onglet demandent alors confirmation. */
@@ -148,6 +197,7 @@ export class SaisieEcritureComponent implements AvecModificationsNonEnregistrees
       .subscribe({
         next: () => {
           this.enregistree = true;
+          this.brouillon.effacer(FORMULAIRE, this.entrepriseId());
           this.router.navigate(['..'], { relativeTo: this.route });
         },
         error: (err) => this.erreur.set(err.error?.message ?? 'Impossible de créer cette écriture.'),

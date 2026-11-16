@@ -19,7 +19,7 @@ const ROUTES_EN_CACHE: RegExp[] = [
   /^\/api\/entreprises$/,
   /^\/api\/entreprises\/[^/]+$/,
   /^\/api\/entreprises\/[^/]+\/(tableau-de-bord|documents|comptes|journaux|exercices|tiers|demandes-pieces|ecritures)$/,
-  /^\/api\/entreprises\/[^/]+\/(plan-comptable|plan-comptable\/arbre|articles|commandes-achat|factures|factures-avoir|devis|immobilisations|inventaires|regularisations|documents\/hub|documents\/hub\/synthese|demandes-pieces\/collecte|demandes-pieces\/collecte\/a-demander|demandes-pieces\/collecte\/synthese|recouvrement\/risques|tresorerie\/position|tresorerie\/prevision)$/,
+  /^\/api\/entreprises\/[^/]+\/(plan-comptable|plan-comptable\/arbre|articles|commandes-achat|factures|factures-avoir|devis|immobilisations|inventaires|regularisations|documents\/hub|documents\/hub\/synthese|demandes-pieces\/collecte|demandes-pieces\/collecte\/a-demander|demandes-pieces\/collecte\/synthese|recouvrement\/risques|tresorerie\/position|tresorerie\/prevision|operations\/propositions)$/,
   /^\/api\/entreprises\/[^/]+\/ecritures\/[^/]+$/,
   /^\/api\/entreprises\/[^/]+\/revue\/[^/]+(\/[^/]+)?$/,
   /^\/api\/entreprises\/[^/]+\/rapports\/[^/]+$/,

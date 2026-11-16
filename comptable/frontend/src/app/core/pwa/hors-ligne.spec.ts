@@ -17,12 +17,14 @@ describe('Mode hors ligne (PWA)', () => {
   const file = {
     enfilerDocument: jasmine.createSpy('enfilerDocument').and.resolveTo(),
     enfilerEcriture: jasmine.createSpy('enfilerEcriture').and.resolveTo(),
+    enfilerOperation: jasmine.createSpy('enfilerOperation').and.resolveTo(),
   };
 
   beforeEach(() => {
     enLigne.set(true);
     file.enfilerDocument.calls.reset();
     file.enfilerEcriture.calls.reset();
+    file.enfilerOperation.calls.reset();
     TestBed.configureTestingModule({
       providers: [
         provideHttpClient(withInterceptors([horsLigneInterceptor])),
@@ -52,6 +54,33 @@ describe('Mode hors ligne (PWA)', () => {
     http.expectNone('/api/entreprises/e1/ecritures');
     expect(file.enfilerEcriture).toHaveBeenCalledWith('e1', { libelle: 'x', lignes: [] });
     expect(statut).toBe(202);
+  });
+
+  it('hors ligne, une opération de Saisie rapide est mise en file (202) avec sa route et un libellé lisible', async () => {
+    enLigne.set(false);
+    let statut = 0;
+    const corps = { fournisseurId: 'f1', libelle: 'Transport sacs de riz', montantHt: 45000 };
+    client.post('/api/entreprises/e1/operations/achat/proposition', corps, { observe: 'response' }).subscribe((r) => (statut = r.status));
+    await Promise.resolve();
+    http.expectNone('/api/entreprises/e1/operations/achat/proposition');
+    expect(file.enfilerOperation).toHaveBeenCalledTimes(1);
+    const [entreprise, chemin, requete, libelle] = file.enfilerOperation.calls.mostRecent().args;
+    expect(entreprise).toBe('e1');
+    expect(chemin).toBe('operations/achat/proposition');
+    expect(requete).toEqual(corps);
+    expect(libelle).toContain('Achat : Transport sacs de riz');
+    expect(libelle).toContain('45');
+    expect(statut).toBe(202);
+  });
+
+  it('hors ligne, valider ou rejeter une proposition reste refusé (jamais mis en file)', () => {
+    enLigne.set(false);
+    for (const action of ['valider', 'rejeter']) {
+      let erreur: HttpErrorResponse | null = null;
+      client.post(`/api/entreprises/e1/operations/propositions/p1/${action}`, { motif: 'x' }).subscribe({ error: (e) => (erreur = e) });
+      expect(erreur!.error.code).toBe('HORS_LIGNE');
+    }
+    expect(file.enfilerOperation).not.toHaveBeenCalled();
   });
 
   it('hors ligne, le dépôt d’une pièce est mis en file avec son fichier et son type', async () => {
@@ -117,7 +146,7 @@ describe('Mode hors ligne (PWA)', () => {
 
 describe('Cache de lectures hors ligne', () => {
   it('reconnaît les pages de lecture d’un dossier, y compris celles téléchargées pour le hors ligne', () => {
-    for (const url of ['/api/entreprises', '/api/entreprises/e1/tiers', '/api/entreprises/e1/plan-comptable', '/api/entreprises/e1/factures', '/api/entreprises/e1/ecritures/e2']) {
+    for (const url of ['/api/entreprises', '/api/entreprises/e1/tiers', '/api/entreprises/e1/plan-comptable', '/api/entreprises/e1/factures', '/api/entreprises/e1/ecritures/e2', '/api/entreprises/e1/operations/propositions']) {
       expect(routeMiseEnCache(url)).withContext(url).toBeTrue();
     }
     expect(routeMiseEnCache('/api/auth/login')).toBeFalse();
@@ -224,6 +253,52 @@ describe('FileAttenteService', () => {
     http.expectNone('/api/entreprises/e1/ecritures');
     expect(service.enAttente().length).toBe(2);
     expect(service.rapport()).toContain('reprendra automatiquement');
+  });
+
+  it('chaque envoi porte une clé d’idempotence valide, et le renvoi après coupure reprend LA MÊME clé (pas de doublon)', async () => {
+    await service.enfilerEcriture('e1', ecriture);
+    await service.enfilerDocument('e1', 'RECU', new File(['x'], 'recu.png', { type: 'image/png' }));
+    enLigne.set(true);
+
+    // 1er envoi : le réseau retombe avant la réponse
+    let fin = service.synchroniser();
+    await attendre();
+    const premier = http.expectOne('/api/entreprises/e1/ecritures');
+    const cle = premier.request.headers.get('Idempotency-Key')!;
+    expect(cle).toMatch(/^[A-Za-z0-9_-]{8,100}$/); // même format que celui accepté par le serveur
+    premier.error(new ProgressEvent('error'), { status: 0 });
+    await fin;
+
+    // reprise : même clé pour la même saisie ; le document a la sienne, différente
+    fin = service.synchroniser();
+    await attendre();
+    const renvoi = http.expectOne('/api/entreprises/e1/ecritures');
+    expect(renvoi.request.headers.get('Idempotency-Key')).toBe(cle);
+    renvoi.flush({ id: 'ec1' });
+    await attendre();
+    const doc = http.expectOne('/api/entreprises/e1/documents');
+    const cleDoc = doc.request.headers.get('Idempotency-Key')!;
+    expect(cleDoc).toMatch(/^[A-Za-z0-9_-]{8,100}$/);
+    expect(cleDoc).not.toBe(cle);
+    doc.flush({ id: 'd1' });
+    await fin;
+  });
+
+  it('une opération mise en file est envoyée sur sa route avec sa clé, puis signalée « à valider dans Saisie rapide »', async () => {
+    await service.enfilerOperation('e1', 'operations/vente/proposition', { clientId: 'c1', libelle: 'Vente riz', montantHt: 1000 }, 'Vente : Vente riz (1 000)');
+    expect(service.enAttente()[0].type).toBe('OPERATION');
+    const avant = service.synchroniseeLe();
+    enLigne.set(true);
+    const fin = service.synchroniser();
+    await attendre();
+    const envoi = http.expectOne('/api/entreprises/e1/operations/vente/proposition');
+    expect(envoi.request.body).toEqual({ clientId: 'c1', libelle: 'Vente riz', montantHt: 1000 });
+    expect(envoi.request.headers.get('Idempotency-Key')).toMatch(/^[A-Za-z0-9_-]{8,100}$/);
+    envoi.flush({ id: 'p1', statut: 'PROPOSED' });
+    await fin;
+    expect(service.elements().length).toBe(0);
+    expect(service.rapport()).toContain('1 opération(s) à valider dans Saisie rapide');
+    expect(service.synchroniseeLe()).toBe(avant + 1);
   });
 
   it('ne fait rien hors ligne', async () => {

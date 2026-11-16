@@ -1,14 +1,22 @@
 import { DOCUMENT, DatePipe } from '@angular/common';
-import { Component, OnDestroy, inject, signal } from '@angular/core';
-import { ActivatedRoute, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
+import { Component, OnDestroy, computed, inject, signal } from '@angular/core';
+import { toSignal } from '@angular/core/rxjs-interop';
+import { ActivatedRoute, NavigationEnd, Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
+import { catchError, filter, map, of, startWith } from 'rxjs';
 import { TokenStorageService } from '../../core/auth/token-storage.service';
 import { DossierHorsLigneService } from '../../core/pwa/dossier-hors-ligne.service';
 import { HorsLigneService } from '../../core/pwa/hors-ligne.service';
+import { CodePinService } from '../../core/auth/code-pin.service';
+import { SynchronisationAutoService } from '../../core/pwa/synchronisation-auto.service';
+import { IconComponent } from '../../shared/ui/icon.component';
+import { EntrepriseService } from './entreprise.service';
+import { EntrepriseDto } from './models/entreprise.model';
+import { disponibiliteHorsLigne, libellePage, menuPour } from './navigation-dossier';
 
 @Component({
   selector: 'app-entreprise-workspace',
   standalone: true,
-  imports: [RouterOutlet, RouterLink, RouterLinkActive, DatePipe],
+  imports: [RouterOutlet, RouterLink, RouterLinkActive, DatePipe, IconComponent],
   templateUrl: './entreprise-workspace.component.html',
   styleUrl: './entreprise-workspace.component.scss',
 })
@@ -16,10 +24,67 @@ export class EntrepriseWorkspaceComponent implements OnDestroy {
   private readonly tokenStorage = inject(TokenStorageService);
   private readonly document = inject(DOCUMENT);
   private readonly route = inject(ActivatedRoute);
+  private readonly router = inject(Router);
   readonly horsLigne = inject(HorsLigneService);
   readonly telechargement = inject(DossierHorsLigneService);
 
-  private readonly entrepriseId = this.route.snapshot.paramMap.get('entrepriseId') ?? '';
+  readonly entrepriseId = this.route.snapshot.paramMap.get('entrepriseId') ?? '';
+  private readonly synchronisationAuto = inject(SynchronisationAutoService);
+  readonly pin = inject(CodePinService);
+  readonly pinDefini = signal(this.pin.defini());
+  readonly pinSaisi = signal('');
+  readonly pinMessage = signal<string | null>(null);
+
+  constructor() {
+    // ce dossier devient « récent » : il est téléchargé automatiquement pour le travail sans Internet
+    this.synchronisationAuto.noterOuverture(this.entrepriseId);
+  }
+
+  async enregistrerPin(): Promise<void> {
+    try {
+      await this.pin.definir(this.pinSaisi());
+      this.pinDefini.set(true);
+      this.pinSaisi.set('');
+      this.pinMessage.set('Code PIN enregistré sur cet appareil.');
+    } catch (erreur) {
+      this.pinMessage.set((erreur as Error).message);
+    }
+  }
+
+  retirerPin(): void {
+    this.pin.retirer();
+    this.pinDefini.set(false);
+    this.pinMessage.set('Code PIN retiré.');
+  }
+
+  /** Les dossiers accessibles : nom du dossier ouvert et sélecteur pour passer d'un dossier à l'autre. */
+  readonly entreprises = toSignal(
+    inject(EntrepriseService).lister().pipe(catchError(() => of([] as EntrepriseDto[]))),
+    { initialValue: [] as EntrepriseDto[] },
+  );
+  readonly entrepriseCourante = computed(() => this.entreprises().find((e) => e.id === this.entrepriseId) ?? null);
+
+  /** Page ouverte dans le dossier (premier segment après l'id), pour le fil d'Ariane. */
+  private readonly segmentCourant = toSignal(
+    this.router.events.pipe(
+      filter((e) => e instanceof NavigationEnd),
+      startWith(null),
+      map(() => this.router.url.split('?')[0].split('/')[3] ?? ''),
+    ),
+    { initialValue: '' },
+  );
+  readonly pageCourante = computed(() => libellePage(this.segmentCourant()));
+
+  /** Change de dossier en restant sur la même page (Écritures de A → Écritures de B). Le passage par une URL
+   * neutre recrée les écrans : sinon Angular réutiliserait ceux du dossier précédent, avec ses données. */
+  changerDossier(id: string): void {
+    if (!id || id === this.entrepriseId) {
+      return;
+    }
+    const page = this.segmentCourant() || '';
+    const cible = ['/entreprises', id, ...(page && libellePage(page) ? [page] : [])];
+    this.router.navigateByUrl('/entreprises', { skipLocationChange: true }).then(() => this.router.navigate(cible));
+  }
   readonly dateTelechargement = signal<number | null>(this.entrepriseId ? this.telechargement.derniereDate(this.entrepriseId) : null);
   readonly messageTelechargement = signal<string | null>(null);
 
@@ -40,6 +105,13 @@ export class EntrepriseWorkspaceComponent implements OnDestroy {
   readonly estMembreCabinet = this.tokenStorage
     .getRoles()
     .some((role) => role === 'ROLE_EXPERT_COMPTABLE' || role === 'ROLE_COLLABORATEUR');
+
+  readonly menu = menuPour(this.estMembreCabinet);
+  readonly disponibilite = disponibiliteHorsLigne;
+
+  /** Application déjà installée sur l'ordinateur (fenêtre propre, sans barre d'adresse) : inutile de proposer l'installation. */
+  readonly installee = typeof window !== 'undefined' && window.matchMedia?.('(display-mode: standalone)').matches === true;
+  readonly guideOuvert = signal(false);
 
   /** Menu de navigation en panneau coulissant sous 960px (voir styleUrl) - ferme par defaut. */
   readonly menuMobileOuvert = signal(false);

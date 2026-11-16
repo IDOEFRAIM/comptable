@@ -9,7 +9,7 @@ import { HorsLigneService } from './hors-ligne.service';
   template: `
     @if (!horsLigne.enLigne()) {
       <div class="bandeau bandeau-hors-ligne" role="status" aria-live="polite" data-zone="bandeau-hors-ligne">
-        <strong>Mode hors ligne.</strong> Vous consultez les dernières données enregistrées sur cet appareil. Vous pouvez encore déposer des pièces et saisir des écritures en brouillon : elles seront envoyées
+        <strong>Mode hors ligne.</strong> Vous consultez les dernières données enregistrées sur cet appareil. Vous pouvez encore déposer des pièces, saisir des écritures en brouillon et des opérations de Saisie rapide : elles seront envoyées
         automatiquement dès le retour d’Internet. Le reste des modifications redevient possible une fois reconnecté.
       </div>
     }
