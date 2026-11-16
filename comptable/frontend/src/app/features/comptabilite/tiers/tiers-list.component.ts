@@ -33,7 +33,7 @@ export class TiersListComponent implements OnInit {
       if (this.fileAttente.synchroniseeLe() > 0 && this.entrepriseId()) {
         this.rafraichir();
       }
-    });
+    }, { allowSignalWrites: true }); // rafraichir() met à jour des signaux (indicateur de chargement)
   }
 
   readonly tiers = signal<TiersDto[]>([]);

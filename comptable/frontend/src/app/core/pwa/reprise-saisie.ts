@@ -86,6 +86,8 @@ export function conseilPourRefus(element: ElementFile): string {
   switch (element.type) {
     case 'TIERS':
       return 'Le tiers n’a pas pu être créé. Vérifiez la configuration des comptes clients et fournisseurs (Paramètres comptables), puis réessayez.';
+    case 'FACTURE':
+      return 'Le serveur a refusé ce brouillon. Vérifiez que le client existe encore et que les lignes sont complètes, puis recréez le document.';
     case 'DOCUMENT':
       return 'Le fichier a été refusé (format ou taille). Abandonnez cet envoi et redéposez la pièce.';
     default:

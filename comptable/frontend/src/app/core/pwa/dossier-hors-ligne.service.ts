@@ -27,7 +27,6 @@ const LECTURES = [
   '/plan-comptable/arbre',
   '/articles',
   '/commandes-achat',
-  '/factures',
   '/factures-avoir',
   '/immobilisations',
   '/inventaires',
@@ -89,6 +88,9 @@ export class DossierHorsLigneService {
       // listes de tiers par type, comme les charge la Saisie rapide (mêmes paramètres : sinon la clé de cache ne correspond pas)
       await lire<unknown>('/tiers', new HttpParams().set('type', 'FOURNISSEUR'));
       await lire<unknown>('/tiers', new HttpParams().set('type', 'CLIENT'));
+      // devis et factures par type, comme les charge la page Facturation (le type est obligatoire côté serveur)
+      await lire<unknown>('/factures', new HttpParams().set('type', 'DEVIS'));
+      await lire<unknown>('/factures', new HttpParams().set('type', 'FACTURE'));
       // vue par défaut de la page Documents (mois courant, 1re page de 20) : mêmes paramètres, dans le même ordre, que document-hub.component.ts, sinon la clé de cache ne correspond pas
       const mois = new Date().toISOString().slice(0, 7);
       await lire<unknown>('/documents/hub/synthese', new HttpParams().set('periode', mois));

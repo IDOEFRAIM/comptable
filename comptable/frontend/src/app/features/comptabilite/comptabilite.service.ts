@@ -1,7 +1,7 @@
-import { HttpClient, HttpParams } from '@angular/common/http';
+import { HttpClient, HttpContext, HttpParams } from '@angular/common/http';
 import { Injectable, Injector, inject } from '@angular/core';
 import { Observable, map } from 'rxjs';
-import { FileAttenteService } from '../../core/pwa/file-attente.service';
+import { FileAttenteService, INFO_HORS_LIGNE } from '../../core/pwa/file-attente.service';
 import { HorsLigneService } from '../../core/pwa/hors-ligne.service';
 import {
   AiMatchProposalDto,
@@ -353,14 +353,19 @@ export class ComptabiliteService {
     );
   }
 
+  /** Hors ligne, les devis et factures créés sur l'appareil et pas encore envoyés s'ajoutent en tête de la liste téléchargée. */
   listerFactures(entrepriseId: string, type: TypeFacture): Observable<FactureDto[]> {
     const params = new HttpParams().set('type', type);
-    return this.http.get<FactureDto[]>(`${BASE_URL}/${entrepriseId}/factures`, { params });
+    return this.http.get<FactureDto[]>(`${BASE_URL}/${entrepriseId}/factures`, { params }).pipe(
+      map((liste) => (this.injector.get(HorsLigneService).enLigne() ? liste : [...this.injector.get(FileAttenteService).facturesProvisoires(entrepriseId, type), ...liste])),
+    );
   }
 
-  creerFacture(entrepriseId: string, type: TypeFacture, request: CreerFactureRequest): Observable<FactureDto> {
+  /** `nomClient` ne part pas au serveur : il sert seulement à nommer le client dans la liste tant que le document n'est pas envoyé (hors ligne). */
+  creerFacture(entrepriseId: string, type: TypeFacture, request: CreerFactureRequest, nomClient?: string): Observable<FactureDto> {
     const params = new HttpParams().set('type', type);
-    return this.http.post<FactureDto>(`${BASE_URL}/${entrepriseId}/factures`, request, { params });
+    const context = new HttpContext().set(INFO_HORS_LIGNE, { tiersNom: nomClient });
+    return this.http.post<FactureDto>(`${BASE_URL}/${entrepriseId}/factures`, request, { params, context });
   }
 
   envoyerFacture(entrepriseId: string, factureId: string): Observable<FactureDto> {

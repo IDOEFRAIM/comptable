@@ -3,14 +3,46 @@ import { Injectable, computed, inject, signal } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
 import { TokenStorageService } from '../auth/token-storage.service';
 import { normaliserErreur } from '../http/messages-erreur';
-import type { CreerTiersRequest, TiersDto } from '../../features/comptabilite/models/comptabilite.model';
+import type { CreerFactureRequest, CreerTiersRequest, FactureDto, TiersDto } from '../../features/comptabilite/models/comptabilite.model';
 import { ElementFile, PREFIXE_ID_PROVISOIRE, fileAttenteStore } from './file-attente.store';
 import { HorsLigneService } from './hors-ligne.service';
 
 /** Marque une requête rejouée par la synchronisation : l'intercepteur hors ligne ne doit pas la remettre en file. */
 export const REJEU_FILE_ATTENTE = new HttpContextToken<boolean>(() => false);
 
+/** Renseignements d'affichage transmis à la mise en file d'une création (le nom du client, que la requête envoyée au serveur ne contient pas). */
+export const INFO_HORS_LIGNE = new HttpContextToken<{ tiersNom?: string } | null>(() => null);
+
 const INTERVALLE_REESSAI_MS = 60_000;
+
+/** Le devis ou la facture tel qu'on l'affiche avant son envoi : montants recalculés comme le serveur (HT = quantité × prix, TTC = HT × (1 + TVA)), numéro à attribuer. */
+function versFactureProvisoire(e: ElementFile): FactureDto {
+  const r = e.requete as CreerFactureRequest;
+  const lignes = (r.lignes ?? []).map((l, i) => {
+    const montantHt = Number(l.quantite) * Number(l.prixUnitaire);
+    return { id: `${e.idProvisoire}-${i}`, designation: l.designation, quantite: Number(l.quantite), prixUnitaire: Number(l.prixUnitaire), tauxTva: Number(l.tauxTva), montantHt, montantTtc: Math.round(montantHt * (1 + Number(l.tauxTva) / 100)), articleId: l.articleId ?? null, mouvementStockId: null };
+  });
+  const montantHt = lignes.reduce((s, l) => s + l.montantHt, 0);
+  const montantTtc = lignes.reduce((s, l) => s + l.montantTtc, 0);
+  return {
+    id: e.idProvisoire!,
+    type: e.typeFacture!,
+    numero: 'Numéro attribué à l’envoi',
+    tiersId: r.tiersId,
+    tiersNom: e.tiersNom ?? 'Client',
+    dateEmission: r.dateEmission,
+    dateEcheance: r.dateEcheance ?? null,
+    statut: 'BROUILLON',
+    objet: r.objet ?? null,
+    montantHt,
+    montantTva: montantTtc - montantHt,
+    montantTtc,
+    devisOrigineId: null,
+    ecritureId: null,
+    lignes,
+    provisoire: true,
+  };
+}
 
 function identifiant(): string {
   return typeof crypto !== 'undefined' && 'randomUUID' in crypto ? crypto.randomUUID() : `${Date.now()}-${Math.random().toString(16).slice(2)}`;
@@ -142,6 +174,39 @@ export class FileAttenteService {
       idProvisoire: tiers.id,
     });
     return tiers;
+  }
+
+  /**
+   * Devis ou facture créé sans Internet : il est gardé en BROUILLON sur l'appareil et envoyé au retour de la connexion. Le numéro officiel (DEV-… / FAC-…) est attribué par le serveur à l'envoi, comme pour tout
+   * brouillon créé en ligne : aucun numéro n'est inventé sur l'appareil, donc aucun trou ni doublon dans la numérotation. Envoyer au client, accepter, convertir et valider (écriture comptable) exigent la connexion.
+   */
+  async enfilerFacture(entrepriseId: string, typeFacture: 'DEVIS' | 'FACTURE', requete: CreerFactureRequest, tiersNom?: string): Promise<FactureDto> {
+    const id = identifiant();
+    const element: ElementFile = {
+      id,
+      utilisateur: this.utilisateur(),
+      entrepriseId,
+      type: 'FACTURE',
+      libelle: '',
+      creeLe: Date.now(),
+      statut: 'EN_ATTENTE',
+      tentatives: 0,
+      requete,
+      idProvisoire: `${PREFIXE_ID_PROVISOIRE}${id}`,
+      typeFacture,
+      tiersNom,
+    };
+    const facture = versFactureProvisoire(element);
+    element.libelle = `${typeFacture === 'DEVIS' ? 'Devis' : 'Facture'} en brouillon : ${facture.tiersNom} (${facture.montantTtc.toLocaleString('fr-FR')})`;
+    await this.ajouter(element);
+    return facture;
+  }
+
+  /** Devis ou factures créés sur cet appareil et pas encore envoyés : ajoutés aux listes tant que l'appareil est hors ligne. */
+  facturesProvisoires(entrepriseId: string, type: string): FactureDto[] {
+    return this.elements()
+      .filter((e) => e.type === 'FACTURE' && e.entrepriseId === entrepriseId && e.typeFacture === type && e.statut !== 'REJETE')
+      .map(versFactureProvisoire);
   }
 
   /** Tiers créés sur cet appareil et pas encore envoyés : ajoutés aux listes de tiers tant que l'appareil est hors ligne. */
@@ -284,6 +349,9 @@ export class FileAttenteService {
     }
     if (element.type === 'TIERS') {
       return this.http.post(`${base}/tiers`, element.requete, { context: contexte, headers });
+    }
+    if (element.type === 'FACTURE') {
+      return this.http.post(`${base}/factures`, element.requete, { context: contexte, headers, params: { type: element.typeFacture ?? 'FACTURE' } });
     }
     return this.http.post(`${base}/ecritures`, element.requete, { context: contexte, headers });
   }

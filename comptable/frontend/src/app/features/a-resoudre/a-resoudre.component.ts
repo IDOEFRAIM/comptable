@@ -8,7 +8,7 @@ import { ElementFile } from '../../core/pwa/file-attente.store';
 import { HorsLigneService } from '../../core/pwa/hors-ligne.service';
 import { conseilPourRefus, reprendreSaisie } from '../../core/pwa/reprise-saisie';
 
-const TYPES: Record<ElementFile['type'], string> = { DOCUMENT: 'Pièce', ECRITURE: 'Écriture', OPERATION: 'Saisie rapide', TIERS: 'Client / fournisseur' };
+const TYPES: Record<ElementFile['type'], string> = { DOCUMENT: 'Pièce', ECRITURE: 'Écriture', OPERATION: 'Saisie rapide', TIERS: 'Client / fournisseur', FACTURE: 'Devis / facture' };
 
 /**
  * « À résoudre » : tout ce que le serveur a refusé après une saisie sans Internet, avec la raison en clair et ce qu'il reste à faire. Une saisie refusée n'est jamais perdue : le comptable la reprend dans son

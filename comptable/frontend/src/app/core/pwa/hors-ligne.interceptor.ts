@@ -1,7 +1,7 @@
 import { HttpErrorResponse, HttpInterceptorFn, HttpRequest, HttpResponse } from '@angular/common/http';
 import { inject } from '@angular/core';
 import { from, map, throwError } from 'rxjs';
-import { FileAttenteService, REJEU_FILE_ATTENTE } from './file-attente.service';
+import { FileAttenteService, INFO_HORS_LIGNE, REJEU_FILE_ATTENTE } from './file-attente.service';
 import { HorsLigneService, MESSAGE_HORS_LIGNE_ECRITURE } from './hors-ligne.service';
 
 const ROUTE_DOCUMENT = /^\/api\/entreprises\/([^/]+)\/documents$/;
@@ -12,8 +12,11 @@ const LIBELLES_OPERATION: Record<string, string> = { achat: 'Achat', vente: 'Ven
 
 /** Les seules écritures acceptées hors ligne (voir {@link FileAttenteService}) : dépôt d'une pièce, création d'une écriture en brouillon et opération de Saisie rapide. */
 const ROUTE_TIERS = /^\/api\/entreprises\/([^/]+)\/tiers$/;
+const ROUTE_FACTURE = /^\/api\/entreprises\/([^/]+)\/factures$/;
 
-function actionEnfilable(req: HttpRequest<unknown>): { entrepriseId: string; type: 'DOCUMENT' | 'ECRITURE' | 'OPERATION' | 'TIERS'; chemin?: string; categorie?: string } | null {
+function actionEnfilable(
+  req: HttpRequest<unknown>,
+): { entrepriseId: string; type: 'DOCUMENT' | 'ECRITURE' | 'OPERATION' | 'TIERS' | 'FACTURE'; chemin?: string; categorie?: string } | null {
   if (req.method !== 'POST' || req.context.get(REJEU_FILE_ATTENTE)) {
     return null;
   }
@@ -29,6 +32,10 @@ function actionEnfilable(req: HttpRequest<unknown>): { entrepriseId: string; typ
   const tiers = ROUTE_TIERS.exec(chemin);
   if (tiers && req.body && typeof req.body === 'object') {
     return { entrepriseId: tiers[1], type: 'TIERS' };
+  }
+  const facture = ROUTE_FACTURE.exec(chemin);
+  if (facture && req.body && typeof req.body === 'object' && (req.params.get('type') === 'DEVIS' || req.params.get('type') === 'FACTURE')) {
+    return { entrepriseId: facture[1], type: 'FACTURE', categorie: req.params.get('type')! };
   }
   const operation = ROUTE_OPERATION.exec(chemin);
   if (operation && req.body && typeof req.body === 'object') {
@@ -59,6 +66,13 @@ export const horsLigneInterceptor: HttpInterceptorFn = (req, next) => {
   if (action?.type === 'TIERS') {
     // le tiers créé hors ligne est rendu tout de suite (201), avec un identifiant provisoire : la page l'affiche et les saisies suivantes peuvent l'utiliser
     return from(inject(FileAttenteService).enfilerTiers(action.entrepriseId, req.body as never)).pipe(map((tiers) => new HttpResponse({ status: 201, statusText: 'Created', url: req.url, body: tiers })));
+  }
+  if (action?.type === 'FACTURE') {
+    // devis ou facture rendu tout de suite (201) en brouillon, numéro à attribuer : la liste l'affiche, le serveur le numérotera à l'envoi
+    const info = req.context.get(INFO_HORS_LIGNE);
+    return from(inject(FileAttenteService).enfilerFacture(action.entrepriseId, action.categorie as 'DEVIS' | 'FACTURE', req.body as never, info?.tiersNom)).pipe(
+      map((facture) => new HttpResponse({ status: 201, statusText: 'Created', url: req.url, body: facture })),
+    );
   }
   if (action) {
     const file = inject(FileAttenteService);

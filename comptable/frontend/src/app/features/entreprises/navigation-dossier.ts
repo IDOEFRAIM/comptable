@@ -109,7 +109,7 @@ const HORS_LIGNE: Record<string, DisponibiliteHorsLigne> = {
   'plan-comptable': 'lecture',
   tresorerie: 'lecture',
   recouvrement: 'lecture',
-  facturation: 'lecture',
+  facturation: 'saisie',
   achats: 'lecture',
   stocks: 'lecture',
   immobilisations: 'lecture',

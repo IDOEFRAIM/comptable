@@ -1,4 +1,4 @@
-export type TypeElementFile = 'DOCUMENT' | 'ECRITURE' | 'OPERATION' | 'TIERS';
+export type TypeElementFile = 'DOCUMENT' | 'ECRITURE' | 'OPERATION' | 'TIERS' | 'FACTURE';
 
 /** Préfixe des identifiants provisoires : un tiers créé hors ligne n'a pas encore d'identifiant serveur. */
 export const PREFIXE_ID_PROVISOIRE = 'prov-';
@@ -29,8 +29,11 @@ export interface ElementFile {
   requete?: unknown;
   // OPERATION : route de proposition, relative au dossier (ex. « operations/achat/proposition »)
   chemin?: string;
-  // TIERS : identifiant provisoire donné au tiers sur l'appareil, remplacé par celui du serveur dans les saisies qui l'utilisent
+  // TIERS et FACTURE : identifiant provisoire donné sur l'appareil (pour un tiers, remplacé par celui du serveur dans les saisies qui l'utilisent)
   idProvisoire?: string;
+  // FACTURE : devis ou facture, et nom du client (pour l'affichage dans les listes avant l'envoi)
+  typeFacture?: 'DEVIS' | 'FACTURE';
+  tiersNom?: string;
 }
 
 const NOM_BASE = 'warimara-file-attente';

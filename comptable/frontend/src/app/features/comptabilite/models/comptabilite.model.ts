@@ -237,6 +237,8 @@ export interface FactureDto {
   statutPaiement?: 'NON_PAYEE' | 'PARTIELLEMENT_PAYEE' | 'PAYEE' | null;
   montantRegle?: number | null;
   resteAPayer?: number | null;
+  /** Créé sans Internet sur cet appareil, pas encore envoyé : le numéro sera attribué par le serveur à l'envoi. */
+  provisoire?: boolean;
 }
 
 export const LIBELLES_STATUT_FACTURE: Record<StatutFacture, string> = {
