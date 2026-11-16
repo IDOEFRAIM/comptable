@@ -9,6 +9,8 @@ export interface TiersDto {
   numeroContribuable: string | null;
   compteComptableId: string;
   compteComptableNumero: string;
+  /** Créé sans Internet sur cet appareil, pas encore envoyé : son identifiant est provisoire. */
+  provisoire?: boolean;
 }
 
 export interface CreerTiersRequest {

@@ -11,7 +11,9 @@ const ROUTE_OPERATION = /^\/api\/entreprises\/([^/]+)\/(operations\/(achat|vente
 const LIBELLES_OPERATION: Record<string, string> = { achat: 'Achat', vente: 'Vente', reglement: 'Règlement', avoir: 'Avoir' };
 
 /** Les seules écritures acceptées hors ligne (voir {@link FileAttenteService}) : dépôt d'une pièce, création d'une écriture en brouillon et opération de Saisie rapide. */
-function actionEnfilable(req: HttpRequest<unknown>): { entrepriseId: string; type: 'DOCUMENT' | 'ECRITURE' | 'OPERATION'; chemin?: string; categorie?: string } | null {
+const ROUTE_TIERS = /^\/api\/entreprises\/([^/]+)\/tiers$/;
+
+function actionEnfilable(req: HttpRequest<unknown>): { entrepriseId: string; type: 'DOCUMENT' | 'ECRITURE' | 'OPERATION' | 'TIERS'; chemin?: string; categorie?: string } | null {
   if (req.method !== 'POST' || req.context.get(REJEU_FILE_ATTENTE)) {
     return null;
   }
@@ -23,6 +25,10 @@ function actionEnfilable(req: HttpRequest<unknown>): { entrepriseId: string; typ
   const ecriture = ROUTE_ECRITURE.exec(chemin);
   if (ecriture && req.body && typeof req.body === 'object') {
     return { entrepriseId: ecriture[1], type: 'ECRITURE' };
+  }
+  const tiers = ROUTE_TIERS.exec(chemin);
+  if (tiers && req.body && typeof req.body === 'object') {
+    return { entrepriseId: tiers[1], type: 'TIERS' };
   }
   const operation = ROUTE_OPERATION.exec(chemin);
   if (operation && req.body && typeof req.body === 'object') {
@@ -50,6 +56,10 @@ export const horsLigneInterceptor: HttpInterceptorFn = (req, next) => {
     return next(req);
   }
   const action = actionEnfilable(req);
+  if (action?.type === 'TIERS') {
+    // le tiers créé hors ligne est rendu tout de suite (201), avec un identifiant provisoire : la page l'affiche et les saisies suivantes peuvent l'utiliser
+    return from(inject(FileAttenteService).enfilerTiers(action.entrepriseId, req.body as never)).pipe(map((tiers) => new HttpResponse({ status: 201, statusText: 'Created', url: req.url, body: tiers })));
+  }
   if (action) {
     const file = inject(FileAttenteService);
     const mise =

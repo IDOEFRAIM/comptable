@@ -1,4 +1,6 @@
-import { Component, inject, OnInit, signal } from '@angular/core';
+import { Component, effect, inject, OnInit, signal } from '@angular/core';
+import { FileAttenteService } from '../../../core/pwa/file-attente.service';
+import { HorsLigneService } from '../../../core/pwa/hors-ligne.service';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { ActivatedRoute } from '@angular/router';
@@ -21,6 +23,18 @@ export class TiersListComponent implements OnInit {
   readonly entrepriseId = toSignal(this.route.paramMap.pipe(map((p) => p.get('entrepriseId')!)), {
     initialValue: '',
   });
+
+  readonly horsLigne = inject(HorsLigneService);
+  private readonly fileAttente = inject(FileAttenteService);
+
+  constructor() {
+    // après l'envoi des tiers créés hors ligne, la liste affiche les vrais tiers (avec leur compte comptable)
+    effect(() => {
+      if (this.fileAttente.synchroniseeLe() > 0 && this.entrepriseId()) {
+        this.rafraichir();
+      }
+    });
+  }
 
   readonly tiers = signal<TiersDto[]>([]);
   readonly chargement = signal(false);

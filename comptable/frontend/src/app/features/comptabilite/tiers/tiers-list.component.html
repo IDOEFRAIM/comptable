@@ -6,6 +6,12 @@
     </button>
   </div>
 
+  @if (!horsLigne.enLigne()) {
+    <p class="info-hors-ligne" role="status" data-zone="info-hors-ligne">
+      Hors ligne : vous pouvez créer un client ou un fournisseur. Il sera utilisable tout de suite dans vos saisies, et enregistré sur le serveur (avec son compte comptable) au retour d’Internet.
+    </p>
+  }
+
   @if (afficherFormulaire()) {
     <form [formGroup]="form" (ngSubmit)="creer()" class="carte formulaire-creation">
       <label class="champ champ-type">
@@ -50,7 +56,12 @@
       <tbody>
         @for (t of tiers(); track t.id) {
           <tr>
-            <td>{{ t.nom }}</td>
+            <td>
+              {{ t.nom }}
+              @if (t.provisoire) {
+                <span class="badge badge-attente" data-zone="tiers-provisoire" title="Créé sans Internet : il sera enregistré sur le serveur au retour de la connexion">En attente d’envoi</span>
+              }
+            </td>
             <td>
               <span class="badge" [class.badge-client]="t.type === 'CLIENT'">
                 {{ t.type === 'CLIENT' ? 'Client' : 'Fournisseur' }}

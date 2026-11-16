@@ -3,7 +3,8 @@ import { Injectable, computed, inject, signal } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
 import { TokenStorageService } from '../auth/token-storage.service';
 import { normaliserErreur } from '../http/messages-erreur';
-import { ElementFile, fileAttenteStore } from './file-attente.store';
+import type { CreerTiersRequest, TiersDto } from '../../features/comptabilite/models/comptabilite.model';
+import { ElementFile, PREFIXE_ID_PROVISOIRE, fileAttenteStore } from './file-attente.store';
 import { HorsLigneService } from './hors-ligne.service';
 
 /** Marque une requête rejouée par la synchronisation : l'intercepteur hors ligne ne doit pas la remettre en file. */
@@ -113,6 +114,47 @@ export class FileAttenteService {
     });
   }
 
+  /**
+   * Création d'un client ou fournisseur sans Internet. Le tiers reçoit tout de suite un identifiant provisoire, utilisable dans les saisies faites hors ligne ; à l'envoi, le serveur crée le vrai tiers
+   * et son identifiant remplace le provisoire dans toutes les saisies encore en attente.
+   */
+  async enfilerTiers(entrepriseId: string, requete: CreerTiersRequest): Promise<TiersDto> {
+    const id = identifiant();
+    const tiers: TiersDto = {
+      id: `${PREFIXE_ID_PROVISOIRE}${id}`,
+      type: requete.type,
+      nom: requete.nom,
+      numeroContribuable: requete.numeroContribuable ?? null,
+      compteComptableId: '',
+      compteComptableNumero: 'Attribué à l’envoi',
+      provisoire: true,
+    };
+    await this.ajouter({
+      id,
+      utilisateur: this.utilisateur(),
+      entrepriseId,
+      type: 'TIERS',
+      libelle: `${requete.type === 'CLIENT' ? 'Nouveau client' : 'Nouveau fournisseur'} : ${requete.nom}`,
+      creeLe: Date.now(),
+      statut: 'EN_ATTENTE',
+      tentatives: 0,
+      requete,
+      idProvisoire: tiers.id,
+    });
+    return tiers;
+  }
+
+  /** Tiers créés sur cet appareil et pas encore envoyés : ajoutés aux listes de tiers tant que l'appareil est hors ligne. */
+  tiersProvisoires(entrepriseId: string, type?: string): TiersDto[] {
+    return this.elements()
+      .filter((e) => e.type === 'TIERS' && e.entrepriseId === entrepriseId && e.statut !== 'REJETE' && e.idProvisoire)
+      .map((e) => {
+        const r = e.requete as CreerTiersRequest;
+        return { id: e.idProvisoire!, type: r.type, nom: r.nom, numeroContribuable: r.numeroContribuable ?? null, compteComptableId: '', compteComptableNumero: 'Attribué à l’envoi', provisoire: true };
+      })
+      .filter((t) => !type || t.type === type);
+  }
+
   private async ajouter(element: ElementFile): Promise<void> {
     await fileAttenteStore.ajouter(element);
     this.elements.update((liste) => [...liste, element]);
@@ -150,10 +192,25 @@ export class FileAttenteService {
     let refuses = 0;
     let interrompu: string | null = null;
     try {
-      for (const element of this.enAttente()) {
+      for (const initial of this.enAttente()) {
+        // l'élément peut avoir été réécrit depuis le début de la boucle (identifiant provisoire remplacé) : on repart de la version à jour
+        const element = this.elements().find((e) => e.id === initial.id);
+        if (!element || element.statut === 'REJETE') {
+          continue;
+        }
+        const manquant = this.tiersProvisoireNonEnvoye(element);
+        if (manquant) {
+          await this.maj({ ...element, statut: 'REJETE', erreur: `${manquant} n’a pas pu être enregistré sur le serveur : cette saisie ne peut pas être envoyée. Corrigez le tiers, puis ressaisissez l’opération.` });
+          refuses++;
+          continue;
+        }
         await this.maj({ ...element, statut: 'EN_COURS' });
         try {
-          await firstValueFrom(this.envoyer(element));
+          const reponse = await firstValueFrom(this.envoyer(element));
+          if (element.type === 'TIERS' && element.idProvisoire) {
+            // les saisies qui utilisent ce tiers partent avec son vrai identifiant ; on les réécrit AVANT de retirer l'élément, pour ne rien perdre si l'application se ferme ici
+            await this.remplacerIdentifiant(element.idProvisoire, (reponse as { id?: string } | null)?.id);
+          }
           await this.supprimer(element.id);
           envoyes++;
           if (element.type === 'OPERATION') {
@@ -175,8 +232,7 @@ export class FileAttenteService {
       this.synchronisation.set(false);
     }
     this.synchroniseeLe.update((n) => n + 1);
-    const parties = [`${envoyes} élément(s) envoyé(s)`];
-    if (operations > 0) {
+    const parties = [`${envoyes} élément(s) envoyé(s)`];    if (operations > 0) {
       parties.push(`${operations} opération(s) à valider dans Saisie rapide`);
     }
     if (refuses > 0) {
@@ -186,6 +242,30 @@ export class FileAttenteService {
       parties.push(interrompu);
     }
     this.rapport.set(`Synchronisation : ${parties.join(' — ')}.`);
+  }
+
+  /** Si la saisie utilise encore un tiers créé hors ligne qui n'a pas été envoyé (refusé), renvoie son nom ; sinon null. */
+  private tiersProvisoireNonEnvoye(element: ElementFile): string | null {
+    if (element.type === 'TIERS' || !element.requete) {
+      return null;
+    }
+    const contenu = JSON.stringify(element.requete);
+    if (!contenu.includes(PREFIXE_ID_PROVISOIRE)) {
+      return null;
+    }
+    const tiers = this.elements().find((e) => e.type === 'TIERS' && e.idProvisoire && contenu.includes(e.idProvisoire));
+    return tiers ? `« ${(tiers.requete as CreerTiersRequest).nom} »` : 'Un tiers créé hors ligne';
+  }
+
+  private async remplacerIdentifiant(provisoire: string, reel: string | undefined): Promise<void> {
+    if (!reel) {
+      return;
+    }
+    for (const e of this.elements()) {
+      if (e.requete && JSON.stringify(e.requete).includes(provisoire)) {
+        await this.maj({ ...e, requete: JSON.parse(JSON.stringify(e.requete).split(provisoire).join(reel)) });
+      }
+    }
   }
 
   private envoyer(element: ElementFile) {
@@ -201,6 +281,9 @@ export class FileAttenteService {
     }
     if (element.type === 'OPERATION') {
       return this.http.post(`${base}/${element.chemin}`, element.requete, { context: contexte, headers });
+    }
+    if (element.type === 'TIERS') {
+      return this.http.post(`${base}/tiers`, element.requete, { context: contexte, headers });
     }
     return this.http.post(`${base}/ecritures`, element.requete, { context: contexte, headers });
   }

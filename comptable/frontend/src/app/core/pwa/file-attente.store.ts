@@ -1,4 +1,7 @@
-export type TypeElementFile = 'DOCUMENT' | 'ECRITURE' | 'OPERATION';
+export type TypeElementFile = 'DOCUMENT' | 'ECRITURE' | 'OPERATION' | 'TIERS';
+
+/** Préfixe des identifiants provisoires : un tiers créé hors ligne n'a pas encore d'identifiant serveur. */
+export const PREFIXE_ID_PROVISOIRE = 'prov-';
 export type StatutElementFile = 'EN_ATTENTE' | 'EN_COURS' | 'REJETE';
 
 /** Une saisie faite hors ligne, gardée sur l'appareil jusqu'à son envoi au serveur. */
@@ -24,6 +27,8 @@ export interface ElementFile {
   requete?: unknown;
   // OPERATION : route de proposition, relative au dossier (ex. « operations/achat/proposition »)
   chemin?: string;
+  // TIERS : identifiant provisoire donné au tiers sur l'appareil, remplacé par celui du serveur dans les saisies qui l'utilisent
+  idProvisoire?: string;
 }
 
 const NOM_BASE = 'warimara-file-attente';

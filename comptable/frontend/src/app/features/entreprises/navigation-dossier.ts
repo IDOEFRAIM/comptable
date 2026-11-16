@@ -105,7 +105,7 @@ const HORS_LIGNE: Record<string, DisponibiliteHorsLigne> = {
   operations: 'saisie',
   'tableau-de-bord': 'lecture',
   'demandes-pieces': 'lecture',
-  tiers: 'lecture',
+  tiers: 'saisie',
   'plan-comptable': 'lecture',
   tresorerie: 'lecture',
   recouvrement: 'lecture',

@@ -80,6 +80,30 @@ class OperationHorsLigneHttpTest extends CollecteTestBase {
     }
 
     @Test
+    void tiersCreeHorsLigne_envoyeDeuxFois_unSeulTiersEtUnSeulSousCompte() throws Exception {
+        Dossier d = nouveauDossier(false);
+        String cle = "tiers-" + UUID.randomUUID();
+        String corps = "{\"type\":\"FOURNISSEUR\",\"nom\":\"Grossiste Sawadogo\"}";
+        long tiersAvant = jdbc.queryForObject("select count(*) from tiers where entreprise_id = ?", Long.class, d.id());
+        long comptesAvant = jdbc.queryForObject("select count(*) from compte_comptable where entreprise_id = ?", Long.class, d.id());
+
+        MockHttpServletResponse premier = creerTiers(d, corps, cle);
+        MockHttpServletResponse renvoi = creerTiers(d, corps, cle);
+
+        assertThat(premier.getStatus()).isEqualTo(201);
+        assertThat(renvoi.getStatus()).isEqualTo(201);
+        assertThat(renvoi.getHeader("Idempotent-Replayed")).isEqualTo("true");
+        assertThat(renvoi.getContentAsString()).as("le renvoi rend le MÊME tiers (même identifiant)").isEqualTo(premier.getContentAsString());
+        assertThat(jdbc.queryForObject("select count(*) from tiers where entreprise_id = ?", Long.class, d.id())).isEqualTo(tiersAvant + 1);
+        assertThat(jdbc.queryForObject("select count(*) from compte_comptable where entreprise_id = ?", Long.class, d.id())).as("un seul sous-compte créé").isEqualTo(comptesAvant + 1);
+    }
+
+    private MockHttpServletResponse creerTiers(Dossier d, String corps, String cle) throws Exception {
+        return mvc.perform(post("/api/entreprises/" + d.id() + "/tiers").contentType(MediaType.APPLICATION_JSON).content(corps).header("Idempotency-Key", cle)
+                .header("Authorization", "Bearer " + jwtService.generateToken(d.expert()))).andReturn().getResponse();
+    }
+
+    @Test
     void sansCle_chaqueEnvoiCreeUneProposition() throws Exception {
         Dossier d = nouveauDossier(false);
         proposer(d, corpsAchat(d, "A"), null);

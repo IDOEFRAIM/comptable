@@ -1,6 +1,8 @@
 import { HttpClient, HttpParams } from '@angular/common/http';
-import { Injectable, inject } from '@angular/core';
-import { Observable } from 'rxjs';
+import { Injectable, Injector, inject } from '@angular/core';
+import { Observable, map } from 'rxjs';
+import { FileAttenteService } from '../../core/pwa/file-attente.service';
+import { HorsLigneService } from '../../core/pwa/hors-ligne.service';
 import {
   AiMatchProposalDto,
   ArticleDto,
@@ -84,10 +86,20 @@ const REFERENTIEL_URL = '/api/plan-comptable-reference';
 @Injectable({ providedIn: 'root' })
 export class ComptabiliteService {
   private readonly http = inject(HttpClient);
+  private readonly injector = inject(Injector);
 
+  /** Hors ligne, les tiers créés sur l'appareil et pas encore envoyés s'ajoutent à la liste téléchargée, pour pouvoir être choisis dans les saisies. */
   listerTiers(entrepriseId: string, type?: TypeTiers): Observable<TiersDto[]> {
     const params = type ? new HttpParams().set('type', type) : undefined;
-    return this.http.get<TiersDto[]>(`${BASE_URL}/${entrepriseId}/tiers`, { params });
+    return this.http.get<TiersDto[]>(`${BASE_URL}/${entrepriseId}/tiers`, { params }).pipe(
+      map((liste) => {
+        if (this.injector.get(HorsLigneService).enLigne()) {
+          return liste;
+        }
+        const dejaPresents = new Set(liste.map((t) => t.id));
+        return [...liste, ...this.injector.get(FileAttenteService).tiersProvisoires(entrepriseId, type).filter((t) => !dejaPresents.has(t.id))];
+      }),
+    );
   }
 
   creerTiers(entrepriseId: string, request: CreerTiersRequest): Observable<TiersDto> {

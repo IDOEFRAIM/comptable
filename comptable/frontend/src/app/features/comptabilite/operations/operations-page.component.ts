@@ -125,9 +125,14 @@ export class OperationsPageComponent implements OnInit {
   constructor() {
     // après chaque synchronisation (retour d'Internet), les opérations envoyées apparaissent dans la liste « à valider »
     effect(() => {
-      this.fileAttente.synchroniseeLe();
+      const synchronisations = this.fileAttente.synchroniseeLe();
       if (this.entrepriseId()) {
         this.chargerPropositionsEnAttente();
+        if (synchronisations > 0) {
+          // les tiers créés hors ligne ont maintenant leur vrai identifiant
+          this.comptabiliteService.listerTiers(this.entrepriseId(), 'FOURNISSEUR').subscribe((t) => this.fournisseurs.set(t));
+          this.comptabiliteService.listerTiers(this.entrepriseId(), 'CLIENT').subscribe((t) => this.clients.set(t));
+        }
       }
     });
   }
