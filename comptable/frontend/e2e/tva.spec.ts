@@ -25,7 +25,7 @@ test('collaborateur : ouvre la période TVA, traite l’opération à revoir et 
 
   await connecter(page, d.collaborateur.email, d.collaborateur.motDePasse);
   await page.goto(`/entreprises/${d.entrepriseId}/fiscalite/tva`);
-  await expect(page.getByRole('heading', { name: 'TVA' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'TVA', exact: true })).toBeVisible();
   await expect(page.locator('[data-champ="aucune-periode"]')).toBeVisible();
 
   // ouverture de la période du mois courant par le formulaire
@@ -84,7 +84,7 @@ test('expert : de la file du cabinet à la déclaration finalisée et son snapsh
   await expect(ligne).toHaveCount(1);
   await expect(ligne).toContainText("À revoir par l'expert");
   await ligne.getByRole('link', { name: 'Ouvrir' }).click();
-  await expect(page.getByRole('heading', { name: 'TVA' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'TVA', exact: true })).toBeVisible();
   await expect(page.locator('[data-zone="statut-periode"]')).toContainText('Prête pour revue');
 
   await page.locator('[data-onglet="DECLARATION"]').click();
