@@ -8,6 +8,33 @@ interface EvenementInstallation extends Event {
   userChoice: Promise<{ outcome: 'accepted' | 'dismissed' }>;
 }
 
+const CLE_INVITATION = 'warimara.invitation-installation';
+const PAUSE_INVITATION_MS = 7 * 24 * 3600 * 1000;
+
+function estInstallee(): boolean {
+  if (typeof window === 'undefined') {
+    return false;
+  }
+  return window.matchMedia?.('(display-mode: standalone)').matches === true || (navigator as { standalone?: boolean }).standalone === true;
+}
+
+function estAppareilApple(): boolean {
+  if (typeof navigator === 'undefined') {
+    return false;
+  }
+  const ua = navigator.userAgent;
+  return /iPhone|iPad|iPod/.test(ua) || (/Macintosh/.test(ua) && navigator.maxTouchPoints > 1);
+}
+
+function invitationRecemmentRefusee(): boolean {
+  try {
+    const refusee = Number(localStorage.getItem(CLE_INVITATION));
+    return refusee > 0 && Date.now() - refusee < PAUSE_INVITATION_MS;
+  } catch {
+    return false;
+  }
+}
+
 export const MESSAGE_HORS_LIGNE_ECRITURE =
   'Vous êtes hors ligne : cette action nécessite une connexion. Les pages déjà consultées restent lisibles en lecture seule ; reconnectez-vous à Internet pour modifier des données.';
 
@@ -23,6 +50,12 @@ export class HorsLigneService {
   readonly horsLigneDepuis = signal<number | null>(typeof navigator !== 'undefined' && !navigator.onLine ? Date.now() : null);
   readonly installable = signal(false);
   readonly miseAJourDisponible = signal(false);
+  /** Vrai quand Warimara tourne déjà comme application installée (fenêtre à part, sans barre d'adresse). */
+  readonly installee = signal(estInstallee());
+  /** iPhone et iPad n'ont pas de bouton d'installation : il faut passer par « Partager ». */
+  readonly sousIos = estAppareilApple();
+  /** Le comptable a dit « Plus tard » : on ne le redemande pas avant {@link PAUSE_INVITATION_MS}. */
+  readonly invitationMasquee = signal(invitationRecemmentRefusee());
 
   constructor() {
     window.addEventListener('online', () => {
@@ -44,6 +77,7 @@ export class HorsLigneService {
     window.addEventListener('appinstalled', () => {
       this.evenementInstallation = null;
       this.installable.set(false);
+      this.installee.set(true);
     });
     if (this.miseAJour?.isEnabled) {
       this.miseAJour.versionUpdates.pipe(filter((e) => e.type === 'VERSION_READY')).subscribe(() => this.miseAJourDisponible.set(true));
@@ -60,6 +94,16 @@ export class HorsLigneService {
     await evenement.userChoice;
     this.evenementInstallation = null;
     this.installable.set(false);
+  }
+
+  /** « Plus tard » : l'invitation disparaît et ne revient pas avant une semaine. */
+  masquerInvitation(): void {
+    this.invitationMasquee.set(true);
+    try {
+      localStorage.setItem(CLE_INVITATION, String(Date.now()));
+    } catch {
+      /* stockage indisponible : l'invitation reviendra au prochain chargement, sans conséquence */
+    }
   }
 
   /** Active la nouvelle version téléchargée en arrière-plan puis recharge l'application. */

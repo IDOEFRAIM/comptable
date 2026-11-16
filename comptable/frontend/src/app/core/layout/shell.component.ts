@@ -6,6 +6,7 @@ import { TokenStorageService } from '../auth/token-storage.service';
 import { GuideAssistantComponent } from '../aide/guide-assistant.component';
 import { BandeauConnexionComponent } from '../pwa/bandeau-connexion.component';
 import { EtatConnexionComponent } from '../pwa/etat-connexion.component';
+import { InvitationInstallationComponent } from '../pwa/invitation-installation.component';
 import { SynchronisationAutoService } from '../pwa/synchronisation-auto.service';
 import { HorsLigneService } from '../pwa/hors-ligne.service';
 import { NotificationService } from '../../features/notifications/notification.service';
@@ -16,7 +17,7 @@ const INTERVALLE_RAFRAICHISSEMENT_MS = 30_000;
 @Component({
   selector: 'app-shell',
   standalone: true,
-  imports: [RouterOutlet, RouterLink, RouterLinkActive, BandeauConnexionComponent, EtatConnexionComponent, GuideAssistantComponent],
+  imports: [RouterOutlet, RouterLink, RouterLinkActive, BandeauConnexionComponent, EtatConnexionComponent, InvitationInstallationComponent, GuideAssistantComponent],
   templateUrl: './shell.component.html',
   styleUrl: './shell.component.scss',
 })

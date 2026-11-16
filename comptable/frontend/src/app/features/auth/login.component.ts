@@ -7,12 +7,13 @@ import { finalize } from 'rxjs/operators';
 import { AuthService } from '../../core/auth/auth.service';
 import { CodePinService } from '../../core/auth/code-pin.service';
 import { HorsLigneService } from '../../core/pwa/hors-ligne.service';
+import { InvitationInstallationComponent } from '../../core/pwa/invitation-installation.component';
 import { messageErreurChamp } from '../../core/forms/messages-validation';
 
 @Component({
   selector: 'app-login',
   standalone: true,
-  imports: [ReactiveFormsModule, RouterLink],
+  imports: [ReactiveFormsModule, RouterLink, InvitationInstallationComponent],
   templateUrl: './login.component.html',
   styleUrl: './login.component.scss',
 })
