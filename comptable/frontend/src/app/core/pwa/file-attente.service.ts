@@ -224,7 +224,7 @@ export class FileAttenteService {
             interrompu = e.status === 401 ? 'Session expirée : reconnectez-vous pour terminer l’envoi.' : 'Connexion instable : l’envoi reprendra automatiquement.';
             break;
           }
-          await this.maj({ ...element, statut: 'REJETE', tentatives: element.tentatives + 1, erreur: normaliserErreur(e).error.message });
+          await this.maj({ ...element, statut: 'REJETE', tentatives: element.tentatives + 1, erreur: normaliserErreur(e).error.message, statutHttp: e.status });
           refuses++;
         }
       }

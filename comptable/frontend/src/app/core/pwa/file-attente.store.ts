@@ -18,6 +18,8 @@ export interface ElementFile {
   tentatives: number;
   /** Message du serveur quand l'élément a été refusé. */
   erreur?: string;
+  /** Code HTTP du refus (403, 404, 422…) : sert à conseiller le comptable dans l'écran « À résoudre ». */
+  statutHttp?: number;
   // DOCUMENT
   typeDocument?: string;
   nomFichier?: string;

@@ -41,6 +41,10 @@ export const routes: Routes = [
           import('./features/entreprises/onboarding-wizard.component').then((m) => m.OnboardingWizardComponent),
       },
       {
+        path: 'a-resoudre',
+        loadComponent: () => import('./features/a-resoudre/a-resoudre.component').then((m) => m.AResoudreComponent),
+      },
+      {
         path: 'cabinet',
         canActivate: [cabinetGuard],
         loadComponent: () =>
