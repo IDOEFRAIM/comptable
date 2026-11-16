@@ -3,6 +3,7 @@ import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
 import { finalize } from 'rxjs/operators';
 import { AuthService } from '../../core/auth/auth.service';
+import { accueilPourRoles } from '../../core/auth/admin.guard';
 import { TokenStorageService } from '../../core/auth/token-storage.service';
 
 /**
@@ -73,7 +74,7 @@ export class ChangerMotDePasseComponent {
       .subscribe({
         next: () => {
           const roles = this.tokens.getRoles();
-          this.router.navigateByUrl(roles.includes('ROLE_EXPERT_COMPTABLE') || roles.includes('ROLE_COLLABORATEUR') ? '/cabinet' : '/entreprises');
+          this.router.navigateByUrl(accueilPourRoles(roles));
         },
         error: (err) => this.erreur.set(err.error?.message ?? 'Le mot de passe n’a pas pu être changé.'),
       });

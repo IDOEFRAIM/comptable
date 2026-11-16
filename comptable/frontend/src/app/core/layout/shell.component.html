@@ -1,10 +1,15 @@
 <app-bandeau-connexion />
 <header class="entete-app">
-  <a routerLink="/entreprises" class="logo">
+  <a [routerLink]="estAdmin ? '/admin' : '/entreprises'" class="logo">
     <img class="logo-marque" src="assets/warimara-mark.png" alt="" width="34" height="32" />
     <span class="logo-nom">Warimara</span>
   </a>
   <nav class="nav-principale">
+    @if (estAdmin) {
+      <a routerLink="/admin/apercu" routerLinkActive="actif" data-zone="nav-admin">Aperçu</a>
+      <a routerLink="/admin/utilisateurs" routerLinkActive="actif">Utilisateurs</a>
+      <a routerLink="/admin/audit" routerLinkActive="actif">Journal d’audit</a>
+    }
     @if (estMembreCabinet) {
       <a routerLink="/cabinet" routerLinkActive="actif" [routerLinkActiveOptions]="{ exact: true }">Cabinet</a>
       <a routerLink="/cabinet/dossiers" routerLinkActive="actif">Dossiers</a>

@@ -1,6 +1,7 @@
 import { inject } from '@angular/core';
 import { Router, Routes } from '@angular/router';
 import { TokenStorageService } from './core/auth/token-storage.service';
+import { adminGuard } from './core/auth/admin.guard';
 import { authGuard } from './core/auth/auth.guard';
 import { cabinetGuard } from './core/auth/cabinet.guard';
 import { defaultTabRedirectGuard } from './core/auth/default-tab.guard';
@@ -39,6 +40,16 @@ export const routes: Routes = [
         path: 'onboarding/entreprise',
         loadComponent: () =>
           import('./features/entreprises/onboarding-wizard.component').then((m) => m.OnboardingWizardComponent),
+      },
+      {
+        path: 'admin',
+        canActivate: [adminGuard],
+        children: [
+          { path: '', pathMatch: 'full', redirectTo: 'apercu' },
+          { path: 'apercu', loadComponent: () => import('./features/admin/admin-apercu.component').then((m) => m.AdminApercuComponent) },
+          { path: 'utilisateurs', loadComponent: () => import('./features/admin/admin-utilisateurs.component').then((m) => m.AdminUtilisateursComponent) },
+          { path: 'audit', loadComponent: () => import('./features/admin/admin-audit.component').then((m) => m.AdminAuditComponent) },
+        ],
       },
       {
         path: 'a-resoudre',
