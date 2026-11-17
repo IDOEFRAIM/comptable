@@ -37,9 +37,11 @@ public class AdminSupervisionService {
                        count(*) filter (where statut <> 'ACTIF'),
                        count(*) filter (where locked_until is not null and locked_until > now()),
                        count(*) filter (where statut = 'ACTIF' and last_login_at is null),
-                       (select count(*) from utilisateur_role ur join role r on r.id = ur.role_id where r.code = 'SUPER_ADMIN')
+                       (select count(*) from utilisateur_role ur join role r on r.id = ur.role_id where r.code = 'SUPER_ADMIN'),
+                       (select count(*) from tenant where statut <> 'ACTIF'),
+                       (select count(*) from tenant where plan_abonnement = 'ESSAI' and fin_essai is not null and fin_essai < current_date)
                 from utilisateur
-                """, (rs, i) -> new Apercu(rs.getLong(1), rs.getLong(2), rs.getLong(3), rs.getLong(4), rs.getLong(5), rs.getLong(6), rs.getLong(7)));
+                """, (rs, i) -> new Apercu(rs.getLong(1), rs.getLong(2), rs.getLong(3), rs.getLong(4), rs.getLong(5), rs.getLong(6), rs.getLong(7), rs.getLong(8), rs.getLong(9)));
     }
 
     /** Journal d'audit de tous les cabinets, du plus récent au plus ancien. Filtres facultatifs : cabinet, texte contenu dans l'action, période (jours inclus). */

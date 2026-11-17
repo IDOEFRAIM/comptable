@@ -186,7 +186,7 @@ public class AdminUtilisateurService {
     }
 
     /** 16 caractères sans ambiguïté visuelle (ni 0/O ni 1/l/I), avec au moins une majuscule, une minuscule et un chiffre. */
-    private static String motDePasseTemporaire() {
+    static String motDePasseTemporaire() {
         String tous = MAJUSCULES + MINUSCULES + CHIFFRES;
         List<Character> caracteres = new ArrayList<>();
         caracteres.add(MAJUSCULES.charAt(ALEA.nextInt(MAJUSCULES.length())));

@@ -159,7 +159,7 @@ export class AdminUtilisateursComponent {
   private readonly admin = inject(AdminService);
   private readonly route = inject(ActivatedRoute);
 
-  q = '';
+  q = this.route.snapshot.queryParamMap.get('q') ?? '';
   statut = this.route.snapshot.queryParamMap.get('statut') ?? '';
   motif = '';
 

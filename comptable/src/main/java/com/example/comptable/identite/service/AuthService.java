@@ -70,6 +70,10 @@ public class AuthService {
             var authentication = authenticationManager.authenticate(
                     new UsernamePasswordAuthenticationToken(request.email(), request.motDePasse()));
             var principal = (UtilisateurPrincipal) authentication.getPrincipal();
+            if (!principal.isCabinetActif()) {
+                // dit après un mot de passe correct seulement : un inconnu n'apprend rien sur l'état d'un cabinet
+                throw new ResponseStatusException(HttpStatus.FORBIDDEN, "L'accès de votre cabinet est suspendu. Contactez l'équipe Warimara.");
+            }
             credentialService.enregistrerSucces(principal.getId());
             return toAuthResponse(principal);
         } catch (BadCredentialsException e) {
@@ -145,7 +149,7 @@ public class AuthService {
         return new AuthResponse(token, principal.getId(), principal.getTenantId(), principal.getUsername(), roles, principal.isMustChangePassword());
     }
 
-    private String genererSlugUnique(String raisonSociale) {
+    public String genererSlugUnique(String raisonSociale) {
         String base = Normalizer.normalize(raisonSociale, Normalizer.Form.NFD)
                 .replaceAll("\\p{M}", "")
                 .toLowerCase()

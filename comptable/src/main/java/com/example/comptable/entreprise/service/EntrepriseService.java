@@ -38,9 +38,11 @@ public class EntrepriseService {
     private final PlanComptableImportService planComptableImportService;
     private final JournalRepository journalRepository;
     private final ExerciceComptableRepository exerciceComptableRepository;
+    private final com.example.comptable.identite.service.QuotaCabinetService quotaCabinetService;
 
     @Transactional
     public EntrepriseDto creer(CreerEntrepriseRequest request, UtilisateurPrincipal principal) {
+        quotaCabinetService.verifierCreationDossier(principal.getTenantId());
         Entreprise entreprise = new Entreprise();
         entreprise.setTenant(tenantRepository.getReferenceById(principal.getTenantId()));
         entreprise.setRaisonSociale(request.raisonSociale());

@@ -4,7 +4,8 @@ import { TestBed } from '@angular/core/testing';
 import { Router, provideRouter } from '@angular/router';
 import { accueilPourRoles, adminGuard } from '../../core/auth/admin.guard';
 import { TokenStorageService } from '../../core/auth/token-storage.service';
-import { AdminService, UtilisateurAdmin } from './admin.service';
+import { AdminService, CabinetAdmin, UtilisateurAdmin } from './admin.service';
+import { AdminCabinetsComponent } from './admin-cabinets.component';
 import { AdminUtilisateursComponent } from './admin-utilisateurs.component';
 import { AdminAuditComponent } from './admin-audit.component';
 
@@ -146,5 +147,105 @@ describe('AdminAuditComponent', () => {
     expect(texte).toContain('motif : Impayé');
     expect(texte).toContain('admin@warimara.test');
     expect(texte).toContain('Cabinet Kone');
+  });
+});
+
+const cabinet = (extra: Partial<CabinetAdmin> = {}): CabinetAdmin => ({
+  id: 'c1', raisonSociale: 'Cabinet Kone', slug: 'cabinet-kone', pays: 'BF', plan: 'ESSAI', statut: 'ACTIF', finEssai: '2026-10-01', essaiExpire: true, quotaUtilisateurs: 3, quotaDossiers: null,
+  membresActifs: 3, utilisateursTotal: 5, dossiersActifs: 12, creeLe: '2026-09-01T10:00:00Z', derniereActivite: '2026-11-16T10:00:00Z', motifSuspension: null, suspenduLe: null, ...extra,
+});
+
+describe('AdminCabinetsComponent', () => {
+  let http: HttpTestingController;
+
+  function ouvrir(elements = [cabinet()]) {
+    TestBed.configureTestingModule({ providers: [provideHttpClient(), provideHttpClientTesting(), provideRouter([])] });
+    http = TestBed.inject(HttpTestingController);
+    const fixture = TestBed.createComponent(AdminCabinetsComponent);
+    fixture.detectChanges();
+    http.expectOne((r) => r.url === '/api/admin/cabinets').flush(page(elements));
+    fixture.detectChanges();
+    return fixture;
+  }
+  const el = (f: ReturnType<typeof ouvrir>, selecteur: string) => f.nativeElement.querySelector(selecteur) as HTMLElement | null;
+  async function ecrire(f: ReturnType<typeof ouvrir>, selecteur: string, texte: string) {
+    await f.whenStable();
+    const champ = el(f, selecteur) as HTMLInputElement | HTMLTextAreaElement;
+    champ.value = texte;
+    champ.dispatchEvent(new Event('input'));
+    f.detectChanges();
+  }
+
+  it('montre l’abonnement, l’utilisation face aux limites, l’essai expiré et l’état', () => {
+    const f = ouvrir([cabinet(), cabinet({ id: 'c2', raisonSociale: 'Cabinet Sow', statut: 'SUSPENDU', motifSuspension: 'Impayé', plan: 'STANDARD', essaiExpire: false, finEssai: null, quotaUtilisateurs: null })]);
+    const texte = el(f, '[data-zone="table-cabinets"]')!.textContent!;
+    expect(texte).toContain('3 / 3 membres');
+    expect(texte).toContain('12 / ∞ dossiers');
+    expect(texte).toContain('Essai expiré');
+    expect(texte).toContain('Suspendu');
+    expect(texte).toContain('Impayé');
+    expect(el(f, '.limite')).not.toBeNull(); // la limite de membres est atteinte : mise en évidence
+  });
+
+  it('suspendre exige un motif, envoie la demande et met la ligne à jour', async () => {
+    const f = ouvrir();
+    el(f, '[data-action="suspendre-cabinet"]')!.click();
+    f.detectChanges();
+    await ecrire(f, '[data-zone="motif-action"]', 'abc');
+    expect((el(f, '[data-action="confirmer-action"]') as HTMLButtonElement).disabled).toBeTrue();
+    await ecrire(f, '[data-zone="motif-action"]', 'Abonnement impayé');
+    (el(f, '[data-action="confirmer-action"]') as HTMLButtonElement).click();
+    const requete = http.expectOne('/api/admin/cabinets/c1/suspendre');
+    expect(requete.request.body).toEqual({ motif: 'Abonnement impayé' });
+    requete.flush(cabinet({ statut: 'SUSPENDU', motifSuspension: 'Abonnement impayé' }));
+    f.detectChanges();
+    expect(el(f, '[data-action="reactiver-cabinet"]')).not.toBeNull();
+    expect(el(f, '[data-zone="confirmation-action"]')).toBeNull();
+  });
+
+  it('l’abonnement s’envoie avec des limites vides = null (pas de limite)', async () => {
+    const f = ouvrir();
+    el(f, '[data-action="abonnement"]')!.click();
+    f.detectChanges();
+    await f.whenStable();
+    f.detectChanges();
+    const quota = el(f, '[data-zone="champ-quota-utilisateurs"]') as HTMLInputElement;
+    expect(quota.value).toBe('3');
+    quota.value = '';
+    quota.dispatchEvent(new Event('input'));
+    await ecrire(f, '[data-zone="motif-action"]', 'Limite levée par accord');
+    (el(f, '[data-action="confirmer-abonnement"]') as HTMLButtonElement).click();
+    const requete = http.expectOne('/api/admin/cabinets/c1/abonnement');
+    expect(requete.request.body).toEqual({ plan: 'ESSAI', finEssai: '2026-10-01', quotaUtilisateurs: null, quotaDossiers: null, motif: 'Limite levée par accord' });
+    requete.flush(cabinet({ quotaUtilisateurs: null }));
+  });
+
+  it('un cabinet créé affiche son mot de passe temporaire une seule fois', async () => {
+    const f = ouvrir([]);
+    el(f, '[data-action="nouveau-cabinet"]')!.click();
+    f.detectChanges();
+    await ecrire(f, '[data-zone="champ-raison-sociale"]', 'Cabinet Nouveau');
+    (el(f, '[data-action="confirmer-creation"]') as HTMLButtonElement).click();
+    const requete = http.expectOne((r) => r.url === '/api/admin/cabinets' && r.method === 'POST');
+    expect((requete.request.body as { raisonSociale: string }).raisonSociale).toBe('Cabinet Nouveau');
+    requete.flush({ cabinet: cabinet({ raisonSociale: 'Cabinet Nouveau' }), emailExpert: 'expert@nouveau.test', motDePasseTemporaire: 'Zx9KmPq3VbNc7Rtw' });
+    http.expectOne((r) => r.url === '/api/admin/cabinets' && r.method === 'GET').flush(page([cabinet({ raisonSociale: 'Cabinet Nouveau' })]));
+    f.detectChanges();
+    expect(el(f, '[data-zone="mot-de-passe"]')!.textContent).toContain('Zx9KmPq3VbNc7Rtw');
+    expect(el(f, '[data-zone="cabinet-cree"]')!.textContent).toContain('une seule fois');
+    (el(f, '[data-action="fermer-cabinet-cree"]') as HTMLButtonElement).click();
+    f.detectChanges();
+    expect(el(f, '[data-zone="mot-de-passe"]')).toBeNull();
+  });
+
+  it('un refus du serveur (ex. e-mail déjà utilisé) s’affiche dans le panneau', async () => {
+    const f = ouvrir([]);
+    el(f, '[data-action="nouveau-cabinet"]')!.click();
+    f.detectChanges();
+    await f.whenStable();
+    (el(f, '[data-action="confirmer-creation"]') as HTMLButtonElement).click();
+    http.expectOne((r) => r.url === '/api/admin/cabinets' && r.method === 'POST').flush({ message: 'Cette adresse e-mail est déjà utilisée' }, { status: 409, statusText: 'Conflict' });
+    f.detectChanges();
+    expect(el(f, '[data-zone="formulaire-creation"]')!.textContent).toContain('déjà utilisée');
   });
 });

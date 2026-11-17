@@ -1,5 +1,6 @@
 package com.example.comptable.admin;
 
+import java.time.LocalDate;
 import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.Map;
@@ -30,6 +31,24 @@ public final class AdminDtos {
                                  String acteur) {
     }
 
-    public record Apercu(long cabinets, long utilisateurs, long actifs, long suspendus, long verrouilles, long jamaisConnectes, long administrateurs) {
+    public record Apercu(long cabinets, long utilisateurs, long actifs, long suspendus, long verrouilles, long jamaisConnectes, long administrateurs, long cabinetsSuspendus, long essaisExpires) {
+    }
+
+    /** Un cabinet avec son abonnement, ses limites et ce qu'il consomme. {@code derniereActivite} : dernière trace d'audit du cabinet. */
+    public record CabinetAdmin(UUID id, String raisonSociale, String slug, String pays, String plan, String statut, LocalDate finEssai, boolean essaiExpire, Integer quotaUtilisateurs,
+                               Integer quotaDossiers, long membresActifs, long utilisateursTotal, long dossiersActifs, OffsetDateTime creeLe, OffsetDateTime derniereActivite,
+                               String motifSuspension, OffsetDateTime suspenduLe) {
+    }
+
+    /** Abonnement d'un cabinet : quotas et date de fin d'essai null = pas de limite / pas de date. */
+    public record AbonnementRequest(String plan, LocalDate finEssai, Integer quotaUtilisateurs, Integer quotaDossiers, String motif) {
+    }
+
+    public record CreerCabinetRequest(String raisonSociale, String pays, String emailExpert, String nom, String prenom, String telephone, String plan, LocalDate finEssai, Integer quotaUtilisateurs,
+                                      Integer quotaDossiers) {
+    }
+
+    /** Le mot de passe temporaire de l'expert n'est renvoyé qu'ici, une seule fois. */
+    public record CreationCabinetAdmin(CabinetAdmin cabinet, String emailExpert, String motDePasseTemporaire) {
     }
 }

@@ -81,7 +81,7 @@ export class LoginComponent {
           this.router.navigateByUrl(accueilPourRoles(this.tokens.getRoles()));
         },
         error: (err) => {
-          this.erreur.set(err.status === 401 ? 'Identifiants invalides.' : err.status === 429 ? err.error?.message : 'Connexion impossible. Réessayez plus tard.');
+          this.erreur.set(err.status === 401 ? 'Identifiants invalides.' : err.status === 429 || err.status === 403 ? err.error?.message : 'Connexion impossible. Réessayez plus tard.');
         },
       });
   }

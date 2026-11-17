@@ -20,9 +20,19 @@ public class UtilisateurPrincipal implements UserDetails {
     private final boolean actif;
     private final boolean mustChangePassword;
     private final int credentialsVersion;
+    private final boolean cabinetActif;
     private final Set<GrantedAuthority> authorities;
 
     public UtilisateurPrincipal(Utilisateur utilisateur) {
+        this(utilisateur, true);
+    }
+
+    /**
+     * {@code cabinetActif} : le cabinet de l'utilisateur n'est pas suspendu. Calculé là où le cabinet est chargé (CustomUserDetailsService, dans sa transaction) plutôt qu'ici : lire le statut d'un cabinet
+     * paresseux hors transaction échouerait. Les jetons d'un cabinet suspendu sont refusés (JwtAuthFilter) et sa connexion aussi (AuthService).
+     */
+    public UtilisateurPrincipal(Utilisateur utilisateur, boolean cabinetActif) {
+        this.cabinetActif = cabinetActif;
         this.id = utilisateur.getId();
         this.tenantId = utilisateur.getTenant() != null ? utilisateur.getTenant().getId() : null;
         this.email = utilisateur.getEmail();
@@ -43,6 +53,10 @@ public class UtilisateurPrincipal implements UserDetails {
 
     public UUID getTenantId() {
         return tenantId;
+    }
+
+    public boolean isCabinetActif() {
+        return cabinetActif;
     }
 
     public boolean isMustChangePassword() {

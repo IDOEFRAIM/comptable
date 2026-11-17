@@ -43,7 +43,8 @@ public class JwtAuthFilter extends OncePerRequestFilter {
                 UtilisateurPrincipal principal = userDetailsService.loadUserById(claims.getSubject());
                 Integer version = claims.get("cv", Integer.class);
                 // Compte désactivé ou mot de passe modifié depuis l'émission du jeton : le jeton est révoqué (effet immédiat, pas à l'expiration).
-                if (!principal.isEnabled() || version == null || version != principal.getCredentialsVersion()) {
+                // Cabinet suspendu par l'administrateur de la plateforme : toutes les sessions de ses comptes sont refusées tout de suite.
+                if (!principal.isEnabled() || !principal.isCabinetActif() || version == null || version != principal.getCredentialsVersion()) {
                     throw new JwtException("Jeton révoqué");
                 }
                 // Mot de passe temporaire ou réinitialisé : seule la route de changement de mot de passe est permise.

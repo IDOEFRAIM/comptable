@@ -44,6 +44,55 @@ export interface EvenementAudit {
   acteur: string | null;
 }
 
+export interface CabinetAdmin {
+  id: string;
+  raisonSociale: string;
+  slug: string;
+  pays: string;
+  plan: string;
+  statut: string;
+  finEssai: string | null;
+  essaiExpire: boolean;
+  quotaUtilisateurs: number | null;
+  quotaDossiers: number | null;
+  membresActifs: number;
+  utilisateursTotal: number;
+  dossiersActifs: number;
+  creeLe: string;
+  derniereActivite: string | null;
+  motifSuspension: string | null;
+  suspenduLe: string | null;
+}
+
+export interface AbonnementCabinet {
+  plan: string;
+  finEssai: string | null;
+  quotaUtilisateurs: number | null;
+  quotaDossiers: number | null;
+  motif: string;
+}
+
+export interface NouveauCabinet {
+  raisonSociale: string;
+  pays: string;
+  emailExpert: string;
+  nom: string;
+  prenom: string;
+  telephone?: string;
+  plan?: string;
+  finEssai?: string | null;
+  quotaUtilisateurs?: number | null;
+  quotaDossiers?: number | null;
+}
+
+export interface CreationCabinet {
+  cabinet: CabinetAdmin;
+  emailExpert: string;
+  motDePasseTemporaire: string;
+}
+
+export const PLANS = ['ESSAI', 'STANDARD', 'PARTENAIRE'];
+
 export interface ApercuAdmin {
   cabinets: number;
   utilisateurs: number;
@@ -52,6 +101,8 @@ export interface ApercuAdmin {
   verrouilles: number;
   jamaisConnectes: number;
   administrateurs: number;
+  cabinetsSuspendus: number;
+  essaisExpires: number;
 }
 
 export type ActionCompte = 'suspendre' | 'reactiver' | 'deverrouiller' | 'revoquer-sessions' | 'reinitialiser-mot-de-passe';
@@ -77,6 +128,22 @@ export class AdminService {
 
   reinitialiser(id: string, motif: string): Observable<ReinitialisationAdmin> {
     return this.http.post<ReinitialisationAdmin>(`/api/admin/utilisateurs/${id}/reinitialiser-mot-de-passe`, { motif });
+  }
+
+  cabinets(filtre: { q?: string; statut?: string; page?: number; taille?: number }): Observable<PageAdmin<CabinetAdmin>> {
+    return this.http.get<PageAdmin<CabinetAdmin>>('/api/admin/cabinets', { params: parametres(filtre) });
+  }
+
+  agirCabinet(id: string, action: 'suspendre' | 'reactiver', motif: string): Observable<CabinetAdmin> {
+    return this.http.post<CabinetAdmin>(`/api/admin/cabinets/${id}/${action}`, { motif });
+  }
+
+  modifierAbonnement(id: string, abonnement: AbonnementCabinet): Observable<CabinetAdmin> {
+    return this.http.post<CabinetAdmin>(`/api/admin/cabinets/${id}/abonnement`, abonnement);
+  }
+
+  creerCabinet(cabinet: NouveauCabinet): Observable<CreationCabinet> {
+    return this.http.post<CreationCabinet>('/api/admin/cabinets', cabinet);
   }
 
   audit(filtre: { cabinetId?: string; action?: string; depuis?: string; jusqu?: string; page?: number; taille?: number }): Observable<PageAdmin<EvenementAudit>> {

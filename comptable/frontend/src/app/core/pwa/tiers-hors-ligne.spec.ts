@@ -17,7 +17,7 @@ describe('Tiers créés hors ligne', () => {
   let client: HttpClient;
   let service: FileAttenteService;
   const enLigne = signal(false);
-  const attendre = () => new Promise((resolve) => setTimeout(resolve, 40));
+  const attendre = () => new Promise((resolve) => setTimeout(resolve, 150));
   const achat = (fournisseurId: string) => ({ natureAchat: 'MARCHANDISE', fournisseurId, date: '2026-11-16', libelle: 'Sacs de riz', montantHt: 45000, compteChargeId: 'c601' });
 
   beforeEach(async () => {

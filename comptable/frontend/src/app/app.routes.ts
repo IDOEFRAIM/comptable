@@ -47,6 +47,7 @@ export const routes: Routes = [
         children: [
           { path: '', pathMatch: 'full', redirectTo: 'apercu' },
           { path: 'apercu', loadComponent: () => import('./features/admin/admin-apercu.component').then((m) => m.AdminApercuComponent) },
+          { path: 'cabinets', loadComponent: () => import('./features/admin/admin-cabinets.component').then((m) => m.AdminCabinetsComponent) },
           { path: 'utilisateurs', loadComponent: () => import('./features/admin/admin-utilisateurs.component').then((m) => m.AdminUtilisateursComponent) },
           { path: 'audit', loadComponent: () => import('./features/admin/admin-audit.component').then((m) => m.AdminAuditComponent) },
         ],

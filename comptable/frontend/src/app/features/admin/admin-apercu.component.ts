@@ -19,7 +19,9 @@ import { STYLES_ADMIN } from './admin-styles';
       }
       @if (apercu(); as a) {
         <div class="cartes" data-zone="apercu-admin">
-          <a class="carte" routerLink="/admin/utilisateurs"><strong>{{ a.cabinets }}</strong><span>cabinets</span></a>
+          <a class="carte" routerLink="/admin/cabinets"><strong>{{ a.cabinets }}</strong><span>cabinets</span></a>
+          <a class="carte" [class.attention]="a.cabinetsSuspendus > 0" routerLink="/admin/cabinets" [queryParams]="{ statut: 'SUSPENDU' }" data-zone="carte-cabinets-suspendus"><strong>{{ a.cabinetsSuspendus }}</strong><span>cabinets suspendus</span></a>
+          <a class="carte" [class.attention]="a.essaisExpires > 0" routerLink="/admin/cabinets" [queryParams]="{ statut: 'ESSAI_EXPIRE' }" data-zone="carte-essais-expires"><strong>{{ a.essaisExpires }}</strong><span>essais expirés</span></a>
           <a class="carte" routerLink="/admin/utilisateurs"><strong>{{ a.utilisateurs }}</strong><span>comptes ({{ a.actifs }} actifs)</span></a>
           <a class="carte" [class.attention]="a.suspendus > 0" routerLink="/admin/utilisateurs" [queryParams]="{ statut: 'INACTIF' }" data-zone="carte-suspendus"><strong>{{ a.suspendus }}</strong><span>suspendus</span></a>
           <a class="carte" [class.attention]="a.verrouilles > 0" routerLink="/admin/utilisateurs" [queryParams]="{ statut: 'VERROUILLE' }" data-zone="carte-verrouilles"><strong>{{ a.verrouilles }}</strong><span>verrouillés</span></a>
