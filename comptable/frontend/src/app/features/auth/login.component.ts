@@ -6,6 +6,7 @@ import { Router, RouterLink } from '@angular/router';
 import { finalize } from 'rxjs/operators';
 import { AuthService } from '../../core/auth/auth.service';
 import { CodePinService } from '../../core/auth/code-pin.service';
+import { accueilPourRoles } from '../../core/auth/admin.guard';
 import { HorsLigneService } from '../../core/pwa/hors-ligne.service';
 import { InvitationInstallationComponent } from '../../core/pwa/invitation-installation.component';
 import { messageErreurChamp } from '../../core/forms/messages-validation';
@@ -49,9 +50,7 @@ export class LoginComponent {
       this.erreurPin.set(`Code incorrect. Il reste ${this.pin.essaisRestants()} essai(s).`);
       return;
     }
-    const roles = this.tokens.getRoles();
-    const cabinet = roles.includes('ROLE_EXPERT_COMPTABLE') || roles.includes('ROLE_COLLABORATEUR');
-    this.router.navigateByUrl(cabinet ? '/cabinet' : '/entreprises');
+    this.router.navigateByUrl(accueilPourRoles(this.tokens.getRoles()));
   }
 
   readonly form = this.fb.nonNullable.group({
@@ -79,9 +78,7 @@ export class LoginComponent {
             this.router.navigateByUrl('/changer-mot-de-passe');
             return;
           }
-          const roles = this.tokens.getRoles();
-          const cabinet = roles.includes('ROLE_EXPERT_COMPTABLE') || roles.includes('ROLE_COLLABORATEUR');
-          this.router.navigateByUrl(cabinet ? '/cabinet' : '/entreprises');
+          this.router.navigateByUrl(accueilPourRoles(this.tokens.getRoles()));
         },
         error: (err) => {
           this.erreur.set(err.status === 401 ? 'Identifiants invalides.' : err.status === 429 ? err.error?.message : 'Connexion impossible. Réessayez plus tard.');

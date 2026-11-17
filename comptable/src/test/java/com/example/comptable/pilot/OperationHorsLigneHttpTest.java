@@ -80,6 +80,54 @@ class OperationHorsLigneHttpTest extends CollecteTestBase {
     }
 
     @Test
+    void tiersCreeHorsLigne_envoyeDeuxFois_unSeulTiersEtUnSeulSousCompte() throws Exception {
+        Dossier d = nouveauDossier(false);
+        String cle = "tiers-" + UUID.randomUUID();
+        String corps = "{\"type\":\"FOURNISSEUR\",\"nom\":\"Grossiste Sawadogo\"}";
+        long tiersAvant = jdbc.queryForObject("select count(*) from tiers where entreprise_id = ?", Long.class, d.id());
+        long comptesAvant = jdbc.queryForObject("select count(*) from compte_comptable where entreprise_id = ?", Long.class, d.id());
+
+        MockHttpServletResponse premier = creerTiers(d, corps, cle);
+        MockHttpServletResponse renvoi = creerTiers(d, corps, cle);
+
+        assertThat(premier.getStatus()).isEqualTo(201);
+        assertThat(renvoi.getStatus()).isEqualTo(201);
+        assertThat(renvoi.getHeader("Idempotent-Replayed")).isEqualTo("true");
+        assertThat(renvoi.getContentAsString()).as("le renvoi rend le MÊME tiers (même identifiant)").isEqualTo(premier.getContentAsString());
+        assertThat(jdbc.queryForObject("select count(*) from tiers where entreprise_id = ?", Long.class, d.id())).isEqualTo(tiersAvant + 1);
+        assertThat(jdbc.queryForObject("select count(*) from compte_comptable where entreprise_id = ?", Long.class, d.id())).as("un seul sous-compte créé").isEqualTo(comptesAvant + 1);
+    }
+
+    @Test
+    void devisCreeHorsLigne_envoyeDeuxFois_unSeulDevis_unSeulNumero() throws Exception {
+        Dossier d = nouveauDossier(false);
+        String cle = "devis-" + UUID.randomUUID();
+        String corps = "{\"tiersId\":\"" + d.fournisseur().id() + "\",\"dateEmission\":\"" + LocalDate.now() + "\",\"objet\":\"Conseil\","
+                + "\"lignes\":[{\"designation\":\"Conseil\",\"quantite\":1,\"prixUnitaire\":100000,\"tauxTva\":18}]}";
+
+        MockHttpServletResponse premier = creerFacture(d, "DEVIS", corps, cle);
+        MockHttpServletResponse renvoi = creerFacture(d, "DEVIS", corps, cle);
+        MockHttpServletResponse suivant = creerFacture(d, "DEVIS", corps, "devis-" + UUID.randomUUID());
+
+        assertThat(premier.getStatus()).isEqualTo(201);
+        assertThat(renvoi.getHeader("Idempotent-Replayed")).isEqualTo("true");
+        assertThat(renvoi.getContentAsString()).as("le renvoi rend le MÊME devis (même numéro)").isEqualTo(premier.getContentAsString());
+        assertThat(jdbc.queryForObject("select count(*) from facture where entreprise_id = ?", Long.class, d.id())).as("deux devis, pas trois").isEqualTo(2);
+        assertThat(premier.getContentAsString()).contains("-0001\"");
+        assertThat(suivant.getContentAsString()).as("numérotation sans trou ni doublon").contains("-0002\"");
+    }
+
+    private MockHttpServletResponse creerFacture(Dossier d, String type, String corps, String cle) throws Exception {
+        return mvc.perform(post("/api/entreprises/" + d.id() + "/factures").param("type", type).contentType(MediaType.APPLICATION_JSON).content(corps).header("Idempotency-Key", cle)
+                .header("Authorization", "Bearer " + jwtService.generateToken(d.expert()))).andReturn().getResponse();
+    }
+
+    private MockHttpServletResponse creerTiers(Dossier d, String corps, String cle) throws Exception {
+        return mvc.perform(post("/api/entreprises/" + d.id() + "/tiers").contentType(MediaType.APPLICATION_JSON).content(corps).header("Idempotency-Key", cle)
+                .header("Authorization", "Bearer " + jwtService.generateToken(d.expert()))).andReturn().getResponse();
+    }
+
+    @Test
     void sansCle_chaqueEnvoiCreeUneProposition() throws Exception {
         Dossier d = nouveauDossier(false);
         proposer(d, corpsAchat(d, "A"), null);

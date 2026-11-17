@@ -1,5 +1,6 @@
 import { DatePipe } from '@angular/common';
 import { Component, computed, inject } from '@angular/core';
+import { RouterLink } from '@angular/router';
 import { FileAttenteService } from './file-attente.service';
 import { HorsLigneService } from './hors-ligne.service';
 import { SynchronisationAutoService } from './synchronisation-auto.service';
@@ -8,7 +9,7 @@ import { SynchronisationAutoService } from './synchronisation-auto.service';
 @Component({
   selector: 'app-etat-connexion',
   standalone: true,
-  imports: [DatePipe],
+  imports: [DatePipe, RouterLink],
   template: `
     <span class="etat" [class.hors]="!horsLigne.enLigne()" [class.sync]="sync.progression() !== null" role="status" aria-live="polite" data-zone="etat-connexion" [title]="detail()">
       <span class="point" aria-hidden="true"></span>
@@ -29,6 +30,9 @@ import { SynchronisationAutoService } from './synchronisation-auto.service';
         @if (file.enAttente().length > 0) {
           <span class="attente">· {{ file.enAttente().length }} en attente</span>
         }
+        @if (file.refuses().length > 0) {
+          <a routerLink="/a-resoudre" class="a-resoudre" data-action="aller-a-resoudre-entete">· {{ file.refuses().length }} à résoudre</a>
+        }
       </span>
     </span>
   `,
@@ -40,6 +44,7 @@ import { SynchronisationAutoService } from './synchronisation-auto.service';
       .sync { background: #eff8ff; color: #0b3b6e; }
       .sync .point { animation: pulse 1s ease-in-out infinite; }
       .precision, .attente { font-weight: 500; opacity: 0.85; }
+      .a-resoudre { color: #b42318; font-weight: 700; text-decoration: underline; }
       @keyframes pulse { 50% { opacity: 0.3; } }
       @media (max-width: 760px) { .precision { display: none; } }
       @media (prefers-reduced-motion: reduce) { .sync .point { animation: none; } }

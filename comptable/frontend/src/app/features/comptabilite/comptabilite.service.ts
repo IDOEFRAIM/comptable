@@ -1,6 +1,8 @@
-import { HttpClient, HttpParams } from '@angular/common/http';
-import { Injectable, inject } from '@angular/core';
-import { Observable } from 'rxjs';
+import { HttpClient, HttpContext, HttpParams } from '@angular/common/http';
+import { Injectable, Injector, inject } from '@angular/core';
+import { Observable, map } from 'rxjs';
+import { FileAttenteService, INFO_HORS_LIGNE } from '../../core/pwa/file-attente.service';
+import { HorsLigneService } from '../../core/pwa/hors-ligne.service';
 import {
   AiMatchProposalDto,
   ArticleDto,
@@ -84,10 +86,20 @@ const REFERENTIEL_URL = '/api/plan-comptable-reference';
 @Injectable({ providedIn: 'root' })
 export class ComptabiliteService {
   private readonly http = inject(HttpClient);
+  private readonly injector = inject(Injector);
 
+  /** Hors ligne, les tiers créés sur l'appareil et pas encore envoyés s'ajoutent à la liste téléchargée, pour pouvoir être choisis dans les saisies. */
   listerTiers(entrepriseId: string, type?: TypeTiers): Observable<TiersDto[]> {
     const params = type ? new HttpParams().set('type', type) : undefined;
-    return this.http.get<TiersDto[]>(`${BASE_URL}/${entrepriseId}/tiers`, { params });
+    return this.http.get<TiersDto[]>(`${BASE_URL}/${entrepriseId}/tiers`, { params }).pipe(
+      map((liste) => {
+        if (this.injector.get(HorsLigneService).enLigne()) {
+          return liste;
+        }
+        const dejaPresents = new Set(liste.map((t) => t.id));
+        return [...liste, ...this.injector.get(FileAttenteService).tiersProvisoires(entrepriseId, type).filter((t) => !dejaPresents.has(t.id))];
+      }),
+    );
   }
 
   creerTiers(entrepriseId: string, request: CreerTiersRequest): Observable<TiersDto> {
@@ -341,14 +353,19 @@ export class ComptabiliteService {
     );
   }
 
+  /** Hors ligne, les devis et factures créés sur l'appareil et pas encore envoyés s'ajoutent en tête de la liste téléchargée. */
   listerFactures(entrepriseId: string, type: TypeFacture): Observable<FactureDto[]> {
     const params = new HttpParams().set('type', type);
-    return this.http.get<FactureDto[]>(`${BASE_URL}/${entrepriseId}/factures`, { params });
+    return this.http.get<FactureDto[]>(`${BASE_URL}/${entrepriseId}/factures`, { params }).pipe(
+      map((liste) => (this.injector.get(HorsLigneService).enLigne() ? liste : [...this.injector.get(FileAttenteService).facturesProvisoires(entrepriseId, type), ...liste])),
+    );
   }
 
-  creerFacture(entrepriseId: string, type: TypeFacture, request: CreerFactureRequest): Observable<FactureDto> {
+  /** `nomClient` ne part pas au serveur : il sert seulement à nommer le client dans la liste tant que le document n'est pas envoyé (hors ligne). */
+  creerFacture(entrepriseId: string, type: TypeFacture, request: CreerFactureRequest, nomClient?: string): Observable<FactureDto> {
     const params = new HttpParams().set('type', type);
-    return this.http.post<FactureDto>(`${BASE_URL}/${entrepriseId}/factures`, request, { params });
+    const context = new HttpContext().set(INFO_HORS_LIGNE, { tiersNom: nomClient });
+    return this.http.post<FactureDto>(`${BASE_URL}/${entrepriseId}/factures`, request, { params, context });
   }
 
   envoyerFacture(entrepriseId: string, factureId: string): Observable<FactureDto> {

@@ -1,4 +1,6 @@
-import { Component, inject, OnInit, signal } from '@angular/core';
+import { Component, effect, inject, OnInit, signal } from '@angular/core';
+import { FileAttenteService } from '../../../core/pwa/file-attente.service';
+import { HorsLigneService } from '../../../core/pwa/hors-ligne.service';
 import { DecimalPipe } from '@angular/common';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { FormArray, FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
@@ -32,6 +34,18 @@ export class FacturationComponent implements OnInit {
   private readonly fb = inject(FormBuilder);
   private readonly comptabiliteService = inject(ComptabiliteService);
   private readonly route = inject(ActivatedRoute);
+  readonly horsLigne = inject(HorsLigneService);
+  private readonly fileAttente = inject(FileAttenteService);
+
+  constructor() {
+    // après l'envoi des documents créés hors ligne, la liste affiche les vrais documents, avec leur numéro officiel
+    effect(() => {
+      if (this.fileAttente.synchroniseeLe() > 0 && this.entrepriseId()) {
+        this.rafraichir();
+        this.comptabiliteService.listerTiers(this.entrepriseId(), 'CLIENT').subscribe((clients) => this.clients.set(clients));
+      }
+    }, { allowSignalWrites: true }); // rafraichir() met à jour des signaux (indicateur de chargement)
+  }
 
   readonly entrepriseId = toSignal(this.route.paramMap.pipe(map((p) => p.get('entrepriseId')!)), {
     initialValue: '',
@@ -187,19 +201,24 @@ export class FacturationComponent implements OnInit {
     this.erreur.set(null);
     const valeurs = this.form.getRawValue();
     this.comptabiliteService
-      .creerFacture(this.entrepriseId(), this.type(), {
-        tiersId: valeurs.tiersId,
-        dateEmission: valeurs.dateEmission,
-        dateEcheance: valeurs.dateEcheance || undefined,
-        objet: valeurs.objet || undefined,
-        lignes: valeurs.lignes.map((l) => ({
-          designation: l.designation,
-          quantite: Number(l.quantite),
-          prixUnitaire: Number(l.prixUnitaire),
-          tauxTva: Number(l.tauxTva),
-          articleId: l.articleId || undefined,
-        })),
-      })
+      .creerFacture(
+        this.entrepriseId(),
+        this.type(),
+        {
+          tiersId: valeurs.tiersId,
+          dateEmission: valeurs.dateEmission,
+          dateEcheance: valeurs.dateEcheance || undefined,
+          objet: valeurs.objet || undefined,
+          lignes: valeurs.lignes.map((l) => ({
+            designation: l.designation,
+            quantite: Number(l.quantite),
+            prixUnitaire: Number(l.prixUnitaire),
+            tauxTva: Number(l.tauxTva),
+            articleId: l.articleId || undefined,
+          })),
+        },
+        this.clients().find((c) => c.id === valeurs.tiersId)?.nom,
+      )
       .pipe(finalize(() => this.envoiEnCours.set(false)))
       .subscribe({
         next: (doc) => {

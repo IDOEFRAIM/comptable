@@ -14,6 +14,11 @@
   </div>
 
   @if (!afficherAvoirs()) {
+    @if (!horsLigne.enLigne()) {
+      <p class="info-hors-ligne" role="status" data-zone="info-hors-ligne">
+        Hors ligne : vous pouvez créer un devis ou une facture en brouillon. Elle sera enregistrée au retour d’Internet et le serveur lui donnera son numéro officiel. L’envoi au client, la validation et la comptabilisation demandent une connexion.
+      </p>
+    }
     @if (erreur()) {
       <p class="message-erreur">{{ erreur() }}</p>
     }
@@ -120,6 +125,9 @@
               <span class="date">{{ doc.dateEmission }}</span>
               <span class="montant">{{ doc.montantTtc | number: '1.0-0' }}</span>
               <span class="badge" [attr.data-statut]="doc.statut">{{ libellesStatut[doc.statut] }}</span>
+              @if (doc.provisoire) {
+                <span class="badge badge-attente" data-zone="document-provisoire" title="Créé sans Internet : il sera enregistré, et numéroté, au retour de la connexion">En attente d’envoi</span>
+              }
               @if (doc.statutPaiement === 'PARTIELLEMENT_PAYEE') {
                 <span class="badge" data-paiement="PARTIELLEMENT_PAYEE">Partiellement payée · reste {{ doc.resteAPayer }}</span>
               } @else if (doc.statutPaiement === 'PAYEE') {
@@ -159,7 +167,10 @@
                   <span class="ttc">TTC {{ doc.montantTtc | number: '1.0-0' }}</span>
                 </div>
 
-                <div class="actions">
+                @if (doc.provisoire) {
+                  <p class="meta" data-aide="provisoire">Ce document n’est pas encore sur le serveur. Dès le retour d’Internet il recevra son numéro officiel ; vous pourrez alors l’envoyer, le valider ou le convertir.</p>
+                }
+                <div class="actions" [hidden]="doc.provisoire">
                   @if (doc.type === 'DEVIS') {
                     @if (doc.statut === 'BROUILLON') {
                       <button type="button" class="bouton-secondaire" [disabled]="actionEnCours() === doc.id" (click)="envoyer(doc)">

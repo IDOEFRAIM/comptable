@@ -18,6 +18,8 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.security.authentication.DisabledException;
+import org.springframework.security.authentication.LockedException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -72,6 +74,9 @@ public class AuthService {
             return toAuthResponse(principal);
         } catch (BadCredentialsException e) {
             credentialService.enregistrerEchec(request.email());
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Identifiants invalides");
+        } catch (DisabledException | LockedException e) {
+            // compte suspendu ou désactivé : même réponse qu'un mot de passe faux (on ne révèle pas l'état du compte) ; sans cela le refus remontait en erreur 500
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Identifiants invalides");
         }
     }

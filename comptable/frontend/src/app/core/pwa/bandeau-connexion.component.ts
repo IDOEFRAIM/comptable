@@ -1,4 +1,5 @@
 import { Component, inject, signal } from '@angular/core';
+import { RouterLink } from '@angular/router';
 import { FileAttenteService } from './file-attente.service';
 import { HorsLigneService } from './hors-ligne.service';
 
@@ -6,6 +7,7 @@ import { HorsLigneService } from './hors-ligne.service';
 @Component({
   selector: 'app-bandeau-connexion',
   standalone: true,
+  imports: [RouterLink],
   template: `
     @if (!horsLigne.enLigne()) {
       <div class="bandeau bandeau-hors-ligne" role="status" aria-live="polite" data-zone="bandeau-hors-ligne">
@@ -26,6 +28,9 @@ import { HorsLigneService } from './hors-ligne.service';
             <strong class="refus">{{ file.refuses().length }}</strong> refusé(s) par le serveur
           }
         </span>
+        @if (file.refuses().length > 0) {
+          <a routerLink="/a-resoudre" class="lien-resoudre" data-action="aller-a-resoudre">Voir et résoudre</a>
+        }
         <button type="button" (click)="detailOuvert.set(!detailOuvert())" data-action="detail-file-attente">{{ detailOuvert() ? 'Masquer' : 'Détail' }}</button>
         @if (file.enAttente().length > 0 && horsLigne.enLigne()) {
           <button type="button" [disabled]="file.synchronisation()" (click)="file.synchroniser()" data-action="synchroniser">
@@ -76,6 +81,7 @@ import { HorsLigneService } from './hors-ligne.service';
       .bandeau button, .liste-file button { border: 1px solid var(--color-primary, #14662f); background: var(--color-primary, #14662f); color: #fff; border-radius: 6px; padding: 0.2rem 0.7rem; font-size: 0.8125rem; cursor: pointer; }
       .bandeau button:disabled { opacity: 0.6; cursor: default; }
       .refus { color: #b42318; }
+      .lien-resoudre { color: #b42318; font-weight: 600; text-decoration: underline; }
       .liste-file { list-style: none; margin: 0; padding: 0.5rem 1.25rem; background: #f5faff; border-bottom: 1px solid #b2ddff; font-size: 0.8125rem; }
       .liste-file li { display: flex; gap: 0.6rem; align-items: center; flex-wrap: wrap; padding: 0.25rem 0; }
       .liste-file .libelle { flex: 1 1 14rem; }

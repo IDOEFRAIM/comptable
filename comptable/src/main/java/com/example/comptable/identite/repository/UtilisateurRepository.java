@@ -15,6 +15,10 @@ public interface UtilisateurRepository extends JpaRepository<Utilisateur, UUID> 
 
     boolean existsByEmail(String email);
 
+    /** Au moins un compte porte ce rôle (sert à l'amorçage du premier SUPER_ADMIN). */
+    @Query("SELECT COUNT(u) > 0 FROM Utilisateur u JOIN u.roles r WHERE r.code = :code")
+    boolean existsByRoleCode(@Param("code") String code);
+
     /** Mission P1.5 (section 51) : source pour le selecteur "assigner a un collaborateur" -
      * tous les utilisateurs du tenant portant un des roles donnes, quel que soit leur nombre de
      * Finding assignes (contrairement a {@code InboxService.chargeParCollaborateur}, qui ne liste

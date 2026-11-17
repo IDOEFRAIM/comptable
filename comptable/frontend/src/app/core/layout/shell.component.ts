@@ -35,11 +35,15 @@ export class ShellComponent implements OnInit, OnDestroy {
   readonly estMembreCabinet = this.tokenStorage
     .getRoles()
     .some((role) => role === 'ROLE_EXPERT_COMPTABLE' || role === 'ROLE_COLLABORATEUR');
+  readonly estAdmin = this.tokenStorage.getRoles().includes('ROLE_SUPER_ADMIN');
   readonly compteurNonLues = signal(0);
   readonly notifications = signal<NotificationDto[]>([]);
   readonly dropdownOuvert = signal(false);
 
   ngOnInit(): void {
+    if (this.estAdmin) {
+      return; // l'administrateur de la plateforme n'a ni dossiers à télécharger ni notifications de cabinet
+    }
     this.synchronisationAuto.demarrer();
     this.abonnementCompteur = interval(INTERVALLE_RAFRAICHISSEMENT_MS)
       .pipe(
