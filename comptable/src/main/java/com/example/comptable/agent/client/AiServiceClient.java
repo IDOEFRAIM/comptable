@@ -28,6 +28,7 @@ import java.net.http.HttpClient;
 import java.time.Duration;
 import java.util.List;
 import java.util.Optional;
+import java.util.function.Supplier;
 
 /**
  * Point d'acces unique, cote Spring Boot, au microservice IA (ai-service, FastAPI) : extraction
@@ -50,12 +51,14 @@ public class AiServiceClient {
     private static final Logger log = LoggerFactory.getLogger(AiServiceClient.class);
 
     private final RestClient restClient;
+    private final AiUsageService usage;
 
-    public AiServiceClient(RestClient.Builder restClientBuilder,
+    public AiServiceClient(AiUsageService usage, RestClient.Builder restClientBuilder,
                             @Value("${ai-service.base-url:http://localhost:8000}") String baseUrl,
                             @Value("${ai-service.outbound-api-key:}") String apiKey,
                             @Value("${ai-service.connect-timeout-ms:5000}") long connectTimeoutMs,
                             @Value("${ai-service.read-timeout-ms:30000}") long readTimeoutMs) {
+        this.usage = usage;
         HttpClient httpClient = HttpClient.newBuilder()
                 .connectTimeout(Duration.ofMillis(connectTimeoutMs))
                 // HTTP/1.1 force : le JDK HttpClient tente HTTP/2 (upgrade h2c) par defaut, que
@@ -77,16 +80,36 @@ public class AiServiceClient {
                 .build();
     }
 
+    /**
+     * Mesure un appel au microservice IA (compté par cabinet) et applique le plafond mensuel : plafond atteint = l'appel n'est pas fait et l'appelant reçoit la valeur de repli, exactement
+     * comme si le microservice était indisponible (l'application reste utilisable sans IA).
+     */
+    private <T> T suivre(String operation, Supplier<T> appel, Supplier<T> repliPlafond) {
+        if (usage.plafondAtteint()) {
+            usage.enregistrer(operation, "REFUSE_PLAFOND", 0, null);
+            return repliPlafond.get();
+        }
+        long debut = System.nanoTime();
+        try {
+            T resultat = appel.get();
+            usage.enregistrer(operation, "OK", (System.nanoTime() - debut) / 1_000_000, null);
+            return resultat;
+        } catch (RestClientException e) {
+            usage.enregistrer(operation, "ECHEC", (System.nanoTime() - debut) / 1_000_000, e.getMessage());
+            throw e;
+        }
+    }
+
     public OcrResult extraire(byte[] contenu, String nomFichier, String contentType) {
         try {
             MultiValueMap<String, Object> corps = new LinkedMultiValueMap<>();
             corps.add("fichier", fichierPart(contenu, nomFichier, contentType));
-            return restClient.post()
+            return suivre("extraction", () -> restClient.post()
                     .uri("/api/v1/extraction/document")
                     .contentType(MediaType.MULTIPART_FORM_DATA)
                     .body(corps)
                     .retrieve()
-                    .body(OcrResult.class);
+                    .body(OcrResult.class), () -> OcrResult.echec("Le plafond mensuel d'appels IA de votre cabinet est atteint ; saisie manuelle requise. Contactez l'équipe Warimara."));
         } catch (RestClientException e) {
             return OcrResult.echec("Extraction indisponible pour le moment (microservice IA : "
                     + e.getMessage() + ") ; saisie manuelle requise.");
@@ -101,12 +124,12 @@ public class AiServiceClient {
             if (typeDocument != null) {
                 corps.add("type_document", typeDocument.name());
             }
-            AlerteFraudeDTO[] alertes = restClient.post()
+            AlerteFraudeDTO[] alertes = suivre("fraude-visuelle", () -> restClient.post()
                     .uri("/api/v1/fraude/analyse-visuelle")
                     .contentType(MediaType.MULTIPART_FORM_DATA)
                     .body(corps)
                     .retrieve()
-                    .body(AlerteFraudeDTO[].class);
+                    .body(AlerteFraudeDTO[].class), () -> new AlerteFraudeDTO[0]);
             return alertes == null ? List.of()
                     : List.of(alertes).stream().map(AlerteFraudeDTO::versAlerteFraude).toList();
         } catch (RestClientException e) {
@@ -118,12 +141,12 @@ public class AiServiceClient {
 
     public List<AppariementSemantique> rapprocherSemantiquement(RapprochementSemantiqueRequestDTO requete) {
         try {
-            AppariementSemantique[] appariements = restClient.post()
+            AppariementSemantique[] appariements = suivre("rapprochement-semantique", () -> restClient.post()
                     .uri("/api/v1/rapprochement/semantique")
                     .contentType(MediaType.APPLICATION_JSON)
                     .body(requete)
                     .retrieve()
-                    .body(AppariementSemantique[].class);
+                    .body(AppariementSemantique[].class), () -> new AppariementSemantique[0]);
             return appariements == null ? List.of() : List.of(appariements);
         } catch (RestClientException e) {
             log.warn("Rapprochement semantique indisponible pour le moment (microservice IA) : {}",
@@ -141,12 +164,12 @@ public class AiServiceClient {
      */
     public Optional<MatchingResponseDTO> analyzeMatching(MatchingRequestDTO requete) {
         try {
-            MatchingResponseDTO reponse = restClient.post()
+            MatchingResponseDTO reponse = suivre("matching", () -> restClient.post()
                     .uri("/api/v1/matching/analyze")
                     .contentType(MediaType.APPLICATION_JSON)
                     .body(requete)
                     .retrieve()
-                    .body(MatchingResponseDTO.class);
+                    .body(MatchingResponseDTO.class), () -> null);
             if (reponse == null) {
                 log.warn("Universal Matching Engine : reponse vide pour la source {}", requete.source().id());
                 return Optional.empty();
@@ -164,12 +187,12 @@ public class AiServiceClient {
      * IA (voir {@code CopilotService.repondre}). */
     public Optional<CopilotExplainResponseDTO> copilotExplain(CopilotExplainRequestDTO requete) {
         try {
-            CopilotExplainResponseDTO reponse = restClient.post()
+            CopilotExplainResponseDTO reponse = suivre("copilot", () -> restClient.post()
                     .uri("/api/v1/copilot/explain")
                     .contentType(MediaType.APPLICATION_JSON)
                     .body(requete)
                     .retrieve()
-                    .body(CopilotExplainResponseDTO.class);
+                    .body(CopilotExplainResponseDTO.class), () -> null);
             return Optional.ofNullable(reponse);
         } catch (RestClientException e) {
             log.warn("Copilot indisponible pour le moment (microservice IA) : {}", e.getMessage());

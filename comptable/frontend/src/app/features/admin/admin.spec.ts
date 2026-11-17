@@ -8,6 +8,8 @@ import { AdminService, CabinetAdmin, UtilisateurAdmin } from './admin.service';
 import { AdminCabinetsComponent } from './admin-cabinets.component';
 import { AdminUtilisateursComponent } from './admin-utilisateurs.component';
 import { AdminAuditComponent } from './admin-audit.component';
+import { AdminIaComponent } from './admin-ia.component';
+import { AdminSanteComponent } from './admin-sante.component';
 
 const utilisateur = (extra: Partial<UtilisateurAdmin> = {}): UtilisateurAdmin => ({
   id: 'u1', email: 'expert@cabinet.test', nom: 'Kone', prenom: 'Awa', statut: 'ACTIF', cabinetId: 'c1', cabinet: 'Cabinet Kone', roles: ['EXPERT_COMPTABLE'], creeLe: '2026-11-01T10:00:00Z',
@@ -247,5 +249,80 @@ describe('AdminCabinetsComponent', () => {
     http.expectOne((r) => r.url === '/api/admin/cabinets' && r.method === 'POST').flush({ message: 'Cette adresse e-mail est déjà utilisée' }, { status: 409, statusText: 'Conflict' });
     f.detectChanges();
     expect(el(f, '[data-zone="formulaire-creation"]')!.textContent).toContain('déjà utilisée');
+  });
+});
+
+describe('AdminIaComponent', () => {
+  let http: HttpTestingController;
+  const usage = (cabinets: object[] = []) => ({ mois: '2026-11', appels: 12, echecs: 2, refusesPlafond: 3, appelsSansCabinet: 1, cabinets, operations: [{ operation: 'extraction', appels: 10, echecs: 2, latenceMoyenneMs: 850 }] });
+  const ligne = (extra: object = {}) => ({ cabinetId: 'c1', cabinet: 'Cabinet Kone', appels: 10, echecs: 2, refusesPlafond: 3, latenceMoyenneMs: 850, plafond: 10, dernierAppel: '2026-11-17T10:00:00Z', ...extra });
+
+  function ouvrir(cabinets: object[] = [ligne()]) {
+    TestBed.configureTestingModule({ providers: [provideHttpClient(), provideHttpClientTesting()] });
+    http = TestBed.inject(HttpTestingController);
+    const f = TestBed.createComponent(AdminIaComponent);
+    f.detectChanges();
+    http.expectOne((r) => r.url === '/api/admin/ia/usage').flush(usage(cabinets));
+    f.detectChanges();
+    return f;
+  }
+  const el = (f: ReturnType<typeof ouvrir>, selecteur: string) => f.nativeElement.querySelector(selecteur) as HTMLElement | null;
+
+  it('dit clairement que le coût et les jetons ne sont pas mesurés, et montre les appels par cabinet', () => {
+    const f = ouvrir();
+    expect(f.nativeElement.textContent).toContain('ne sont pas mesurés');
+    const texte = el(f, '[data-zone="table-usage-ia"]')!.textContent!;
+    expect(texte).toContain('Cabinet Kone');
+    expect(texte).toContain('850 ms');
+    expect(el(f, '[data-zone="plafond-atteint"]')).not.toBeNull(); // 10 appels sur 10
+    expect(el(f, '[data-zone="table-operations-ia"]')!.textContent).toContain('extraction');
+  });
+
+  it('modifier le plafond exige un motif puis envoie la demande', async () => {
+    const f = ouvrir();
+    el(f, '[data-action="plafond"]')!.click();
+    f.detectChanges();
+    await f.whenStable();
+    const motif = el(f, '[data-zone="motif-action"]') as HTMLTextAreaElement;
+    motif.value = 'abc';
+    motif.dispatchEvent(new Event('input'));
+    f.detectChanges();
+    expect((el(f, '[data-action="confirmer-plafond"]') as HTMLButtonElement).disabled).toBeTrue();
+    motif.value = 'Offre de départ';
+    motif.dispatchEvent(new Event('input'));
+    f.detectChanges();
+    (el(f, '[data-action="confirmer-plafond"]') as HTMLButtonElement).click();
+    const requete = http.expectOne('/api/admin/cabinets/c1/plafond-ia');
+    expect(requete.request.body.motif).toBe('Offre de départ');
+    expect(requete.request.body.plafond).toBe(10);
+    requete.flush(ligne());
+    http.expectOne((r) => r.url === '/api/admin/ia/usage').flush(usage([ligne()]));
+  });
+});
+
+describe('AdminSanteComponent', () => {
+  const sante = (extra: object = {}) => ({
+    mesureLe: '2026-11-17T10:00:00Z',
+    services: [
+      { nom: 'Serveur Warimara', etat: 'OK', latenceMs: null, detail: 'Répond.' },
+      { nom: 'Microservice IA', etat: 'HORS_SERVICE', latenceMs: null, detail: 'Ne répond pas.' },
+    ],
+    sauvegarde: { etat: 'NON_SURVEILLEE', derniere: null, ageHeures: null, detail: 'Aucun dossier configuré.' },
+    memoireUtiliseeMo: 300, memoireMaxMo: 900, disqueLibreMo: 1000, disqueTotalMo: 20000, versionBase: '72', demarreDepuisMinutes: 90, ...extra,
+  });
+
+  it('montre chaque service avec son état réel, une sauvegarde non surveillée comme une alerte, et la version de la base', () => {
+    TestBed.configureTestingModule({ providers: [provideHttpClient(), provideHttpClientTesting()] });
+    const http = TestBed.inject(HttpTestingController);
+    const f = TestBed.createComponent(AdminSanteComponent);
+    f.detectChanges();
+    http.expectOne('/api/admin/sante').flush(sante());
+    f.detectChanges();
+    const racine = f.nativeElement as HTMLElement;
+    expect(racine.querySelector('[data-etat="HORS_SERVICE"]')!.textContent).toContain('Microservice IA');
+    expect(racine.querySelector('[data-zone="sauvegarde"]')!.textContent).toContain('Non surveillée');
+    expect(racine.querySelector('[data-zone="sauvegarde"]')!.className).toContain('alerte');
+    expect(racine.querySelector('[data-zone="ressources"]')!.textContent).toContain('V72');
+    expect(racine.querySelector('[data-zone="ressources"]')!.textContent).toContain('1 h');
   });
 });

@@ -91,6 +91,60 @@ export interface CreationCabinet {
   motDePasseTemporaire: string;
 }
 
+export interface UsageIaCabinet {
+  cabinetId: string;
+  cabinet: string;
+  appels: number;
+  echecs: number;
+  refusesPlafond: number;
+  latenceMoyenneMs: number | null;
+  plafond: number | null;
+  dernierAppel: string | null;
+}
+
+export interface UsageIaOperation {
+  operation: string;
+  appels: number;
+  echecs: number;
+  latenceMoyenneMs: number | null;
+}
+
+export interface UsageIa {
+  mois: string;
+  appels: number;
+  echecs: number;
+  refusesPlafond: number;
+  appelsSansCabinet: number;
+  cabinets: UsageIaCabinet[];
+  operations: UsageIaOperation[];
+}
+
+export interface EtatService {
+  nom: string;
+  etat: 'OK' | 'DEGRADE' | 'HORS_SERVICE';
+  latenceMs: number | null;
+  detail: string;
+}
+
+export interface SanteSauvegarde {
+  etat: 'OK' | 'ANCIENNE' | 'ABSENTE' | 'NON_SURVEILLEE';
+  derniere: string | null;
+  ageHeures: number | null;
+  detail: string;
+}
+
+export interface SantePlateforme {
+  mesureLe: string;
+  services: EtatService[];
+  sauvegarde: SanteSauvegarde;
+  memoireUtiliseeMo: number;
+  memoireMaxMo: number;
+  disqueLibreMo: number;
+  disqueTotalMo: number;
+  versionBase: string;
+  demarreDepuisMinutes: number;
+}
+
 export const PLANS = ['ESSAI', 'STANDARD', 'PARTENAIRE'];
 
 export interface ApercuAdmin {
@@ -144,6 +198,18 @@ export class AdminService {
 
   creerCabinet(cabinet: NouveauCabinet): Observable<CreationCabinet> {
     return this.http.post<CreationCabinet>('/api/admin/cabinets', cabinet);
+  }
+
+  usageIa(mois?: string): Observable<UsageIa> {
+    return this.http.get<UsageIa>('/api/admin/ia/usage', { params: parametres({ mois }) });
+  }
+
+  modifierPlafondIa(cabinetId: string, plafond: number | null, motif: string): Observable<UsageIaCabinet> {
+    return this.http.post<UsageIaCabinet>(`/api/admin/cabinets/${cabinetId}/plafond-ia`, { plafond, motif });
+  }
+
+  sante(): Observable<SantePlateforme> {
+    return this.http.get<SantePlateforme>('/api/admin/sante');
   }
 
   audit(filtre: { cabinetId?: string; action?: string; depuis?: string; jusqu?: string; page?: number; taille?: number }): Observable<PageAdmin<EvenementAudit>> {

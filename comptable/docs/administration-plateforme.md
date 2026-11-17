@@ -35,8 +35,13 @@ Le compte est créé avec « changement de mot de passe obligatoire » : à la p
 - Les cabinets déjà existants ne sont **ni limités ni en fin d'essai** (limites et date vides) tant que l'administrateur ne les renseigne pas.
 - Non couvert : limite de **pièces** par mois (volume, à définir avec les tarifs).
 
-### 3. IA, coûts et santé — *à venir*
-Usage de l'IA par cabinet (requêtes, jetons, coût estimé) avec plafonds ; état des services (backend, ai-service, base) ; files hors ligne en erreur ; sauvegarde de la base visible.
+### 3. IA, coûts et santé — *livré*
+- **Usage de l'IA par cabinet** (`/admin/ia`) : pour un mois, appels au microservice IA, échecs, refus de plafond, latence moyenne, dernier appel, par cabinet et par type d'appel (extraction, rapprochement, Copilot, fraude, matching). Chaque appel est enregistré dans `ai_call_log` (`AiUsageService`), jamais de façon bloquante.
+- **Ce qui n'est PAS mesuré : les jetons et le coût en argent.** Le microservice IA ne les remonte pas. Le plafond est donc un **nombre d'appels par mois** et par cabinet (vide = pas de plafond). Pour mesurer un coût, il faudra que `ai-service` renvoie les jetons consommés (Groq, Bedrock) : à faire au moment du choix du fournisseur.
+- **Plafond** : un cabinet qui l'atteint n'est pas coupé. Ses fonctions d'IA reviennent à la saisie manuelle (comme quand le microservice est en panne) et l'appel refusé n'augmente pas l'usage. Modifier un plafond demande un motif et est tracé (`ADMIN_PLAFOND_IA_MODIFIE`). Les appels faits hors requête (tâches de fond) sont comptés « sans cabinet » et jamais plafonnés.
+- **Santé** (`/admin/sante`) : serveur, base (avec sa latence), microservice IA (`/health`, sinon `/openapi.json`), mémoire, disque, version de la base, durée de fonctionnement. Un service qui ne répond pas est affiché « hors service », jamais « OK » par défaut.
+- **Sauvegarde de la base** : le serveur regarde le fichier le plus récent du dossier `admin.sauvegarde.dossier` (variable `ADMIN_SAUVEGARDE_DOSSIER`) et alerte au-delà de `admin.sauvegarde.age-max-heures` (36 par défaut). **Sans dossier configuré, l'état est « non surveillée »** : Warimara ne prétend pas savoir si la base est sauvegardée.
+- **Files hors ligne** : elles vivent sur les appareils des comptables ; le serveur ne les voit qu'à l'envoi. Rien à surveiller côté serveur avant ce moment, c'est volontairement absent de cet écran.
 
 ### 4. Durcissement — *à prévoir*
 Authentification à deux facteurs obligatoire pour les administrateurs, journal d'audit infalsifiable (chaînage), alertes (comptes verrouillés en masse, connexions anormales).

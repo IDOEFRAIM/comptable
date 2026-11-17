@@ -15,6 +15,7 @@ export const LIBELLES_ACTION: Record<string, string> = {
   ADMIN_UTILISATEUR_DEVERROUILLE: 'Compte déverrouillé',
   ADMIN_SESSIONS_REVOQUEES: 'Sessions révoquées',
   ADMIN_MOT_DE_PASSE_REINITIALISE: 'Mot de passe réinitialisé',
+  ADMIN_PLAFOND_IA_MODIFIE: 'Plafond d’appels IA modifié',
 };
 
 /** Journal d'audit global : ce qui s'est passé dans tous les cabinets, du plus récent au plus ancien. Lecture seule. */

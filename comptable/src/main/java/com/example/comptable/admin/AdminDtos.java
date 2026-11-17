@@ -51,4 +51,30 @@ public final class AdminDtos {
     /** Le mot de passe temporaire de l'expert n'est renvoyé qu'ici, une seule fois. */
     public record CreationCabinetAdmin(CabinetAdmin cabinet, String emailExpert, String motDePasseTemporaire) {
     }
+
+    // ---- IA, coûts et santé (livraison 3)
+
+    /** Usage de l'IA d'un cabinet sur un mois. Les jetons et le coût ne sont pas mesurés : seuls les appels, échecs, refus de plafond et la latence le sont. */
+    public record UsageIaCabinet(UUID cabinetId, String cabinet, long appels, long echecs, long refusesPlafond, Long latenceMoyenneMs, Integer plafond, OffsetDateTime dernierAppel) {
+    }
+
+    public record UsageIaOperation(String operation, long appels, long echecs, Long latenceMoyenneMs) {
+    }
+
+    public record UsageIa(String mois, long appels, long echecs, long refusesPlafond, long appelsSansCabinet, List<UsageIaCabinet> cabinets, List<UsageIaOperation> operations) {
+    }
+
+    public record PlafondIaRequest(Integer plafond, String motif) {
+    }
+
+    /** État d'un élément de la plateforme : OK, DEGRADE (répond mal) ou HORS_SERVICE ; {@code detail} explique en une phrase. */
+    public record EtatService(String nom, String etat, Long latenceMs, String detail) {
+    }
+
+    public record SanteSauvegarde(String etat, OffsetDateTime derniere, Long ageHeures, String detail) {
+    }
+
+    public record SantePlateforme(OffsetDateTime mesureLe, List<EtatService> services, SanteSauvegarde sauvegarde, long memoireUtiliseeMo, long memoireMaxMo, long disqueLibreMo, long disqueTotalMo,
+                                  String versionBase, long demarreDepuisMinutes) {
+    }
 }

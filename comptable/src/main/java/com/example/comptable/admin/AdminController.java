@@ -34,6 +34,7 @@ public class AdminController {
     private final AdminUtilisateurService utilisateurs;
     private final AdminSupervisionService supervision;
     private final AdminCabinetService cabinets;
+    private final AdminIaSanteService iaSante;
 
     @GetMapping("/apercu")
     public Apercu apercu(@AuthenticationPrincipal UtilisateurPrincipal admin) {
@@ -103,5 +104,20 @@ public class AdminController {
                                       @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate jusqu, @RequestParam(defaultValue = "0") int page,
                                       @RequestParam(defaultValue = "50") int taille) {
         return supervision.audit(admin, cabinetId, action, depuis, jusqu, page, taille);
+    }
+
+    @GetMapping("/ia/usage")
+    public AdminDtos.UsageIa usageIa(@AuthenticationPrincipal UtilisateurPrincipal admin, @RequestParam(required = false) String mois) {
+        return iaSante.usage(admin, mois);
+    }
+
+    @PostMapping("/cabinets/{id}/plafond-ia")
+    public AdminDtos.UsageIaCabinet plafondIa(@AuthenticationPrincipal UtilisateurPrincipal admin, @PathVariable UUID id, @RequestBody AdminDtos.PlafondIaRequest corps) {
+        return iaSante.modifierPlafond(admin, id, corps);
+    }
+
+    @GetMapping("/sante")
+    public AdminDtos.SantePlateforme sante(@AuthenticationPrincipal UtilisateurPrincipal admin) {
+        return iaSante.sante(admin);
     }
 }
