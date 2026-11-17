@@ -24,6 +24,12 @@
     }
 
     @if (afficherFormulaire()) {
+      @if (brouillonRestaure(); as le) {
+        <div class="bandeau-brouillon" role="status" data-zone="brouillon-restaure">
+          <span>Saisie retrouvée : vous l’aviez laissée le {{ le | date: 'dd/MM/yyyy à HH:mm' }}.</span>
+          <button type="button" (click)="recommencer()" data-action="recommencer-saisie">Recommencer à zéro</button>
+        </div>
+      }
       <form [formGroup]="form" (ngSubmit)="creer()">
         <div class="carte formulaire-entete">
           <label class="champ">

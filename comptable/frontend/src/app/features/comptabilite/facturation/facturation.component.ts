@@ -1,7 +1,8 @@
 import { Component, effect, inject, OnInit, signal } from '@angular/core';
+import { BrouillonLocalService } from '../../../core/forms/brouillon-local.service';
 import { FileAttenteService } from '../../../core/pwa/file-attente.service';
 import { HorsLigneService } from '../../../core/pwa/hors-ligne.service';
-import { DecimalPipe } from '@angular/common';
+import { DatePipe, DecimalPipe } from '@angular/common';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { FormArray, FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
@@ -26,7 +27,7 @@ function aujourdhui(): string {
 @Component({
   selector: 'app-facturation',
   standalone: true,
-  imports: [ReactiveFormsModule, DecimalPipe],
+  imports: [ReactiveFormsModule, DecimalPipe, DatePipe],
   templateUrl: './facturation.component.html',
   styleUrl: './facturation.component.scss',
 })
@@ -36,8 +37,15 @@ export class FacturationComponent implements OnInit {
   private readonly route = inject(ActivatedRoute);
   readonly horsLigne = inject(HorsLigneService);
   private readonly fileAttente = inject(FileAttenteService);
+  private readonly brouillon = inject(BrouillonLocalService);
+
+  /** Moment du brouillon retrouvé à l'ouverture du formulaire ; null si la saisie est neuve. */
+  readonly brouillonRestaure = signal<number | null>(null);
+  private restauration = false;
 
   constructor() {
+    // la saisie en cours est gardée sur l'appareil à chaque modification : une coupure ne la fait plus perdre
+    this.form.valueChanges.subscribe(() => this.memoriser());
     // après l'envoi des documents créés hors ligne, la liste affiche les vrais documents, avec leur numéro officiel
     effect(() => {
       if (this.fileAttente.synchroniseeLe() > 0 && this.entrepriseId()) {
@@ -106,6 +114,79 @@ export class FacturationComponent implements OnInit {
       this.comptesProduits.set(comptes.filter((c) => c.numero.startsWith('7')));
     });
     this.rafraichir();
+    this.restaurer();
+  }
+
+  private formulaire(): string {
+    return `facture-${this.type()}`;
+  }
+
+  private estVide(): boolean {
+    const v = this.form.getRawValue();
+    return !v.tiersId && !v.objet && !v.dateEcheance && v.lignes.every((l) => !l.designation && !Number(l.prixUnitaire));
+  }
+
+  private memoriser(): void {
+    if (this.restauration || !this.entrepriseId()) {
+      return;
+    }
+    if (this.estVide()) {
+      this.brouillon.effacer(this.formulaire(), this.entrepriseId());
+      return;
+    }
+    this.brouillon.sauver(this.formulaire(), this.entrepriseId(), this.form.getRawValue());
+  }
+
+  /** Remet dans le formulaire la saisie laissée en cours (coupure, fermeture accidentelle) pour ce type de document. */
+  private restaurer(): void {
+    const retrouve = this.brouillon.lire<ReturnType<typeof this.form.getRawValue>>(this.formulaire(), this.entrepriseId());
+    if (!retrouve || !retrouve.valeurs.lignes?.length) {
+      this.brouillonRestaure.set(null);
+      return;
+    }
+    this.restauration = true;
+    try {
+      while (this.lignes.length < retrouve.valeurs.lignes.length) {
+        this.lignes.push(this.creerLigne());
+      }
+      while (this.lignes.length > retrouve.valeurs.lignes.length) {
+        this.lignes.removeAt(this.lignes.length - 1);
+      }
+      this.form.setValue(retrouve.valeurs);
+    } finally {
+      this.restauration = false;
+    }
+    this.brouillonRestaure.set(retrouve.le);
+    this.afficherFormulaire.set(true);
+  }
+
+  /** Vide le formulaire sans toucher au brouillon enregistré (changement de devis à facture). */
+  private recommencerSansEffacer(): void {
+    this.restauration = true;
+    this.form.reset({ tiersId: '', dateEmission: aujourdhui(), dateEcheance: '', objet: '' });
+    while (this.lignes.length > 2) {
+      this.lignes.removeAt(0);
+    }
+    while (this.lignes.length < 2) {
+      this.lignes.push(this.creerLigne());
+    }
+    this.restauration = false;
+    this.brouillonRestaure.set(null);
+  }
+
+  /** Efface la saisie en cours et remet le formulaire à neuf. */
+  recommencer(): void {
+    this.restauration = true;
+    this.form.reset({ tiersId: '', dateEmission: aujourdhui(), dateEcheance: '', objet: '' });
+    while (this.lignes.length > 2) {
+      this.lignes.removeAt(0);
+    }
+    while (this.lignes.length < 2) {
+      this.lignes.push(this.creerLigne());
+    }
+    this.restauration = false;
+    this.brouillon.effacer(this.formulaire(), this.entrepriseId());
+    this.brouillonRestaure.set(null);
   }
 
   private creerLigne() {
@@ -144,6 +225,8 @@ export class FacturationComponent implements OnInit {
     this.type.set(type);
     this.documentOuvert.set(null);
     this.rafraichir();
+    this.recommencerSansEffacer();
+    this.restaurer();
   }
 
   afficherOngletAvoirs(): void {
@@ -223,10 +306,14 @@ export class FacturationComponent implements OnInit {
       .subscribe({
         next: (doc) => {
           this.documents.update((liste) => [doc, ...liste]);
+          this.brouillon.effacer(this.formulaire(), this.entrepriseId());
+          this.brouillonRestaure.set(null);
+          this.restauration = true;
           this.form.reset({ tiersId: '', dateEmission: aujourdhui(), dateEcheance: '', objet: '' });
           while (this.lignes.length > 2) {
             this.lignes.removeAt(0);
           }
+          this.restauration = false;
           this.afficherFormulaire.set(false);
         },
         error: (err) => this.erreur.set(err.error?.message ?? 'Impossible de créer ce document.'),
