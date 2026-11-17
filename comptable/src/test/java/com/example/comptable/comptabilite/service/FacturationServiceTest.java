@@ -97,6 +97,9 @@ class FacturationServiceTest {
     @Mock
     private com.example.comptable.comptabilite.repository.FactureAvoirRepository factureAvoirRepository;
 
+    @Mock
+    private NumerotationDocumentService numerotation;
+
     @InjectMocks
     private FacturationService facturationService;
 
@@ -180,7 +183,7 @@ class FacturationServiceTest {
     @Test
     void cree_un_devis_avec_montants_calcules() {
         when(tiersRepository.findById(client.getId())).thenReturn(Optional.of(client));
-        when(factureRepository.countByEntrepriseIdAndType(entrepriseId, TypeFacture.DEVIS)).thenReturn(0L);
+        when(numerotation.prochain(entrepriseId, "DEV", "facture")).thenReturn("DEV-2026-0001");
         when(factureRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
 
         FactureDto resultat = facturationService.creer(entrepriseId, TypeFacture.DEVIS, requete(), principal);
@@ -227,7 +230,7 @@ class FacturationServiceTest {
     void convertit_un_devis_accepte_en_facture() {
         Facture devis = facture(TypeFacture.DEVIS, StatutFacture.ACCEPTE);
         when(factureRepository.findById(devis.getId())).thenReturn(Optional.of(devis));
-        when(factureRepository.countByEntrepriseIdAndType(entrepriseId, TypeFacture.FACTURE)).thenReturn(0L);
+        when(numerotation.prochain(entrepriseId, "FAC", "facture")).thenReturn("FAC-2026-0001");
         when(factureRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
 
         FactureDto resultat = facturationService.convertirEnFacture(entrepriseId, devis.getId(), principal);
