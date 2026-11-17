@@ -200,7 +200,8 @@ class AdminCabinetHttpTest extends CollecteTestBase {
         assertThat(reponse).contains("\"plan\":\"ESSAI\"").contains("\"pays\":\"BF\"").contains("\"membresActifs\":1");
         String temporaire = reponse.replaceAll(".*\"motDePasseTemporaire\":\"([^\"]+)\".*", "$1");
         assertThat(temporaire).hasSize(16);
-        assertThat(jdbc.queryForObject("select fin_essai - current_date from tenant where raison_sociale = 'Cabinet Nouveau Test' order by created_at desc limit 1", Integer.class)).isEqualTo(30);
+        // comparé à la date du serveur Java (et non à current_date de la base, en UTC) : entre minuit et 1 h en heure locale, les deux jours diffèrent
+        assertThat(jdbc.queryForObject("select fin_essai from tenant where raison_sociale = 'Cabinet Nouveau Test' order by created_at desc limit 1", java.time.LocalDate.class)).isEqualTo(java.time.LocalDate.now().plusDays(30));
 
         MockHttpServletResponse connexion = connexion(email, temporaire);
         assertThat(connexion.getStatus()).isEqualTo(200);
