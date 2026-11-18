@@ -32,7 +32,7 @@ public class TiersController {
     public ResponseEntity<TiersDto> creer(@PathVariable UUID entrepriseId,
                                            @Valid @RequestBody CreerTiersRequest request,
                                            @AuthenticationPrincipal UtilisateurPrincipal principal) {
-        TiersDto tiers = tiersService.creer(entrepriseId, request.type(), request.nom(), request.numeroContribuable(), principal);
+        TiersDto tiers = tiersService.creer(entrepriseId, request.type(), request.nom(), request.numeroContribuable(), request.adresse(), principal);
         return ResponseEntity.status(HttpStatus.CREATED).body(tiers);
     }
 

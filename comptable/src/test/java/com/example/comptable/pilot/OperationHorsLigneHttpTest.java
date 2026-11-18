@@ -117,6 +117,32 @@ class OperationHorsLigneHttpTest extends CollecteTestBase {
         assertThat(suivant.getContentAsString()).as("numérotation sans trou ni doublon").contains("-0002\"");
     }
 
+    @Test
+    void huitDevisEnvoyesEnMemeTemps_tousCrees_numerosDistinctsSansTrou() throws Exception {
+        Dossier d = nouveauDossier(false);
+        String corps = "{\"tiersId\":\"" + d.fournisseur().id() + "\",\"dateEmission\":\"" + LocalDate.now() + "\",\"objet\":\"Conseil\","
+                + "\"lignes\":[{\"designation\":\"Conseil\",\"quantite\":1,\"prixUnitaire\":1000,\"tauxTva\":18}]}";
+        var pool = java.util.concurrent.Executors.newFixedThreadPool(8);
+        var depart = new java.util.concurrent.CountDownLatch(1);
+        java.util.List<java.util.concurrent.Future<Integer>> envois = new java.util.ArrayList<>();
+        for (int i = 0; i < 8; i++) {
+            String cle = "course-" + UUID.randomUUID();
+            envois.add(pool.submit(() -> {
+                depart.await();
+                return creerFacture(d, "DEVIS", corps, cle).getStatus();
+            }));
+        }
+        depart.countDown();
+        for (var envoi : envois) {
+            assertThat(envoi.get()).as("aucun envoi ne doit échouer sur un numéro déjà pris").isEqualTo(201);
+        }
+        pool.shutdown();
+        assertThat(jdbc.queryForList("select numero from facture where entreprise_id = ? order by numero", String.class, d.id()))
+                .hasSize(8).doesNotHaveDuplicates()
+                .first().asString().endsWith("-0001");
+        assertThat(jdbc.queryForObject("select max(numero) from facture where entreprise_id = ?", String.class, d.id())).endsWith("-0008");
+    }
+
     private MockHttpServletResponse creerFacture(Dossier d, String type, String corps, String cle) throws Exception {
         return mvc.perform(post("/api/entreprises/" + d.id() + "/factures").param("type", type).contentType(MediaType.APPLICATION_JSON).content(corps).header("Idempotency-Key", cle)
                 .header("Authorization", "Bearer " + jwtService.generateToken(d.expert()))).andReturn().getResponse();

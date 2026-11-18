@@ -43,6 +43,18 @@ public class Entreprise extends UuidEntity {
     @Column(name = "secteur_activite")
     private String secteurActivite;
 
+    private String adresse;
+
+    private String telephone;
+
+    private String email;
+
+    @Column(name = "coordonnees_bancaires")
+    private String coordonneesBancaires;
+
+    @Column(name = "mentions_facture")
+    private String mentionsFacture;
+
     @Column(nullable = false, length = 2)
     private String pays;
 

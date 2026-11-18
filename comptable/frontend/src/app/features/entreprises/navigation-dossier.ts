@@ -67,6 +67,8 @@ export const MENU_DOSSIER: GroupeMenu[] = [
   {
     titre: 'Réglages du dossier',
     entrees: [
+      { lien: 'fiche', libelle: 'Fiche de l’entreprise', icone: 'building', aide: 'IFU, RCCM, adresse, coordonnées bancaires : ce qui figure sur vos devis et factures', cabinet: true },
+      { lien: 'reprise-balance', libelle: 'Reprise de balance', icone: 'upload', aide: 'Importer la balance d’ouverture depuis Excel ou l’ancien logiciel', cabinet: true },
       { lien: 'plan-comptable', libelle: 'Plan comptable', icone: 'grid', aide: 'Comptes SYSCOHADA du dossier', cabinet: true },
       { lien: 'parametres-comptables', libelle: 'Paramètres comptables', icone: 'settings', aide: 'Journaux, exercices et comptes par défaut', cabinet: true },
       { lien: 'inviter', libelle: 'Inviter un utilisateur', icone: 'user-plus', aide: 'Donner un accès au client ou à un collaborateur', cabinet: true },

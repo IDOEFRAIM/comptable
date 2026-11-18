@@ -21,12 +21,18 @@ public class CustomUserDetailsService implements UserDetailsService {
     public UtilisateurPrincipal loadUserByUsername(String email) {
         Utilisateur utilisateur = utilisateurRepository.findByEmail(email)
                 .orElseThrow(() -> new UsernameNotFoundException("Identifiants invalides"));
-        return new UtilisateurPrincipal(utilisateur);
+        return principal(utilisateur);
     }
 
     public UtilisateurPrincipal loadUserById(String id) {
         Utilisateur utilisateur = utilisateurRepository.findById(UUID.fromString(id))
                 .orElseThrow(() -> new UsernameNotFoundException("Utilisateur introuvable"));
-        return new UtilisateurPrincipal(utilisateur);
+        return principal(utilisateur);
+    }
+
+    /** Un administrateur de la plateforme n'a pas de cabinet : jamais suspendu à ce titre. */
+    private static UtilisateurPrincipal principal(Utilisateur utilisateur) {
+        boolean cabinetActif = utilisateur.getTenant() == null || "ACTIF".equals(utilisateur.getTenant().getStatut());
+        return new UtilisateurPrincipal(utilisateur, cabinetActif);
     }
 }

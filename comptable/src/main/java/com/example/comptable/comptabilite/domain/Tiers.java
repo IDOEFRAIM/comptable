@@ -39,6 +39,8 @@ public class Tiers extends UuidEntity {
     @Column(name = "numero_contribuable")
     private String numeroContribuable;
 
+    private String adresse;
+
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "compte_comptable_id", nullable = false)
     private CompteComptable compteComptable;

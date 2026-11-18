@@ -53,6 +53,7 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class FacturationService {
 
+    private final NumerotationDocumentService numerotation;
     private final EntrepriseAccessService entrepriseAccessService;
     private final FactureRepository factureRepository;
     private final TiersRepository tiersRepository;
@@ -306,8 +307,8 @@ public class FacturationService {
 
     private String genererNumero(UUID entrepriseId, TypeFacture type) {
         String prefixe = type == TypeFacture.DEVIS ? "DEV" : "FAC";
-        long sequence = factureRepository.countByEntrepriseIdAndType(entrepriseId, type) + 1;
-        return "%s-%d-%04d".formatted(prefixe, LocalDate.now().getYear(), sequence);
+        factureRepository.flush();
+        return numerotation.prochain(entrepriseId, prefixe, "facture");
     }
 
     private Facture charger(UUID entrepriseId, UUID factureId, UtilisateurPrincipal principal) {

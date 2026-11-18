@@ -9,6 +9,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+import java.time.LocalDate;
 import java.time.OffsetDateTime;
 
 @Entity
@@ -32,6 +33,24 @@ public class Tenant extends UuidEntity {
 
     @Column(nullable = false)
     private String statut = "ACTIF";
+
+    /** Fin de la période d'essai (plan ESSAI). Null : pas de date. Une date dépassée est signalée à l'administrateur, jamais appliquée automatiquement. */
+    @Column(name = "fin_essai")
+    private LocalDate finEssai;
+
+    /** Nombre maximal de membres de cabinet actifs (experts et collaborateurs). Null : illimité. */
+    @Column(name = "quota_utilisateurs")
+    private Integer quotaUtilisateurs;
+
+    /** Nombre maximal de dossiers (entreprises) actifs. Null : illimité. */
+    @Column(name = "quota_dossiers")
+    private Integer quotaDossiers;
+
+    @Column(name = "suspendu_motif", length = 500)
+    private String suspenduMotif;
+
+    @Column(name = "suspendu_le")
+    private OffsetDateTime suspenduLe;
 
     @Column(name = "created_at", nullable = false)
     private OffsetDateTime createdAt;

@@ -1,6 +1,10 @@
 package com.example.comptable.admin;
 
+import com.example.comptable.admin.AdminDtos.AbonnementRequest;
 import com.example.comptable.admin.AdminDtos.Apercu;
+import com.example.comptable.admin.AdminDtos.CabinetAdmin;
+import com.example.comptable.admin.AdminDtos.CreationCabinetAdmin;
+import com.example.comptable.admin.AdminDtos.CreerCabinetRequest;
 import com.example.comptable.admin.AdminDtos.EvenementAudit;
 import com.example.comptable.admin.AdminDtos.MotifRequest;
 import com.example.comptable.admin.AdminDtos.Page;
@@ -29,6 +33,8 @@ public class AdminController {
 
     private final AdminUtilisateurService utilisateurs;
     private final AdminSupervisionService supervision;
+    private final AdminCabinetService cabinets;
+    private final AdminIaSanteService iaSante;
 
     @GetMapping("/apercu")
     public Apercu apercu(@AuthenticationPrincipal UtilisateurPrincipal admin) {
@@ -66,11 +72,52 @@ public class AdminController {
         return utilisateurs.reinitialiserMotDePasse(admin, id, corps.motif());
     }
 
+    @GetMapping("/cabinets")
+    public Page<CabinetAdmin> cabinets(@AuthenticationPrincipal UtilisateurPrincipal admin, @RequestParam(required = false) String q, @RequestParam(required = false) String statut,
+                                       @RequestParam(defaultValue = "0") int page, @RequestParam(defaultValue = "25") int taille) {
+        return cabinets.lister(admin, q, statut, page, taille);
+    }
+
+    @PostMapping("/cabinets")
+    public org.springframework.http.ResponseEntity<CreationCabinetAdmin> creerCabinet(@AuthenticationPrincipal UtilisateurPrincipal admin, @RequestBody CreerCabinetRequest corps) {
+        return org.springframework.http.ResponseEntity.status(org.springframework.http.HttpStatus.CREATED).body(cabinets.creer(admin, corps));
+    }
+
+    @PostMapping("/cabinets/{id}/suspendre")
+    public CabinetAdmin suspendreCabinet(@AuthenticationPrincipal UtilisateurPrincipal admin, @PathVariable UUID id, @RequestBody MotifRequest corps) {
+        return cabinets.suspendre(admin, id, corps.motif());
+    }
+
+    @PostMapping("/cabinets/{id}/reactiver")
+    public CabinetAdmin reactiverCabinet(@AuthenticationPrincipal UtilisateurPrincipal admin, @PathVariable UUID id, @RequestBody MotifRequest corps) {
+        return cabinets.reactiver(admin, id, corps.motif());
+    }
+
+    @PostMapping("/cabinets/{id}/abonnement")
+    public CabinetAdmin abonnement(@AuthenticationPrincipal UtilisateurPrincipal admin, @PathVariable UUID id, @RequestBody AbonnementRequest corps) {
+        return cabinets.modifierAbonnement(admin, id, corps);
+    }
+
     @GetMapping("/audit")
     public Page<EvenementAudit> audit(@AuthenticationPrincipal UtilisateurPrincipal admin, @RequestParam(required = false) UUID cabinetId, @RequestParam(required = false) String action,
                                       @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate depuis,
                                       @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate jusqu, @RequestParam(defaultValue = "0") int page,
                                       @RequestParam(defaultValue = "50") int taille) {
         return supervision.audit(admin, cabinetId, action, depuis, jusqu, page, taille);
+    }
+
+    @GetMapping("/ia/usage")
+    public AdminDtos.UsageIa usageIa(@AuthenticationPrincipal UtilisateurPrincipal admin, @RequestParam(required = false) String mois) {
+        return iaSante.usage(admin, mois);
+    }
+
+    @PostMapping("/cabinets/{id}/plafond-ia")
+    public AdminDtos.UsageIaCabinet plafondIa(@AuthenticationPrincipal UtilisateurPrincipal admin, @PathVariable UUID id, @RequestBody AdminDtos.PlafondIaRequest corps) {
+        return iaSante.modifierPlafond(admin, id, corps);
+    }
+
+    @GetMapping("/sante")
+    public AdminDtos.SantePlateforme sante(@AuthenticationPrincipal UtilisateurPrincipal admin) {
+        return iaSante.sante(admin);
     }
 }

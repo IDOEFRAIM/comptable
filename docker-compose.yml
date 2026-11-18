@@ -89,6 +89,7 @@ services:
       # Premier administrateur de la plateforme (mode /admin) : cree UNE fois, seulement si aucun administrateur n'existe. Retirer le mot de passe du .env apres la premiere connexion.
       COMPTABLE_ADMIN_BOOTSTRAP_EMAIL: ${COMPTABLE_ADMIN_BOOTSTRAP_EMAIL:-}
       COMPTABLE_ADMIN_BOOTSTRAP_PASSWORD: ${COMPTABLE_ADMIN_BOOTSTRAP_PASSWORD:-}
+      ADMIN_SAUVEGARDE_DOSSIER: ${ADMIN_SAUVEGARDE_DOSSIER:-}
       COLLECTE_LIEN_DEPOT_BASE_URL: ${COLLECTE_LIEN_DEPOT_BASE_URL:?COLLECTE_LIEN_DEPOT_BASE_URL doit etre defini dans .env (URL publique des liens de depot, ex. https://comptable.example.org/depot)}
       COLLECTE_SANDBOX_ALLOWLIST: ${COLLECTE_SANDBOX_ALLOWLIST:-}
       COLLECTE_ENVOI_ACTIF: ${COLLECTE_ENVOI_ACTIF:-false}

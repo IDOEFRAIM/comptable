@@ -189,7 +189,7 @@ describe('FileAttenteService', () => {
       { debit: 0, credit: 1000 },
     ],
   };
-  const attendre = () => new Promise((resolve) => setTimeout(resolve, 40));
+  const attendre = () => new Promise((resolve) => setTimeout(resolve, 150));
 
   beforeEach(async () => {
     enLigne.set(false); // le constructeur tente une synchronisation : hors ligne elle ne fait rien

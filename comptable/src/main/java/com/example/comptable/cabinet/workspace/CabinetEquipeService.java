@@ -56,10 +56,12 @@ public class CabinetEquipeService {
     private final PasswordEncoder passwordEncoder;
     private final AuditTrailService audit;
     private final JdbcTemplate jdbc;
+    private final com.example.comptable.identite.service.QuotaCabinetService quotaCabinetService;
     private final SecureRandom aleatoire = new SecureRandom();
 
     public CabinetEquipeService(UtilisateurRepository utilisateurRepository, RoleRepository roleRepository, TenantRepository tenantRepository, PasswordEncoder passwordEncoder,
-                                AuditTrailService audit, JdbcTemplate jdbc) {
+                                AuditTrailService audit, JdbcTemplate jdbc, com.example.comptable.identite.service.QuotaCabinetService quotaCabinetService) {
+        this.quotaCabinetService = quotaCabinetService;
         this.utilisateurRepository = utilisateurRepository;
         this.roleRepository = roleRepository;
         this.tenantRepository = tenantRepository;
@@ -83,6 +85,7 @@ public class CabinetEquipeService {
     public MembreCreeDto ajouter(UtilisateurPrincipal principal, MembreRequest req) {
         exigerExpert(principal);
         UUID tenant = principal.getTenantId();
+        quotaCabinetService.verifierAjoutMembre(tenant);
         String role = req.role() == null || req.role().isBlank() ? "COLLABORATEUR" : req.role().trim().toUpperCase();
         if (!ROLES.contains(role)) {
             throw new ResponseStatusException(HttpStatus.UNPROCESSABLE_ENTITY, "Rôle inconnu : seuls COLLABORATEUR et EXPERT_COMPTABLE sont possibles");
@@ -148,6 +151,9 @@ public class CabinetEquipeService {
             }
             boolean veutActif = "ACTIF".equals(statut);
             if (veutActif != etaitActif) {
+                if (veutActif) {
+                    quotaCabinetService.verifierAjoutMembre(tenant); // réactiver un membre le recompte dans la limite
+                }
                 if (!veutActif && soiMeme) {
                     throw new ResponseStatusException(HttpStatus.UNPROCESSABLE_ENTITY, "Vous ne pouvez pas désactiver votre propre compte");
                 }

@@ -31,6 +31,8 @@ public class FacturationController {
 
     private final FacturationService facturationService;
     private final FactureAvoirService factureAvoirService;
+    private final com.example.comptable.comptabilite.service.FactureDocumentPdfService pdfService;
+    private final com.example.comptable.comptabilite.repository.FactureRepository factureRepository;
     private final com.example.comptable.comptabilite.allocation.PaiementFactureEnrichisseur paiementFactureEnrichisseur;
     private final com.example.comptable.audit.AuditTrailService auditTrailService;
 
@@ -47,6 +49,15 @@ public class FacturationController {
     public List<FactureDto> lister(@PathVariable UUID entrepriseId, @RequestParam TypeFacture type,
                                     @AuthenticationPrincipal UtilisateurPrincipal principal) {
         return paiementFactureEnrichisseur.enrichir(entrepriseId, facturationService.lister(entrepriseId, type, principal));
+    }
+
+    /** Le devis ou la facture en PDF, prêt à envoyer au client. Un brouillon est téléchargeable mais marqué « BROUILLON ». */
+    @GetMapping("/{factureId}/pdf")
+    public ResponseEntity<byte[]> pdf(@PathVariable UUID entrepriseId, @PathVariable UUID factureId, @AuthenticationPrincipal UtilisateurPrincipal principal) {
+        byte[] contenu = pdfService.generer(entrepriseId, factureId, principal);
+        String nom = factureRepository.findById(factureId).map(com.example.comptable.comptabilite.service.FactureDocumentPdfService::nomFichier).orElse("document.pdf");
+        return ResponseEntity.ok().contentType(org.springframework.http.MediaType.APPLICATION_PDF)
+                .header(org.springframework.http.HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + nom + "\"").body(contenu);
     }
 
     @PostMapping("/{factureId}/envoyer")

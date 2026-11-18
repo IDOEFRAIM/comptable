@@ -22,8 +22,20 @@
     @if (erreur()) {
       <p class="message-erreur">{{ erreur() }}</p>
     }
+    @if (ficheManquants().length > 0) {
+      <p class="info-hors-ligne" role="status" data-zone="fiche-incomplete">
+        Vos documents sortiront avec « non renseigné » pour : {{ ficheManquants().join(', ') }}.
+        <a [routerLink]="['/entreprises', entrepriseId(), 'fiche']">Compléter la fiche de l’entreprise</a>
+      </p>
+    }
 
     @if (afficherFormulaire()) {
+      @if (brouillonRestaure(); as le) {
+        <div class="bandeau-brouillon" role="status" data-zone="brouillon-restaure">
+          <span>Saisie retrouvée : vous l’aviez laissée le {{ le | date: 'dd/MM/yyyy à HH:mm' }}.</span>
+          <button type="button" (click)="recommencer()" data-action="recommencer-saisie">Recommencer à zéro</button>
+        </div>
+      }
       <form [formGroup]="form" (ngSubmit)="creer()">
         <div class="carte formulaire-entete">
           <label class="champ">
@@ -169,6 +181,14 @@
 
                 @if (doc.provisoire) {
                   <p class="meta" data-aide="provisoire">Ce document n’est pas encore sur le serveur. Dès le retour d’Internet il recevra son numéro officiel ; vous pourrez alors l’envoyer, le valider ou le convertir.</p>
+                }
+                @if (!doc.provisoire) {
+                  <div class="actions">
+                    <button type="button" class="bouton-secondaire" [disabled]="actionEnCours() === doc.id || !horsLigne.enLigne()" (click)="telechargerDocument(doc)" data-action="pdf-document"
+                      [title]="horsLigne.enLigne() ? 'Télécharger le document en PDF' : 'Le PDF demande une connexion'">
+                      Télécharger le PDF
+                    </button>
+                  </div>
                 }
                 <div class="actions" [hidden]="doc.provisoire">
                   @if (doc.type === 'DEVIS') {

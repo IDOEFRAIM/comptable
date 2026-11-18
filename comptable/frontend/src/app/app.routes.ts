@@ -47,7 +47,10 @@ export const routes: Routes = [
         children: [
           { path: '', pathMatch: 'full', redirectTo: 'apercu' },
           { path: 'apercu', loadComponent: () => import('./features/admin/admin-apercu.component').then((m) => m.AdminApercuComponent) },
+          { path: 'cabinets', loadComponent: () => import('./features/admin/admin-cabinets.component').then((m) => m.AdminCabinetsComponent) },
           { path: 'utilisateurs', loadComponent: () => import('./features/admin/admin-utilisateurs.component').then((m) => m.AdminUtilisateursComponent) },
+          { path: 'ia', loadComponent: () => import('./features/admin/admin-ia.component').then((m) => m.AdminIaComponent) },
+          { path: 'sante', loadComponent: () => import('./features/admin/admin-sante.component').then((m) => m.AdminSanteComponent) },
           { path: 'audit', loadComponent: () => import('./features/admin/admin-audit.component').then((m) => m.AdminAuditComponent) },
         ],
       },
@@ -248,6 +251,14 @@ export const routes: Routes = [
             path: 'conformite',
             loadComponent: () =>
               import('./features/conformite/conformite.component').then((m) => m.ConformiteComponent),
+          },
+          {
+            path: 'reprise-balance',
+            loadComponent: () => import('./features/entreprises/reprise-balance.component').then((m) => m.RepriseBalanceComponent),
+          },
+          {
+            path: 'fiche',
+            loadComponent: () => import('./features/entreprises/fiche-entreprise.component').then((m) => m.FicheEntrepriseComponent),
           },
           {
             path: 'inviter',

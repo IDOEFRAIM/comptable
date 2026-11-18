@@ -9,6 +9,7 @@ public record TiersDto(
         String type,
         String nom,
         String numeroContribuable,
+        String adresse,
         UUID compteComptableId,
         String compteComptableNumero
 ) {
@@ -18,6 +19,7 @@ public record TiersDto(
                 tiers.getType().name(),
                 tiers.getNom(),
                 tiers.getNumeroContribuable(),
+                tiers.getAdresse(),
                 tiers.getCompteComptable().getId(),
                 tiers.getCompteComptable().getNumero()
         );

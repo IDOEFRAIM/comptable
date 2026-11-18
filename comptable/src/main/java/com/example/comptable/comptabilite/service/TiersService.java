@@ -31,8 +31,13 @@ public class TiersService {
     private final CompteComptableRepository compteComptableRepository;
     private final AccountingAccountResolver accountingAccountResolver;
 
-    @Transactional
     public TiersDto creer(UUID entrepriseId, TypeTiers type, String nom, String numeroContribuable,
+                          UtilisateurPrincipal principal) {
+        return creer(entrepriseId, type, nom, numeroContribuable, null, principal);
+    }
+
+    @Transactional
+    public TiersDto creer(UUID entrepriseId, TypeTiers type, String nom, String numeroContribuable, String adresse,
                           UtilisateurPrincipal principal) {
         Entreprise entreprise = entrepriseAccessService.verifierAcces(entrepriseId, principal);
 
@@ -43,6 +48,7 @@ public class TiersService {
         tiers.setType(type);
         tiers.setNom(nom);
         tiers.setNumeroContribuable(numeroContribuable);
+        tiers.setAdresse(adresse == null || adresse.isBlank() ? null : adresse.trim());
         tiers.setCompteComptable(sousCompte);
         return TiersDto.from(tiersRepository.save(tiers));
     }

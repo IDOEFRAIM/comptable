@@ -86,6 +86,9 @@ class FactureAvoirServiceTest {
     @Mock
     private LettrageService lettrageService;
 
+    @Mock
+    private NumerotationDocumentService numerotation;
+
     @InjectMocks
     private FactureAvoirService factureAvoirService;
 
@@ -100,6 +103,7 @@ class FactureAvoirServiceTest {
     @BeforeEach
     void setUp() {
         entrepriseId = UUID.randomUUID();
+        org.mockito.Mockito.lenient().when(numerotation.prochain(org.mockito.ArgumentMatchers.any(), org.mockito.ArgumentMatchers.eq("AV"), org.mockito.ArgumentMatchers.eq("facture_avoir"))).thenReturn("AV-2026-0001");
         entreprise = new Entreprise();
         entreprise.setId(entrepriseId);
 

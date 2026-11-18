@@ -67,6 +67,7 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class FactureAvoirService {
 
+    private final NumerotationDocumentService numerotation;
     private final EntrepriseAccessService entrepriseAccessService;
     private final FactureRepository factureRepository;
     private final FactureAvoirRepository factureAvoirRepository;
@@ -338,8 +339,8 @@ public class FactureAvoirService {
     }
 
     private String genererNumero(UUID entrepriseId) {
-        long sequence = factureAvoirRepository.countByEntrepriseId(entrepriseId) + 1;
-        return "AV-%d-%04d".formatted(LocalDate.now().getYear(), sequence);
+        factureAvoirRepository.flush();
+        return numerotation.prochain(entrepriseId, "AV", "facture_avoir");
     }
 
     private FactureAvoir chargerAvoir(UUID entrepriseId, UUID avoirId) {

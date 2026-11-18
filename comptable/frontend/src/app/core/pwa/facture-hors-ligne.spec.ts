@@ -16,7 +16,7 @@ describe('Devis et factures créés hors ligne', () => {
   let client: HttpClient;
   let service: FileAttenteService;
   const enLigne = signal(false);
-  const attendre = () => new Promise((resolve) => setTimeout(resolve, 40));
+  const attendre = () => new Promise((resolve) => setTimeout(resolve, 150));
   const requete = (tiersId: string) => ({
     tiersId,
     dateEmission: '2026-11-16',

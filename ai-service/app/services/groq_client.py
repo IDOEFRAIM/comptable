@@ -130,9 +130,13 @@ def _tracer_appel_ia(operation: str, debut: float, *, succes: bool, erreur: Exce
     if succes:
         logger.info("ai_call provider=groq operation=%s success=true latency_ms=%d", operation, latence_ms)
     else:
+        # Le message du fournisseur (ex. "Rate limit reached ... tokens per minute ... Requested N")
+        # dit QUELLE limite est touchee ; il ne contient ni le prompt ni le document ni la cle.
+        detail = " ".join(str(erreur).split())[:300] if erreur is not None else ""
         logger.warning(
-            "ai_call provider=groq operation=%s success=false latency_ms=%d error=%s",
+            "ai_call provider=groq operation=%s success=false latency_ms=%d error=%s detail=%s",
             operation,
             latence_ms,
             type(erreur).__name__ if erreur is not None else "unknown",
+            detail,
         )
