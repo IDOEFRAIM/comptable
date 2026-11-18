@@ -708,3 +708,36 @@ export interface FicheEntreprise {
   mentionsFacture: string | null;
   manquants?: string[];
 }
+
+export interface LigneApercuReprise {
+  ligne: number;
+  compte: string;
+  libelle: string | null;
+  tiers: string | null;
+  debit: number | null;
+  credit: number | null;
+  statut: 'OK' | 'ERREUR' | 'TIERS_A_CREER';
+  message: string | null;
+  compteRetenu: string | null;
+}
+
+/** Ce que le serveur a compris d'une balance de reprise ; `importable` est faux tant qu'il reste une erreur, un déséquilibre ou une reprise déjà faite. */
+export interface ApercuReprise {
+  exerciceId: string;
+  dateOuverture: string;
+  lignes: LigneApercuReprise[];
+  totalDebit: number;
+  totalCredit: number;
+  ecart: number;
+  erreurs: number;
+  tiersACreer: number;
+  importable: boolean;
+  blocage: string | null;
+  avertissements: string[];
+}
+
+export interface ResultatReprise {
+  ecriture: { id: string; numeroPiece: string };
+  lignes: number;
+  tiersCrees: number;
+}

@@ -13,6 +13,8 @@ import {
   ComptabiliserDocumentRequest,
   CreerArticleRequest,
   FicheEntreprise,
+  ApercuReprise,
+  ResultatReprise,
   CreerCommandeAchatRequest,
   CreerDepotRequest,
   CreerEcritureRequest,
@@ -110,6 +112,20 @@ export class ComptabiliteService {
   /** Le devis ou la facture en PDF, prêt à envoyer au client. */
   telechargerDocumentPdf(entrepriseId: string, factureId: string): Observable<Blob> {
     return this.http.get(`${BASE_URL}/${entrepriseId}/factures/${factureId}/pdf`, { responseType: 'blob' });
+  }
+
+  /** Balance d'ouverture (Excel ou CSV) : lecture et explication de chaque ligne, rien n'est écrit. */
+  apercuReprise(entrepriseId: string, fichier: File): Observable<ApercuReprise> {
+    const corps = new FormData();
+    corps.append('fichier', fichier);
+    return this.http.post<ApercuReprise>(`${BASE_URL}/${entrepriseId}/reprise-balance/apercu`, corps);
+  }
+
+  /** Crée l'écriture d'à-nouveaux en brouillon (à relire puis valider). */
+  importerReprise(entrepriseId: string, fichier: File): Observable<ResultatReprise> {
+    const corps = new FormData();
+    corps.append('fichier', fichier);
+    return this.http.post<ResultatReprise>(`${BASE_URL}/${entrepriseId}/reprise-balance`, corps);
   }
 
   ficheEntreprise(entrepriseId: string): Observable<FicheEntreprise> {
