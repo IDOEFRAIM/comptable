@@ -100,7 +100,8 @@ def call_structured(
             # tronque en test reel (2 echecs identiques observes) ; 3000 laisse une marge nettement
             # plus confortable tout en restant sous la limite de 8000 jetons/minute du compte de
             # test (palier gratuit Groq) avec une seule image encodee en base64.
-            max_completion_tokens=3000,
+            max_completion_tokens=settings.groq_max_completion_tokens,
+            **({"extra_body": {"reasoning_effort": settings.groq_reasoning_effort}} if settings.groq_reasoning_effort else {}),
         )
     except Exception as exc:
         _tracer_appel_ia(tool_name, debut, succes=False, erreur=exc)

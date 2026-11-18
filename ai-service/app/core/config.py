@@ -27,6 +27,13 @@ class Settings(BaseSettings):
     # qu'une piece contenant une image doit etre extraite ou analysee visuellement.
     groq_api_key: str = ""
     groq_model: str = "qwen/qwen3.8-27b"
+    # Budget de jetons de sortie par appel. 3000 par defaut : le modele de raisonnement depense
+    # ~750-1070 jetons a "reflechir" avant la reponse. Sur un palier Groq plafonne en jetons de sortie
+    # par minute (ex. OTPM 1000), baisser cette valeur ET desactiver la reflexion (ci-dessous).
+    groq_max_completion_tokens: int = 3000
+    # "" = comportement par defaut du modele ; "none" desactive la phase de reflexion (reponse bien plus
+    # courte, tient sous un petit plafond de jetons de sortie). Valeur transmise telle quelle a Groq.
+    groq_reasoning_effort: str = ""
 
     # Fournisseur des appels IA "groq_client.call_structured" (extraction, fraude visuelle et, quand
     # AI_PROVIDER=groq, matching/copilot) : "groq" (defaut) ou "bedrock" (Amazon Bedrock, API Converse).
