@@ -244,14 +244,38 @@
 
 .lecture-incomplete {
   display: flex;
-  flex-direction: column;
-  gap: 0.2rem;
-  padding: 0.6rem 0.8rem;
+  align-items: flex-start;
+  gap: 0.65rem;
+  padding: 0.55rem 0.8rem;
   border-radius: 8px;
-  background: #fff4d6;
-  border: 1px solid #f2b705;
-  font-size: 0.85rem;
+  background: #fffaeb;
+  border-left: 4px solid #f2b705;
   color: #5c3d00;
+
+  .icone {
+    flex: none;
+    width: 1.3rem;
+    height: 1.3rem;
+    border-radius: 50%;
+    background: #f2b705;
+    color: #fff;
+    font-weight: 700;
+    font-size: 0.8rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-top: 0.1rem;
+  }
+
+  .texte {
+    display: flex;
+    flex-direction: column;
+    gap: 0.1rem;
+    font-size: 0.8rem;
+
+    strong { font-size: 0.85rem; }
+    span { color: #7a5600; }
+  }
 }
 
 .constats {

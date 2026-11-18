@@ -395,6 +395,7 @@ export class DocumentHubComponent implements OnInit, OnDestroy {
   peutAssocier(ligne: LigneHubDto): boolean {
     return (
       this.peutGerer() &&
+      !ligne.lectureIncomplete &&
       (ligne.type === 'FACTURE_ACHAT' || ligne.type === 'FACTURE_VENTE') &&
       !ligne.doublonConfirme &&
       ligne.statutRapprochement !== 'RAPPROCHE' &&

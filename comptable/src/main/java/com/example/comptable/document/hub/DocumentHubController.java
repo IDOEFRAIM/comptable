@@ -147,7 +147,8 @@ public class DocumentHubController {
     }
 
     public record DonneesRequest(java.time.LocalDate datePiece, String numeroFacture, String fournisseur,
-                                 java.math.BigDecimal montantHt, java.math.BigDecimal montantTva, java.math.BigDecimal montantTtc) {
+                                 java.math.BigDecimal montantHt, java.math.BigDecimal montantTva, java.math.BigDecimal montantTtc,
+                                 UUID tiersId) {
     }
 
     /** Saisie manuelle quand la lecture automatique n'a pas pu lire la piece (image floue, service indisponible). */
@@ -156,7 +157,7 @@ public class DocumentHubController {
                                     @AuthenticationPrincipal UtilisateurPrincipal principal) {
         return Resultat.de(traitementService.corrigerDonnees(entrepriseId, documentId,
                 new DocumentTraitementService.CorrectionDonnees(requete.datePiece(), requete.numeroFacture(), requete.fournisseur(),
-                        requete.montantHt(), requete.montantTva(), requete.montantTtc()), principal));
+                        requete.montantHt(), requete.montantTva(), requete.montantTtc(), requete.tiersId()), principal));
     }
 
     /** Etat de la piece apres une action (le Hub recharge ensuite sa liste). */

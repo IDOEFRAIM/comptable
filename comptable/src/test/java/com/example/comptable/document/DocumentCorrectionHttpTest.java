@@ -98,6 +98,23 @@ class DocumentCorrectionHttpTest extends CollecteTestBase {
     }
 
     @Test
+    void fournisseurChoisiDansLaListe_l_emporteSurLeNomLu_etUnTiersDUnAutreDossierEstRefuse() throws Exception {
+        Dossier d = nouveauDossier(false);
+        UUID id = pieceIllisible(d);
+        // un nom qui ne correspond a rien : seul l'identifiant choisi dans la liste peut designer le fournisseur
+        MockHttpServletResponse r = corriger(d, id, "{\"fournisseur\":\"Nom tape de travers\",\"tiersId\":\"" + d.fournisseur().id() + "\"}", jeton(d));
+        assertThat(r.getStatus()).isEqualTo(200);
+        Document apres = documentRepository.findById(id).orElseThrow();
+        assertThat(apres.getTiersId()).isEqualTo(d.fournisseur().id());
+        assertThat(apres.getDonneesOcr().get("fournisseur")).as("le nom enregistre est celui du tiers choisi").isEqualTo("Station XYZ");
+
+        Dossier autre = nouveauDossier(false);
+        MockHttpServletResponse refus = corriger(d, id, "{\"tiersId\":\"" + autre.fournisseur().id() + "\"}", jeton(d));
+        assertThat(refus.getStatus()).as("un tiers d'un autre dossier n'est jamais accepte").isEqualTo(422);
+        assertThat(documentRepository.findById(id).orElseThrow().getTiersId()).isEqualTo(d.fournisseur().id());
+    }
+
+    @Test
     void isoleParCabinet() throws Exception {
         Dossier d = nouveauDossier(false);
         UUID id = pieceIllisible(d);

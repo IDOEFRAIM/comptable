@@ -26,7 +26,7 @@ describe('À valider : pièces à compléter', () => {
       providers: [
         { provide: DocumentHubService, useValue: hub },
         { provide: DocumentAgentService, useValue: { listerEnAttenteValidation: () => of([]) } },
-        { provide: ComptabiliteService, useValue: { listerComptes: () => of([]) } },
+        { provide: ComptabiliteService, useValue: { listerComptes: () => of([]), listerTiers: () => of([]) } },
         { provide: ActivatedRoute, useValue: { paramMap: of(convertToParamMap({ entrepriseId: 'e1' })) } },
       ],
     });

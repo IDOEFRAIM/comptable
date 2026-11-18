@@ -78,7 +78,7 @@ export class DocumentHubService {
   corrigerDonnees(
     entrepriseId: string,
     documentId: string,
-    donnees: { datePiece?: string; numeroFacture?: string; fournisseur?: string; montantHt?: number; montantTva?: number; montantTtc?: number },
+    donnees: { datePiece?: string; numeroFacture?: string; fournisseur?: string; tiersId?: string; montantHt?: number; montantTva?: number; montantTtc?: number },
   ): Observable<ResultatActionDto> {
     return this.http.put<ResultatActionDto>(`${BASE_URL}/${entrepriseId}/documents/${documentId}/donnees`, donnees);
   }

@@ -139,8 +139,11 @@
           }
           @if (l.lectureIncomplete && !l.doublonConfirme) {
             <div class="lecture-incomplete" role="status" data-zone="lecture-incomplete">
-              <strong>{{ l.motifLecture }}</strong>
-              <span>Ouvrez la pièce, puis <b>complétez les informations</b> à la main. Si la photo est trop floue, demandez au client de renvoyer un document plus net.</span>
+              <span class="icone" aria-hidden="true">!</span>
+              <div class="texte">
+                <strong>{{ l.motifLecture }}</strong>
+                <span>Relancez la lecture ou complétez la pièce à la main. Photo trop floue ? Demandez au client de la renvoyer.</span>
+              </div>
             </div>
           }
           @if (l.constats.length) {
@@ -166,11 +169,13 @@
               @if (peutAssocier(l)) {
                 <button type="button" class="bouton-secondaire petit" (click)="ouvrirAssociation(l)">Associer à une facture…</button>
               }
-              <button type="button" class="bouton-secondaire petit" (click)="ouvrirAssociationDemande(l)">Associer à une demande…</button>
+              @if (!l.lectureIncomplete) {
+                <button type="button" class="bouton-secondaire petit" (click)="ouvrirAssociationDemande(l)">Associer à une demande…</button>
+              }
               @if (l.statutRapprochement === 'RAPPROCHE' && !l.valide) {
                 <button type="button" class="bouton-principal petit" (click)="validerPiece(l)">Valider</button>
               }
-              @if (l.qualiteTiers === 'INCONNU' || l.qualiteTiers === 'AMBIGU' || l.qualiteTiers === 'PROBABLE') {
+              @if (!l.lectureIncomplete && (l.qualiteTiers === 'INCONNU' || l.qualiteTiers === 'AMBIGU' || l.qualiteTiers === 'PROBABLE')) {
                 <button type="button" class="bouton-secondaire petit" (click)="retraiter(l)" title="Après avoir créé ou corrigé le fournisseur">Réanalyser</button>
               }
               @if (peutComptabiliser(l)) {
