@@ -51,6 +51,9 @@ services:
       CORE_SERVICE_API_KEY: ${AI_SERVICE_INBOUND_API_KEY:?}
       GROQ_API_KEY: ${GROQ_API_KEY:-}
       GROQ_MODEL: ${GROQ_MODEL:-qwen/qwen3.8-27b}
+      # Palier Groq plafonne en jetons de sortie/minute : GROQ_REASONING_EFFORT=none et un budget plus petit
+      GROQ_MAX_COMPLETION_TOKENS: ${GROQ_MAX_COMPLETION_TOKENS:-3000}
+      GROQ_REASONING_EFFORT: ${GROQ_REASONING_EFFORT:-}
       # groq (defaut) ou bedrock : avec bedrock, aucune cle - role IAM de l'instance EC2 (voir DEPLOYMENT.md)
       VLM_PROVIDER: ${VLM_PROVIDER:-groq}
       BEDROCK_REGION: ${BEDROCK_REGION:-us-east-1}
