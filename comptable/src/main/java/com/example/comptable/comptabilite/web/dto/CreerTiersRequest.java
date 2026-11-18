@@ -7,6 +7,7 @@ import jakarta.validation.constraints.NotNull;
 public record CreerTiersRequest(
         @NotNull TypeTiers type,
         @NotBlank String nom,
-        String numeroContribuable
+        String numeroContribuable,
+        String adresse
 ) {
 }

@@ -12,6 +12,7 @@ import {
   CompteComptableDto,
   ComptabiliserDocumentRequest,
   CreerArticleRequest,
+  FicheEntreprise,
   CreerCommandeAchatRequest,
   CreerDepotRequest,
   CreerEcritureRequest,
@@ -104,6 +105,19 @@ export class ComptabiliteService {
 
   creerTiers(entrepriseId: string, request: CreerTiersRequest): Observable<TiersDto> {
     return this.http.post<TiersDto>(`${BASE_URL}/${entrepriseId}/tiers`, request);
+  }
+
+  /** Le devis ou la facture en PDF, prêt à envoyer au client. */
+  telechargerDocumentPdf(entrepriseId: string, factureId: string): Observable<Blob> {
+    return this.http.get(`${BASE_URL}/${entrepriseId}/factures/${factureId}/pdf`, { responseType: 'blob' });
+  }
+
+  ficheEntreprise(entrepriseId: string): Observable<FicheEntreprise> {
+    return this.http.get<FicheEntreprise>(`${BASE_URL}/${entrepriseId}/fiche`);
+  }
+
+  modifierFicheEntreprise(entrepriseId: string, fiche: FicheEntreprise): Observable<FicheEntreprise> {
+    return this.http.put<FicheEntreprise>(`${BASE_URL}/${entrepriseId}/fiche`, fiche);
   }
 
   listerComptes(entrepriseId: string): Observable<CompteComptableDto[]> {

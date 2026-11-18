@@ -39,6 +39,8 @@ public class EntrepriseService {
     private final JournalRepository journalRepository;
     private final ExerciceComptableRepository exerciceComptableRepository;
     private final com.example.comptable.identite.service.QuotaCabinetService quotaCabinetService;
+    private final EntrepriseAccessService entrepriseAccessService;
+    private final com.example.comptable.audit.AuditTrailService auditTrailService;
 
     @Transactional
     public EntrepriseDto creer(CreerEntrepriseRequest request, UtilisateurPrincipal principal) {
@@ -112,5 +114,36 @@ public class EntrepriseService {
         exercice.setDateDebut(LocalDate.of(annee, 1, 1));
         exercice.setDateFin(LocalDate.of(annee, 12, 31));
         exerciceComptableRepository.save(exercice);
+    }
+
+    @Transactional(readOnly = true)
+    public com.example.comptable.entreprise.web.dto.FicheEntreprise fiche(UUID entrepriseId, UtilisateurPrincipal principal) {
+        return com.example.comptable.entreprise.web.dto.FicheEntreprise.from(entrepriseAccessService.verifierAcces(entrepriseId, principal));
+    }
+
+    /** Met à jour la fiche légale. Réservé aux membres du cabinet (un utilisateur du portail client ne modifie pas l'identité de son dossier). Les champs vides sont effacés. */
+    @Transactional
+    public com.example.comptable.entreprise.web.dto.FicheEntreprise modifierFiche(UUID entrepriseId, com.example.comptable.entreprise.web.dto.FicheEntreprise fiche, UtilisateurPrincipal principal) {
+        Entreprise e = entrepriseAccessService.verifierAcces(entrepriseId, principal);
+        if (principal.getAuthorities().stream().anyMatch(a -> a.getAuthority().equals("ROLE_CLIENT"))) {
+            throw new org.springframework.web.server.ResponseStatusException(org.springframework.http.HttpStatus.FORBIDDEN, "Seul le cabinet peut modifier la fiche de l'entreprise");
+        }
+        e.setRaisonSociale(fiche.raisonSociale().trim());
+        e.setNumeroContribuable(nettoye(fiche.numeroContribuable()));
+        e.setRccm(nettoye(fiche.rccm()));
+        e.setFormeJuridique(nettoye(fiche.formeJuridique()));
+        e.setRegimeFiscal(nettoye(fiche.regimeFiscal()));
+        e.setAdresse(nettoye(fiche.adresse()));
+        e.setTelephone(nettoye(fiche.telephone()));
+        e.setEmail(nettoye(fiche.email()));
+        e.setCoordonneesBancaires(nettoye(fiche.coordonneesBancaires()));
+        e.setMentionsFacture(nettoye(fiche.mentionsFacture()));
+        entrepriseRepository.save(e);
+        auditTrailService.enregistrerActionHumaine(principal.getTenantId(), principal.getId(), "FICHE_ENTREPRISE_MODIFIEE", "ENTREPRISE", entrepriseId.toString(), java.util.Map.of("raisonSociale", e.getRaisonSociale()));
+        return com.example.comptable.entreprise.web.dto.FicheEntreprise.from(e);
+    }
+
+    private static String nettoye(String valeur) {
+        return valeur == null || valeur.isBlank() ? null : valeur.trim();
     }
 }

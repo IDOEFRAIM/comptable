@@ -46,6 +46,7 @@ export class TiersListComponent implements OnInit {
     type: this.fb.nonNullable.control<TypeTiers>('FOURNISSEUR', Validators.required),
     nom: ['', Validators.required],
     numeroContribuable: [''],
+    adresse: [''],
   });
 
   ngOnInit(): void {
@@ -69,14 +70,14 @@ export class TiersListComponent implements OnInit {
       return;
     }
     this.envoiEnCours.set(true);
-    const { type, nom, numeroContribuable } = this.form.getRawValue();
+    const { type, nom, numeroContribuable, adresse } = this.form.getRawValue();
     this.comptabiliteService
-      .creerTiers(this.entrepriseId(), { type, nom, numeroContribuable: numeroContribuable || undefined })
+      .creerTiers(this.entrepriseId(), { type, nom, numeroContribuable: numeroContribuable || undefined, adresse: adresse || undefined })
       .pipe(finalize(() => this.envoiEnCours.set(false)))
       .subscribe({
         next: (tiers) => {
           this.tiers.update((liste) => [...liste, tiers]);
-          this.form.reset({ type: 'FOURNISSEUR', nom: '', numeroContribuable: '' });
+          this.form.reset({ type: 'FOURNISSEUR', nom: '', numeroContribuable: '', adresse: '' });
           this.afficherFormulaire.set(false);
         },
         error: () => this.erreur.set('Impossible de créer ce tiers.'),

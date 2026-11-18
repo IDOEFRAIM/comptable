@@ -253,6 +253,10 @@ export const routes: Routes = [
               import('./features/conformite/conformite.component').then((m) => m.ConformiteComponent),
           },
           {
+            path: 'fiche',
+            loadComponent: () => import('./features/entreprises/fiche-entreprise.component').then((m) => m.FicheEntrepriseComponent),
+          },
+          {
             path: 'inviter',
             loadComponent: () =>
               import('./features/entreprises/invitation/invitation.component').then((m) => m.InvitationComponent),

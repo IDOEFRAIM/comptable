@@ -16,6 +16,7 @@ describe('Brouillon du formulaire de devis et de facture', () => {
     listerComptes: () => of([]),
     listerFactures: () => of([]),
     listerAvoirs: () => of([]),
+    ficheEntreprise: () => of({ raisonSociale: 'X', manquants: [] }),
     creerFacture: () => of({ id: 'd1', numero: 'DEV-2026-0001' }),
   };
 

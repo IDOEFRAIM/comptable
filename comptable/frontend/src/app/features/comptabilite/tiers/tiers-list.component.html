@@ -29,6 +29,10 @@
         <span>N° contribuable (optionnel)</span>
         <input type="text" formControlName="numeroContribuable" />
       </label>
+      <label class="champ">
+        <span>Adresse (optionnel, figure sur les devis et factures)</span>
+        <input type="text" formControlName="adresse" />
+      </label>
       <button type="submit" class="bouton-principal" [disabled]="envoiEnCours()">
         {{ envoiEnCours() ? 'Création…' : 'Créer' }}
       </button>

@@ -5,7 +5,7 @@ import { HorsLigneService } from '../../../core/pwa/hors-ligne.service';
 import { DatePipe, DecimalPipe } from '@angular/common';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { FormArray, FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, RouterLink } from '@angular/router';
 import { finalize, map } from 'rxjs/operators';
 import { ComptabiliteService } from '../comptabilite.service';
 import {
@@ -27,7 +27,7 @@ function aujourdhui(): string {
 @Component({
   selector: 'app-facturation',
   standalone: true,
-  imports: [ReactiveFormsModule, DecimalPipe, DatePipe],
+  imports: [ReactiveFormsModule, DecimalPipe, DatePipe, RouterLink],
   templateUrl: './facturation.component.html',
   styleUrl: './facturation.component.scss',
 })
@@ -74,6 +74,8 @@ export class FacturationComponent implements OnInit {
   readonly actionEnCours = signal<string | null>(null);
   readonly erreur = signal<string | null>(null);
   readonly afficherFormulaire = signal(false);
+  /** Ce qu'il manque à la fiche de l'entreprise (IFU, RCCM, adresse) pour que ses documents soient présentables ; vide = complète. */
+  readonly ficheManquants = signal<string[]>([]);
 
   readonly avoirs = signal<FactureAvoirDto[]>([]);
   readonly avoirOuvert = signal<string | null>(null);
@@ -113,6 +115,7 @@ export class FacturationComponent implements OnInit {
     this.comptabiliteService.listerComptes(this.entrepriseId()).subscribe((comptes) => {
       this.comptesProduits.set(comptes.filter((c) => c.numero.startsWith('7')));
     });
+    this.comptabiliteService.ficheEntreprise(this.entrepriseId()).subscribe({ next: (f) => this.ficheManquants.set(f.manquants ?? []), error: () => undefined });
     this.rafraichir();
     this.restaurer();
   }
@@ -420,6 +423,23 @@ export class FacturationComponent implements OnInit {
         },
         error: (err) => this.erreurAvoir.set(err.error?.message ?? 'Impossible de valider cet avoir.'),
       });
+  }
+
+  /** Le devis ou la facture en PDF, à envoyer au client (nécessite une connexion : le PDF est produit par le serveur). */
+  telechargerDocument(doc: FactureDto): void {
+    this.actionEnCours.set(doc.id);
+    this.erreur.set(null);
+    this.comptabiliteService.telechargerDocumentPdf(this.entrepriseId(), doc.id).pipe(finalize(() => this.actionEnCours.set(null))).subscribe({
+      next: (blob) => {
+        const url = URL.createObjectURL(blob);
+        const lien = document.createElement('a');
+        lien.href = url;
+        lien.download = `${doc.numero}.pdf`;
+        lien.click();
+        URL.revokeObjectURL(url);
+      },
+      error: () => this.erreur.set('Le PDF n’a pas pu être produit. Vérifiez votre connexion et réessayez.'),
+    });
   }
 
   telechargerPdf(avoir: FactureAvoirDto): void {

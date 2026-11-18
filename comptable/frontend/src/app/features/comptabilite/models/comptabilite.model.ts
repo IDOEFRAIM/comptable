@@ -7,6 +7,7 @@ export interface TiersDto {
   type: TypeTiers;
   nom: string;
   numeroContribuable: string | null;
+  adresse?: string | null;
   compteComptableId: string;
   compteComptableNumero: string;
   /** Créé sans Internet sur cet appareil, pas encore envoyé : son identifiant est provisoire. */
@@ -17,6 +18,7 @@ export interface CreerTiersRequest {
   type: TypeTiers;
   nom: string;
   numeroContribuable?: string;
+  adresse?: string;
 }
 
 export type NatureCompte = 'ACTIF' | 'PASSIF' | 'CHARGE' | 'PRODUIT';
@@ -690,4 +692,19 @@ export interface AvoirFournisseurDto {
   retourStock: boolean;
   ecritureId: string | null;
   lignesEcriture: LignePropositionDto[];
+}
+
+/** Fiche légale de l'entreprise : ce qui figure sur ses devis et factures. `manquants` est calculé par le serveur. */
+export interface FicheEntreprise {
+  raisonSociale: string;
+  numeroContribuable: string | null;
+  rccm: string | null;
+  formeJuridique: string | null;
+  regimeFiscal: string | null;
+  adresse: string | null;
+  telephone: string | null;
+  email: string | null;
+  coordonneesBancaires: string | null;
+  mentionsFacture: string | null;
+  manquants?: string[];
 }
