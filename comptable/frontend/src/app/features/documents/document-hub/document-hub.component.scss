@@ -242,6 +242,18 @@
   color: var(--text-secondary);
 }
 
+.lecture-incomplete {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  padding: 0.6rem 0.8rem;
+  border-radius: 8px;
+  background: #fff4d6;
+  border: 1px solid #f2b705;
+  font-size: 0.85rem;
+  color: #5c3d00;
+}
+
 .constats {
   margin: 0;
   display: flex;

@@ -1,6 +1,6 @@
 import { CanalSource, TypeDocument } from './document.model';
 
-export type TuileHub = 'RECUS' | 'TRAITES' | 'A_VERIFIER' | 'DOUBLONS' | 'NON_RAPPROCHES' | 'A_CONFIRMER';
+export type TuileHub = 'RECUS' | 'TRAITES' | 'A_VERIFIER' | 'DOUBLONS' | 'NON_RAPPROCHES' | 'A_CONFIRMER' | 'A_COMPLETER';
 export type StatutRapprochement = 'NON_RAPPROCHE' | 'RAPPROCHE' | 'A_CONFIRMER' | 'AMBIGU';
 export type QualiteTiers = 'EXACT' | 'PROBABLE' | 'AMBIGU' | 'INCONNU';
 
@@ -45,6 +45,9 @@ export interface LigneHubDto {
   valide: boolean;
   doublonConfirme: boolean;
   constats: string[];
+  /** La lecture automatique n'a pas pu lire (tout ou partie) cette pièce : le comptable doit la compléter. */
+  lectureIncomplete?: boolean;
+  motifLecture?: string | null;
 }
 
 export interface PageHubDto {

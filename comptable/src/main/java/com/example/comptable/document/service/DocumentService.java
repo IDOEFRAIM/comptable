@@ -208,8 +208,48 @@ public class DocumentService {
         return enregistre;
     }
 
+    /**
+     * Relance la lecture automatique sur le fichier DEJA stocke (apres une panne passagere du service IA ou un quota atteint),
+     * sans que le comptable ait a renvoyer la piece. Si la nouvelle lecture echoue, la piece reste EXACTEMENT comme elle etait :
+     * rien de ce qui avait ete lu ou saisi n'est ecrase. Refuse une piece comptabilisee ou deja completee a la main.
+     */
+    @Transactional
+    public DocumentDto relire(UUID entrepriseId, UUID documentId, UtilisateurPrincipal principal) {
+        entrepriseAccessService.verifierAcces(entrepriseId, principal);
+        Document document = documentRepository.findById(documentId)
+                .filter(d -> d.getEntreprise().getId().equals(entrepriseId))
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Document introuvable"));
+        if (document.getDoublonDeId() != null || document.getEcritureId() != null) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "Cette piece est deja comptabilisee ou ecartee : elle ne peut plus etre relue");
+        }
+        if (document.getDonneesOcr() != null && Boolean.TRUE.equals(document.getDonneesOcr().get("correctionManuelle"))) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "Cette piece a deja ete completee a la main : la relire effacerait votre saisie");
+        }
+        byte[] contenu;
+        try (var flux = storageService.charger(document.getCheminFichier()).getInputStream()) {
+            contenu = flux.readAllBytes();
+        } catch (IOException e) {
+            throw new ResponseStatusException(HttpStatus.UNPROCESSABLE_ENTITY, "Le fichier de cette piece est introuvable : renvoyez-la");
+        }
+        OcrResult resultat = ocrExtractionService.extraire(contenu, document.getContentType());
+        if (!resultat.reussite()) {
+            throw new ResponseStatusException(HttpStatus.UNPROCESSABLE_ENTITY,
+                    "La lecture automatique n'a toujours pas abouti (photo trop floue ou service momentanement indisponible). "
+                            + "Reessayez dans une minute ou completez la piece a la main.");
+        }
+        appliquerResultat(document, resultat, contenu, document.getContentType());
+        documentRepository.save(document);
+        if (document.getStatutRapprochement() != com.example.comptable.document.domain.StatutRapprochementDocument.RAPPROCHE) {
+            documentPipeline.analyser(document);
+        }
+        return DocumentDto.from(document);
+    }
+
     private void appliquerExtraction(Document document, byte[] contenu, String contentType) {
-        OcrResult resultat = ocrExtractionService.extraire(contenu, contentType);
+        appliquerResultat(document, ocrExtractionService.extraire(contenu, contentType), contenu, contentType);
+    }
+
+    private void appliquerResultat(Document document, OcrResult resultat, byte[] contenu, String contentType) {
         document.setStatut(resultat.reussite() ? StatutDocument.TRAITE : StatutDocument.ERREUR);
         document.setMontantHt(resultat.montantHt());
         document.setMontantTva(resultat.montantTva());

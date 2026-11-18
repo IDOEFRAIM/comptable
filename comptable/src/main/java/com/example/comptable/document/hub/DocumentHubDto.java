@@ -30,7 +30,9 @@ public final class DocumentHubDto {
             BigDecimal montantTtc, String devise, String statut,
             String statutRapprochement, Association association, UUID ecritureId,
             String qualiteTiers, Double confianceTiers, Double confianceRapprochement,
-            boolean valide, boolean doublonConfirme, List<String> constats) {
+            boolean valide, boolean doublonConfirme, List<String> constats,
+            /** La lecture automatique n'a pas pu lire (tout ou partie) cette piece : le comptable doit la completer. */
+            boolean lectureIncomplete, String motifLecture) {
     }
 
     public record Page(List<Ligne> contenu, int page, int taille, long total, int totalPages) {

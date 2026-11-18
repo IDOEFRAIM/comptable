@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { finalize } from 'rxjs/operators';
 import { ComptabiliserModalComponent } from '../../comptabilite/comptabiliser-modal.component';
+import { CompleterPieceComponent } from './completer-piece.component';
 import { DocumentHubService } from '../document-hub.service';
 import {
   CandidatDemandeDto,
@@ -35,7 +36,7 @@ const TUILES: { code: TuileHub; libelle: string; cle: keyof SyntheseHubDto }[] =
 @Component({
   selector: 'app-document-hub',
   standalone: true,
-  imports: [FormsModule, DatePipe, CurrencyPipe, ComptabiliserModalComponent],
+  imports: [FormsModule, DatePipe, CurrencyPipe, ComptabiliserModalComponent, CompleterPieceComponent],
   templateUrl: './document-hub.component.html',
   styleUrl: './document-hub.component.scss',
 })
@@ -73,6 +74,8 @@ export class DocumentHubComponent implements OnInit, OnDestroy {
   readonly apercuLot = signal<DocumentSimpleDto[] | null>(null);
   readonly selectionLot = signal<Set<string>>(new Set());
   readonly documentEnComptabilisation = signal<LigneHubDto | null>(null);
+  /** Pièce que la lecture automatique n'a pas pu lire et que le comptable complète à la main. */
+  readonly pieceACompleter = signal<LigneHubDto | null>(null);
 
   tuile: TuileHub | '' = '';
   type: TypeDocument | '' = '';
@@ -167,6 +170,27 @@ export class DocumentHubComponent implements OnInit, OnDestroy {
   }
 
   // ------------------------------------------------------------------------------------------ actions
+
+  /** Id de la pièce dont la relecture est en cours (un seul clic à la fois, et le bouton le dit). */
+  readonly relectureEnCours = signal<string | null>(null);
+
+  relire(ligne: LigneHubDto): void {
+    this.relectureEnCours.set(ligne.id);
+    this.erreur.set(null);
+    this.hub
+      .relire(this.entrepriseId(), ligne.id)
+      .pipe(finalize(() => this.relectureEnCours.set(null)))
+      .subscribe({
+        next: () => this.apresAction('Pièce relue par l’IA : vérifiez les informations lues.'),
+        error: (err) => this.echec(err, 'La relecture a échoué.'),
+      });
+  }
+
+  /** La pièce vient d'être complétée à la main : on referme la fenêtre et on recharge la liste. */
+  pieceCompletee(): void {
+    this.pieceACompleter.set(null);
+    this.apresAction('Informations enregistrées. Vous pouvez maintenant comptabiliser la pièce.');
+  }
 
   private apresAction(message: string): void {
     this.info.set(message);
@@ -355,6 +379,7 @@ export class DocumentHubComponent implements OnInit, OnDestroy {
   peutComptabiliser(ligne: LigneHubDto): boolean {
     return (
       this.peutGerer() &&
+      !ligne.lectureIncomplete &&
       ligne.statut === 'TRAITE' &&
       !ligne.ecritureId &&
       !ligne.association &&
@@ -392,7 +417,10 @@ export class DocumentHubComponent implements OnInit, OnDestroy {
         break;
     }
     if (ligne.statut === 'ERREUR') {
-      return { texte: 'Illisible', classe: 'badge-erreur' };
+      return { texte: 'À compléter', classe: 'badge-erreur' };
+    }
+    if (ligne.lectureIncomplete) {
+      return { texte: 'À compléter', classe: 'badge-attente' };
     }
     if (ligne.statut === 'EN_ATTENTE_VALIDATION_HUMAINE') {
       return { texte: 'À valider', classe: 'badge-attente' };

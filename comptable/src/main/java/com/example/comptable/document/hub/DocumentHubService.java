@@ -55,7 +55,8 @@ import java.util.stream.Collectors;
 public class DocumentHubService {
 
     /** Filtres cliquables du Hub ; les compteurs de la synthese portent les memes noms. */
-    public enum Tuile { RECUS, TRAITES, A_VERIFIER, DOUBLONS, NON_RAPPROCHES, A_CONFIRMER }
+    /** A_COMPLETER : factures que la lecture automatique n'a pas pu lire (en erreur, ou sans date ou sans montant) et que le comptable doit completer. */
+    public enum Tuile { RECUS, TRAITES, A_VERIFIER, DOUBLONS, NON_RAPPROCHES, A_CONFIRMER, A_COMPLETER }
 
     static final int TAILLE_MAX = 100;
     static final Set<String> CODES_DOUBLON = Set.of(ControlCodes.EXACT_DUPLICATE, ControlCodes.DUPLICATE_INVOICE, ControlCodes.POSSIBLE_DUPLICATE);
@@ -194,10 +195,15 @@ public class DocumentHubService {
                         p.add(cb.or(cb.equal(root.get("statutRapprochement"), StatutRapprochementDocument.RAPPROCHE),
                                 cb.isNotNull(root.get("ecritureId")), cb.isNotNull(root.get("valideAt"))));
                     }
+                    case A_COMPLETER -> {
+                        p.add(pasDoublonConfirme);
+                        p.add(aCompleter(cb, root, facture));
+                    }
                     case A_VERIFIER -> {
                         p.add(pasDoublonConfirme);
                         p.add(cb.isNull(root.get("valideAt")));
                         p.add(cb.or(
+                                aCompleter(cb, root, facture),
                                 root.get("statut").in(StatutDocument.EN_ATTENTE_VALIDATION_HUMAINE, StatutDocument.ERREUR),
                                 root.get("statutRapprochement").in(StatutRapprochementDocument.A_CONFIRMER, StatutRapprochementDocument.AMBIGU),
                                 cb.and(facture, cb.isNull(root.get("ecritureId")),
@@ -272,9 +278,40 @@ public class DocumentHubService {
                     d.getNumeroFacture(), d.getMontantTtc(), d.getDevise(), d.getStatut().name(), d.getStatutRapprochement().name(),
                     association, d.getEcritureId(), d.getStatutClassification() != null ? d.getStatutClassification().name() : null,
                     d.getConfianceTiers(), d.getConfianceRapprochement(), d.getValideAt() != null, d.getDoublonDeId() != null,
-                    constats.getOrDefault(d.getId().toString(), List.of())));
+                    constats.getOrDefault(d.getId().toString(), List.of()), motifLecture(d) != null, motifLecture(d)));
         }
         return lignes;
+    }
+
+    /**
+     * Pourquoi la lecture automatique n'a pas suffi, en francais et sans jargon ; {@code null} si la piece est exploitable.
+     * Une piece deja comptabilisee ou ecartee comme doublon n'a rien a completer. Le detail technique (panne, quota) reste dans
+     * les donnees de la piece : le comptable doit savoir CE QU'IL FAUT FAIRE, pas lire une erreur reseau.
+     */
+    /** Meme regle que {@link #motifLecture} : facture non comptabilisee, en erreur de lecture ou sans date ou sans montant TTC. */
+    private static jakarta.persistence.criteria.Predicate aCompleter(jakarta.persistence.criteria.CriteriaBuilder cb,
+                                                                     jakarta.persistence.criteria.Root<Document> root,
+                                                                     jakarta.persistence.criteria.Predicate facture) {
+        return cb.and(facture, cb.isNull(root.get("ecritureId")),
+                cb.or(cb.equal(root.get("statut"), StatutDocument.ERREUR), cb.isNull(root.get("datePiece")), cb.isNull(root.get("montantTtc"))));
+    }
+
+    static String motifLecture(Document d) {
+        if (d.getEcritureId() != null || d.getDoublonDeId() != null || !d.getTypeDocument().estFacture()) {
+            return null;
+        }
+        if (d.getStatut() == com.example.comptable.document.domain.StatutDocument.ERREUR) {
+            return "La lecture automatique n'a pas abouti (photo floue ou coupee, ou service indisponible).";
+        }
+        List<String> manquants = new ArrayList<>();
+        if (d.getDatePiece() == null) {
+            manquants.add("la date");
+        }
+        if (d.getMontantTtc() == null) {
+            manquants.add("le montant");
+        }
+        // un fournisseur inconnu a son propre parcours (creer le tiers puis Reanalyser) : il n'est pas une lecture incomplete
+        return manquants.isEmpty() ? null : "La lecture automatique n'a pas trouve " + String.join(", ", manquants) + ".";
     }
 
     private Collection<UUID> idsCible(List<Document> documents, String type) {

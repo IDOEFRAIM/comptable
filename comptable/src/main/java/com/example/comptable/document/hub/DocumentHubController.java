@@ -36,6 +36,7 @@ public class DocumentHubController {
 
     private final DocumentHubService hubService;
     private final DocumentTraitementService traitementService;
+    private final com.example.comptable.document.service.DocumentService documentService;
 
     public record AssocierRequest(@NotBlank String cibleType, @NotNull UUID cibleId) {
     }
@@ -136,6 +137,26 @@ public class DocumentHubController {
     public Resultat retraiter(@PathVariable UUID entrepriseId, @PathVariable UUID documentId,
                               @AuthenticationPrincipal UtilisateurPrincipal principal) {
         return Resultat.de(traitementService.retraiter(entrepriseId, documentId, principal));
+    }
+
+    /** Relance la lecture automatique sur le fichier deja stocke (apres une panne passagere du service IA). */
+    @PostMapping("/{documentId}/relire")
+    public com.example.comptable.document.web.dto.DocumentDto relire(@PathVariable UUID entrepriseId, @PathVariable UUID documentId,
+                                                                     @AuthenticationPrincipal UtilisateurPrincipal principal) {
+        return documentService.relire(entrepriseId, documentId, principal);
+    }
+
+    public record DonneesRequest(java.time.LocalDate datePiece, String numeroFacture, String fournisseur,
+                                 java.math.BigDecimal montantHt, java.math.BigDecimal montantTva, java.math.BigDecimal montantTtc) {
+    }
+
+    /** Saisie manuelle quand la lecture automatique n'a pas pu lire la piece (image floue, service indisponible). */
+    @org.springframework.web.bind.annotation.PutMapping("/{documentId}/donnees")
+    public Resultat corrigerDonnees(@PathVariable UUID entrepriseId, @PathVariable UUID documentId, @RequestBody DonneesRequest requete,
+                                    @AuthenticationPrincipal UtilisateurPrincipal principal) {
+        return Resultat.de(traitementService.corrigerDonnees(entrepriseId, documentId,
+                new DocumentTraitementService.CorrectionDonnees(requete.datePiece(), requete.numeroFacture(), requete.fournisseur(),
+                        requete.montantHt(), requete.montantTva(), requete.montantTtc()), principal));
     }
 
     /** Etat de la piece apres une action (le Hub recharge ensuite sa liste). */
