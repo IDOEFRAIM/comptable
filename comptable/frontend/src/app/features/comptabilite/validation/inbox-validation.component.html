@@ -11,10 +11,41 @@
     <p class="message-succes">{{ succes() }}</p>
   }
 
+  @if (aCompleter().length > 0) {
+    <section class="a-completer carte" data-zone="a-completer">
+      <h3>Pièces à compléter ({{ aCompleter().length }})</h3>
+      <p class="sous-titre">La lecture automatique n’a pas pu lire ces pièces (photo floue ou service momentanément indisponible). Relancez la lecture, ou saisissez les informations vous-même.</p>
+      @for (piece of aCompleter(); track piece.id) {
+        <div class="piece-a-completer" data-zone="piece-a-completer">
+          <div class="infos-piece">
+            <strong>{{ piece.numeroFacture ?? piece.fournisseurExtrait ?? 'Pièce sans nom' }}</strong>
+            <span class="meta">reçue le {{ piece.recuLe | date: 'dd/MM/yyyy' }}</span>
+            <span class="meta">{{ piece.motifLecture }}</span>
+          </div>
+          <div class="actions-piece">
+            <button type="button" class="bouton-secondaire petit" (click)="ouvrirPiece(piece)">Ouvrir</button>
+            <button type="button" class="bouton-secondaire petit" [disabled]="relectureEnCours() === piece.id" (click)="relirePiece(piece)" data-action="relire-ia">
+              {{ relectureEnCours() === piece.id ? 'Lecture…' : 'Relire avec l’IA' }}
+            </button>
+            <button type="button" class="bouton-principal petit" (click)="pieceACompleter.set(piece)" data-action="completer-piece">Compléter</button>
+          </div>
+        </div>
+      }
+    </section>
+  }
+
+  @if (pieceACompleter(); as piece) {
+    <app-completer-piece [entrepriseId]="entrepriseId()" [ligne]="piece" (enregistre)="pieceCompletee()" (annule)="pieceACompleter.set(null)" />
+  }
+
   @if (chargement()) {
     <p class="etat-vide">Chargement…</p>
   } @else if (documents().length === 0) {
-    <p class="etat-vide">Aucune pièce en attente de validation.</p>
+    @if (aCompleter().length === 0) {
+      <p class="etat-vide">Aucune pièce en attente de validation.</p>
+    } @else {
+      <p class="etat-vide">Aucune autre pièce en attente de validation.</p>
+    }
   } @else {
     <div class="barre-lot">
       <label class="case-tout">

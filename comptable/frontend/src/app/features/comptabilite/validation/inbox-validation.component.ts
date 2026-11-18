@@ -6,6 +6,9 @@ import { ActivatedRoute } from '@angular/router';
 import { forkJoin } from 'rxjs';
 import { finalize, map } from 'rxjs/operators';
 import { AideContextuelleComponent } from '../../../core/aide/aide-contextuelle.component';
+import { CompleterPieceComponent } from '../../documents/document-hub/completer-piece.component';
+import { DocumentHubService } from '../../documents/document-hub.service';
+import { LigneHubDto } from '../../documents/models/document-hub.model';
 import { ComptabiliteService } from '../comptabilite.service';
 import { DocumentAgentService } from '../document-agent.service';
 import { CompteComptableDto } from '../models/comptabilite.model';
@@ -22,13 +25,14 @@ import { DocumentEnAttenteValidationDto, ValiderDocumentRequest } from '../model
 @Component({
   selector: 'app-inbox-validation',
   standalone: true,
-  imports: [FormsModule, DecimalPipe, DatePipe, AideContextuelleComponent],
+  imports: [FormsModule, DecimalPipe, DatePipe, AideContextuelleComponent, CompleterPieceComponent],
   templateUrl: './inbox-validation.component.html',
   styleUrl: './inbox-validation.component.scss',
 })
 export class InboxValidationComponent implements OnInit, OnDestroy {
   private readonly documentAgentService = inject(DocumentAgentService);
   private readonly comptabiliteService = inject(ComptabiliteService);
+  private readonly hub = inject(DocumentHubService);
   private readonly route = inject(ActivatedRoute);
 
   readonly entrepriseId = toSignal(this.route.paramMap.pipe(map((p) => p.get('entrepriseId')!)), {
@@ -45,6 +49,15 @@ export class InboxValidationComponent implements OnInit, OnDestroy {
   readonly envoiEnCours = signal(false);
   readonly erreur = signal<string | null>(null);
   readonly succes = signal<string | null>(null);
+
+  /**
+   * Pièces du hub que la lecture automatique n'a pas pu lire (photo floue, service indisponible) : sans cette section, un comptable
+   * qui dépose une pièce illisible voit « Aucune pièce en attente » alors qu'il a du travail. Il les complète ici à la main, ou
+   * relance la lecture.
+   */
+  readonly aCompleter = signal<LigneHubDto[]>([]);
+  readonly pieceACompleter = signal<LigneHubDto | null>(null);
+  readonly relectureEnCours = signal<string | null>(null);
 
   // Formulaire d'edition de la piece active - simples champs, pas de ReactiveForms ici pour
   // rester coherent avec le reste du module comptabilite (FormsModule + ngModel partout).
@@ -73,7 +86,44 @@ export class InboxValidationComponent implements OnInit, OnDestroy {
     this.revoquerApercu();
   }
 
+  chargerACompleter(): void {
+    this.hub.lister(this.entrepriseId(), { tuile: 'A_COMPLETER', taille: 50 }).subscribe({
+      next: (page) => this.aCompleter.set(page.contenu),
+      error: () => this.aCompleter.set([]),
+    });
+  }
+
+  ouvrirPiece(ligne: LigneHubDto): void {
+    this.hub.fichier(this.entrepriseId(), ligne.id).subscribe({
+      next: (blob) => window.open(URL.createObjectURL(blob), '_blank'),
+      error: () => this.erreur.set('Impossible d’ouvrir ce fichier.'),
+    });
+  }
+
+  relirePiece(ligne: LigneHubDto): void {
+    this.relectureEnCours.set(ligne.id);
+    this.erreur.set(null);
+    this.succes.set(null);
+    this.hub
+      .relire(this.entrepriseId(), ligne.id)
+      .pipe(finalize(() => this.relectureEnCours.set(null)))
+      .subscribe({
+        next: () => {
+          this.succes.set('Pièce relue par l’IA : vérifiez les informations lues.');
+          this.rafraichir();
+        },
+        error: (err) => this.erreur.set(err.error?.message ?? 'La relecture a échoué.'),
+      });
+  }
+
+  pieceCompletee(): void {
+    this.pieceACompleter.set(null);
+    this.succes.set('Informations enregistrées. Comptabilisez la pièce depuis l’écran Documents.');
+    this.rafraichir();
+  }
+
   rafraichir(): void {
+    this.chargerACompleter();
     this.chargement.set(true);
     this.erreur.set(null);
     this.documentAgentService

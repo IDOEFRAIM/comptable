@@ -69,6 +69,20 @@ export class DocumentHubService {
     return this.http.post<ResultatActionDto>(`${BASE_URL}/${entrepriseId}/documents/${documentId}/valider`, {});
   }
 
+  /** Relance la lecture automatique sur le fichier déjà stocké (après une panne passagère du service IA) : rien à renvoyer. */
+  relire(entrepriseId: string, documentId: string): Observable<unknown> {
+    return this.http.post(`${BASE_URL}/${entrepriseId}/documents/${documentId}/relire`, {});
+  }
+
+  /** Saisie manuelle quand la lecture automatique n'a pas pu lire la pièce (date, n°, fournisseur, montants). */
+  corrigerDonnees(
+    entrepriseId: string,
+    documentId: string,
+    donnees: { datePiece?: string; numeroFacture?: string; fournisseur?: string; montantHt?: number; montantTva?: number; montantTtc?: number },
+  ): Observable<ResultatActionDto> {
+    return this.http.put<ResultatActionDto>(`${BASE_URL}/${entrepriseId}/documents/${documentId}/donnees`, donnees);
+  }
+
   retraiter(entrepriseId: string, documentId: string): Observable<ResultatActionDto> {
     return this.http.post<ResultatActionDto>(`${BASE_URL}/${entrepriseId}/documents/${documentId}/retraiter`, {});
   }

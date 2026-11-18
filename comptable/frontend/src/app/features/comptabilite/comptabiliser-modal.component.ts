@@ -36,6 +36,8 @@ export class ComptabiliserModalComponent implements OnInit {
     tiersId: ['', Validators.required],
     compteChargeOuProduitId: ['', Validators.required],
     libelle: [''],
+    /** Facultative : sert quand l'extraction n'a pas lu de date sur la pièce (sinon le serveur refuse : « Date de pièce manquante »). */
+    dateEcriture: [''],
   });
 
   ngOnInit(): void {
@@ -63,13 +65,14 @@ export class ComptabiliserModalComponent implements OnInit {
     }
     this.envoiEnCours.set(true);
     this.erreur.set(null);
-    const { tiersId, compteChargeOuProduitId, libelle } = this.form.getRawValue();
+    const { tiersId, compteChargeOuProduitId, libelle, dateEcriture } = this.form.getRawValue();
 
     this.comptabiliteService
       .comptabiliserDocument(this.entrepriseId(), this.documentId(), {
         tiersId,
         compteChargeOuProduitId,
         libelle: libelle || undefined,
+        dateEcriture: dateEcriture || undefined,
       })
       .pipe(finalize(() => this.envoiEnCours.set(false)))
       .subscribe({

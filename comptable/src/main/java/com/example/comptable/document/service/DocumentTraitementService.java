@@ -261,6 +261,90 @@ public class DocumentTraitementService {
         return document;
     }
 
+    /** Ce que le comptable saisit quand la lecture automatique n'a rien trouve (image floue, service indisponible). Un champ absent n'est pas modifie. */
+    public record CorrectionDonnees(java.time.LocalDate datePiece, String numeroFacture, String fournisseur,
+                                    java.math.BigDecimal montantHt, java.math.BigDecimal montantTva, java.math.BigDecimal montantTtc) {
+    }
+
+    /**
+     * Saisie manuelle des informations d'une piece que la lecture automatique n'a pas pu lire : date, numero, fournisseur,
+     * montants. Refuse l'incoherent (HT + TVA different du TTC, montant negatif, date aberrante), ne touche jamais une piece
+     * deja comptabilisee, remet la piece en etat de traitement (une piece en erreur redevient exploitable) et relance
+     * l'identification du fournisseur. Tracee : seuls les NOMS des champs modifies sont journalises.
+     */
+    @Transactional
+    public Document corrigerDonnees(UUID entrepriseId, UUID documentId, CorrectionDonnees saisie, UtilisateurPrincipal principal) {
+        entrepriseAccessService.verifierAcces(entrepriseId, principal);
+        Document document = chargerActif(entrepriseId, documentId);
+        if (document.getEcritureId() != null) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "Cette piece est deja comptabilisee : ses informations ne peuvent plus etre modifiees ici");
+        }
+        String fournisseur = saisie.fournisseur() == null || saisie.fournisseur().isBlank() ? null : saisie.fournisseur().trim();
+        String numero = saisie.numeroFacture() == null || saisie.numeroFacture().isBlank() ? null : saisie.numeroFacture().trim();
+        if (saisie.datePiece() == null && numero == null && fournisseur == null && saisie.montantHt() == null && saisie.montantTva() == null
+                && saisie.montantTtc() == null) {
+            throw new ResponseStatusException(HttpStatus.UNPROCESSABLE_ENTITY, "Renseignez au moins une information (date, numero, fournisseur ou montant)");
+        }
+        for (java.math.BigDecimal m : new java.math.BigDecimal[]{saisie.montantHt(), saisie.montantTva(), saisie.montantTtc()}) {
+            if (m != null && m.signum() < 0) {
+                throw new ResponseStatusException(HttpStatus.UNPROCESSABLE_ENTITY, "Un montant ne peut pas etre negatif");
+            }
+        }
+        if (saisie.datePiece() != null && (saisie.datePiece().getYear() < 2000 || saisie.datePiece().isAfter(java.time.LocalDate.now().plusYears(1)))) {
+            throw new ResponseStatusException(HttpStatus.UNPROCESSABLE_ENTITY, "La date de la piece n'est pas plausible : verifiez l'annee");
+        }
+
+        java.math.BigDecimal ht = saisie.montantHt() != null ? saisie.montantHt() : document.getMontantHt();
+        java.math.BigDecimal ttc = saisie.montantTtc() != null ? saisie.montantTtc() : document.getMontantTtc();
+        java.math.BigDecimal tva = saisie.montantTva() != null ? saisie.montantTva() : document.getMontantTva();
+        if (tva == null && ht != null && ttc != null) {
+            tva = ttc.subtract(ht); // la TVA se deduit quand HT et TTC sont connus
+        }
+        if (ht != null && ttc != null) {
+            if (tva != null && tva.signum() < 0) {
+                throw new ResponseStatusException(HttpStatus.UNPROCESSABLE_ENTITY, "Le TTC ne peut pas etre inferieur au HT");
+            }
+            com.example.comptable.comptabilite.service.CoherenceMontants.verifier(ht, tva == null ? java.math.BigDecimal.ZERO : tva, ttc, java.math.BigDecimal.ZERO)
+                    .ifPresent(ecart -> {
+                        throw new ResponseStatusException(HttpStatus.UNPROCESSABLE_ENTITY, "Montants incoherents : " + ecart.explication());
+                    });
+        }
+
+        List<String> modifies = new ArrayList<>();
+        if (saisie.datePiece() != null) {
+            document.setDatePiece(saisie.datePiece());
+            modifies.add("datePiece");
+        }
+        if (numero != null) {
+            document.setNumeroFacture(numero);
+            modifies.add("numeroFacture");
+        }
+        if (saisie.montantHt() != null || saisie.montantTtc() != null || saisie.montantTva() != null) {
+            document.setMontantHt(ht);
+            document.setMontantTva(tva);
+            document.setMontantTtc(ttc);
+            modifies.add("montants");
+        }
+        Map<String, Object> ocr = document.getDonneesOcr() == null ? new java.util.HashMap<>() : new java.util.HashMap<>(document.getDonneesOcr());
+        if (fournisseur != null) {
+            ocr.put("fournisseur", fournisseur);
+            modifies.add("fournisseur");
+        }
+        ocr.put("correctionManuelle", true);
+        ocr.put("message", "Informations saisies ou corrigees par le comptable.");
+        document.setDonneesOcr(ocr);
+        if (document.getStatut() == com.example.comptable.document.domain.StatutDocument.ERREUR) {
+            document.setStatut(com.example.comptable.document.domain.StatutDocument.TRAITE);
+        }
+        documentRepository.save(document);
+        auditTrailService.enregistrerActionHumaine(principal.getTenantId(), principal.getId(), "DOCUMENT_DONNEES_CORRIGEES", "DOCUMENT",
+                documentId.toString(), Map.of("champs", String.join(",", modifies)));
+        if (document.getStatutRapprochement() != StatutRapprochementDocument.RAPPROCHE) {
+            pipeline.analyser(document);
+        }
+        return document;
+    }
+
     static boolean estValidableEnLot(Document d) {
         return d.getStatutRapprochement() == StatutRapprochementDocument.RAPPROCHE && d.getValideAt() == null
                 && d.getRapprochePar() == OrigineRapprochement.SYSTEME && d.getDoublonDeId() == null;

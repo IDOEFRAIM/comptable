@@ -137,6 +137,12 @@
               <strong>{{ l.association.libelle }}</strong>
             </p>
           }
+          @if (l.lectureIncomplete && !l.doublonConfirme) {
+            <div class="lecture-incomplete" role="status" data-zone="lecture-incomplete">
+              <strong>{{ l.motifLecture }}</strong>
+              <span>Ouvrez la pièce, puis <b>complétez les informations</b> à la main. Si la photo est trop floue, demandez au client de renvoyer un document plus net.</span>
+            </div>
+          }
           @if (l.constats.length) {
             <p class="constats">
               @for (c of l.constats; track c) {
@@ -148,6 +154,11 @@
           <div class="actions">
             <button type="button" class="bouton-secondaire petit" (click)="ouvrirFichier(l)">Ouvrir</button>
             @if (peutGerer() && !l.doublonConfirme) {
+              @if (l.lectureIncomplete) {
+                <button type="button" class="bouton-principal petit" (click)="pieceACompleter.set(l)" data-action="completer-piece">Compléter la pièce</button>
+                <button type="button" class="bouton-secondaire petit" [disabled]="relectureEnCours() === l.id" (click)="relire(l)" data-action="relire-ia"
+                  title="Relance la lecture automatique sur le fichier déjà reçu, sans le renvoyer">{{ relectureEnCours() === l.id ? 'Lecture…' : 'Relire avec l’IA' }}</button>
+              }
               @if (l.statutRapprochement === 'A_CONFIRMER') {
                 <button type="button" class="bouton-principal petit" (click)="confirmer(l)">Confirmer</button>
                 <button type="button" class="bouton-secondaire petit" (click)="rejeterProposition(l)">Rejeter</button>
@@ -247,6 +258,15 @@
     }
   }
 </div>
+
+@if (pieceACompleter(); as piece) {
+  <app-completer-piece
+    [entrepriseId]="entrepriseId()"
+    [ligne]="piece"
+    (enregistre)="pieceCompletee()"
+    (annule)="pieceACompleter.set(null)"
+  />
+}
 
 @if (documentEnComptabilisation(); as document) {
   <app-comptabiliser-modal
