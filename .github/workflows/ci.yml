@@ -16,11 +16,26 @@ jobs:
           distribution: temurin
           java-version: "21"
           cache: maven
-      - name: mvn verify
+      # Maven lui-meme (telecharge par mvnw) est mis en cache : sans cela, chaque execution le retelecharge et
+      # un simple incident reseau de repo.maven.apache.org fait echouer tout le job. La cle suit la version
+      # demandee dans maven-wrapper.properties.
+      - uses: actions/cache@v4
+        with:
+          path: ~/.m2/wrapper
+          key: maven-wrapper-${{ runner.os }}-${{ hashFiles('comptable/.mvn/wrapper/maven-wrapper.properties') }}
+      - name: Preparer Maven (3 essais si le telechargement echoue)
         working-directory: comptable
         run: |
           chmod +x mvnw
-          ./mvnw -B -ntp verify
+          for essai in 1 2 3; do
+            ./mvnw -B -ntp -v && break
+            [ "$essai" -eq 3 ] && exit 1
+            echo "Telechargement de Maven en echec (essai $essai/3), nouvelle tentative..."
+            sleep $((essai * 15))
+          done
+      - name: mvn verify
+        working-directory: comptable
+        run: ./mvnw -B -ntp verify
 
   frontend:
     name: Frontend (Angular)
@@ -77,8 +92,21 @@ jobs:
       - name: npm ci
         working-directory: comptable/frontend
         run: npm ci
-      - name: Wrapper Maven exécutable (lancé par Playwright pour démarrer le backend)
-        run: chmod +x comptable/mvnw
+      # Playwright demarre le backend avec mvnw : meme protection que le job backend (cache + 3 essais).
+      - uses: actions/cache@v4
+        with:
+          path: ~/.m2/wrapper
+          key: maven-wrapper-${{ runner.os }}-${{ hashFiles('comptable/.mvn/wrapper/maven-wrapper.properties') }}
+      - name: Wrapper Maven exécutable et préparé (lancé par Playwright pour démarrer le backend)
+        working-directory: comptable
+        run: |
+          chmod +x mvnw
+          for essai in 1 2 3; do
+            ./mvnw -B -ntp -v && break
+            [ "$essai" -eq 3 ] && exit 1
+            echo "Telechargement de Maven en echec (essai $essai/3), nouvelle tentative..."
+            sleep $((essai * 15))
+          done
       - name: Suite Playwright complète (pilote, cabinet, dossier financier, TVA, responsive / accessibilité)
         working-directory: comptable/frontend
         run: npx playwright test

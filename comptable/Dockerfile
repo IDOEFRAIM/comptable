@@ -1,17 +1,23 @@
-# Build multi-etapes : etape 1 compile le jar avec le meme wrapper Maven que le developpement
-# (mvnw, meme version epinglee dans .mvn/wrapper/maven-wrapper.properties), etape 2 ne garde que
-# le jar + un JRE minimal - l'image finale n'a jamais le JDK complet ni le code source.
-FROM eclipse-temurin:21-jdk AS build
+# Build multi-etapes : etape 1 compile le jar, etape 2 ne garde que le jar + un JRE minimal - l'image
+# finale n'a jamais le JDK complet ni le code source.
+#
+# Etape 1 sur l'image officielle Maven (Maven + JDK 21 deja inclus) et NON via mvnw : le script mvnw
+# telecharge Maven avec wget a chaque build, sans nouvelle tentative, et un simple incident reseau de
+# repo.maven.apache.org (frequent depuis les machines GitHub Actions) faisait echouer tout le build.
+# Version EPINGLEE a la meme que .mvn/wrapper/maven-wrapper.properties (developpement et CI) : meme Maven
+# partout, build reproductible. En changeant la version du wrapper, changer ce tag aussi.
+FROM maven:3.9.16-eclipse-temurin-21 AS build
 WORKDIR /build
+ENV MAVEN_OPTS="-Dmaven.wagon.http.retryHandler.count=5 -Dmaven.wagon.httpconnectionManager.ttlSeconds=30"
 
-# Couche dependances separee du code source : un changement de code seul ne re-telecharge pas
-# tout le repository Maven (cache Docker efficace sur les rebuilds).
-COPY mvnw pom.xml ./
-COPY .mvn .mvn
-RUN ./mvnw -B -q dependency:go-offline
+# Les dependances sont telechargees par Maven (5 tentatives) et gardees dans un CACHE BuildKit : un
+# rebuild, meme apres un changement de pom.xml, ne retelecharge que ce qui manque (serveur a memoire
+# et reseau limites). Le cache n'est jamais copie dans l'image finale.
+COPY pom.xml ./
+RUN --mount=type=cache,target=/root/.m2 mvn -B -q dependency:go-offline
 
 COPY src src
-RUN ./mvnw -B -q -o package -DskipTests
+RUN --mount=type=cache,target=/root/.m2 mvn -B -q -o package -DskipTests
 
 FROM eclipse-temurin:21-jre AS runtime
 WORKDIR /app

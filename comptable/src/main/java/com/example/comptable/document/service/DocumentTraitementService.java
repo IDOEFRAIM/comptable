@@ -44,13 +44,16 @@ public class DocumentTraitementService {
     private final com.example.comptable.demande.repository.DemandePieceRepository demandePieceRepository;
     private final PieceEcritureLinker pieceEcritureLinker;
     private final com.example.comptable.collecte.service.DemandeMatcher demandeMatcher;
+    private final DocumentClassifier classifier;
 
     public DocumentTraitementService(EntrepriseAccessService entrepriseAccessService, DocumentRepository documentRepository,
                                      DocumentMatcher matcher, DocumentPipeline pipeline,
                                      FactureFournisseurRepository factureFournisseurRepository, FactureRepository factureRepository,
                                      FindingService findingService, AuditTrailService auditTrailService,
                                      com.example.comptable.demande.repository.DemandePieceRepository demandePieceRepository,
-                                     PieceEcritureLinker pieceEcritureLinker, com.example.comptable.collecte.service.DemandeMatcher demandeMatcher) {
+                                     PieceEcritureLinker pieceEcritureLinker, com.example.comptable.collecte.service.DemandeMatcher demandeMatcher,
+                                     DocumentClassifier classifier) {
+        this.classifier = classifier;
         this.entrepriseAccessService = entrepriseAccessService;
         this.documentRepository = documentRepository;
         this.matcher = matcher;
@@ -263,7 +266,8 @@ public class DocumentTraitementService {
 
     /** Ce que le comptable saisit quand la lecture automatique n'a rien trouve (image floue, service indisponible). Un champ absent n'est pas modifie. */
     public record CorrectionDonnees(java.time.LocalDate datePiece, String numeroFacture, String fournisseur,
-                                    java.math.BigDecimal montantHt, java.math.BigDecimal montantTva, java.math.BigDecimal montantTtc) {
+                                    java.math.BigDecimal montantHt, java.math.BigDecimal montantTva, java.math.BigDecimal montantTtc,
+                                    UUID tiersId) {
     }
 
     /**
@@ -281,9 +285,16 @@ public class DocumentTraitementService {
         }
         String fournisseur = saisie.fournisseur() == null || saisie.fournisseur().isBlank() ? null : saisie.fournisseur().trim();
         String numero = saisie.numeroFacture() == null || saisie.numeroFacture().isBlank() ? null : saisie.numeroFacture().trim();
-        if (saisie.datePiece() == null && numero == null && fournisseur == null && saisie.montantHt() == null && saisie.montantTva() == null
-                && saisie.montantTtc() == null) {
+        if (saisie.datePiece() == null && numero == null && fournisseur == null && saisie.tiersId() == null && saisie.montantHt() == null
+                && saisie.montantTva() == null && saisie.montantTtc() == null) {
             throw new ResponseStatusException(HttpStatus.UNPROCESSABLE_ENTITY, "Renseignez au moins une information (date, numero, fournisseur ou montant)");
+        }
+        com.example.comptable.comptabilite.domain.Tiers tiersChoisi = null;
+        if (saisie.tiersId() != null) {
+            tiersChoisi = classifier.tiersChoisi(document, saisie.tiersId());
+            if (tiersChoisi == null) {
+                throw new ResponseStatusException(HttpStatus.UNPROCESSABLE_ENTITY, "Ce tiers n'appartient pas a ce dossier ou n'est pas de la bonne categorie");
+            }
         }
         for (java.math.BigDecimal m : new java.math.BigDecimal[]{saisie.montantHt(), saisie.montantTva(), saisie.montantTtc()}) {
             if (m != null && m.signum() < 0) {
@@ -326,8 +337,14 @@ public class DocumentTraitementService {
             modifies.add("montants");
         }
         Map<String, Object> ocr = document.getDonneesOcr() == null ? new java.util.HashMap<>() : new java.util.HashMap<>(document.getDonneesOcr());
-        if (fournisseur != null) {
+        if (tiersChoisi != null) {
+            // choix dans la liste : l'identifiant l'emporte sur le nom (deux tiers peuvent porter le meme nom)
+            ocr.put("fournisseur", tiersChoisi.getNom());
+            ocr.put(DocumentClassifier.TIERS_CHOISI, tiersChoisi.getId().toString());
+            modifies.add("fournisseur");
+        } else if (fournisseur != null) {
             ocr.put("fournisseur", fournisseur);
+            ocr.remove(DocumentClassifier.TIERS_CHOISI); // nom saisi librement : l'ancien choix ne vaut plus
             modifies.add("fournisseur");
         }
         ocr.put("correctionManuelle", true);

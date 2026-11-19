@@ -51,7 +51,30 @@ public class DocumentClassifier {
         return nom instanceof String s && !s.isBlank() ? s : null;
     }
 
+    /** Cle de {@code donneesOcr} qui memorise le tiers choisi par le comptable dans la liste : un choix humain l'emporte sur le nom lu. */
+    public static final String TIERS_CHOISI = "tiersIdChoisi";
+
+    /**
+     * Le tiers {@code tiersId} s'il appartient bien a l'entreprise de la piece ET a la bonne categorie (fournisseur pour un achat,
+     * client pour une vente), sinon {@code null} : un identifiant venu d'un autre dossier n'est jamais accepte.
+     */
+    public Tiers tiersChoisi(Document document, java.util.UUID tiersId) {
+        TypeTiers type = document.getTypeDocument() == TypeDocument.FACTURE_ACHAT ? TypeTiers.FOURNISSEUR : TypeTiers.CLIENT;
+        return tiersRepository.findByEntrepriseIdAndType(document.getEntreprise().getId(), type).stream()
+                .filter(t -> t.getId().equals(tiersId)).findFirst().orElse(null);
+    }
+
     public Resultat identifierTiers(Document document) {
+        if (document.getDonneesOcr() != null && document.getDonneesOcr().get(TIERS_CHOISI) instanceof String choisi && !choisi.isBlank()) {
+            try {
+                Tiers t = tiersChoisi(document, java.util.UUID.fromString(choisi));
+                if (t != null) {
+                    return new Resultat(t, QualiteClassification.EXACT, 1.0); // choix explicite du comptable : certain
+                }
+            } catch (IllegalArgumentException ignore) {
+                // identifiant illisible : on retombe sur l'identification par le nom
+            }
+        }
         String nom = nomExtrait(document);
         if (nom == null || !document.getTypeDocument().estFacture()) {
             return new Resultat(null, QualiteClassification.INCONNU, 0.0);
