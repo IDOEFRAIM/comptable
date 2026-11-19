@@ -1,4 +1,5 @@
 import base64
+import re
 from datetime import date
 from decimal import Decimal
 
@@ -46,6 +47,11 @@ ETAPE 2 - Auto-critique mathematique et temporelle, APRES avoir lu les montants 
 - Verifie que la date n'est pas dans le futur par rapport a aujourd'hui, et n'est pas
   anormalement ancienne (plus de 2 ans) : dans les deux cas, baisse confiance et explique-le dans
   motif plutot que de l'ignorer silencieusement.
+- Une date lisible reste TOUJOURS renseignee dans date_piece, meme ancienne ou dans le futur :
+  tu signales l'anomalie dans motif et confiance, tu ne mets jamais la date a null pour cela.
+- Les dates sont ecrites en jour/mois/annee (22/07/2022 = 22 juillet 2022). Cherche-la pres des
+  libelles "Date", "Date Facture", "Le", "Emis le", y compris a droite ou en haut de la piece, et
+  renvoie-la en yyyy-MM-dd.
 
 Regles strictes :
 - Une piece PETITE, courte ou recadree (bordereau, ticket, reçu de quelques lignes), meme prise
@@ -190,7 +196,7 @@ def extraire(contenu: bytes, content_type: str) -> OcrResult:
         montant_ht=raw.get("montant_ht"),
         montant_tva=raw.get("montant_tva"),
         montant_ttc=raw.get("montant_ttc"),
-        date_piece=raw.get("date_piece"),
+        date_piece=_lire_date(raw.get("date_piece")),
         reussite=True,
         message=raw.get("motif") or "Extraction par IA ; a verifier avant validation.",
         confiance=confiance,
@@ -203,6 +209,28 @@ def extraire(contenu: bytes, content_type: str) -> OcrResult:
         reference_transaction=raw.get("reference_transaction"),
     )
     return _verifier_coherence_arithmetique(resultat)
+
+
+def _lire_date(valeur) -> date | None:
+    """Le modele doit renvoyer yyyy-MM-dd, mais il lui arrive d'ecrire 22/07/2022 ou 22-07-22 :
+    on accepte ces formes (jour en premier, usage local) plutot que de perdre la date."""
+    if not valeur:
+        return None
+    texte = str(valeur).strip()
+    try:
+        return date.fromisoformat(texte[:10])
+    except ValueError:
+        pass
+    morceaux = re.split(r"[/.\-\s]+", texte)
+    if len(morceaux) >= 3 and all(m.isdigit() for m in morceaux[:3]):
+        jour, mois, annee = (int(m) for m in morceaux[:3])
+        if annee < 100:
+            annee += 2000
+        try:
+            return date(annee, mois, jour)
+        except ValueError:
+            return None
+    return None
 
 
 def _verifier_coherence_arithmetique(resultat: OcrResult) -> OcrResult:
